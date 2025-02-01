@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -MMD -Wall -Wextra -Werror -Wfatal-errors -Wno-stringop-overflow -fopenmp
+CFLAGS = -MMD -Wall -Wextra -Werror -Wfatal-errors -Wno-unused-parameter -Wno-stringop-overflow -fopenmp
 CFLAGS_DEV = -g3
 CFLAGS_RELEASE = -O3 
 LINKER_FLAGS = -lglfw3dll -lm -lOpenAL32 -lsndfile
@@ -10,6 +10,7 @@ DIR_DEP = build
 DIR_BIN = bin
 NAME = prog
 
+$(shell mkdir -p build)
 DIRS_LIB = $(shell find $(DIR_LIB) -type d -name "*link")
 DIRS_INC = $(shell find $(DIR_LIB) -type d -name "*include")
 HEADERS  = $(shell find $(DIR_SRC) $(DIR_LIB) -name "*.h")
@@ -24,20 +25,20 @@ DEPS     = $(SOURCES:%.c=$(DIR_DEP)/%.d)
 all: dev
 
 dev: $(OBJS_DEV)
-	mkdir -p $(DIR_BIN)/dev
-	$(CC) $(CFLAGS) $(CFLAGS_DEV) $(LINKER_FLAGS) $(LIBS) $(INCLUDES) $(OBJS_DEV) -o $(DIR_BIN)/dev/$(NAME)
+	@mkdir -p $(DIR_BIN)/dev
+	@$(CC) $(CFLAGS) $(CFLAGS_DEV) $(LIBS) $(INCLUDES) $(OBJS_DEV) $(LINKER_FLAGS) -o $(DIR_BIN)/dev/$(NAME)
 
 $(DIR_OBJ)/dev/%.o: %.c
-	mkdir -p $(shell dirname $@)
-	$(CC) $(CFLAGS) $(CFLAGS_DEV) $(LINKER_FLAGS) $(LIBS) $(INCLUDES) -c -o $@ $<
+	@mkdir -p $(shell dirname $@)
+	@$(CC) $(CFLAGS) $(CFLAGS_DEV) $(LIBS) $(INCLUDES) $(LINKER_FLAGS) -c -o $@ $<
 
 release: $(OBJS_REL)
-	mkdir -p $(DIR_BIN)/release
-	$(CC) $(CFLAGS) $(CFLAGS_RELEASE) $(LINKER_FLAGS) $(LIBS) $(INCLUDES) $(OBJS_REL) -o $(DIR_BIN)/release/$(NAME)
+	@mkdir -p $(DIR_BIN)/release
+	@$(CC) $(CFLAGS) $(CFLAGS_RELEASE) $(LINKER_FLAGS) $(LIBS) $(INCLUDES) $(OBJS_REL) -o $(DIR_BIN)/release/$(NAME)
 
 $(DIR_OBJ)/release/%.o: %.c
-	mkdir -p $(shell dirname $@)
-	$(CC) $(CFLAGS) $(CFLAGS_RELEASE) $(LINKER_FLAGS) $(LIBS) $(INCLUDES) -c -o $@ $<
+	@mkdir -p $(shell dirname $@)
+	@$(CC) $(CFLAGS) $(CFLAGS_RELEASE) $(LINKER_FLAGS) $(LIBS) $(INCLUDES) -c -o $@ $<
 
 $(DEPSH):
 
