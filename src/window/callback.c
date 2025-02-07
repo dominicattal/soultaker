@@ -1,4 +1,4 @@
-#include "../window.h"
+#include "internal.h"
 #include "../gui.h"
 #include "../game.h"
 #include <stdio.h>
