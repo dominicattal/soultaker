@@ -3,27 +3,17 @@
 
 #include "util.h"
 
-typedef struct {
-    bool kill_thread;
-    pthread_t thread_id;
-} GUIContext;
-
-extern GUIContext gui_context;
-
+typedef struct GUIData GUIData;
 typedef struct GUIComp GUIComp;
-typedef struct GUIComp {
-    u64 info1;
-    u64 info2;
-    void* data;
-    union {
-        GUIComp** children;
-        char* text;
-    };
-} GUIComp;
+typedef struct GUIContext GUIContext;
 
 void gui_init(void);
 void gui_cleanup(void);
+
+void gui_render_init(void);
 void gui_render(void);
+void gui_render_cleanup(void);
+
 void gui_cursor_pos_callback(f64 xpos, f64 ypos);
 bool gui_key_callback(i32 key, i32 scancode, i32 action, i32 mods);
 bool gui_mouse_button_callback(i32 button, i32 action, i32 mods);
@@ -31,7 +21,8 @@ bool gui_mouse_button_callback(i32 button, i32 action, i32 mods);
 void gui_comp_init(void);
 void gui_comp_cleanup(void);
 
-/* #define MAX_NUM_CHILDREN  255
+/*
+#define MAX_NUM_CHILDREN  255
 
 #define ALIGN_LEFT      0
 #define ALIGN_CENTER    1
@@ -128,6 +119,6 @@ bool gui_comp_is_text(GUIComp* comp);
 bool gui_comp_is_hoverable(GUIComp* comp);
 bool gui_comp_is_hovered(GUIComp* comp);
 bool gui_comp_is_clickable(GUIComp* comp);
-bool gui_comp_is_visible(GUIComp* comp); */
-
+bool gui_comp_is_visible(GUIComp* comp);
+*/
 #endif

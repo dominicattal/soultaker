@@ -1,4 +1,4 @@
-#include "../gui.h"
+#include "internal.h"
 
 void gui_cursor_pos_callback(f64 xpos, f64 ypos)
 {

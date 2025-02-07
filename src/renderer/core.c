@@ -1,68 +1,75 @@
-#include "../renderer.h"
+#include "internal.h"
+#include "../gui.h"
+#include "../game.h"
 
 RenderContext render_context;
 
+static void GLAPIENTRY message_callback(GLenum, GLenum, GLuint, GLenum, GLsizei, const GLchar*, const void*);
+
 void renderer_init(void)
 {
-    renderer_print_context_profile();
-    renderer_list_context_flags();
+    glEnable(GL_DEBUG_OUTPUT);
+    glDebugMessageCallback(message_callback, 0);
+    shader_init();
+}
+
+void renderer_render(void)
+{
+    glClear(GL_COLOR_BUFFER_BIT);
+    glClearColor(0.5f, 0.5f, 0.7f, 1.0f);
+
+    gui_render();
+    game_render();
 }
 
 void renderer_cleanup(void)
 {
+    shader_cleanup();
 }
 
+static void GLAPIENTRY message_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
+{
+    if (severity == GL_DEBUG_SEVERITY_NOTIFICATION)
+        return;
 
-GLint renderer_get_major_version(void)
-{
-    GLint major_version;
-    glGetIntegerv(GL_MAJOR_VERSION, &major_version);
-    return major_version;
-}
-GLint renderer_get_minor_version(void)
-{
-    GLint minor_version;
-    glGetIntegerv(GL_MINOR_VERSION, &minor_version);
-    return minor_version;
-}
-const char* renderer_get_version(void)
-{
-    return (const char*)glGetString(GL_VERSION);
-}
-const char* renderer_get_vendor(void)
-{
-    return (const char*)glGetString(GL_RENDERER);
-}
-const char* renderer_get_renderer_name(void)
-{
-    return (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION);
-}
-void renderer_print_context_profile(void)
-{
-    GLint mask;
-    glGetIntegerv(GL_CONTEXT_PROFILE_MASK, &mask);
-    printf((mask == GL_CONTEXT_CORE_PROFILE_BIT) ? "GL_CONTEXT_CORE_PROFILE\n" : "GL_CONTEXT_COMPATIBILITY_PROFILE\n");
-}
-void renderer_list_available_extensions(void)
-{
-    GLint num_extensions;
-    glGetIntegerv(GL_NUM_EXTENSIONS, &num_extensions);
-    for (i32 i = 0; i < num_extensions; i++)
-        printf("%s\n", (const char*)glGetStringi(GL_EXTENSIONS, i));
-}
-void renderer_list_available_versions(void)
-{
-    GLint num_versions;
-    glGetIntegerv(GL_NUM_SHADING_LANGUAGE_VERSIONS , &num_versions);
-    for (i32 i = 0; i < num_versions; i++)
-        printf("%s\n", (const char*)glGetStringi(GL_SHADING_LANGUAGE_VERSION, i));
-}
-void renderer_list_context_flags(void)
-{
-    GLint mask;
-    glGetIntegerv(GL_CONTEXT_FLAGS, &mask);
-    printf("%sGL_CONTEXT_FLAG_FORWARD_COMPATIBLE\n", (mask & GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT) ? "" : "NOT ");
-    printf("%sGL_CONTEXT_FLAG_DEBUG\n", (mask & GL_CONTEXT_FLAG_DEBUG_BIT) ? "" : "NOT ");
-    printf("%sGL_CONTEXT_FLAG_ROBUST_ACCESS\n", (mask & GL_CONTEXT_FLAG_ROBUST_ACCESS_BIT) ? "" : "NOT ");
-    printf("%sGL_CONTEXT_FLAG_NO_ERROR\n", (mask & GL_CONTEXT_FLAG_NO_ERROR_BIT) ? "" : "NOT ");
+    puts("======== gl message callback ========");
+    char* source_str;
+    char* type_str;
+    char* severity_str;
+    switch (source) {
+        case GL_DEBUG_SOURCE_API:
+            source_str = "GL_DEBUG_SOURCE_API"; break;
+        default:
+            source_str = ""; break;
+    }
+    switch (type) {
+        case GL_DEBUG_TYPE_OTHER:
+            type_str = "GL_DEBUG_TYPE_OTHER"; break;
+        case GL_DEBUG_TYPE_ERROR:
+            type_str = "GL_DEBUG_TYPE_ERROR"; break;
+        case GL_DEBUG_TYPE_PERFORMANCE:
+            type_str = "GL_DEBUG_TYPE_PERFORMANCE"; break;
+        default:
+            type_str = ""; break;
+    }
+    switch (severity) {
+        case GL_DEBUG_SEVERITY_NOTIFICATION:
+            severity_str = "GL_DEBUG_SEVERITY_NOTIFICATION"; break;
+        case GL_DEBUG_SEVERITY_LOW:
+            severity_str = "GL_DEBUG_SEVERITY_LOW"; break;
+        case GL_DEBUG_SEVERITY_MEDIUM:
+            severity_str = "GL_DEBUG_SEVERITY_MEDIUM"; break;
+        case GL_DEBUG_SEVERITY_HIGH:
+            severity_str = "GL_DEBUG_SEVERITY_HIGH"; break;
+        default:
+            severity_str = ""; break;
+    }
+    printf("%-8s = 0x%04x %s\n", "source", source, source_str);
+    printf("%-8s = 0x%04x %s\n", "type", type, type_str);
+    printf("%-8s = 0x%04x %s\n", "severity", severity, severity_str);
+    printf("%-8s = %u\n\n", "id", id);
+    printf("%s\n\n", message);
+    
+    if (severity != GL_DEBUG_SEVERITY_NOTIFICATION)
+        exit(1);
 }

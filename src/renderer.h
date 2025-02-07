@@ -3,29 +3,32 @@
 
 #include "util.h"
 
-typedef struct {
-    int x;
-} RenderContext;
-
-extern RenderContext render_context;
+#define NUM_TEXTURE_UNITS 16
 
 typedef enum {
     SHADER_PROGRAM_GUI,
     SHADER_PROGRAM_GAME,
     NUM_SHADER_PROGRAMS
-} ShaderProgram;
+} ShaderProgramEnum;
 
 typedef enum {
     TEX_NONE,
     TEX_COLOR,
     NUM_TEXTURES
-} Texture;
+} TextureEnum;
+
+typedef enum {
+    TEX_ATLAS_FONT_STATIC,
+    TEX_ATLAS_GUI_STATIC,
+    TEX_ATLAS_GAME_STATIC,
+    NUM_TEXTURE_ATLASES
+} TextureAtlasEnum;
 
 typedef enum {
     FONT_MONOSPACE,
     FONT_MOJANGLES,
     NUM_FONTS
-} Font;
+} FontEnum;
 
 void renderer_init(void);
 void renderer_render(void);
@@ -41,11 +44,15 @@ void renderer_list_context_flags(void);
 void renderer_print_context_profile(void);
 
 void shader_init(void);
+void shader_compile(ShaderProgramEnum program);
+void shader_use(ShaderProgramEnum program);
+GLuint shader_get_uniform_location(ShaderProgramEnum program, const char* identifier);
 void shader_cleanup(void);
 
 void texture_init(void);
+void texture_info(TextureEnum tex, f32* u1, f32* u2, f32* v1, f32* v2, u32* location);
+void texture_atlas_load(TextureAtlasEnum atlas);
+void texture_atlas_unload(TextureAtlasEnum atlas);
 void texture_cleanup(void);
-
-void renderer_use_shader_program(ShaderProgram program);
 
 #endif
