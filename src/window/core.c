@@ -1,4 +1,4 @@
-#include "../window.h"
+#include "internal.h"
 
 #define DEFAULT_WINDOW_WIDTH 1000
 #define DEFAULT_WINDOW_HEIGHT 750
@@ -54,4 +54,14 @@ bool window_closed(void)
 void window_cleanup(void)
 {
     glfwTerminate();
+}
+
+i32 window_width(void)
+{
+    return window_context.width;
+}
+
+i32 window_height(void)
+{
+    return window_context.height;
 }

@@ -1,8 +1,8 @@
 CC = gcc
 CFLAGS = -MMD -Wall -Wextra -Werror -Wfatal-errors -Wno-unused-parameter -Wno-stringop-overflow -fopenmp
-CFLAGS_DEV = -g3
-CFLAGS_RELEASE = -O3 
-LINKER_FLAGS = -lglfw3dll -lm -lOpenAL32 -lsndfile
+CFLAGS_DEV = -g3 -D DEBUG_BUILD
+CFLAGS_RELEASE = -O3 -D RELEASE_BUILD
+LINKER_FLAGS = -lglfw3dll -lm -pthread -lOpenAL32 -lsndfile
 DIR_LIB = lib
 DIR_SRC = src
 DIR_OBJ = build
@@ -34,7 +34,7 @@ $(DIR_OBJ)/dev/%.o: %.c
 
 release: $(OBJS_REL)
 	@mkdir -p $(DIR_BIN)/release
-	@$(CC) $(CFLAGS) $(CFLAGS_RELEASE) $(LINKER_FLAGS) $(LIBS) $(INCLUDES) $(OBJS_REL) -o $(DIR_BIN)/release/$(NAME)
+	@$(CC) $(CFLAGS) $(CFLAGS_RELEASE) $(LIBS) $(INCLUDES) $(OBJS_REL) $(LINKER_FLAGS) -o $(DIR_BIN)/release/$(NAME)
 
 $(DIR_OBJ)/release/%.o: %.c
 	@mkdir -p $(shell dirname $@)

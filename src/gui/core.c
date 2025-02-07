@@ -7,6 +7,7 @@ void* gui_loop(void* vargp)
     gui_comp_init();
     while (!gui_context.kill_thread)
     {
+        sleep(20);
     }
     gui_comp_cleanup();
     return NULL;

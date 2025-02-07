@@ -3,9 +3,11 @@
 
 #include "../gui.h"
 
+
 typedef struct GUIComp {
     u64 info1;
     u64 info2;
+    void* update_func;
     void* hover_func;
     void* mouse_button_func;
     void* key_func;

@@ -34,6 +34,12 @@ void state_cleanup(void)
 
 int main()
 {
+    #ifdef DEBUG_BUILD
+    printf("DEBUG");
+    #endif
+    #ifdef RELEASE_BUILD
+    printf("RELEASE");
+    #endif
     atexit(state_cleanup);
     state_init();
     state_loop();

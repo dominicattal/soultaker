@@ -6,6 +6,7 @@ void* game_update(void* vargp)
 {
     while (!game_context.kill_thread)
     {
+        sleep(20);
     }
     return NULL;
 }
