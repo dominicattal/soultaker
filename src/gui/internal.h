@@ -26,6 +26,7 @@ typedef struct GUIData {
 
 typedef struct GUIContext {
     GUIData data;
+    GUIData data_swap;
     GUIComp* root;
     bool kill_thread;
     pthread_t thread_id;

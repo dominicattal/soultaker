@@ -11,5 +11,6 @@
 #include <al.h>
 #include <alc.h>
 #include <sndfile.h>
+#include <assert.h>
 
 #endif
