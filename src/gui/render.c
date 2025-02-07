@@ -21,14 +21,14 @@ void gui_render_init(void)
         1.0f, 1.0f, 1.0f, 0.0f,
     };
 
-    static GLfloat dummy_data[] = {
+/*    static GLfloat dummy_data[] = {
         0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f
     };
 
     gui_context.data.buffer = dummy_data;
     gui_context.data.length = 13;
     gui_context.data.capacity = 13;
-
+*/
     glBindVertexArray(s_vao);
     glBindBuffer(GL_ARRAY_BUFFER, s_vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
@@ -60,10 +60,9 @@ void gui_render(void)
     glBindBuffer(GL_ARRAY_BUFFER, s_instance_vbo);
 
     pthread_mutex_lock(&gui_context.mutex);
-    GLint length = gui_context.data.length; 
     glBufferData(GL_ARRAY_BUFFER, gui_context.data.length * sizeof(GLfloat), gui_context.data.buffer, GL_DYNAMIC_DRAW);
     pthread_mutex_unlock(&gui_context.mutex);
-    glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, length);
+    glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, 1);
 }
 
 void gui_render_cleanup(void)
