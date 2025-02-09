@@ -15,6 +15,7 @@ void renderer_init(void)
 
 void renderer_render(void)
 {
+    //glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
     glClear(GL_COLOR_BUFFER_BIT);
     glClearColor(0.5f, 0.5f, 0.7f, 1.0f);
 

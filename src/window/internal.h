@@ -15,7 +15,8 @@ typedef struct {
         f64 x, y;
         bool hidden;
     } cursor;
-    f64 dt;
+    f32 dt;
+    GLuint ubo;
 } WindowContext;
 
 extern WindowContext window_context;

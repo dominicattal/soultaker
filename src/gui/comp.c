@@ -5,7 +5,17 @@
 
 void gui_comp_init(void)
 { 
-    gui_context.root = gui_comp_create(0, 0, window_width(), window_height());
+    gui_context.root = gui_comp_create(0, 0, window_resolution_x(), window_resolution_y());
+    gui_comp_set_color(gui_context.root, 255, 0, 0, 255);
+    GUIComp* comp1 = gui_comp_create(30, 30, 500, 500);
+    gui_comp_set_color(comp1, 0, 255, 0, 255);
+    gui_comp_attach(gui_context.root, comp1);
+    GUIComp* comp2 = gui_comp_create(30, 30, 200, 400);
+    gui_comp_set_color(comp2, 0, 0, 255, 255);
+    gui_comp_attach(comp1, comp2);
+    GUIComp* comp3 = gui_comp_create(260, 30, 200, 400);
+    gui_comp_set_color(comp3, 0, 0, 255, 255);
+    gui_comp_attach(comp1, comp3);
 }
 
 void gui_comp_cleanup(void)
@@ -20,6 +30,7 @@ GUIComp* gui_comp_create(i16 x, i16 y, i16 w, i16 h)
     comp->children = NULL;
     comp->parent = NULL;
     comp->data = NULL;
+    gui_comp_set_bbox(comp, x, y, w, h);
     return comp;
 } 
 
@@ -167,84 +178,76 @@ void* gui_comp_remove_data(GUIComp* comp)
 }
 
 // ---------------------------------------------------------------------------
-// info1            | info2 (same)   | info2 (text)      | info2 (ele)
-//  7 - id          | 24 - w, h      | 2  - halign       | 8 - num_children
-//  1 - is_text     | 16 - tex       | 2  - valign       | 1 - update_children
-// 32 - r, g, b, a  |  1 - hoverable | 10 - font_size    |
-// 24 - x, y        |  1 - hovered   | 4  - font         |
-//                  |  1 - clickable |                   |
-//                  |  1 - visible   |                   |
+// info1            | info2 (text)      | info2 (ele)
+// 48 - x, y, w, h  | 2  - halign       | 8 - num_children
+// 16 - tex         | 2  - valign       | 1 - update_children
+// info2            | 10 - font_size    |
+// 32 - rgba        | 4  - font         |
+//  1 - is_text     |                   |
+//  1 - hoverable   |                   |
+//  1 - hovered     |                   |
+//  1 - clickable   |                   |
+//  1 - visible     |                   |
+//  1 - relative    |                   |
+//  3 - location    |                   |
 // ---------------------------------------------------------------------------
 
-#define ID_SHIFT    0
-#define ID_BITS     7
-#define IT_SHIFT    7
-#define IT_BITS     1
-#define R_SHIFT     8
-#define R_BITS      8
-#define G_SHIFT     16
-#define G_BITS      8
-#define B_SHIFT     24
-#define B_BITS      8
-#define A_SHIFT     32
-#define A_BITS      8
-#define X_SHIFT     40
+// info1
+#define X_SHIFT     0
 #define X_BITS      12
-#define Y_SHIFT     52
+#define Y_SHIFT     12
 #define Y_BITS      12
-
-#define W_SHIFT     0
+#define W_SHIFT     24
 #define W_BITS      12
-#define H_SHIFT     12
+#define H_SHIFT     36
 #define H_BITS      12
-#define TX_SHIFT    24
+#define TX_SHIFT    48
 #define TX_BITS     16
-#define HV_SHIFT    40
+
+// info2
+#define R_SHIFT     0
+#define R_BITS      8
+#define G_SHIFT     8
+#define G_BITS      8
+#define B_SHIFT     16
+#define B_BITS      8
+#define A_SHIFT     24
+#define A_BITS      8
+#define IT_SHIFT    32
+#define IT_BITS     1
+#define HV_SHIFT    33
 #define HV_BITS     1
-#define HD_SHIFT    41
+#define HD_SHIFT    34
 #define HD_BITS     1
-#define CL_SHIFT    42
+#define CL_SHIFT    35
 #define CL_BITS     1
-#define VS_SHIFT    43
+#define VS_SHIFT    36
 #define VS_BITS     1
+#define RL_SHIFT    37
+#define RL_BITS     1
+#define LO_SHIFT    38
+#define LO_BITS     3
 
-#define NC_SHIFT    44
+// non text comp
+#define NC_SHIFT    41
 #define NC_BITS     8
+#define UC_SHIFT    49
+#define UC_BITS     1
 
-#define HA_SHIFT    44
+// text comp
+#define HA_SHIFT    41
 #define HA_BITS     2
-#define VA_SHIFT    46
+#define VA_SHIFT    43
 #define VA_BITS     2
-#define FS_SHIFT    48
+#define FS_SHIFT    45
 #define FS_BITS     10
-#define FT_SHIFT    58
+#define FT_SHIFT    55
 #define FT_BITS     4
 
 #define SMASK(BITS)         ((1<<BITS)-1)
 #define GMASK(BITS, SHIFT)  ~((u64)SMASK(BITS)<<SHIFT)
 
 // setters
-void gui_comp_set_is_text(GUIComp* comp, bool it) {
-    comp->info1 = (comp->info1 & GMASK(IT_BITS, IT_SHIFT)) | ((u64)(it & SMASK(IT_BITS)) << IT_SHIFT);
-}
-void gui_comp_set_color(GUIComp* comp, u8 r, u8 g, u8 b, u8 a) {
-    gui_comp_set_r(comp, r);
-    gui_comp_set_g(comp, g);
-    gui_comp_set_b(comp, b);
-    gui_comp_set_a(comp, a);
-}
-void gui_comp_set_r(GUIComp* comp, u8 r) {
-    comp->info1 = (comp->info1 & GMASK(R_BITS, R_SHIFT)) | ((u64)(r & SMASK(R_BITS)) << R_SHIFT);
-}
-void gui_comp_set_g(GUIComp* comp, u8 g) {
-    comp->info1 = (comp->info1 & GMASK(G_BITS, G_SHIFT)) | ((u64)(g & SMASK(G_BITS)) << G_SHIFT);
-}
-void gui_comp_set_b(GUIComp* comp, u8 b) {
-    comp->info1 = (comp->info1 & GMASK(B_BITS, B_SHIFT)) | ((u64)(b & SMASK(B_BITS)) << B_SHIFT);
-}
-void gui_comp_set_a(GUIComp* comp, u8 a) {
-    comp->info1 = (comp->info1 & GMASK(A_BITS, A_SHIFT)) | ((u64)(a & SMASK(A_BITS)) << A_SHIFT);
-}
 void gui_comp_set_bbox(GUIComp* comp, i32 x, i32 y, i32 w, i32 h) {
     gui_comp_set_x(comp, x);
     gui_comp_set_y(comp, y);
@@ -266,10 +269,52 @@ void gui_comp_set_size(GUIComp* comp, i32 w, i32 h) {
     gui_comp_set_h(comp, h);
 }
 void gui_comp_set_w(GUIComp* comp, i32 w) {
-    comp->info2 = (comp->info2 & GMASK(W_BITS, W_SHIFT)) | ((u64)(w & SMASK(W_BITS)) << W_SHIFT);
+    comp->info1 = (comp->info1 & GMASK(W_BITS, W_SHIFT)) | ((u64)(w & SMASK(W_BITS)) << W_SHIFT);
 }
 void gui_comp_set_h(GUIComp* comp, i32 h) {
-    comp->info2 = (comp->info2 & GMASK(H_BITS, H_SHIFT)) | ((u64)(h & SMASK(H_BITS)) << H_SHIFT);
+    comp->info1 = (comp->info1 & GMASK(H_BITS, H_SHIFT)) | ((u64)(h & SMASK(H_BITS)) << H_SHIFT);
+}
+void gui_comp_set_tex(GUIComp* comp, i32 tx) {
+    comp->info1 = (comp->info1 & GMASK(TX_BITS, TX_SHIFT)) | ((u64)(tx & SMASK(TX_BITS)) << TX_SHIFT);
+}
+void gui_comp_set_color(GUIComp* comp, u8 r, u8 g, u8 b, u8 a) {
+    gui_comp_set_r(comp, r);
+    gui_comp_set_g(comp, g);
+    gui_comp_set_b(comp, b);
+    gui_comp_set_a(comp, a);
+}
+void gui_comp_set_r(GUIComp* comp, u8 r) {
+    comp->info2 = (comp->info2 & GMASK(R_BITS, R_SHIFT)) | ((u64)(r & SMASK(R_BITS)) << R_SHIFT);
+}
+void gui_comp_set_g(GUIComp* comp, u8 g) {
+    comp->info2 = (comp->info2 & GMASK(G_BITS, G_SHIFT)) | ((u64)(g & SMASK(G_BITS)) << G_SHIFT);
+}
+void gui_comp_set_b(GUIComp* comp, u8 b) {
+    comp->info2 = (comp->info2 & GMASK(B_BITS, B_SHIFT)) | ((u64)(b & SMASK(B_BITS)) << B_SHIFT);
+}
+void gui_comp_set_a(GUIComp* comp, u8 a) {
+    comp->info2 = (comp->info2 & GMASK(A_BITS, A_SHIFT)) | ((u64)(a & SMASK(A_BITS)) << A_SHIFT);
+}
+void gui_comp_set_is_text(GUIComp* comp, bool it) {
+    comp->info2 = (comp->info2 & GMASK(IT_BITS, IT_SHIFT)) | ((u64)(it & SMASK(IT_BITS)) << IT_SHIFT);
+}
+void gui_comp_set_hoverable(GUIComp* comp, bool hv) {
+    comp->info2 = (comp->info2 & GMASK(HV_BITS, HV_SHIFT)) | ((u64)(hv & SMASK(HV_BITS)) << HV_SHIFT);
+}
+void gui_comp_set_hovered(GUIComp* comp, bool hd) {
+    comp->info2 = (comp->info2 & GMASK(HD_BITS, HD_SHIFT)) | ((u64)(hd & SMASK(HD_BITS)) << HD_SHIFT);
+}
+void gui_comp_set_clickable(GUIComp* comp, bool cl) {
+    comp->info2 = (comp->info2 & GMASK(CL_BITS, CL_SHIFT)) | ((u64)(cl & SMASK(CL_BITS)) << CL_SHIFT);
+}
+void gui_comp_set_visible(GUIComp* comp, bool vs) {
+    comp->info2 = (comp->info2 & GMASK(VS_BITS, VS_SHIFT)) | ((u64)(vs & SMASK(VS_BITS)) << VS_SHIFT);
+}
+void gui_comp_set_relative(GUIComp* comp, bool rl) {
+    comp->info2 = (comp->info2 & GMASK(RL_BITS, RL_SHIFT)) | ((u64)(rl & SMASK(RL_BITS)) << RL_SHIFT);
+}
+void gui_comp_set_location(GUIComp* comp, u8 loc) {
+    comp->info2 = (comp->info2 & GMASK(LO_BITS, LO_SHIFT)) | ((u64)(loc & SMASK(LO_BITS)) << LO_SHIFT);
 }
 void gui_comp_set_num_children(GUIComp* comp, i32 nc) {
     comp->info2 = (comp->info2 & GMASK(NC_BITS, NC_SHIFT)) | ((u64)(nc & SMASK(NC_BITS)) << NC_SHIFT);
@@ -284,21 +329,7 @@ void gui_comp_set_halign(GUIComp* comp, u8 ha) {
 void gui_comp_set_valign(GUIComp* comp, u8 va) {
     comp->info2 = (comp->info2 & GMASK(VA_BITS, VA_SHIFT)) | ((u64)(va & SMASK(VA_BITS)) << VA_SHIFT);
 }
-void gui_comp_set_hoverable(GUIComp* comp, bool hv) {
-    comp->info2 = (comp->info2 & GMASK(HV_BITS, HV_SHIFT)) | ((u64)(hv & SMASK(HV_BITS)) << HV_SHIFT);
-}
-void gui_comp_set_hovered(GUIComp* comp, bool hd) {
-    comp->info2 = (comp->info2 & GMASK(HD_BITS, HD_SHIFT)) | ((u64)(hd & SMASK(HD_BITS)) << HD_SHIFT);
-}
-void gui_comp_set_clickable(GUIComp* comp, bool cl) {
-    comp->info2 = (comp->info2 & GMASK(CL_BITS, CL_SHIFT)) | ((u64)(cl & SMASK(CL_BITS)) << CL_SHIFT);
-}
-void gui_comp_set_visible(GUIComp* comp, bool vs) {
-    comp->info2 = (comp->info2 & GMASK(VS_BITS, VS_SHIFT)) | ((u64)(vs & SMASK(VS_BITS)) << VS_SHIFT);
-}
-void gui_comp_set_tex(GUIComp* comp, i32 tx) {
-    comp->info2 = (comp->info2 & GMASK(TX_BITS, TX_SHIFT)) | ((u64)(tx & SMASK(TX_BITS)) << TX_SHIFT);
-}
+
 void gui_comp_set_font(GUIComp* comp, FontEnum ft) {
     comp->info2 = (comp->info2 & GMASK(FT_BITS, FT_SHIFT)) | ((u64)(ft & SMASK(FT_BITS)) << FT_SHIFT);
 }
@@ -307,27 +338,6 @@ void gui_comp_set_font_size(GUIComp* comp, i32 fs) {
 }
 
 // getters 1
-void gui_comp_get_is_text(GUIComp* comp, bool* it) {
-    *it = (comp->info1 >> IT_SHIFT) & SMASK(IT_BITS);
-}
-void gui_comp_get_color(GUIComp* comp, u8* r, u8* g, u8* b, u8* a) {
-    gui_comp_get_r(comp, r);
-    gui_comp_get_g(comp, g);
-    gui_comp_get_b(comp, b);
-    gui_comp_get_a(comp, a);
-}
-void gui_comp_get_r(GUIComp* comp, u8* r) {
-    *r = (comp->info1 >> R_SHIFT) & SMASK(R_BITS);
-}
-void gui_comp_get_g(GUIComp* comp, u8* g) {
-    *g = (comp->info1 >> G_SHIFT) & SMASK(G_BITS);
-}
-void gui_comp_get_b(GUIComp* comp, u8* b) {
-    *b = (comp->info1 >> B_SHIFT) & SMASK(B_BITS);
-}
-void gui_comp_get_a(GUIComp* comp, u8* a) {
-    *a = (comp->info1 >> A_SHIFT) & SMASK(A_BITS);
-}
 void gui_comp_get_bbox(GUIComp* comp, i32* x, i32* y, i32* w, i32* h) {
     gui_comp_get_x(comp, x);
     gui_comp_get_y(comp, y);
@@ -349,23 +359,34 @@ void gui_comp_get_size(GUIComp* comp, i32* w, i32* h) {
     gui_comp_get_h(comp, h);
 }
 void gui_comp_get_w(GUIComp* comp, i32* w) {
-    *w = (comp->info2 >> W_SHIFT) & SMASK(W_BITS);
+    *w = (comp->info1 >> W_SHIFT) & SMASK(W_BITS);
 }
 void gui_comp_get_h(GUIComp* comp, i32* h) {
-    *h = (comp->info2 >> H_SHIFT) & SMASK(H_BITS);
+    *h = (comp->info1 >> H_SHIFT) & SMASK(H_BITS);
 }
-void gui_comp_get_num_children(GUIComp* comp, i32* nc) {
-    *nc = (comp->info2 >> NC_SHIFT) & SMASK(NC_BITS);
+void gui_comp_get_tex(GUIComp* comp, i32* tx) {
+    *tx = (comp->info1 >> TX_SHIFT) & SMASK(TX_BITS);
 }
-void gui_comp_get_align(GUIComp* comp, u8* ha, u8* va) {
-    gui_comp_get_halign(comp, ha);
-    gui_comp_get_valign(comp, va);
+void gui_comp_get_color(GUIComp* comp, u8* r, u8* g, u8* b, u8* a) {
+    gui_comp_get_r(comp, r);
+    gui_comp_get_g(comp, g);
+    gui_comp_get_b(comp, b);
+    gui_comp_get_a(comp, a);
 }
-void gui_comp_get_halign(GUIComp* comp, u8* ha) {
-    *ha = (comp->info2 >> HA_SHIFT) & SMASK(HA_BITS);
+void gui_comp_get_r(GUIComp* comp, u8* r) {
+    *r = (comp->info2 >> R_SHIFT) & SMASK(R_BITS);
 }
-void gui_comp_get_valign(GUIComp* comp, u8* va) {
-    *va = (comp->info2 >> VA_SHIFT) & SMASK(VA_BITS);
+void gui_comp_get_g(GUIComp* comp, u8* g) {
+    *g = (comp->info2 >> G_SHIFT) & SMASK(G_BITS);
+}
+void gui_comp_get_b(GUIComp* comp, u8* b) {
+    *b = (comp->info2 >> B_SHIFT) & SMASK(B_BITS);
+}
+void gui_comp_get_a(GUIComp* comp, u8* a) {
+    *a = (comp->info2 >> A_SHIFT) & SMASK(A_BITS);
+}
+void gui_comp_get_is_text(GUIComp* comp, bool* it) {
+    *it = (comp->info2 >> IT_SHIFT) & SMASK(IT_BITS);
 }
 void gui_comp_get_hoverable(GUIComp* comp, bool* hv) {
     *hv = (comp->info2 >> HV_SHIFT) & SMASK(HV_BITS);
@@ -379,8 +400,24 @@ void gui_comp_get_clickable(GUIComp* comp, bool* cl) {
 void gui_comp_get_visible(GUIComp* comp, bool* vs) {
     *vs = (comp->info2 >> VS_SHIFT) & SMASK(VS_BITS);
 }
-void gui_comp_get_tex(GUIComp* comp, i32* tx) {
-    *tx = (comp->info2 >> TX_SHIFT) & SMASK(TX_BITS);
+void gui_comp_get_relative(GUIComp* comp, bool* rl) {
+    *rl = (comp->info2 >> RL_SHIFT) & SMASK(RL_BITS);
+}
+void gui_comp_get_location(GUIComp* comp, u8* loc) {
+    *loc = (comp->info2 >> LO_SHIFT) & SMASK(LO_BITS);
+}
+void gui_comp_get_num_children(GUIComp* comp, i32* nc) {
+    *nc = (comp->info2 >> NC_SHIFT) & SMASK(NC_BITS);
+}
+void gui_comp_get_align(GUIComp* comp, u8* ha, u8* va) {
+    gui_comp_get_halign(comp, ha);
+    gui_comp_get_valign(comp, va);
+}
+void gui_comp_get_halign(GUIComp* comp, u8* ha) {
+    *ha = (comp->info2 >> HA_SHIFT) & SMASK(HA_BITS);
+}
+void gui_comp_get_valign(GUIComp* comp, u8* va) {
+    *va = (comp->info2 >> VA_SHIFT) & SMASK(VA_BITS);
 }
 void gui_comp_get_font(GUIComp* comp, FontEnum* ft) {
     *ft = (comp->info2 >> FT_SHIFT) & SMASK(FT_BITS);
@@ -396,10 +433,10 @@ i32 gui_comp_num_children(GUIComp* comp) {
     return (comp->info2 >> NC_SHIFT) & SMASK(NC_BITS);
 }
 i32  gui_comp_tex(GUIComp* comp){
-    return (comp->info2 >> TX_SHIFT) & SMASK(TX_BITS);
+    return (comp->info1 >> TX_SHIFT) & SMASK(TX_BITS);
 }
 bool gui_comp_is_text(GUIComp* comp) {
-    return (comp->info1 >> IT_SHIFT) & SMASK(IT_BITS);
+    return (comp->info2 >> IT_SHIFT) & SMASK(IT_BITS);
 }
 bool gui_comp_is_hoverable(GUIComp* comp) {
     return (comp->info2 >> HV_SHIFT) & SMASK(HV_BITS);

@@ -1,4 +1,5 @@
 #include "internal.h"
+#include "../renderer.h"
 
 GUIContext gui_context;
 
@@ -23,35 +24,43 @@ static void resize_data_buffer(void)
     #undef FLOATS_PER_RESIZE
 }
 
-static void push_comp_data(GUIComp* comp)
+static void push_comp_data(GUIComp* comp, i32 offset_x, i32 offset_y)
 {
-    i32 u, v, x, y, w, h;
+    i32 x, y, w, h;
+    f32 u1, v1, u2, v2;
     u8 r, g, b, a;
+    u32 loc;
     if (gui_context.data_swap.length >= gui_context.data_swap.capacity)
         resize_data_buffer();
 
     #define A gui_context.data_swap.buffer[gui_context.data_swap.length++]
     gui_comp_get_bbox(comp, &x, &y, &w, &h);
-    A = x; A = y; A = w; A = h;
-    u = 0; v = 0; w = 1; h = 1;
-    A = u; A = v; A = w; A = h;
+    A = x + offset_x; A = y + offset_y; 
+    A = w; A = h;
     gui_comp_get_color(comp, &r, &g, &b, &a);
     A = r; A = g; A = b; A = a;
-    A = 0;
+    texture_info(gui_comp_tex(comp), &u1, &v1, &u2, &v2, &loc);
+    A = u1; A = v1; A = u2; A = v2;
+    A = loc;
     #undef A
+
+    gui_context.data_swap.instance_count++;
 }
 
-static void gui_update_helper(GUIComp* comp)
+static void gui_update_helper(GUIComp* comp, i32 offset_x, i32 offset_y)
 {
-    push_comp_data(comp);
+    i32 x, y;
+    gui_comp_get_position(comp, &x, &y);
+    push_comp_data(comp, offset_x, offset_y);
     for (i32 i = 0; i < gui_comp_num_children(comp); i++)
-        gui_update_helper(comp->children[i]);
+        gui_update_helper(comp->children[i], x + offset_x, y + offset_y);
 }
 
 static void gui_update(void)
 {
+    gui_context.data_swap.instance_count = 0;
     gui_context.data_swap.length = 0;
-    gui_update_helper(gui_context.root);
+    gui_update_helper(gui_context.root, 0, 0);
     GUIData tmp;
     pthread_mutex_lock(&gui_context.mutex);
     tmp = gui_context.data;
