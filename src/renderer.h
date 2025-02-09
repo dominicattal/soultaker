@@ -30,6 +30,11 @@ typedef enum {
     NUM_FONTS
 } FontEnum;
 
+typedef enum {
+    UBO_INDEX_DEFAULT,
+    UBO_INDEX_WINDOW,
+} UBOIndexEnum;
+
 void renderer_init(void);
 void renderer_render(void);
 void renderer_cleanup(void);
@@ -47,6 +52,7 @@ void shader_init(void);
 void shader_compile(ShaderProgramEnum program);
 void shader_use(ShaderProgramEnum program);
 GLuint shader_get_uniform_location(ShaderProgramEnum program, const char* identifier);
+void shader_bind_uniform_block(ShaderProgramEnum program, u32 index, const char* identifier);
 void shader_cleanup(void);
 
 void texture_init(void);

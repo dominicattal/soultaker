@@ -20,6 +20,7 @@ typedef struct GUIComp {
 } GUIComp;
 
 typedef struct GUIData {
+    GLsizei instance_count;
     GLint length, capacity;
     GLfloat* buffer;
 } GUIData;

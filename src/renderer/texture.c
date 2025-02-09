@@ -361,3 +361,7 @@ void texture_cleanup(void)
 {
     glDeleteTextures(NUM_TEXTURE_UNITS, ctx.texture_units);
 }
+
+void texture_info(TextureEnum tex, f32* u1, f32* u2, f32* v1, f32* v2, u32* location)
+{
+}

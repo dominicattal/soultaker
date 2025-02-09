@@ -1,4 +1,5 @@
 #include "internal.h"
+#include "../renderer.h"
 
 #define DEFAULT_WINDOW_WIDTH 1000
 #define DEFAULT_WINDOW_HEIGHT 750
@@ -33,6 +34,13 @@ void window_init(void)
     glfwSwapInterval(0);
 
     window_context.dt = 0;
+
+    glGenBuffers(1, &window_context.ubo);
+    glBindBuffer(GL_UNIFORM_BUFFER, window_context.ubo);
+    glBindBufferBase(GL_UNIFORM_BUFFER, UBO_INDEX_WINDOW, window_context.ubo);
+    glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(i32), NULL, GL_STATIC_DRAW);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(i32), &window_context.width);
+    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(i32), sizeof(i32), &window_context.height);
 }
 
 void window_update(void)
@@ -53,7 +61,18 @@ bool window_closed(void)
 
 void window_cleanup(void)
 {
+    glDeleteBuffers(1, &window_context.ubo);
     glfwTerminate();
+}
+
+i32 window_resolution_x(void)
+{
+    return window_context.resolution.x;
+}
+
+i32 window_resolution_y(void)
+{
+    return window_context.resolution.y;
 }
 
 i32 window_width(void)

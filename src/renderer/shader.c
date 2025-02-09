@@ -115,9 +115,9 @@ static void compile_shader_program_gui(void)
     delete(frag);
     i32 texs[NUM_TEXTURE_UNITS];
     for (i32 i = 0; i < NUM_TEXTURE_UNITS; ++i)
-        texs[i] = i;
     shader_use(SHADER_PROGRAM_GUI);
     glUniform1iv(shader_get_uniform_location(SHADER_PROGRAM_GUI, "textures"), NUM_TEXTURE_UNITS, texs);
+    shader_bind_uniform_block(SHADER_PROGRAM_GUI, UBO_INDEX_WINDOW, "Window");
 }
 
 void shader_program_compile(ShaderProgramEnum program)
@@ -155,12 +155,12 @@ void shader_cleanup(void)
         glDeleteProgram(shader_programs[i]);
 }
 
-GLuint shader_get_uniform_location(ShaderProgramEnum shader, const char* identifier)
+GLuint shader_get_uniform_location(ShaderProgramEnum program, const char* identifier)
 {
-    return glGetUniformLocation(shader_programs[shader], identifier);
+    return glGetUniformLocation(shader_programs[program], identifier);
 }
 
-void shader_bind_uniform_block(ShaderProgramEnum shader, u32 index, const char* identifier)
+void shader_bind_uniform_block(ShaderProgramEnum program, u32 index, const char* identifier)
 {
-    glUniformBlockBinding(shader_programs[shader], glGetUniformBlockIndex(shader_programs[shader], identifier), index);
+    glUniformBlockBinding(shader_programs[program], glGetUniformBlockIndex(shader_programs[program], identifier), index);
 }
