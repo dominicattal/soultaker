@@ -6,13 +6,14 @@
 
 #define MAX_NUM_CHILDREN  255
 
-#define ALIGN_LEFT      0
-#define ALIGN_CENTER    1
-#define ALIGN_RIGHT     2
-#define ALIGN_JUSTIFY   3
-
-#define ALIGN_TOP       0
-#define ALIGN_BOTTOM    2
+#define ALIGN_LEFT          0
+#define ALIGN_CENTER        1
+#define ALIGN_RIGHT         2
+#define ALIGN_JUSTIFY       3
+#define ALIGN_TOP           0
+#define ALIGN_BOTTOM        2
+#define ALIGN_CENTER_POS    1
+#define ALIGN_CENTER_NEG    3
 
 #define HOVER_ON        0
 #define HOVER_OFF       1
@@ -75,14 +76,17 @@ void gui_comp_set_hovered(GUIComp* comp, bool hd);
 void gui_comp_set_clickable(GUIComp* comp, bool cl);
 void gui_comp_set_visible(GUIComp* comp, bool vs);
 void gui_comp_set_relative(GUIComp* comp, bool rl);
-void gui_comp_set_location(GUIComp* comp, u8 loc);
-void gui_comp_set_num_children(GUIComp* comp, i32 num_children);
 void gui_comp_set_align(GUIComp* comp, u8 ha, u8 va);
 void gui_comp_set_halign(GUIComp* comp, u8 ha);
 void gui_comp_set_valign(GUIComp* comp, u8 va);
+void gui_comp_set_num_children(GUIComp* comp, i32 num_children);
+void gui_comp_set_text_align(GUIComp* comp, u8 tha, u8 tva);
+void gui_comp_set_text_halign(GUIComp* comp, u8 tha);
+void gui_comp_set_text_valign(GUIComp* comp, u8 tva);
 void gui_comp_set_font(GUIComp* comp, FontEnum ft);
 void gui_comp_set_font_size(GUIComp* comp, i32 fs);
 
+void gui_comp_get_bbox(GUIComp* comp, i32* x, i32* y, i32* w, i32* h);
 void gui_comp_get_position(GUIComp* comp, i32* x, i32* y);
 void gui_comp_get_x(GUIComp* comp, i32* x);
 void gui_comp_get_y(GUIComp* comp, i32* y);
@@ -101,11 +105,13 @@ void gui_comp_get_hovered(GUIComp* comp, bool* hd);
 void gui_comp_get_clickable(GUIComp* comp, bool* cl);
 void gui_comp_get_visible(GUIComp* comp, bool* vs);
 void gui_comp_get_relative(GUIComp* comp, bool* rl);
-void gui_comp_get_location(GUIComp* comp, u8* loc);
-void gui_comp_get_num_children(GUIComp* comp, i32* num_children);
 void gui_comp_get_align(GUIComp* comp, u8* ha, u8* va);
 void gui_comp_get_halign(GUIComp* comp, u8* ha);
 void gui_comp_get_valign(GUIComp* comp, u8* va);
+void gui_comp_get_num_children(GUIComp* comp, i32* num_children);
+void gui_comp_get_text_align(GUIComp* comp, u8* tha, u8* tva);
+void gui_comp_get_text_halign(GUIComp* comp, u8* tha);
+void gui_comp_get_text_valign(GUIComp* comp, u8* tva);
 void gui_comp_get_font(GUIComp* comp, FontEnum* ft);
 void gui_comp_get_font_size(GUIComp* comp, i32* fs);
 

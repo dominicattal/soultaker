@@ -7,15 +7,19 @@ void gui_comp_init(void)
 { 
     gui_context.root = gui_comp_create(0, 0, window_resolution_x(), window_resolution_y());
     gui_comp_set_color(gui_context.root, 255, 0, 0, 255);
-    GUIComp* comp1 = gui_comp_create(30, 30, 500, 500);
-    gui_comp_set_color(comp1, 0, 255, 0, 255);
-    gui_comp_attach(gui_context.root, comp1);
-    GUIComp* comp2 = gui_comp_create(30, 30, 200, 400);
-    gui_comp_set_color(comp2, 0, 0, 255, 255);
-    gui_comp_attach(comp1, comp2);
-    GUIComp* comp3 = gui_comp_create(260, 30, 200, 400);
-    gui_comp_set_color(comp3, 0, 0, 255, 255);
-    gui_comp_attach(comp1, comp3);
+    GUIComp* base = gui_comp_create(30, 30, 700, 700);
+    gui_comp_set_color(base, 0, 255, 0, 255);
+    gui_comp_attach(gui_context.root, base);
+    for (i32 i = 0; i < 16; i++) {
+        GUIComp* comp = gui_comp_create(50, 50, 50, 50);
+        gui_comp_set_color(comp, 0, 0, 255, 255);
+        gui_comp_set_align(comp, i % 4, i / 4);
+        gui_comp_attach(base, comp);
+        GUIComp* comp2 = gui_comp_create(0, 0, 4, 4);
+        gui_comp_set_align(comp2, ALIGN_CENTER, ALIGN_CENTER);
+        gui_comp_set_color(comp2, 255, 255, 255, 255);
+        gui_comp_attach(comp, comp2);
+    }
 }
 
 void gui_comp_cleanup(void)
@@ -179,8 +183,8 @@ void* gui_comp_remove_data(GUIComp* comp)
 
 // ---------------------------------------------------------------------------
 // info1            | info2 (text)      | info2 (ele)
-// 48 - x, y, w, h  | 2  - halign       | 8 - num_children
-// 16 - tex         | 2  - valign       | 1 - update_children
+// 48 - x, y, w, h  | 2  - text_halign  | 8 - num_children
+// 16 - tex         | 2  - text_valign  | 1 - update_children
 // info2            | 10 - font_size    |
 // 32 - rgba        | 4  - font         |
 //  1 - is_text     |                   |
@@ -189,7 +193,8 @@ void* gui_comp_remove_data(GUIComp* comp)
 //  1 - clickable   |                   |
 //  1 - visible     |                   |
 //  1 - relative    |                   |
-//  3 - location    |                   |
+//  2 - halign      |                   |
+//  2 - valign      |                   |
 // ---------------------------------------------------------------------------
 
 // info1
@@ -225,23 +230,25 @@ void* gui_comp_remove_data(GUIComp* comp)
 #define VS_BITS     1
 #define RL_SHIFT    37
 #define RL_BITS     1
-#define LO_SHIFT    38
-#define LO_BITS     3
+#define HA_SHIFT    38
+#define HA_BITS     2
+#define VA_SHIFT    40
+#define VA_BITS     2
 
 // non text comp
-#define NC_SHIFT    41
+#define NC_SHIFT    42
 #define NC_BITS     8
-#define UC_SHIFT    49
+#define UC_SHIFT    50
 #define UC_BITS     1
 
 // text comp
-#define HA_SHIFT    41
-#define HA_BITS     2
-#define VA_SHIFT    43
-#define VA_BITS     2
-#define FS_SHIFT    45
+#define THA_SHIFT   42
+#define THA_BITS    2
+#define TVA_SHIFT   44
+#define TVA_BITS    2
+#define FS_SHIFT    46
 #define FS_BITS     10
-#define FT_SHIFT    55
+#define FT_SHIFT    56
 #define FT_BITS     4
 
 #define SMASK(BITS)         ((1<<BITS)-1)
@@ -313,12 +320,6 @@ void gui_comp_set_visible(GUIComp* comp, bool vs) {
 void gui_comp_set_relative(GUIComp* comp, bool rl) {
     comp->info2 = (comp->info2 & GMASK(RL_BITS, RL_SHIFT)) | ((u64)(rl & SMASK(RL_BITS)) << RL_SHIFT);
 }
-void gui_comp_set_location(GUIComp* comp, u8 loc) {
-    comp->info2 = (comp->info2 & GMASK(LO_BITS, LO_SHIFT)) | ((u64)(loc & SMASK(LO_BITS)) << LO_SHIFT);
-}
-void gui_comp_set_num_children(GUIComp* comp, i32 nc) {
-    comp->info2 = (comp->info2 & GMASK(NC_BITS, NC_SHIFT)) | ((u64)(nc & SMASK(NC_BITS)) << NC_SHIFT);
-}
 void gui_comp_set_align(GUIComp* comp, u8 ha, u8 va) {
     gui_comp_set_halign(comp, ha);
     gui_comp_set_valign(comp, va);
@@ -329,7 +330,19 @@ void gui_comp_set_halign(GUIComp* comp, u8 ha) {
 void gui_comp_set_valign(GUIComp* comp, u8 va) {
     comp->info2 = (comp->info2 & GMASK(VA_BITS, VA_SHIFT)) | ((u64)(va & SMASK(VA_BITS)) << VA_SHIFT);
 }
-
+void gui_comp_set_num_children(GUIComp* comp, i32 nc) {
+    comp->info2 = (comp->info2 & GMASK(NC_BITS, NC_SHIFT)) | ((u64)(nc & SMASK(NC_BITS)) << NC_SHIFT);
+}
+void gui_comp_set_text_align(GUIComp* comp, u8 tha, u8 tva) {
+    gui_comp_set_text_halign(comp, tha);
+    gui_comp_set_text_valign(comp, tva);
+}
+void gui_comp_set_text_halign(GUIComp* comp, u8 tha) {
+    comp->info2 = (comp->info2 & GMASK(THA_BITS, THA_SHIFT)) | ((u64)(tha & SMASK(THA_BITS)) << THA_SHIFT);
+}
+void gui_comp_set_text_valign(GUIComp* comp, u8 tva) {
+    comp->info2 = (comp->info2 & GMASK(TVA_BITS, TVA_SHIFT)) | ((u64)(tva & SMASK(TVA_BITS)) << TVA_SHIFT);
+}
 void gui_comp_set_font(GUIComp* comp, FontEnum ft) {
     comp->info2 = (comp->info2 & GMASK(FT_BITS, FT_SHIFT)) | ((u64)(ft & SMASK(FT_BITS)) << FT_SHIFT);
 }
@@ -403,12 +416,6 @@ void gui_comp_get_visible(GUIComp* comp, bool* vs) {
 void gui_comp_get_relative(GUIComp* comp, bool* rl) {
     *rl = (comp->info2 >> RL_SHIFT) & SMASK(RL_BITS);
 }
-void gui_comp_get_location(GUIComp* comp, u8* loc) {
-    *loc = (comp->info2 >> LO_SHIFT) & SMASK(LO_BITS);
-}
-void gui_comp_get_num_children(GUIComp* comp, i32* nc) {
-    *nc = (comp->info2 >> NC_SHIFT) & SMASK(NC_BITS);
-}
 void gui_comp_get_align(GUIComp* comp, u8* ha, u8* va) {
     gui_comp_get_halign(comp, ha);
     gui_comp_get_valign(comp, va);
@@ -418,6 +425,19 @@ void gui_comp_get_halign(GUIComp* comp, u8* ha) {
 }
 void gui_comp_get_valign(GUIComp* comp, u8* va) {
     *va = (comp->info2 >> VA_SHIFT) & SMASK(VA_BITS);
+}
+void gui_comp_get_num_children(GUIComp* comp, i32* nc) {
+    *nc = (comp->info2 >> NC_SHIFT) & SMASK(NC_BITS);
+}
+void gui_comp_get_text_align(GUIComp* comp, u8* tha, u8* tva) {
+    gui_comp_get_text_halign(comp, tha);
+    gui_comp_get_text_valign(comp, tva);
+}
+void gui_comp_get_text_halign(GUIComp* comp, u8* tha) {
+    *tha = (comp->info2 >> THA_SHIFT) & SMASK(THA_BITS);
+}
+void gui_comp_get_text_valign(GUIComp* comp, u8* tva) {
+    *tva = (comp->info2 >> TVA_SHIFT) & SMASK(TVA_BITS);
 }
 void gui_comp_get_font(GUIComp* comp, FontEnum* ft) {
     *ft = (comp->info2 >> FT_SHIFT) & SMASK(FT_BITS);
