@@ -16,6 +16,7 @@
 
 typedef struct {
     i16 font_size;
+    i16 location;
     i32 ascent, descent, line_gap;
     struct {
         i32 advance, left_side_bearing;
@@ -23,7 +24,7 @@ typedef struct {
         i32 x1, y1, x2, y2;
         u16 u1, v1, u2, v2;
     } chars[NUM_CHARS];
-} FontInfo;
+} Font;
 
 typedef struct {
     TextureEnum tex;
@@ -33,11 +34,18 @@ typedef struct {
 typedef struct {
     f32 u, v, w, h;
     i32 location;
-} TEX;
+} Texture;
 
-#define NUM_IMAGES_TO_PACK 1
+typedef struct {
+    Font fonts[NUM_FONTS];
+    Texture textures[NUM_TEXTURES];
+    u32 texture_units[NUM_TEXTURE_UNITS];
+} TextureContext;
+
+#define NUM_IMAGES_TO_PACK 2
 static Image images[NUM_IMAGES_TO_PACK] = {
-    (Image) {TEX_COLOR, "assets/nothing"}
+    (Image) {TEX_NONE, "assets/textures/none.png"},
+    (Image) {TEX_COLOR, "assets/textures/color.png"},
 };
 /*
 static const char* image_paths[NUM_TEXTURES] = {
@@ -45,11 +53,6 @@ static const char* image_paths[NUM_TEXTURES] = {
     "assets/textures/color.png",
 };
 */
-typedef struct {
-    FontInfo fonts[NUM_FONTS];
-    u32 texture_units[NUM_TEXTURE_UNITS];
-    u32 tex_ssbo;
-} TextureContext;
 
 static TextureContext ctx;
 
@@ -110,12 +113,13 @@ static void load_font(stbtt_pack_context* spc, FontEnum font, i32 font_size, con
     free(font_buffer);
 }
 
-void font_info(FontEnum font, i32 font_size, i32* ascent, i32* descent, i32* line_gap)
+void font_info(FontEnum font, i32 font_size, i32* ascent, i32* descent, i32* line_gap, i32* location)
 {
     f32 scale = (f32)font_size / ctx.fonts[font].font_size;
     *ascent   = roundf(ctx.fonts[font].ascent   * scale);
     *descent  = roundf(ctx.fonts[font].descent  * scale);
     *line_gap = roundf(ctx.fonts[font].line_gap * scale);
+    *location = ctx.fonts[font].location;
 }
 
 void font_char_hmetrics(FontEnum font, i32 font_size, char character, i32* advance, i32* left_side_bearing)
@@ -148,7 +152,7 @@ void font_char_kern(FontEnum font, i32 font_size, char character, char next_char
     *kern = roundf(ctx.fonts[font].chars[character-CHAR_OFFSET].kern[next_character-CHAR_OFFSET] * scale);
 }
 
-static void create_font_textures(i32* tex_unit_location, TEX* textures) 
+static void create_font_textures(i32* tex_unit_location) 
 {
     stbtt_pack_context spc;
     unsigned char* bitmap;
@@ -162,6 +166,9 @@ static void create_font_textures(i32* tex_unit_location, TEX* textures)
 
     stbtt_PackEnd(&spc);
 
+    for (i32 font = 0; font < NUM_FONTS; font++)
+        ctx.fonts[font].location = *tex_unit_location;
+
     glGenTextures(1, &tex);
     glBindTexture(GL_TEXTURE_2D, tex);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, BITMAP_WIDTH, BITMAP_HEIGHT, 0, GL_RED, GL_UNSIGNED_BYTE, bitmap);
@@ -174,21 +181,9 @@ static void create_font_textures(i32* tex_unit_location, TEX* textures)
     glActiveTexture(GL_TEXTURE0 + *tex_unit_location);
     glBindTexture(GL_TEXTURE_2D, ctx.texture_units[*tex_unit_location]);
 
-    i32 idx;
-    for (i32 font = 0; font < NUM_FONTS; font++) {
-        for (i32 i = 0; i < NUM_CHARS; i++) {
-            idx = NUM_TEXTURES + font * NUM_CHARS + i;
-            textures[idx].u = (f32)(ctx.fonts[font].chars[i].u1) / BITMAP_WIDTH;
-            textures[idx].v = (f32)(ctx.fonts[font].chars[i].v1) / BITMAP_WIDTH;
-            textures[idx].w = (f32)(ctx.fonts[font].chars[i].u2 - ctx.fonts[font].chars[i].u1) / BITMAP_WIDTH;
-            textures[idx].h = (f32)(ctx.fonts[font].chars[i].v2 - ctx.fonts[font].chars[i].v1) / BITMAP_WIDTH;
-            textures[idx].location = *tex_unit_location;
-        }
-    }
-
     if (1) {
         char path[512];
-        sprintf(path, "data/packed%d.png", *tex_unit_location);
+        sprintf(path, "data/packed_font%d.png", *tex_unit_location);
         stbi_write_png(path, BITMAP_WIDTH, BITMAP_HEIGHT, 1, bitmap, 0);
     }
 
@@ -196,43 +191,7 @@ static void create_font_textures(i32* tex_unit_location, TEX* textures)
     (*tex_unit_location)++;
 }
 
-static void initialize_rects(TEX* textures, stbrp_rect* rects_rgb, stbrp_rect* rects_rgba, unsigned char** image_data, i32* num_rects_rgb_out, i32* num_rects_rgba_out)
-{
-    i32 num_rects_rgb, num_rects_rgba, i;
-    i32 width, height, num_channels;
-    num_rects_rgb = num_rects_rgba = 0;
-    for (i = 0; i < NUM_IMAGES_TO_PACK; i++) {
-        image_data[i] = stbi_load(images[i].path, &width, &height, &num_channels, 0);
-        if (image_data[i] == NULL) {
-            printf("Could not open %s\n", images[i].path);
-            continue;
-        }
-        if (num_channels == 3) {
-            load_rgb:
-            rects_rgb[num_rects_rgb].id = images[i].tex;
-            rects_rgb[num_rects_rgb].w  = PADDING + width;
-            rects_rgb[num_rects_rgb].h  = PADDING + height;
-            textures[images[i].tex].location = i;
-            ++num_rects_rgb;
-        } else if (num_channels == 4) {
-            rects_rgba[num_rects_rgba].id = images[i].tex;
-            rects_rgba[num_rects_rgba].w  = PADDING + width;
-            rects_rgba[num_rects_rgba].h  = PADDING + height;
-            textures[images[i].tex].location = i;
-            ++num_rects_rgba;
-        } else {
-            printf("Unsupported number of channels (%d) for image %d: %s\n", num_channels, images[i].tex, images[i].path);
-            printf("Defaulting to 3 channels\n");
-            stbi_image_free(image_data[i]);
-            image_data[i] = stbi_load(images[i].path, &width, &height, &num_channels, 3);
-            goto load_rgb;
-        }
-    }
-    *num_rects_rgb_out  = num_rects_rgb;
-    *num_rects_rgba_out = num_rects_rgba;
-}
-
-static void pack_textures(i32* tex_unit_location, TEX* textures, unsigned char** image_data, stbrp_rect* rects, i32 num_rects, i32 num_channels)
+static void pack_textures(i32* tex_unit_location, unsigned char** image_data, stbrp_rect* rects, i32 num_rects, i32 num_channels)
 {
     i32 num_nodes, num_rects_packed;
     i32 y, x, c, data_idx, bitmap_idx;
@@ -271,7 +230,7 @@ static void pack_textures(i32* tex_unit_location, TEX* textures, unsigned char**
                                  + (x + rect.x) * num_channels
                                  +  c;
 
-                    bitmap[bitmap_idx] = image_data[textures[rect.id].location][data_idx];
+                    bitmap[bitmap_idx] = image_data[ctx.textures[rect.id].location][data_idx];
                 }
             }
         }
@@ -295,16 +254,16 @@ static void pack_textures(i32* tex_unit_location, TEX* textures, unsigned char**
             rects[new_rect_idx++] = rect;
             continue;
         }
-        textures[rect.id].u = (f32)rect.x / BITMAP_WIDTH;
-        textures[rect.id].v = (f32)rect.y / BITMAP_HEIGHT;
-        textures[rect.id].w = (f32)(rect.w-PADDING) / BITMAP_WIDTH;
-        textures[rect.id].h = (f32)(rect.h-PADDING) / BITMAP_HEIGHT;
-        textures[rect.id].location = location;
+        ctx.textures[rect.id].u = (f32)rect.x / BITMAP_WIDTH;
+        ctx.textures[rect.id].v = (f32)rect.y / BITMAP_HEIGHT;
+        ctx.textures[rect.id].w = (f32)(rect.w-PADDING) / BITMAP_WIDTH;
+        ctx.textures[rect.id].h = (f32)(rect.h-PADDING) / BITMAP_HEIGHT;
+        ctx.textures[rect.id].location = location;
     }
 
     if (1) {
         char path[512];
-        sprintf(path, "data/packed%d.png", *tex_unit_location);
+        sprintf(path, "data/packed_tex%d.png", *tex_unit_location);
         stbi_write_png(path, BITMAP_WIDTH, BITMAP_HEIGHT, num_channels, bitmap, 0);
     }
 
@@ -318,43 +277,60 @@ static void pack_textures(i32* tex_unit_location, TEX* textures, unsigned char**
             puts("Out of texture units to pack to");
             exit(1);
         }
-        pack_textures(tex_unit_location, textures, image_data, rects, new_rect_idx, num_channels);
+        pack_textures(tex_unit_location, image_data, rects, new_rect_idx, num_channels);
     }
 }
 
-
-void texture_init(void)
+static void initialize_rects(i32* tex_unit_location)
 {
-    TEX* textures;
-    size_t textures_size;
-    i32 tex_unit_location;
-    stbrp_rect* rects_rgb;
-    stbrp_rect* rects_rgba;
+    stbrp_rect* rects;
     unsigned char** image_data;
-    i32 num_rects_rgb, num_rects_rgba;
+    i32 width, height, num_channels;
+    i32 num_rects;
 
-    textures_size = sizeof(TEX) * (NUM_TEXTURES + NUM_FONTS * NUM_CHARS);
-    tex_unit_location = 0;
-    
-    textures = malloc(textures_size);
-    create_font_textures(&tex_unit_location, textures);
-
-    rects_rgb  = malloc(sizeof(stbrp_rect) * NUM_IMAGES_TO_PACK);
-    rects_rgba = malloc(sizeof(stbrp_rect) * NUM_IMAGES_TO_PACK);
+    rects  = malloc(sizeof(stbrp_rect) * NUM_IMAGES_TO_PACK);
     image_data = malloc(sizeof(unsigned char*) * NUM_IMAGES_TO_PACK);
 
-    initialize_rects(textures, rects_rgb, rects_rgba, image_data, &num_rects_rgb, &num_rects_rgba);
+    num_rects = 0;
+    for (i32 i = 0; i < NUM_IMAGES_TO_PACK; i++) {
+        image_data[i] = stbi_load(images[i].path, &width, &height, &num_channels, 4);
+        if (image_data[i] == NULL) {
+            printf("Could not open %s\n", images[i].path);
+            continue;
+        }
+        rects[num_rects].id = images[i].tex;
+        rects[num_rects].w = PADDING + width;
+        rects[num_rects].h = PADDING + height;
+        ctx.textures[images[i].tex].location = i;
+        num_rects++;
+    }
 
-    pack_textures(&tex_unit_location, textures, image_data, rects_rgb, num_rects_rgb, 3);
-    pack_textures(&tex_unit_location, textures, image_data, rects_rgba, num_rects_rgba, 4);
+    pack_textures(tex_unit_location, image_data, rects, num_rects, 4);
 
     for (i32 i = 0; i < NUM_IMAGES_TO_PACK; i++)
         stbi_image_free(image_data[i]);
 
-    free(rects_rgb);
-    free(rects_rgba);
+    free(rects);
     free(image_data);
-    free(textures);
+}
+
+void texture_info(TextureEnum tex, f32* u1, f32* v1, f32* u2, f32* v2, i32* location)
+{
+    *u1 = ctx.textures[tex].u;
+    *v1 = ctx.textures[tex].v;
+    *u2 = ctx.textures[tex].u + ctx.textures[tex].w;
+    *v2 = ctx.textures[tex].v + ctx.textures[tex].h;
+    *location = ctx.textures[tex].location;
+}
+
+void texture_init(void)
+{
+    i32 tex_unit_location;
+    tex_unit_location = 0;
+    create_font_textures(&tex_unit_location);
+
+    initialize_rects(&tex_unit_location);
+
 }
 
 void texture_cleanup(void)
@@ -362,6 +338,3 @@ void texture_cleanup(void)
     glDeleteTextures(NUM_TEXTURE_UNITS, ctx.texture_units);
 }
 
-void texture_info(TextureEnum tex, f32* u1, f32* u2, f32* v1, f32* v2, u32* location)
-{
-}

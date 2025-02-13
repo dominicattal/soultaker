@@ -35,10 +35,10 @@ void state_cleanup(void)
 int main()
 {
     #ifdef DEBUG_BUILD
-    printf("DEBUG");
+    puts("DEBUG");
     #endif
     #ifdef RELEASE_BUILD
-    printf("RELEASE");
+    puts("RELEASE");
     #endif
     atexit(state_cleanup);
     state_init();

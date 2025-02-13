@@ -9,8 +9,11 @@ static void GLAPIENTRY message_callback(GLenum, GLenum, GLuint, GLenum, GLsizei,
 void renderer_init(void)
 {
     glEnable(GL_DEBUG_OUTPUT);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
     glDebugMessageCallback(message_callback, 0);
     shader_init();
+    texture_init();
 }
 
 void renderer_render(void)
