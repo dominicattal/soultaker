@@ -1,15 +1,14 @@
 #include "internal.h"
 #include "../renderer.h"
+#include <string.h>
+
+#define FLOATS_PER_COMP 13
 
 GUIContext gui_context;
 
-static void resize_data_buffer(void)
+static void resize_data_buffer(i32 num_comps)
 {
-    #define FLOATS_PER_COMP     13
-    #define COMPS_PER_RESIZE    5
-    #define FLOATS_PER_RESIZE   (FLOATS_PER_COMP * COMPS_PER_RESIZE)
-
-    gui_context.data_swap.capacity += FLOATS_PER_RESIZE;
+    gui_context.data_swap.capacity += FLOATS_PER_COMP * num_comps;
     if (gui_context.data_swap.buffer == NULL) {
         gui_context.data_swap.buffer = malloc(gui_context.data_swap.capacity * sizeof(GLfloat));
         assert(gui_context.data_swap.buffer != NULL);
@@ -18,32 +17,184 @@ static void resize_data_buffer(void)
         assert(buf != NULL);
         gui_context.data_swap.buffer = buf;
     }
-
-    #undef FLOATS_PER_COMP
-    #undef COMPS_PER_RESIZE
-    #undef FLOATS_PER_RESIZE
 }
 
+static void push_text_data(GUIComp* comp, i32 pos_x, i32 pos_y)
+{
+    if (comp->text == NULL)
+        return;
+
+    i32 cx, cy, cw, ch;     // comp position and size
+    f32 u1, v1, u2, v2;     // bitmap coordinates
+    i32 a1, b1, a2, b2;     // glyph bounding box
+    i32 x, y, w, h;         // pixel coordinates
+    i32 ascent, descent;    // highest and lowest glyph offsets
+    i32 line_gap;           // gap between lines
+    i32 adv, lsb, kern;     // advance, left side bearing, kerning
+    u8  ha, va;             // horizontal and vertical alignment
+    u8  justify;            // branchless justify
+    i32 font_size;          // font_size = ascent - descent
+    FontEnum font;          // font
+    i32 num_spaces;         // count whitespace for horizontal alignment
+    f32 dy;                 // change in y for vertical alignment
+    i32 vbo_idx;            // vbo index of first glyph
+    i32 length;             // index in text, length of text
+    char* text;             // text, equal to comp->text
+    i32 location;           // active texture slot of bitmap
+
+    register i32 ox, oy, test_ox;    // glyph origin
+    register i32 prev_test_ox;       // edge case
+    register i32 left, right, mid;   // pointers for word
+    
+    gui_comp_get_position(comp, &cx, &cy);
+    gui_comp_get_size(comp, &cw, &ch);
+    gui_comp_get_text_align(comp, &ha, &va);
+    gui_comp_get_font(comp, &font);
+    gui_comp_get_font_size(comp, &font_size);
+
+    //cx += pos_x;
+    //cy += pos_y;
+
+    text = comp->text;
+    length = strlen(text);
+    
+    justify = 0;
+    if (ha == ALIGN_JUSTIFY) {
+        ha = ALIGN_LEFT;
+        justify = 1;
+    }
+    
+    font_info(font, font_size, &ascent, &descent, &line_gap, &location);
+    
+    left = right = 0;
+    ox = 0;
+    oy = ascent;
+    resize_data_buffer(length);
+    vbo_idx = gui_context.data_swap.length;
+    while (right < length) {
+        
+        while (right < length && (text[right] == ' ' || text[right] == '\t' || text[right] == '\n'))
+            right++;
+
+        left = right;
+        prev_test_ox = test_ox = 0;
+        num_spaces = 0;
+        while (right < length && text[right] != '\n' && test_ox <= cw) {
+            font_char_hmetrics(font, font_size, text[right], &adv, &lsb);
+            font_char_kern(font, font_size, text[right], text[right+1], &kern);
+            prev_test_ox = test_ox;
+            test_ox += adv + kern;
+            num_spaces += text[right] == ' ';
+            right++;
+        }
+
+        mid = right;
+        if (test_ox > cw) {
+            while (mid > left && text[mid-1] != ' ') {
+                font_char_hmetrics(font, font_size, text[mid-1], &adv, &lsb);
+                font_char_kern(font, font_size, text[mid-1], text[mid], &kern);
+                test_ox -= adv + kern;
+                mid--;
+            }
+            while (mid > left && text[mid-1] == ' ') {
+                font_char_hmetrics(font, font_size, text[mid-1], &adv, &lsb);
+                font_char_kern(font, font_size, text[mid-1], text[mid], &kern);
+                test_ox -= adv + kern;
+                num_spaces -= text[mid-1] == ' ';
+                mid--;
+            }
+        }
+
+        if (mid == left) {
+            if (left == right) {
+                test_ox = cw;
+                right = left + 1;
+            } else {
+                test_ox = prev_test_ox;
+                right = right - 1;
+            }
+        }
+        else {
+            right = mid;
+        }
+
+        if (left == right)
+            right++;
+
+        if (text[right-1] != ' ') {
+            font_char_hmetrics(font, font_size, text[right-1], &adv, &lsb);
+            font_char_bbox(font, font_size, text[right-1], &a1, &b1, &a2, &b2);
+            test_ox -= adv - (a2 + a1);
+        }
+        
+        ox = ha * (cw - test_ox) / 2.0f;
+
+        while (left < right) {
+            font_char_hmetrics(font, font_size, text[left], &adv, &lsb);
+            font_char_bbox(font, font_size, text[left], &a1, &b1, &a2, &b2);
+            font_char_bmap(font, font_size, text[left], &u1, &v1, &u2, &v2);
+            font_char_kern(font, font_size, text[left], text[left+1], &kern);
+
+            x = cx + ox + lsb;
+            y = cy + ch - oy - b2;
+            w = a2 - a1;
+            h = b2 - b1;
+
+            if (text[left] != '\0' && text[left] != ' ') {
+                #define A gui_context.data_swap.buffer[gui_context.data_swap.length++]
+                A = x; A = y; A = w; A = h;
+                A = 255; A = 255; A = 255; A = 255;
+                A = u1; A = v1; A = u2; A = v2;
+                A = location;
+                gui_context.data_swap.instance_count++;
+                #undef A
+            }   
+
+            ox += adv + kern;
+            if (justify && text[left] == ' ')
+                ox += (cw - test_ox) / num_spaces;
+
+            left++;
+        }
+
+        oy += ascent - descent + line_gap;
+    }
+
+    if (va == ALIGN_TOP)
+        return;
+
+    oy -= ascent - descent + line_gap;
+    dy = va * (ch - oy) / 2;
+//    window_pixel_to_screen_y(va * (ch - oy) / 2, &dy);
+
+    while (vbo_idx < gui_context.data_swap.length) {
+        gui_context.data_swap.buffer[vbo_idx + 1] -= dy;
+        vbo_idx += FLOATS_PER_COMP;
+    }
+}
 static void push_comp_data(GUIComp* comp, i32 x, i32 y)
 {
-    i32 w, h;
+    i32 w, h, loc;
     f32 u1, v1, u2, v2;
     u8 r, g, b, a;
-    u32 loc;
     if (gui_context.data_swap.length >= gui_context.data_swap.capacity)
-        resize_data_buffer();
+        resize_data_buffer(5);
+
+    gui_comp_get_size(comp, &w, &h);
+    gui_comp_get_color(comp, &r, &g, &b, &a);
+    texture_info(gui_comp_tex(comp), &u1, &v1, &u2, &v2, &loc);
 
     #define A gui_context.data_swap.buffer[gui_context.data_swap.length++]
-    gui_comp_get_size(comp, &w, &h);
     A = x; A = y; A = w; A = h;
-    gui_comp_get_color(comp, &r, &g, &b, &a);
     A = r; A = g; A = b; A = a;
-    texture_info(gui_comp_tex(comp), &u1, &v1, &u2, &v2, &loc);
     A = u1; A = v1; A = u2; A = v2;
     A = loc;
     #undef A
 
     gui_context.data_swap.instance_count++;
+
+    if (gui_comp_is_text(comp))
+        push_text_data(comp, x, y);
 }
 
 static void gui_update_helper(GUIComp* comp, i32 position_x, i32 position_y, i32 size_x, i32 size_y)

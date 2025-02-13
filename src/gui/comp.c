@@ -7,8 +7,9 @@ void gui_comp_init(void)
 { 
     gui_context.root = gui_comp_create(0, 0, window_resolution_x(), window_resolution_y());
     gui_comp_set_color(gui_context.root, 255, 0, 0, 255);
+
     GUIComp* base = gui_comp_create(30, 30, 700, 700);
-    gui_comp_set_color(base, 0, 255, 0, 255);
+    gui_comp_set_color(base, 255, 255, 255, 255);
     gui_comp_attach(gui_context.root, base);
     for (i32 i = 0; i < 16; i++) {
         GUIComp* comp = gui_comp_create(50, 50, 50, 50);
@@ -20,6 +21,14 @@ void gui_comp_init(void)
         gui_comp_set_color(comp2, 255, 255, 255, 255);
         gui_comp_attach(comp, comp2);
     }
+
+    GUIComp* textbox = gui_comp_create(735, 30, 250, 700);
+    gui_comp_set_is_text(textbox, true);
+    gui_comp_set_text(textbox, "The quick brown fox jumps over the lazy dog");
+    gui_comp_set_color(textbox, 255, 255, 255, 255);
+    gui_comp_set_font_size(textbox, 16);
+    gui_comp_set_font(textbox, FONT_MONOSPACE);
+    gui_comp_attach(gui_context.root, textbox);
 }
 
 void gui_comp_cleanup(void)
@@ -29,12 +38,9 @@ void gui_comp_cleanup(void)
 
 GUIComp* gui_comp_create(i16 x, i16 y, i16 w, i16 h)
 {
-    GUIComp* comp = malloc(sizeof(GUIComp));
-    comp->info1 = comp->info2 = 0;
-    comp->children = NULL;
-    comp->parent = NULL;
-    comp->data = NULL;
+    GUIComp* comp = calloc(1, sizeof(GUIComp));
     gui_comp_set_bbox(comp, x, y, w, h);
+    gui_comp_set_tex(comp, TEX_COLOR);
     return comp;
 } 
 
