@@ -3,12 +3,25 @@
 #include <assert.h>
 #include <string.h>
 
-void test(GUIComp* comp, bool status)
+void test_hover(GUIComp* comp, bool status)
+{
+    if (status == HOVER_OFF)
+        gui_comp_set_color(comp, 255, 255, 255, 255);
+    else
+        gui_comp_set_color(comp, 127, 127, 127, 255);
+}
+
+void test_hover2(GUIComp* comp, bool status)
 {
     if (status == HOVER_ON)
-        gui_comp_set_color(comp, 255, 0, 255, 255);
+        gui_comp_set_color(comp, 255, 0, 0, 255);
     else
-        gui_comp_set_color(comp, 0, 255, 255, 255);
+        gui_comp_set_color(comp, 0, 255, 0, 255);
+}
+
+void test_click(GUIComp* comp, i32 button, i32 action, i32 mods)
+{
+    printf("%p, %d, %d, %d\n", comp, button, action, mods);
 }
 
 void gui_comp_init(void)
@@ -17,7 +30,8 @@ void gui_comp_init(void)
     gui_comp_set_color(gui_context.root, 255, 0, 0, 255);
 
     GUIComp* base = gui_comp_create(30, 30, 700, 700);
-    base->hover_func = test;
+    base->hover_func = test_hover;
+    base->click_func = test_click;
     gui_comp_set_color(base, 255, 255, 255, 255);
     gui_comp_attach(gui_context.root, base);
     for (i32 i = 0; i < 16; i++) {
@@ -25,6 +39,7 @@ void gui_comp_init(void)
         gui_comp_set_color(comp, 0, 0, 255, 255);
         gui_comp_set_align(comp, i % 4, i / 4);
         gui_comp_attach(base, comp);
+        comp->hover_func = test_hover2;
         GUIComp* comp2 = gui_comp_create(0, 0, 4, 4);
         gui_comp_set_align(comp2, ALIGN_CENTER, ALIGN_CENTER);
         gui_comp_set_color(comp2, 255, 255, 255, 255);
@@ -169,15 +184,17 @@ void gui_comp_delete_char(GUIComp* comp, i32 idx)
 
 void gui_comp_hover(GUIComp* comp, bool status)
 {
+    gui_comp_set_hovered(comp, status);
     if (comp->hover_func == NULL)
         return;
-    ((hover_fptr)(comp->hover_func))(comp, status);
-    gui_comp_set_hovered(comp, status);
+    ((GUIHoverFPtr)(comp->hover_func))(comp, status);
 }
 
-void gui_comp_click(GUIComp* comp, i32 button, i32 action)
+void gui_comp_click(GUIComp* comp, i32 button, i32 action, i32 mods)
 {
-
+    if (comp->click_func == NULL)
+        return;
+    ((GUIClickFPtr)(comp->click_func))(comp, button, action, mods);
 }
 
 void gui_comp_key(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods)

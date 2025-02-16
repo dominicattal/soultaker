@@ -84,3 +84,13 @@ i32 window_height(void)
 {
     return window_context.height;
 }
+
+i32 window_cursor_position_x(void)
+{
+    return window_context.cursor.x;
+}
+
+i32 window_cursor_position_y(void)
+{
+    return window_context.height - window_context.cursor.y;
+}

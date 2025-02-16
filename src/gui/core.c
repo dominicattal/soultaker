@@ -6,6 +6,22 @@
 
 GUIContext gui_context;
 
+void align_comp_position_x(i32* position_x, u8 halign, i32 size_x, i32 x, i32 w)
+{
+    if      (halign == ALIGN_LEFT)       *position_x += x;
+    else if (halign == ALIGN_CENTER_POS) *position_x += (size_x - w) / 2 + x;
+    else if (halign == ALIGN_CENTER_NEG) *position_x += (size_x - w) / 2 - x;
+    else if (halign == ALIGN_RIGHT)      *position_x += size_x - w - x;
+}
+
+void align_comp_position_y(i32* position_y, u8 valign, i32 size_y, i32 y, i32 h)
+{
+    if      (valign == ALIGN_TOP)        *position_y += y;
+    else if (valign == ALIGN_CENTER_POS) *position_y += (size_y - h) / 2 + y;
+    else if (valign == ALIGN_CENTER_NEG) *position_y += (size_y - h) / 2 - y;
+    else if (valign == ALIGN_BOTTOM)     *position_y += size_y - h - y;
+}
+
 static void resize_data_buffer(i32 num_comps)
 {
     gui_context.data_swap.capacity += FLOATS_PER_COMP * num_comps;
@@ -201,15 +217,8 @@ static void gui_update_helper(GUIComp* comp, i32 position_x, i32 position_y, i32
     gui_comp_get_bbox(comp, &x, &y, &w, &h);
     gui_comp_get_align(comp, &halign, &valign);
     
-    if      (halign == ALIGN_LEFT)       position_x += x;
-    else if (halign == ALIGN_CENTER_POS) position_x += (size_x - w) / 2 + x;
-    else if (halign == ALIGN_CENTER_NEG) position_x += (size_x - w) / 2 - x;
-    else if (halign == ALIGN_RIGHT)      position_x += size_x - w - x;
-
-    if      (valign == ALIGN_TOP)        position_y += y;
-    else if (valign == ALIGN_CENTER_POS) position_y += (size_y - h) / 2 + y;
-    else if (valign == ALIGN_CENTER_NEG) position_y += (size_y - h) / 2 - y;
-    else if (valign == ALIGN_BOTTOM)     position_y += size_y - h - y;
+    align_comp_position_x(&position_x, halign, size_x, x, w);
+    align_comp_position_y(&position_y, valign, size_y, y, h);
 
     push_comp_data(comp, position_x, position_y);
     for (i32 i = 0; i < gui_comp_num_children(comp); i++)
