@@ -15,8 +15,8 @@
 #define ALIGN_CENTER_POS    1
 #define ALIGN_CENTER_NEG    3
 
-#define HOVER_ON        0
-#define HOVER_OFF       1
+#define HOVER_OFF       0
+#define HOVER_ON        1
 
 typedef struct GUIData GUIData;
 typedef struct GUIComp GUIComp;
@@ -25,6 +25,8 @@ typedef enum {
     GUI_PRESET_MAIN_MENU,
     NUM_GUI_PRESETS
 } GUIPreset;
+
+typedef void (*hover_fptr)(GUIComp* comp, bool status); 
 
 void gui_preset_load(GUIPreset preset);
 

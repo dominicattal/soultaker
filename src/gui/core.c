@@ -52,9 +52,6 @@ static void push_text_data(GUIComp* comp, i32 pos_x, i32 pos_y)
     gui_comp_get_font(comp, &font);
     gui_comp_get_font_size(comp, &font_size);
 
-    //cx += pos_x;
-    //cy += pos_y;
-
     text = comp->text;
     length = strlen(text);
     
@@ -224,6 +221,7 @@ static void gui_update(void)
     gui_context.data_swap.instance_count = 0;
     gui_context.data_swap.length = 0;
     gui_update_helper(gui_context.root, 0, 0, 0, 0);
+
     GUIData tmp;
     pthread_mutex_lock(&gui_context.mutex);
     tmp = gui_context.data;

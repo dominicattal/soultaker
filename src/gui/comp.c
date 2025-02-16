@@ -3,12 +3,21 @@
 #include <assert.h>
 #include <string.h>
 
+void test(GUIComp* comp, bool status)
+{
+    if (status == HOVER_ON)
+        gui_comp_set_color(comp, 255, 0, 255, 255);
+    else
+        gui_comp_set_color(comp, 0, 255, 255, 255);
+}
+
 void gui_comp_init(void)
 { 
     gui_context.root = gui_comp_create(0, 0, window_resolution_x(), window_resolution_y());
     gui_comp_set_color(gui_context.root, 255, 0, 0, 255);
 
     GUIComp* base = gui_comp_create(30, 30, 700, 700);
+    base->hover_func = test;
     gui_comp_set_color(base, 255, 255, 255, 255);
     gui_comp_attach(gui_context.root, base);
     for (i32 i = 0; i < 16; i++) {
@@ -160,7 +169,10 @@ void gui_comp_delete_char(GUIComp* comp, i32 idx)
 
 void gui_comp_hover(GUIComp* comp, bool status)
 {
-
+    if (comp->hover_func == NULL)
+        return;
+    ((hover_fptr)(comp->hover_func))(comp, status);
+    gui_comp_set_hovered(comp, status);
 }
 
 void gui_comp_click(GUIComp* comp, i32 button, i32 action)
