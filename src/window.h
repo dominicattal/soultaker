@@ -19,5 +19,7 @@ i32 window_resolution_x(void);
 i32 window_resolution_y(void);
 i32 window_width(void);
 i32 window_height(void);
+i32 window_cursor_position_x(void);
+i32 window_cursor_position_y(void);
 
 #endif
