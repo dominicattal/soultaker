@@ -7,18 +7,22 @@ extern WindowContext window_context;
 
 void window_framebuffer_size_callback(GLFWwindow* window, i32 width, i32 height)
 {
+    window_context.width = width;
+    window_context.height = height;
+    glViewport(0, 0, window_context.width, window_context.height);
 }
 
 void window_mouse_button_callback(GLFWwindow* window, i32 button, i32 action, i32 mods)
 {
-    if (!gui_mouse_button_callback(button, action, mods))
-        game_mouse_button_callback(button, action, mods);
+    if (gui_mouse_button_callback(button, action, mods))
+        return;
+    game_mouse_button_callback(button, action, mods);
 }
 
 void window_cursor_pos_callback(GLFWwindow* window, f64 xpos, f64 ypos)
 {
-    window_context.cursor.x = xpos;
-    window_context.cursor.y = window_context.height - ypos;
+    window_context.cursor.x = xpos * window_context.resolution.x / window_context.width;
+    window_context.cursor.y = (window_context.height - ypos) * window_context.resolution.y / window_context.height;
     gui_cursor_pos_callback(window_context.cursor.x, window_context.cursor.y);
 }
 
@@ -26,8 +30,9 @@ void window_key_callback(GLFWwindow* window, i32 key, i32 scancode, i32 action, 
 {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         window_close();
-    if (!gui_key_callback(key, scancode, action, mods))
-        game_key_callback(key, scancode, action, mods);
+    if (gui_key_callback(key, scancode, action, mods))
+        return;
+    game_key_callback(key, scancode, action, mods);
 }
 
 void window_error_callback(i32 x, const char* message) 

@@ -21,7 +21,7 @@ void test_hover2(GUIComp* comp, bool status)
 
 void test_click(GUIComp* comp, i32 button, i32 action, i32 mods)
 {
-    printf("%p, %d, %d, %d\n", comp, button, action, mods);
+    gui_comp_set_color(comp, rand() % 255, rand() % 255, rand() % 255, 255);
 }
 
 void gui_comp_init(void)
@@ -32,6 +32,8 @@ void gui_comp_init(void)
     GUIComp* base = gui_comp_create(30, 30, 700, 700);
     base->hover_func = test_hover;
     base->click_func = test_click;
+    gui_comp_set_clickable(base, true);
+    gui_comp_set_hoverable(base, true);
     gui_comp_set_color(base, 255, 255, 255, 255);
     gui_comp_attach(gui_context.root, base);
     for (i32 i = 0; i < 16; i++) {
@@ -39,7 +41,10 @@ void gui_comp_init(void)
         gui_comp_set_color(comp, 0, 0, 255, 255);
         gui_comp_set_align(comp, i % 4, i / 4);
         gui_comp_attach(base, comp);
+        gui_comp_set_hoverable(comp, true);
+        gui_comp_set_clickable(comp, true);
         comp->hover_func = test_hover2;
+        comp->click_func = test_click;
         GUIComp* comp2 = gui_comp_create(0, 0, 4, 4);
         gui_comp_set_align(comp2, ALIGN_CENTER, ALIGN_CENTER);
         gui_comp_set_color(comp2, 255, 255, 255, 255);
