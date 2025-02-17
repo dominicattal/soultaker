@@ -38,4 +38,6 @@ extern GUIContext gui_context;
 void align_comp_position_x(i32* position_x, u8 halign, i32 size_x, i32 x, i32 w);
 void align_comp_position_y(i32* position_y, u8 valign, i32 size_y, i32 y, i32 h);
 
+void load_preset_test(GUIComp* root);
+
 #endif

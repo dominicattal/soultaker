@@ -35,12 +35,11 @@ static void resize_data_buffer(i32 num_comps)
     }
 }
 
-static void push_text_data(GUIComp* comp, i32 pos_x, i32 pos_y)
+static void push_text_data(GUIComp* comp, i32 cx, i32 cy, i32 cw, i32 ch)
 {
     if (comp->text == NULL)
         return;
 
-    i32 cx, cy, cw, ch;     // comp position and size
     f32 u1, v1, u2, v2;     // bitmap coordinates
     i32 a1, b1, a2, b2;     // glyph bounding box
     i32 x, y, w, h;         // pixel coordinates
@@ -62,8 +61,6 @@ static void push_text_data(GUIComp* comp, i32 pos_x, i32 pos_y)
     register i32 prev_test_ox;       // edge case
     register i32 left, right, mid;   // pointers for word
     
-    gui_comp_get_position(comp, &cx, &cy);
-    gui_comp_get_size(comp, &cw, &ch);
     gui_comp_get_text_align(comp, &ha, &va);
     gui_comp_get_font(comp, &font);
     gui_comp_get_font_size(comp, &font_size);
@@ -178,22 +175,20 @@ static void push_text_data(GUIComp* comp, i32 pos_x, i32 pos_y)
 
     oy -= ascent - descent + line_gap;
     dy = va * (ch - oy) / 2;
-//    window_pixel_to_screen_y(va * (ch - oy) / 2, &dy);
 
     while (vbo_idx < gui_context.data_swap.length) {
         gui_context.data_swap.buffer[vbo_idx + 1] -= dy;
         vbo_idx += FLOATS_PER_COMP;
     }
 }
-static void push_comp_data(GUIComp* comp, i32 x, i32 y)
+static void push_comp_data(GUIComp* comp, i32 x, i32 y, i32 w, i32 h)
 {
-    i32 w, h, loc;
+    i32 loc;
     f32 u1, v1, u2, v2;
     u8 r, g, b, a;
     if (gui_context.data_swap.length >= gui_context.data_swap.capacity)
         resize_data_buffer(5);
 
-    gui_comp_get_size(comp, &w, &h);
     gui_comp_get_color(comp, &r, &g, &b, &a);
     texture_info(gui_comp_tex(comp), &u1, &v1, &u2, &v2, &loc);
 
@@ -207,7 +202,7 @@ static void push_comp_data(GUIComp* comp, i32 x, i32 y)
     gui_context.data_swap.instance_count++;
 
     if (gui_comp_is_text(comp))
-        push_text_data(comp, x, y);
+        push_text_data(comp, x, y, w, h);
 }
 
 static void gui_update_helper(GUIComp* comp, i32 position_x, i32 position_y, i32 size_x, i32 size_y)
@@ -220,7 +215,7 @@ static void gui_update_helper(GUIComp* comp, i32 position_x, i32 position_y, i32
     align_comp_position_x(&position_x, halign, size_x, x, w);
     align_comp_position_y(&position_y, valign, size_y, y, h);
 
-    push_comp_data(comp, position_x, position_y);
+    push_comp_data(comp, position_x, position_y, w, h);
     for (i32 i = 0; i < gui_comp_num_children(comp); i++)
         gui_update_helper(comp->children[i], position_x, position_y, w, h);
 }

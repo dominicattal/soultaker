@@ -22,6 +22,7 @@ typedef struct GUIData GUIData;
 typedef struct GUIComp GUIComp;
 
 typedef enum {
+    GUI_PRESET_TEST,
     GUI_PRESET_MAIN_MENU,
     NUM_GUI_PRESETS
 } GUIPreset;
