@@ -59,11 +59,22 @@ static bool gui_key_callback_helper(GUIComp* comp, i32 key, i32 scancode, i32 ac
     return false;
 }
 
-bool gui_key_callback(i32 key, i32 scancode, i32 action, i32 mods)
+bool gui_key_callback_internal(i32 key, i32 scancode, i32 action, i32 mods)
 {
     bool comp_found = false;
     comp_found = gui_key_callback_helper(gui_context.root, key, scancode, action, mods);
     return comp_found;
+}
+
+void gui_key_callback(i32 key, i32 scancode, i32 action, i32 mods)
+{
+    GUIEvent event;
+    event.type = GUI_EVENT_KEY_CALLBACK;
+    event.args.key = key;
+    event.args.scancode = scancode;
+    event.args.action = action;
+    event.args.mods = mods;
+    gui_event_enqueue(&gui_context.event_queue, event);
 }
 
 static bool gui_mouse_button_callback_helper(GUIComp* comp, i32 xpos, i32 ypos, i32 button, i32 action, i32 mods, i32 position_x, i32 position_y, i32 size_x, i32 size_y)
@@ -95,7 +106,7 @@ static bool gui_mouse_button_callback_helper(GUIComp* comp, i32 xpos, i32 ypos, 
     return in_bounds || child_clicked;
 }
 
-bool gui_mouse_button_callback(i32 button, i32 action, i32 mods)
+bool gui_mouse_button_callback_internal(i32 button, i32 action, i32 mods)
 {
     f64 xpos, ypos;
     bool comp_found = false;
@@ -103,4 +114,16 @@ bool gui_mouse_button_callback(i32 button, i32 action, i32 mods)
     ypos = window_cursor_position_y();
     comp_found = gui_mouse_button_callback_helper(gui_context.root, xpos, ypos, button, action, mods, 0, 0, 0, 0);
     return comp_found;
+}
+
+void gui_mouse_button_callback(i32 button, i32 action, i32 mods)
+{
+    GUIEvent event;
+    event.type = GUI_EVENT_MOUSE_BUTTON_CALLBACK;
+    event.args.xpos = window_cursor_position_x();
+    event.args.ypos = window_cursor_position_y();
+    event.args.button = button;
+    event.args.action = action;
+    event.args.mods = mods;
+    gui_event_enqueue(&gui_context.event_queue, event);
 }

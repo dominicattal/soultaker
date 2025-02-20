@@ -42,6 +42,12 @@ static void gui_event_process(GUIEvent event)
         case GUI_EVENT_CURSOR_POS_CALLBACK:
             gui_cursor_pos_callback_internal(event.args.xpos, event.args.ypos);
             break;
+        case GUI_EVENT_MOUSE_BUTTON_CALLBACK:
+            gui_mouse_button_callback_internal(event.args.button, event.args.action, event.args.mods);
+            break;
+        case GUI_EVENT_KEY_CALLBACK:
+            gui_key_callback_internal(event.args.key, event.args.scancode, event.args.action, event.args.mods);
+            break;
         default:
             break;
     }
