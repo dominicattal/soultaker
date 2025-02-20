@@ -40,9 +40,12 @@ void gui_render_init(void);
 void gui_render(void);
 void gui_render_cleanup(void);
 
-bool gui_cursor_pos_callback(f64 xpos, f64 ypos);
+void gui_cursor_pos_callback(f64 xpos, f64 ypos);
 bool gui_key_callback(i32 key, i32 scancode, i32 action, i32 mods);
 bool gui_mouse_button_callback(i32 button, i32 action, i32 mods);
+void gui_comp_hover(GUIComp* comp, bool status);
+void gui_comp_click(GUIComp* comp, i32 button, i32 action, i32 mods);
+void gui_comp_key(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods);
 
 void gui_comp_init(void);
 void gui_comp_cleanup(void);
@@ -55,9 +58,6 @@ void gui_comp_detach_and_destroy(GUIComp* parent, GUIComp* child);
 void gui_comp_set_text(GUIComp* comp, const char* text);
 void gui_comp_insert_char(GUIComp* comp, const char character, i32 idx);
 void gui_comp_delete_char(GUIComp* comp, i32 idx);
-void gui_comp_hover(GUIComp* comp, bool status);
-void gui_comp_click(GUIComp* comp, i32 button, i32 action, i32 mods);
-void gui_comp_key(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods);
 void gui_comp_update(GUIComp* comp, f32 dt);
 void gui_comp_add_data(GUIComp* comp, void* data);
 void* gui_comp_remove_data(GUIComp* comp);

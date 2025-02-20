@@ -35,9 +35,20 @@ static bool gui_cursor_pos_callback_helper(GUIComp* comp, f64 xpos, f64 ypos, i3
     return in_bounds || child_hovered;
 }
 
-bool gui_cursor_pos_callback(f64 xpos, f64 ypos)
+bool gui_cursor_pos_callback_internal(f64 xpos, f64 ypos)
 {
-    return gui_cursor_pos_callback_helper(gui_context.root, xpos, ypos, 0, 0, 0, 0);
+    bool comp_found = false;
+    comp_found = gui_cursor_pos_callback_helper(gui_context.root, xpos, ypos, 0, 0, 0, 0);
+    return comp_found;
+}
+
+void gui_cursor_pos_callback(f64 xpos, f64 ypos)
+{
+    GUIEvent event;
+    event.type = GUI_EVENT_CURSOR_POS_CALLBACK;
+    event.args.xpos = xpos;
+    event.args.ypos = ypos;
+    gui_event_enqueue(&gui_context.event_queue, event);
 }
 
 static bool gui_key_callback_helper(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods)
@@ -50,7 +61,9 @@ static bool gui_key_callback_helper(GUIComp* comp, i32 key, i32 scancode, i32 ac
 
 bool gui_key_callback(i32 key, i32 scancode, i32 action, i32 mods)
 {
-    return gui_key_callback_helper(gui_context.root, key, scancode, action, mods);
+    bool comp_found = false;
+    comp_found = gui_key_callback_helper(gui_context.root, key, scancode, action, mods);
+    return comp_found;
 }
 
 static bool gui_mouse_button_callback_helper(GUIComp* comp, i32 xpos, i32 ypos, i32 button, i32 action, i32 mods, i32 position_x, i32 position_y, i32 size_x, i32 size_y)
@@ -85,7 +98,9 @@ static bool gui_mouse_button_callback_helper(GUIComp* comp, i32 xpos, i32 ypos, 
 bool gui_mouse_button_callback(i32 button, i32 action, i32 mods)
 {
     f64 xpos, ypos;
+    bool comp_found = false;
     xpos = window_cursor_position_x();
     ypos = window_cursor_position_y();
-    return gui_mouse_button_callback_helper(gui_context.root, xpos, ypos, button, action, mods, 0, 0, 0, 0);
+    comp_found = gui_mouse_button_callback_helper(gui_context.root, xpos, ypos, button, action, mods, 0, 0, 0, 0);
+    return comp_found;
 }
