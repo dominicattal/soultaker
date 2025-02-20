@@ -41,8 +41,8 @@ void gui_render(void);
 void gui_render_cleanup(void);
 
 void gui_cursor_pos_callback(f64 xpos, f64 ypos);
-bool gui_key_callback(i32 key, i32 scancode, i32 action, i32 mods);
-bool gui_mouse_button_callback(i32 button, i32 action, i32 mods);
+void gui_key_callback(i32 key, i32 scancode, i32 action, i32 mods);
+void gui_mouse_button_callback(i32 button, i32 action, i32 mods);
 void gui_comp_hover(GUIComp* comp, bool status);
 void gui_comp_click(GUIComp* comp, i32 button, i32 action, i32 mods);
 void gui_comp_key(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods);
