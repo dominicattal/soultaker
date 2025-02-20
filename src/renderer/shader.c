@@ -115,6 +115,7 @@ static void compile_shader_program_gui(void)
     delete(frag);
     i32 texs[NUM_TEXTURE_UNITS];
     for (i32 i = 0; i < NUM_TEXTURE_UNITS; ++i)
+        texs[i] = i;
     shader_use(SHADER_PROGRAM_GUI);
     glUniform1iv(shader_get_uniform_location(SHADER_PROGRAM_GUI, "textures"), NUM_TEXTURE_UNITS, texs);
     shader_bind_uniform_block(SHADER_PROGRAM_GUI, UBO_INDEX_WINDOW, "Window");

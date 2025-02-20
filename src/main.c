@@ -13,7 +13,6 @@ void state_init(void)
     game_init();
     audio_init();
 
-    gui_preset_load(GUI_PRESET_TEST);
 }
 
 void state_loop(void)

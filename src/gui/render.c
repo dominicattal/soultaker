@@ -49,10 +49,10 @@ void gui_render(void)
     glBindVertexArray(s_vao);
     glBindBuffer(GL_ARRAY_BUFFER, s_instance_vbo);
 
-    pthread_mutex_lock(&gui_context.mutex);
+    pthread_mutex_lock(&gui_context.data_mutex);
     GLsizei instance_count = gui_context.data.instance_count;
     glBufferData(GL_ARRAY_BUFFER, gui_context.data.length * sizeof(GLfloat), gui_context.data.buffer, GL_DYNAMIC_DRAW);
-    pthread_mutex_unlock(&gui_context.mutex);
+    pthread_mutex_unlock(&gui_context.data_mutex);
     glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, instance_count);
 }
 

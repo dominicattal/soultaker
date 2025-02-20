@@ -79,7 +79,8 @@ static void push_text_data(GUIComp* comp, i32 cx, i32 cy, i32 cw, i32 ch)
     left = right = 0;
     ox = 0;
     oy = ascent;
-    resize_data_buffer(length);
+    if (gui_context.data_swap.length + length >= gui_context.data_swap.capacity)
+        resize_data_buffer(length);
     vbo_idx = gui_context.data_swap.length;
     while (right < length) {
         
@@ -205,7 +206,7 @@ static void push_comp_data(GUIComp* comp, i32 x, i32 y, i32 w, i32 h)
         push_text_data(comp, x, y, w, h);
 }
 
-static void gui_update_helper(GUIComp* comp, i32 position_x, i32 position_y, i32 size_x, i32 size_y)
+static void gui_update_vertex_data_helper(GUIComp* comp, i32 position_x, i32 position_y, i32 size_x, i32 size_y)
 {
     i32 x, y, w, h;
     u8 halign, valign;
@@ -217,30 +218,40 @@ static void gui_update_helper(GUIComp* comp, i32 position_x, i32 position_y, i32
 
     push_comp_data(comp, position_x, position_y, w, h);
     for (i32 i = 0; i < gui_comp_num_children(comp); i++)
-        gui_update_helper(comp->children[i], position_x, position_y, w, h);
+        gui_update_vertex_data_helper(comp->children[i], position_x, position_y, w, h);
 }
 
-static void gui_update(void)
+static void gui_update_vertex_data(void)
 {
     gui_context.data_swap.instance_count = 0;
     gui_context.data_swap.length = 0;
-    gui_update_helper(gui_context.root, 0, 0, 0, 0);
+    gui_update_vertex_data_helper(gui_context.root, 0, 0, 0, 0);
 
     GUIData tmp;
-    pthread_mutex_lock(&gui_context.mutex);
+    pthread_mutex_lock(&gui_context.data_mutex);
     tmp = gui_context.data;
     gui_context.data = gui_context.data_swap;
     gui_context.data_swap = tmp;
-    pthread_mutex_unlock(&gui_context.mutex);
+    pthread_mutex_unlock(&gui_context.data_mutex);
+}
+
+static void gui_update_comps(void)
+{
+    sleep(5);
 }
 
 static void* gui_loop(void* vargp)
 {
+    f64 start;
     gui_comp_init();
+    gui_preset_load(GUI_PRESET_TEST);
     while (!gui_context.kill_thread)
     {
-        gui_update();
-        sleep(20);
+        start = get_time();
+        gui_update_comps();
+        gui_update_vertex_data();
+        gui_event_queue_flush(&gui_context.event_queue);
+        gui_context.dt = get_time() - start;
     }
     gui_comp_cleanup();
     return NULL;
@@ -249,7 +260,13 @@ static void* gui_loop(void* vargp)
 void gui_init(void)
 {
     gui_render_init();
-    pthread_mutex_init(&gui_context.mutex, NULL);
+    gui_event_queue_init(&gui_context.event_queue);
+    GUIEvent event;
+    event.type = GUI_EVENT_CURSOR_POS_CALLBACK;
+    event.xpos = 0;
+    event.ypos = 0;
+    gui_event_enqueue(&gui_context.event_queue, event);
+    pthread_mutex_init(&gui_context.data_mutex, NULL);
     pthread_create(&gui_context.thread_id, NULL, gui_loop, NULL);
 }
 
@@ -257,7 +274,8 @@ void gui_cleanup(void)
 {
     gui_context.kill_thread = true;
     pthread_join(gui_context.thread_id, NULL);
-    pthread_mutex_destroy(&gui_context.mutex);
+    pthread_mutex_destroy(&gui_context.data_mutex);
     gui_render_cleanup();
+    gui_event_queue_cleanup(&gui_context.event_queue);
 }
 
