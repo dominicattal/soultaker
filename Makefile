@@ -20,7 +20,8 @@ INCLUDES = $(patsubst %, -I./%, $(DIRS_INC))
 LIBS     = $(patsubst %, -L./%, $(DIRS_LIB))
 OBJS_DEV = $(SOURCES:%.c=$(DIR_OBJ)/dev/%.o)
 OBJS_REL = $(SOURCES:%.c=$(DIR_OBJ)/release/%.o)
-DEPS     = $(SOURCES:%.c=$(DIR_DEP)/%.d)
+DEPS_DEV = $(OBJS_DEV:%.o=%.d)
+DEPS_REL = $(OBJS_REL:%.o=%.d)
 
 all: dev
 
@@ -31,6 +32,7 @@ dev: $(OBJS_DEV)
 $(DIR_OBJ)/dev/%.o: %.c
 	@mkdir -p $(shell dirname $@)
 	@$(CC) $(CFLAGS) $(CFLAGS_DEV) $(LIBS) $(INCLUDES) $(LINKER_FLAGS) -c -o $@ $<
+	@echo $<
 
 release: $(OBJS_REL)
 	@mkdir -p $(DIR_BIN)/release
@@ -39,10 +41,10 @@ release: $(OBJS_REL)
 $(DIR_OBJ)/release/%.o: %.c
 	@mkdir -p $(shell dirname $@)
 	@$(CC) $(CFLAGS) $(CFLAGS_RELEASE) $(LINKER_FLAGS) $(LIBS) $(INCLUDES) -c -o $@ $<
+	@echo $<
 
-$(DEPSH):
-
--include $(DEPS)
+-include $(DEPS_DEV)
+-include $(DEPS_REL)
 
 clean:
 	rm -rf $(DIR_OBJ) $(DIR_DEP) $(DIR_BIN)

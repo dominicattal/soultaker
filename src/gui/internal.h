@@ -40,7 +40,7 @@ typedef struct GUIEvent {
 
 typedef struct GUIEventQueue {
     GUIEvent buffer[EVENT_QUEUE_LENGTH];
-    sem_t mutex, empty, full;
+    sem_t mutex;
     i32 head, tail, count;
 } GUIEventQueue;
 

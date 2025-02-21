@@ -261,11 +261,6 @@ void gui_init(void)
 {
     gui_render_init();
     gui_event_queue_init(&gui_context.event_queue);
-    GUIEvent event;
-    event.type = GUI_EVENT_CURSOR_POS_CALLBACK;
-    event.xpos = 0;
-    event.ypos = 0;
-    gui_event_enqueue(&gui_context.event_queue, event);
     pthread_mutex_init(&gui_context.data_mutex, NULL);
     pthread_create(&gui_context.thread_id, NULL, gui_loop, NULL);
 }
