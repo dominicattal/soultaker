@@ -34,13 +34,13 @@ static void gui_event_process(GUIEvent event)
 {
     switch (event.type) {
         case GUI_EVENT_CURSOR_POS_CALLBACK:
-            gui_cursor_pos_callback_internal(event.args.xpos, event.args.ypos);
+            gui_cursor_pos_callback(event.args.xpos, event.args.ypos);
             break;
         case GUI_EVENT_MOUSE_BUTTON_CALLBACK:
-            gui_mouse_button_callback_internal(event.args.button, event.args.action, event.args.mods);
+            gui_mouse_button_callback(event.args.button, event.args.action, event.args.mods);
             break;
         case GUI_EVENT_KEY_CALLBACK:
-            gui_key_callback_internal(event.args.key, event.args.scancode, event.args.action, event.args.mods);
+            gui_key_callback(event.args.key, event.args.scancode, event.args.action, event.args.mods);
             break;
         default:
             break;
@@ -50,7 +50,6 @@ static void gui_event_process(GUIEvent event)
 void gui_event_queue_flush(GUIEventQueue* queue)
 {
     GUIEvent event;
-    printf("%d\n", queue->count);
     while ((event = gui_event_dequeue(queue)).type != GUI_EVENT_NONE)
         gui_event_process(event);
 }

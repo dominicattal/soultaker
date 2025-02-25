@@ -78,10 +78,6 @@ typedef struct GUIContext {
 
 extern GUIContext gui_context;
 
-bool gui_cursor_pos_callback_internal(f64 xpos, f64 ypos);
-bool gui_key_callback_internal(i32 key, i32 scancode, i32 action, i32 mods);
-bool gui_mouse_button_callback_internal(i32 button, i32 action, i32 mods);
-
 void gui_event_queue_init(GUIEventQueue* queue);
 void gui_event_enqueue(GUIEventQueue* queue, GUIEvent event);
 GUIEvent gui_event_dequeue(GUIEventQueue* queue);
