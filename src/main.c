@@ -4,6 +4,7 @@
 #include "gui.h"
 #include "audio.h"
 #include <stdio.h>
+#include <pthread.h>
 
 void state_init(void)
 {
