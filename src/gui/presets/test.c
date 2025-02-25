@@ -50,7 +50,7 @@ void load_preset_test(GUIComp* root)
     gui_comp_set_is_text(textbox, true);
     gui_comp_set_text(textbox, "The quick brown fox jumps over the lazy dog");
     gui_comp_set_color(textbox, 255, 255, 255, 255);
-    gui_comp_set_font_size(textbox, 24);
-    gui_comp_set_font(textbox, FONT_MONOSPACE);
+    gui_comp_set_font_size(textbox, 16);
+    gui_comp_set_font(textbox, FONT_MOJANGLES);
     gui_comp_attach(root, textbox);
 }

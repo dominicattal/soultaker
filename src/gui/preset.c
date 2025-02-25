@@ -8,6 +8,8 @@ void gui_preset_load(GUIPreset preset)
     switch (preset) {
         case GUI_PRESET_TEST:
             load_preset_test(gui_context.root); break;
+        case GUI_PRESET_MAIN_MENU:
+            load_preset_main_menu(gui_context.root); break;
         default:
             break;
     }

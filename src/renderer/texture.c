@@ -162,7 +162,7 @@ static void create_font_textures(i32* tex_unit_location)
     stbtt_PackBegin(&spc, bitmap, BITMAP_WIDTH, BITMAP_HEIGHT, 0, 1, NULL);
 
     load_font(&spc, FONT_MOJANGLES, 16, "assets/fonts/mojangles.ttf");
-    load_font(&spc, FONT_MONOSPACE, 24, "assets/fonts/FreeMono.ttf");
+    load_font(&spc, FONT_MONOSPACE, 16, "assets/fonts/FreeMono.ttf");
 
     stbtt_PackEnd(&spc);
 

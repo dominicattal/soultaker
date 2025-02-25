@@ -16,10 +16,10 @@ void align_comp_position_x(i32* position_x, u8 halign, i32 size_x, i32 x, i32 w)
 
 void align_comp_position_y(i32* position_y, u8 valign, i32 size_y, i32 y, i32 h)
 {
-    if      (valign == ALIGN_TOP)        *position_y += y;
+    if      (valign == ALIGN_TOP)        *position_y += size_y - h - y;
     else if (valign == ALIGN_CENTER_POS) *position_y += (size_y - h) / 2 + y;
     else if (valign == ALIGN_CENTER_NEG) *position_y += (size_y - h) / 2 - y;
-    else if (valign == ALIGN_BOTTOM)     *position_y += size_y - h - y;
+    else if (valign == ALIGN_BOTTOM)     *position_y += y;
 }
 
 static void resize_data_buffer(i32 num_comps)
@@ -146,16 +146,16 @@ static void push_text_data(GUIComp* comp, i32 cx, i32 cy, i32 cw, i32 ch)
             font_char_bmap(font, font_size, text[left], &u1, &v1, &u2, &v2);
             font_char_kern(font, font_size, text[left], text[left+1], &kern);
 
-            x = cx + ox + lsb;
+            x = cx + ox + lsb + a1;
             y = cy + ch - oy - b2;
             w = a2 - a1;
             h = b2 - b1;
 
             if (text[left] != '\0' && text[left] != ' ') {
                 #define A gui_context.data_swap.buffer[gui_context.data_swap.length++]
-                A = x; A = y; A = w; A = h;
+                A = x;   A = y;   A = w;   A = h;
                 A = 255; A = 255; A = 255; A = 255;
-                A = u1; A = v1; A = u2; A = v2;
+                A = u1;  A = v1;  A = u2;  A = v2;
                 A = location;
                 gui_context.data_swap.instance_count++;
                 #undef A
@@ -244,7 +244,7 @@ static void* gui_loop(void* vargp)
 {
     f64 start;
     gui_comp_init();
-    gui_preset_load(GUI_PRESET_TEST);
+    gui_preset_load(GUI_PRESET_MAIN_MENU);
     while (!gui_context.kill_thread)
     {
         start = get_time();
