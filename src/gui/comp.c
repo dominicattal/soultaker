@@ -6,8 +6,8 @@
 void gui_comp_init(void)
 { 
     gui_context.root = gui_comp_create(0, 0, window_resolution_x(), window_resolution_y());
-    gui_comp_set_color(gui_context.root, 255, 0, 0, 255);
-
+    gui_comp_set_color(gui_context.root, 0, 0, 0, 0);
+    gui_comp_set_valign(gui_context.root, ALIGN_BOTTOM);
 }
 
 void gui_comp_cleanup(void)
