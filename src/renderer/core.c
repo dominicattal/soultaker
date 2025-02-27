@@ -20,7 +20,7 @@ void renderer_render(void)
 {
     //glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
     glClear(GL_COLOR_BUFFER_BIT);
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClearColor(0.4f, 0.4f, 0.4f, 1.0f);
 
     gui_render();
     game_render();

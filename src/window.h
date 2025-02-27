@@ -15,8 +15,11 @@ void window_mouse_button_callback(GLFWwindow* window, i32 button, i32 action, i3
 void window_cursor_pos_callback(GLFWwindow* window, f64 xpos, f64 ypos);
 void window_key_callback(GLFWwindow* window, i32 key, i32 scancode, i32 action, i32 mods);
 
+bool window_get_key(i32 key);
+
 i32 window_resolution_x(void);
 i32 window_resolution_y(void);
+f32 window_aspect_ratio(void);
 i32 window_width(void);
 i32 window_height(void);
 f64 window_cursor_position_x(void);

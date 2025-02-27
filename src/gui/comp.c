@@ -159,7 +159,9 @@ void gui_comp_key(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods)
 
 void gui_comp_update(GUIComp* comp, f32 dt)
 {
-
+   if (comp->update_func == NULL)
+       return;
+   ((GUIUpdateFPtr)(comp->update_func))(comp, dt);
 }
 
 void gui_comp_add_data(GUIComp* comp, void* data)

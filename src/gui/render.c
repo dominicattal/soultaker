@@ -4,6 +4,7 @@
 */
 
 #include "internal.h"
+#include "../renderer.h"
 
 extern GUIContext gui_context;
 static GLuint s_vao, s_vbo, s_instance_vbo;
@@ -46,6 +47,8 @@ void gui_render(void)
     if (gui_context.data.buffer == NULL)
         return;
 
+    shader_use(SHADER_PROGRAM_GUI);
+    glDisable(GL_DEPTH_TEST);
     glBindVertexArray(s_vao);
     glBindBuffer(GL_ARRAY_BUFFER, s_instance_vbo);
 

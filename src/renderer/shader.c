@@ -99,6 +99,7 @@ static void compile_shader_program_game(void)
         texs[i] = i;
     shader_use(SHADER_PROGRAM_GAME);
     glUniform1iv(shader_get_uniform_location(SHADER_PROGRAM_GAME, "textures"), NUM_TEXTURE_UNITS, texs);
+    shader_bind_uniform_block(SHADER_PROGRAM_GAME, UBO_INDEX_MATRICES, "Matrices");
 }
 
 static void compile_shader_program_gui(void)
