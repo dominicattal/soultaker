@@ -249,7 +249,8 @@ static void gui_update_comps(f32 dt)
 
 static void* gui_loop(void* vargp)
 {
-    f32 dt, start;
+    f64 start;
+    f32 dt;
     dt = 0;
     gui_comp_init();
     gui_preset_load(GUI_PRESET_DEBUG);
