@@ -27,11 +27,11 @@ void state_loop(void)
 
 void state_cleanup(void)
 {
-    window_cleanup();
-    renderer_cleanup();
     gui_cleanup();
     game_cleanup();
     audio_cleanup();
+    renderer_cleanup();
+    window_cleanup();
 }
 
 int main()

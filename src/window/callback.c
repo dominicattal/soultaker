@@ -34,5 +34,5 @@ void window_key_callback(GLFWwindow* window, i32 key, i32 scancode, i32 action, 
 
 void window_error_callback(i32 x, const char* message) 
 { 
-    fprintf(stderr, "%d\n%s\n", x, message); 
+    fprintf(stderr, "GLFW error: %x\n%s\n", x, message); 
 }

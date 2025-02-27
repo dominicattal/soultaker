@@ -235,23 +235,31 @@ static void gui_update_vertex_data(void)
     pthread_mutex_unlock(&gui_context.data_mutex);
 }
 
-static void gui_update_comps(void)
+static void gui_update_comps_helper(GUIComp* comp, f32 dt)
 {
-    sleep(5);
+    gui_comp_update(comp, dt);
+    for (i32 i = 0; i < gui_comp_num_children(comp); i++)
+        gui_update_comps_helper(comp->children[i], dt);
+}
+
+static void gui_update_comps(f32 dt)
+{
+    gui_update_comps_helper(gui_context.root, dt);
 }
 
 static void* gui_loop(void* vargp)
 {
-    f64 start;
+    f32 dt, start;
+    dt = 0;
     gui_comp_init();
-    gui_preset_load(GUI_PRESET_MAIN_MENU);
+    gui_preset_load(GUI_PRESET_DEBUG);
     while (!gui_context.kill_thread)
     {
         start = get_time();
-        gui_update_comps();
+        gui_update_comps(dt);
         gui_update_vertex_data();
         gui_event_queue_flush(&gui_context.event_queue);
-        gui_context.dt = get_time() - start;
+        dt = get_time() - start;
     }
     gui_comp_cleanup();
     return NULL;

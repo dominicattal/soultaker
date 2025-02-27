@@ -18,18 +18,19 @@
 #define HOVER_OFF       0
 #define HOVER_ON        1
 
-typedef struct GUIData GUIData;
 typedef struct GUIComp GUIComp;
 
 typedef enum {
     GUI_PRESET_TEST,
     GUI_PRESET_MAIN_MENU,
+    GUI_PRESET_DEBUG,
     NUM_GUI_PRESETS
 } GUIPreset;
 
 typedef void (*GUIHoverFPtr)(GUIComp* comp, bool status); 
 typedef void (*GUIClickFPtr)(GUIComp* comp, i32 button, i32 action, i32 mods);
 typedef void (*GUIKeyFPtr)(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods);
+typedef void (*GUIUpdateFPtr)(GUIComp* comp, f32 dt);
 
 void gui_preset_load(GUIPreset preset);
 
@@ -46,6 +47,7 @@ bool gui_mouse_button_callback(i32 button, i32 action, i32 mods);
 void gui_comp_hover(GUIComp* comp, bool status);
 void gui_comp_click(GUIComp* comp, i32 button, i32 action, i32 mods);
 void gui_comp_key(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods);
+void gui_comp_update(GUIComp* comp, f32 dt);
 
 void gui_comp_init(void);
 void gui_comp_cleanup(void);

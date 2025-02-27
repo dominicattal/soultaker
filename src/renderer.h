@@ -33,6 +33,7 @@ typedef enum {
 typedef enum {
     UBO_INDEX_DEFAULT,
     UBO_INDEX_WINDOW,
+    UBO_INDEX_MATRICES
 } UBOIndexEnum;
 
 void renderer_init(void);

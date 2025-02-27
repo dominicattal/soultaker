@@ -65,6 +65,11 @@ void window_cleanup(void)
     glfwTerminate();
 }
 
+bool window_get_key(i32 key)
+{
+    return glfwGetKey(window_context.handle, key);
+}
+
 i32 window_resolution_x(void)
 {
     return window_context.resolution.x;
@@ -73,6 +78,11 @@ i32 window_resolution_x(void)
 i32 window_resolution_y(void)
 {
     return window_context.resolution.y;
+}
+
+f32 window_aspect_ratio(void)
+{
+    return (f32)window_context.resolution.y / window_context.resolution.x;
 }
 
 i32 window_width(void)

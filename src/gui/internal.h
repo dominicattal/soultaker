@@ -47,10 +47,10 @@ typedef struct GUIEventQueue {
 typedef struct GUIComp {
     u64 info1;
     u64 info2;
-    void* update_func;
+    GUIUpdateFPtr update_func;
     GUIHoverFPtr hover_func;
-    void* click_func;
-    void* key_func;
+    GUIClickFPtr click_func;
+    GUIKeyFPtr key_func;
     void* data;
     GUIComp* parent;
     union {
@@ -73,7 +73,6 @@ typedef struct GUIContext {
     pthread_t thread_id;
     pthread_mutex_t data_mutex;
     GUIEventQueue event_queue;
-    f32 dt;
 } GUIContext;
 
 extern GUIContext gui_context;
@@ -89,5 +88,6 @@ void align_comp_position_y(i32* position_y, u8 valign, i32 size_y, i32 y, i32 h)
 
 void load_preset_test(GUIComp* root);
 void load_preset_main_menu(GUIComp* root);
+void load_preset_debug(GUIComp* root);
 
 #endif
