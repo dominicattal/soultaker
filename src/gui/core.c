@@ -146,7 +146,7 @@ static void push_text_data(GUIComp* comp, i32 cx, i32 cy, i32 cw, i32 ch)
             font_char_bmap(font, font_size, text[left], &u1, &v1, &u2, &v2);
             font_char_kern(font, font_size, text[left], text[left+1], &kern);
 
-            x = cx + ox + lsb + a1;
+            x = cx + ox + lsb;
             y = cy + ch - oy - b2;
             w = a2 - a1;
             h = b2 - b1;

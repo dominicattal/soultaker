@@ -18,10 +18,15 @@ void state_init(void)
 
 void state_loop(void)
 {
+    f64 start;
+    f32 dt;
     while (!window_closed())
     {
+        start = get_time();
         window_update();
+        game_process_input(dt);
         renderer_render();
+        dt = get_time() - start;
     }
 }
 

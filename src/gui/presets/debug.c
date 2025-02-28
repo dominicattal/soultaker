@@ -30,11 +30,11 @@ static void update_info(GUIComp* comp, f32 dt)
             string[i] = '\0';
         for (i32 i = 0; i < 100; i++)
             buf[i] = '\0';
-        sprintf(buf, "%-7.3f, %-7.3f, %-7.3f\n", position.x, position.y, position.z);
+        sprintf(buf, "position: (%.3f %.3f %.3f)\n", position.x, position.y, position.z);
         strncpy(string, buf, 100);
-        sprintf(buf, "%-7.3f, %-7.3f, %-7.3f\n", facing.x, facing.y, facing.z);
+        sprintf(buf, "facing: (%.3f %.3f %.3f)\n", facing.x, facing.y, facing.z);
         strncat(string, buf, 100);
-        sprintf(buf, "%-7.3f, %-7.3f, %-7.3f\n", pitch, yaw, zoom);
+        sprintf(buf, "pitch: %-7.3f yaw: %-7.3f zoom: %-7.3f\n", pitch, yaw, zoom);
         strncat(string, buf, 100);
         gui_comp_set_text(comp, string);
     }
@@ -42,11 +42,11 @@ static void update_info(GUIComp* comp, f32 dt)
 
 void load_preset_debug(GUIComp* root)
 {
-    GUIComp* info = gui_comp_create(0, 0, 400, 300);
+    GUIComp* info = gui_comp_create(0, 0, 400, 50);
     gui_comp_set_color(info, 255, 255, 255, 100);
     gui_comp_set_is_text(info, true);
     gui_comp_set_font_size(info, 16);
-    gui_comp_set_font(info, FONT_MONOSPACE);
+    gui_comp_set_font(info, FONT_MOJANGLES);
     info->update_func = update_info;
     info->data = create_comp_data(); 
     gui_comp_attach(root, info);

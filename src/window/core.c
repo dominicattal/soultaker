@@ -82,7 +82,7 @@ i32 window_resolution_y(void)
 
 f32 window_aspect_ratio(void)
 {
-    return (f32)window_context.resolution.y / window_context.resolution.x;
+    return (f32)window_context.resolution.x / window_context.resolution.y;
 }
 
 i32 window_width(void)

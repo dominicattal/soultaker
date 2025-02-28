@@ -10,4 +10,5 @@ in flat int TexLocation;
 
 void main() {
     FragColor = texture(textures[TexLocation], TexCoord) * Color;
+    //FragColor = Color;
 }
