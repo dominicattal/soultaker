@@ -6,12 +6,12 @@
 #define NEAR_CLIP_DISTANCE  0.1f
 #define FAR_CLIP_DISTANCE   10000.0f
 #define DEFAULT_YAW         PI
-#define DEFAULT_PITCH       -(PI / 2 - 0.01)
+#define DEFAULT_PITCH       PI / 2 - 0.01
 #define DEFAULT_FOV         PI / 4
-#define DEFAULT_ZOOM        15
+#define DEFAULT_ZOOM        5
 #define DEFAULT_ROTSPEED    1
-#define DEFAULT_MOVESPEED   150
-#define DEFAULT_POSITION    vec3_create(1, 5, 1)
+#define DEFAULT_MOVESPEED   1
+#define DEFAULT_POSITION    vec3_create(0, 5, 0)
 #define Y_AXIS              vec3_create(0, 1, 0)
 
 extern GameContext game_context;
@@ -33,21 +33,21 @@ static void update_view_matrix(void)
 {
     view(game_context.camera.view, game_context.camera.right, game_context.camera.up, game_context.camera.facing, game_context.camera.position);
     glBindBuffer(GL_UNIFORM_BUFFER, game_context.camera.matrices_ubo);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, 16 * sizeof(f32), game_context.camera.view);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, 16 * sizeof(GLfloat), game_context.camera.view);
 }
 
 static void update_proj_matrix()
 {
-    orthographic(game_context.camera.proj, 1 / window_aspect_ratio(), game_context.camera.zoom);
+    orthographic(game_context.camera.proj, window_aspect_ratio(), game_context.camera.zoom);
     glBindBuffer(GL_UNIFORM_BUFFER, game_context.camera.matrices_ubo);
-    glBufferSubData(GL_UNIFORM_BUFFER, 16 * sizeof(f32), 16 * sizeof(f32), game_context.camera.proj);
+    glBufferSubData(GL_UNIFORM_BUFFER, 16 * sizeof(GLfloat), 16 * sizeof(GLfloat), game_context.camera.proj);
 }
 
 void camera_init(void)
 {
     glGenBuffers(1, &game_context.camera.matrices_ubo);
     glBindBuffer(GL_UNIFORM_BUFFER, game_context.camera.matrices_ubo);
-    glBufferData(GL_UNIFORM_BUFFER, 32 * sizeof(f32), NULL, GL_STATIC_DRAW);
+    glBufferData(GL_UNIFORM_BUFFER, 32 * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
     glBindBufferBase(GL_UNIFORM_BUFFER, UBO_INDEX_MATRICES, game_context.camera.matrices_ubo);
 
     game_context.camera.yaw = DEFAULT_YAW;
@@ -62,14 +62,19 @@ void camera_init(void)
     update_proj_matrix();
 }
 
-void camera_move(vec3 mag, f32 dt)
+void camera_move(vec2 mag, f32 dt)
 {
-    vec3 direction = vec3_create(0, 0, 0);
-    direction = vec3_add(direction, vec3_scale(game_context.camera.right, mag.x));
-    direction = vec3_add(direction, vec3_scale(Y_AXIS, mag.y));
-    direction = vec3_add(direction, vec3_scale(game_context.camera.facing, mag.z));
-    direction = vec3_scale(vec3_normalize(direction), game_context.camera.move_speed * dt);
-    game_context.camera.position = vec3_add(game_context.camera.position, direction);
+    vec2 direction = vec2_create(0, 0);
+    vec2 facing, right;
+    facing.x = game_context.camera.facing.x;
+    facing.y = game_context.camera.facing.z;
+    right.x = game_context.camera.right.x;
+    right.y = game_context.camera.right.z;
+    direction = vec2_add(direction, vec2_scale(facing, mag.x));
+    direction = vec2_add(direction, vec2_scale(right, mag.y));
+    direction = vec2_scale(vec2_normalize(direction), game_context.camera.move_speed * dt);
+    game_context.camera.position.x += direction.x;
+    game_context.camera.position.z += direction.y;
     update_view_matrix();
 }
 

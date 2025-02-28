@@ -5,7 +5,7 @@
 
 void game_init(void);
 void game_cleanup(void);
-void game_process_input(void);
+void game_process_input(f32 dt);
 void game_render_init(void);
 void game_render(void);
 void game_render_cleanup(void);

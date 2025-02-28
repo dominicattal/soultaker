@@ -8,7 +8,9 @@ static void GLAPIENTRY message_callback(GLenum, GLenum, GLuint, GLenum, GLsizei,
 
 void renderer_init(void)
 {
+    #ifdef DEBUG_BUILD
     glEnable(GL_DEBUG_OUTPUT);
+    #endif
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
     glDebugMessageCallback(message_callback, 0);
@@ -19,11 +21,11 @@ void renderer_init(void)
 void renderer_render(void)
 {
     //glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(0.4f, 0.4f, 0.4f, 1.0f);
 
-    gui_render();
     game_render();
+    gui_render();
 }
 
 void renderer_cleanup(void)
