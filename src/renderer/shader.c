@@ -122,6 +122,37 @@ static void compile_shader_program_gui(void)
     shader_bind_uniform_block(SHADER_PROGRAM_GUI, UBO_INDEX_WINDOW, "Window");
 }
 
+static void compile_shader_program_entity(void)
+{
+    u32 vert, frag;
+    vert = compile(GL_VERTEX_SHADER, "assets/shaders/entity.vert");
+    frag = compile(GL_FRAGMENT_SHADER, "assets/shaders/entity.frag");
+    attach(SHADER_PROGRAM_ENTITY, vert);
+    attach(SHADER_PROGRAM_ENTITY, frag);
+    link(SHADER_PROGRAM_ENTITY);
+    detach(SHADER_PROGRAM_ENTITY, vert);
+    detach(SHADER_PROGRAM_ENTITY, frag);
+    delete(vert);
+    delete(frag);
+    i32 texs[NUM_TEXTURE_UNITS];
+    for (i32 i = 0; i < NUM_TEXTURE_UNITS; ++i)
+        texs[i] = i;
+    shader_use(SHADER_PROGRAM_ENTITY);
+    glUniform1iv(shader_get_uniform_location(SHADER_PROGRAM_ENTITY, "textures"), NUM_TEXTURE_UNITS, texs);
+    shader_bind_uniform_block(SHADER_PROGRAM_ENTITY, UBO_INDEX_MATRICES, "Matrices");
+}
+
+static void compile_shader_program_entity_comp(void)
+{
+    u32 comp;
+    comp = compile(GL_COMPUTE_SHADER, "assets/shaders/entity.comp");
+    attach(SHADER_PROGRAM_ENTITY_COMP, comp);
+    link(SHADER_PROGRAM_ENTITY_COMP);
+    detach(SHADER_PROGRAM_ENTITY_COMP, comp);
+    delete(comp);
+    shader_bind_uniform_block(SHADER_PROGRAM_ENTITY_COMP, UBO_INDEX_MATRICES, "Matrices");
+}
+
 void shader_program_compile(ShaderProgramEnum program)
 {
     switch (program) {
@@ -130,6 +161,12 @@ void shader_program_compile(ShaderProgramEnum program)
             break;
         case SHADER_PROGRAM_GUI:
             compile_shader_program_gui();
+            break;
+        case SHADER_PROGRAM_ENTITY:
+            compile_shader_program_entity();
+            break;
+        case SHADER_PROGRAM_ENTITY_COMP:
+            compile_shader_program_entity_comp();
             break;
         default:
             printf("Unrecognized program %x\n", program);
@@ -144,6 +181,8 @@ void shader_init(void)
     
     shader_program_compile(SHADER_PROGRAM_GAME);
     shader_program_compile(SHADER_PROGRAM_GUI);
+    shader_program_compile(SHADER_PROGRAM_ENTITY);
+    shader_program_compile(SHADER_PROGRAM_ENTITY_COMP);
 }
 
 void shader_use(ShaderProgramEnum id)
