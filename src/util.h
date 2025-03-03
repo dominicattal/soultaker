@@ -4,6 +4,7 @@
 #include "util/type.h"
 #include "util/linalg.h"
 #include "util/extra.h"
+#include "util/list.h"
 #include <pthread.h>
 #include <stdlib.h>
 #include <glad.h>

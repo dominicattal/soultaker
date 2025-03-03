@@ -1,0 +1,30 @@
+#version 460
+
+layout (local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
+
+layout (std140) uniform Matrices {
+    mat4 view;
+    mat4 proj;
+};
+
+uniform int N;
+
+layout (std430, binding = 0) readonly buffer Input {
+    vec3 data_in[];
+};
+
+layout (std430, binding = 1) writeonly buffer Output {
+    vec4 data_out[];
+};
+
+void main() {
+    if (gl_GlobalInvocationID.x >= N)
+        return;
+    vec4 position = proj * view * vec4(data_in[gl_GlobalInvocationID.x], 1.0);
+    data_out[6*gl_GlobalInvocationID.x]   = position - vec4(0.5, 0.0, 0.0, 0.0);
+    data_out[6*gl_GlobalInvocationID.x+1] = position + vec4(0.5, 0.0, 0.0, 0.0);
+    data_out[6*gl_GlobalInvocationID.x+2] = position - vec4(0.5, 1.0, 0.0, 0.0);
+    data_out[6*gl_GlobalInvocationID.x+3] = position + vec4(0.5, 0.0, 0.0, 0.0);
+    data_out[6*gl_GlobalInvocationID.x+4] = position - vec4(0.5, 1.0, 0.0, 0.0);
+    data_out[6*gl_GlobalInvocationID.x+5] = position + vec4(0.5, 1.0, 0.0, 0.0);
+}

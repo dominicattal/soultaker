@@ -11,12 +11,23 @@ typedef struct {
 } Camera;
 
 typedef struct {
+    vec3 position;
+} Entity;
+
+typedef struct {
+    Entity* player;
+    List* entities;
     Camera camera;
     bool kill_thread;
     pthread_t thread_id;
 } GameContext;
 
 extern GameContext game_context;
+
+void entity_init(void);
+Entity* entity_create(vec3 position);
+void entity_destroy(Entity* entity);
+void entity_cleanup(void);
 
 void camera_init(void);
 void camera_move(vec2 mag, f32 dt);

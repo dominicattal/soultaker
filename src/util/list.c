@@ -1,0 +1,67 @@
+#include "list.h"
+#include <stdlib.h>
+#include <assert.h>
+
+#define RESIZE_LENGTH 10
+
+typedef struct List {
+    void** buffer;
+    i32 length, capacity;
+} List;
+
+List* list_create(void)
+{
+    List* list = malloc(sizeof(List));
+    list->buffer = NULL;
+    list->length = list->capacity = 0;
+    return list;
+}
+
+void  list_append(List* list, void* item)
+{
+    if (list->length >= list->capacity) {
+        list->capacity += RESIZE_LENGTH;
+        if (list->buffer == NULL)
+            list->buffer = malloc(list->capacity * sizeof(void*));
+        else
+            list->buffer = realloc(list->buffer, list->capacity * sizeof(void*));
+        assert(list->buffer != NULL);
+    }
+    list->buffer[list->length++] = item;
+}
+
+void  list_remove(List* list, i32 idx)
+{
+    list->buffer[idx] = list->buffer[--list->length];
+    if (list->length % RESIZE_LENGTH == 0) {
+        list->capacity = list->length;
+        if (list->capacity == 0) {
+            free(list->buffer);
+            list->buffer = NULL;
+        } else
+            list->buffer = realloc(list->buffer, list->capacity * sizeof(void*));
+    }
+}
+
+void  list_clear(List* list)
+{
+    free(list->buffer);
+    list->buffer = NULL;
+    list->length = list->capacity = 0;
+}
+
+void* list_get(List* list, i32 idx)
+{
+    return list->buffer[idx];
+}
+
+bool  list_empty(List* list)
+{
+    return list->length == 0;
+}
+
+void  list_destroy(List* list)
+{
+    free(list->buffer);
+    free(list);
+}

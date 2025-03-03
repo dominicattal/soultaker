@@ -3,16 +3,18 @@
 #include "../window.h"
 #include <math.h>
 
-#define NEAR_CLIP_DISTANCE  0.1f
+#define NEAR_CLIP_DISTANCE  0.0001f
 #define FAR_CLIP_DISTANCE   10000.0f
 #define DEFAULT_YAW         PI
-#define DEFAULT_PITCH       PI / 2 - 0.01
+#define DEFAULT_PITCH       PI / 6
 #define DEFAULT_FOV         PI / 4
 #define DEFAULT_ZOOM        5
 #define DEFAULT_ROTSPEED    1
 #define DEFAULT_MOVESPEED   1
 #define DEFAULT_POSITION    vec3_create(0, 5, 0)
 #define Y_AXIS              vec3_create(0, 1, 0)
+
+#define DISTANCE_FROM_PLAYER 10
 
 extern GameContext game_context;
 
@@ -36,11 +38,18 @@ static void update_view_matrix(void)
     glBufferSubData(GL_UNIFORM_BUFFER, 0, 16 * sizeof(GLfloat), game_context.camera.view);
 }
 
-static void update_proj_matrix()
+static void update_proj_matrix(void)
 {
     orthographic(game_context.camera.proj, window_aspect_ratio(), game_context.camera.zoom);
     glBindBuffer(GL_UNIFORM_BUFFER, game_context.camera.matrices_ubo);
     glBufferSubData(GL_UNIFORM_BUFFER, 16 * sizeof(GLfloat), 16 * sizeof(GLfloat), game_context.camera.proj);
+}
+
+static void lock_onto_target(void)
+{
+    if (game_context.player == NULL)
+        return;
+    game_context.camera.position = vec3_sub(game_context.player->position, vec3_scale(game_context.camera.facing, DISTANCE_FROM_PLAYER));
 }
 
 void camera_init(void)
@@ -56,8 +65,8 @@ void camera_init(void)
     game_context.camera.fov = DEFAULT_FOV;
     game_context.camera.move_speed = DEFAULT_MOVESPEED;
     game_context.camera.rotate_speed = DEFAULT_ROTSPEED;
-    game_context.camera.position = DEFAULT_POSITION;
     update_orientation_vectors();
+    lock_onto_target();
     update_view_matrix();
     update_proj_matrix();
 }
@@ -73,8 +82,11 @@ void camera_move(vec2 mag, f32 dt)
     direction = vec2_add(direction, vec2_scale(facing, mag.x));
     direction = vec2_add(direction, vec2_scale(right, mag.y));
     direction = vec2_scale(vec2_normalize(direction), game_context.camera.move_speed * dt);
-    game_context.camera.position.x += direction.x;
-    game_context.camera.position.z += direction.y;
+    if (game_context.player != NULL) {
+        game_context.player->position.x += direction.x;
+        game_context.player->position.z += direction.y;
+        lock_onto_target();
+    }
     update_view_matrix();
 }
 
@@ -85,6 +97,7 @@ void camera_rotate(f32 mag, f32 dt)
         game_context.camera.yaw -= 2 * PI;
     else if (game_context.camera.yaw < 0)
         game_context.camera.yaw += 2 * PI;
+    lock_onto_target();
     update_orientation_vectors();
     update_view_matrix();
 }
@@ -96,6 +109,7 @@ void camera_tilt(f32 mag, f32 dt)
         game_context.camera.pitch = PI / 2 - EPSILON;
     else if (game_context.camera.pitch < -PI / 2 + EPSILON)
         game_context.camera.pitch = -PI / 2 + EPSILON;
+    lock_onto_target();
     update_orientation_vectors();
     update_view_matrix();
 }
