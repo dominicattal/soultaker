@@ -151,6 +151,7 @@ static void compile_shader_program_entity_comp(void)
     detach(SHADER_PROGRAM_ENTITY_COMP, comp);
     delete(comp);
     shader_bind_uniform_block(SHADER_PROGRAM_ENTITY_COMP, UBO_INDEX_MATRICES, "Matrices");
+    shader_bind_uniform_block(SHADER_PROGRAM_ENTITY_COMP, UBO_INDEX_WINDOW, "Window");
 }
 
 void shader_program_compile(ShaderProgramEnum program)

@@ -21,11 +21,11 @@ void game_render_init(void)
 
     f32 test_data[] = {
         0.0f, 0.0f, 0.0f,
-        20.0f, 0.0f, 0.0f,
-        20.0f, 0.0f, 20.0f, 
+        1.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 1.0f, 
         0.0f, 0.0f, 0.0f,
-        20.0f, 0.0f, 20.0f, 
-        0.0f, 0.0f, 20.0f
+        1.0f, 0.0f, 1.0f, 
+        0.0f, 0.0f, 1.0f
     };
 
     glBindVertexArray(s_vao);
@@ -46,7 +46,6 @@ void game_render_init(void)
 void game_render(void)
 {
     shader_use(SHADER_PROGRAM_GAME);
-    glEnable(GL_DEPTH_TEST);
     glBindVertexArray(s_vao);
     glBindBuffer(GL_ARRAY_BUFFER, s_vbo);
     glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -54,6 +53,7 @@ void game_render(void)
     if (game_context.player == NULL)
         return;
 
+    glEnable(GL_DEPTH_TEST);
     shader_use(SHADER_PROGRAM_ENTITY_COMP);
     glUniform1i(shader_get_uniform_location(SHADER_PROGRAM_ENTITY_COMP, "N"), 1);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, s_ent_vbo);
@@ -62,18 +62,9 @@ void game_render(void)
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, s_ent_ssbo);
     glDispatchCompute(1, 1, 1);
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-    GLfloat* buf = malloc(6 * 4 * sizeof(GLfloat));
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, s_ent_ssbo);
-    glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, 6 * 4 * sizeof(GLfloat), buf);
-    vec3_print(game_context.player->position);
-    for (i32 i = 0; i < 6 * 4; i++)
-        printf((i % 4 == 3) ? "%f\n" : "%f ", buf[i]);
-    puts("");
-    free(buf);
 
     shader_use(SHADER_PROGRAM_ENTITY);
     glBindVertexArray(s_ent_vao);
-    //glBindBuffer(GL_VERTEX_ARRAY, s_ent_ssbo);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 

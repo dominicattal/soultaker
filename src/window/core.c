@@ -35,12 +35,15 @@ void window_init(void)
 
     window_context.dt = 0;
 
+    GLfloat aspect_ratio = (GLfloat)window_context.width / window_context.height;
+
     glGenBuffers(1, &window_context.ubo);
     glBindBuffer(GL_UNIFORM_BUFFER, window_context.ubo);
     glBindBufferBase(GL_UNIFORM_BUFFER, UBO_INDEX_WINDOW, window_context.ubo);
-    glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(i32), NULL, GL_STATIC_DRAW);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(i32), &window_context.width);
-    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(i32), sizeof(i32), &window_context.height);
+    glBufferData(GL_UNIFORM_BUFFER, 3 * sizeof(GLint), NULL, GL_STATIC_DRAW);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(GLint), &window_context.width);
+    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLint), sizeof(GLint), &window_context.height);
+    glBufferSubData(GL_UNIFORM_BUFFER, 2 * sizeof(GLint), sizeof(GLfloat), &aspect_ratio);
 }
 
 void window_update(void)

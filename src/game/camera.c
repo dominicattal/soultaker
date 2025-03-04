@@ -8,7 +8,7 @@
 #define DEFAULT_YAW         PI
 #define DEFAULT_PITCH       PI / 6
 #define DEFAULT_FOV         PI / 4
-#define DEFAULT_ZOOM        5
+#define DEFAULT_ZOOM        1
 #define DEFAULT_ROTSPEED    1
 #define DEFAULT_MOVESPEED   1
 #define DEFAULT_POSITION    vec3_create(0, 5, 0)
@@ -43,6 +43,7 @@ static void update_proj_matrix(void)
     orthographic(game_context.camera.proj, window_aspect_ratio(), game_context.camera.zoom);
     glBindBuffer(GL_UNIFORM_BUFFER, game_context.camera.matrices_ubo);
     glBufferSubData(GL_UNIFORM_BUFFER, 16 * sizeof(GLfloat), 16 * sizeof(GLfloat), game_context.camera.proj);
+    glBufferSubData(GL_UNIFORM_BUFFER, 32 * sizeof(GLfloat), sizeof(GLfloat), &game_context.camera.zoom);
 }
 
 static void lock_onto_target(void)
@@ -56,7 +57,7 @@ void camera_init(void)
 {
     glGenBuffers(1, &game_context.camera.matrices_ubo);
     glBindBuffer(GL_UNIFORM_BUFFER, game_context.camera.matrices_ubo);
-    glBufferData(GL_UNIFORM_BUFFER, 32 * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
+    glBufferData(GL_UNIFORM_BUFFER, 33 * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
     glBindBufferBase(GL_UNIFORM_BUFFER, UBO_INDEX_MATRICES, game_context.camera.matrices_ubo);
 
     game_context.camera.yaw = DEFAULT_YAW;
@@ -85,9 +86,9 @@ void camera_move(vec2 mag, f32 dt)
     if (game_context.player != NULL) {
         game_context.player->position.x += direction.x;
         game_context.player->position.z += direction.y;
-        lock_onto_target();
     }
     update_view_matrix();
+    lock_onto_target();
 }
 
 void camera_rotate(f32 mag, f32 dt)
@@ -97,8 +98,8 @@ void camera_rotate(f32 mag, f32 dt)
         game_context.camera.yaw -= 2 * PI;
     else if (game_context.camera.yaw < 0)
         game_context.camera.yaw += 2 * PI;
-    lock_onto_target();
     update_orientation_vectors();
+    lock_onto_target();
     update_view_matrix();
 }
 
