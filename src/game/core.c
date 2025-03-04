@@ -3,11 +3,6 @@
 
 GameContext game_context;
 
-void do_something(f32 dt) 
-{
-    sleep(1);
-}
-
 void game_update_vertex_data()
 {
     #define FLOATS_PER_VERTEX 4
@@ -39,14 +34,12 @@ void game_update_vertex_data()
 void* game_update(void* vargp)
 {
     f64 start;
-    f32 dt = 0;
     entity_init();
     while (!game_context.kill_thread)
     {
         start = get_time();
-        do_something(dt);
         game_update_vertex_data();
-        dt = get_time() - start;
+        game_context.dt = get_time() - start;
     }
     entity_cleanup();
     return NULL;
@@ -69,4 +62,9 @@ void game_cleanup(void)
     camera_cleanup();
     free(game_context.data.entity_buffer);
     free(game_context.data_swap.entity_buffer);
+}
+
+f32 game_dt(void)
+{
+    return game_context.dt;
 }

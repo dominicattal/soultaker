@@ -250,22 +250,24 @@ static void gui_update_comps(f32 dt)
 static void* gui_loop(void* vargp)
 {
     f64 start;
-    f32 dt;
-    dt = 0;
     gui_comp_init();
     gui_preset_load(GUI_PRESET_DEBUG);
     while (!gui_context.kill_thread)
     {
         start = get_time();
-        gui_update_comps(dt);
+        gui_update_comps(gui_context.dt);
         gui_update_vertex_data();
         gui_event_queue_flush(&gui_context.event_queue);
-        dt = get_time() - start;
+        gui_context.dt = get_time() - start;
     }
     gui_comp_cleanup();
     return NULL;
 }
 
+f32 gui_dt(void)
+{
+    return gui_context.dt;
+}
 void gui_init(void)
 {
     gui_render_init();

@@ -12,6 +12,8 @@ void game_render_cleanup(void);
 void game_key_callback(i32 key, i32 scancode, i32 action, i32 mods);
 void game_mouse_button_callback(i32 button, i32 action, i32 mods);
 
+f32 game_dt(void);
+
 f32 camera_get_pitch(void);
 f32 camera_get_yaw(void);
 f32 camera_get_zoom(void);

@@ -6,6 +6,8 @@ void entity_init(void)
 {
     game_context.entities = list_create();
     game_context.player = entity_create(vec3_create(0, 0, 0));
+    entity_create(vec3_create(5, 0, 0));
+    entity_create(vec3_create(0, 0, 4));
 }
 
 Entity* entity_create(vec3 position)

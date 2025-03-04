@@ -24,7 +24,7 @@ static void update_info(GUIComp* comp, f32 dt)
         f32 pitch = camera_get_pitch();
         f32 zoom = camera_get_zoom();
         f32 yaw = camera_get_yaw();
-        char string[300];
+        char string[400];
         char buf[100];
         for (i32 i = 0; i < 300; i++)
             string[i] = '\0';
@@ -36,17 +36,19 @@ static void update_info(GUIComp* comp, f32 dt)
         strncat(string, buf, 100);
         sprintf(buf, "pitch: %-7.3f yaw: %-7.3f zoom: %-7.3f\n", pitch, yaw, zoom);
         strncat(string, buf, 100);
+        sprintf(buf, "Main: %-6.3f GUI: %-6.3f Game: %-6.3f\n", state_dt() * 1000, gui_dt() * 1000, game_dt() * 1000);
+        strncat(string, buf, 100);
         gui_comp_set_text(comp, string);
     }
 }
 
 void load_preset_debug(GUIComp* root)
 {
-    GUIComp* info = gui_comp_create(0, 0, 400, 50);
+    GUIComp* info = gui_comp_create(0, 0, 400, 70);
     gui_comp_set_color(info, 255, 255, 255, 100);
     gui_comp_set_is_text(info, true);
     gui_comp_set_font_size(info, 16);
-    gui_comp_set_font(info, FONT_MOJANGLES);
+    gui_comp_set_font(info, FONT_MONOSPACE);
     info->update_func = update_info;
     info->data = create_comp_data(); 
     gui_comp_attach(root, info);
