@@ -28,6 +28,7 @@ typedef struct {
     bool kill_thread;
     pthread_t thread_id;
     pthread_mutex_t data_mutex;
+    f32 dt;
 } GameContext;
 
 extern GameContext game_context;

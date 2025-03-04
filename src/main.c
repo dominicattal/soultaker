@@ -1,3 +1,4 @@
+#include "util.h"
 #include "window.h"
 #include "renderer.h"
 #include "game.h"
@@ -5,6 +6,8 @@
 #include "audio.h"
 #include <stdio.h>
 #include <pthread.h>
+
+static f32 dt;
 
 void state_init(void)
 {
@@ -19,7 +22,6 @@ void state_init(void)
 void state_loop(void)
 {
     f64 start;
-    f32 dt;
     while (!window_closed())
     {
         start = get_time();
@@ -37,6 +39,11 @@ void state_cleanup(void)
     audio_cleanup();
     renderer_cleanup();
     window_cleanup();
+}
+
+f32 state_dt(void)
+{
+    return dt;
 }
 
 int main()

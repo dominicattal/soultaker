@@ -36,6 +36,7 @@ void gui_preset_load(GUIPreset preset);
 
 void gui_init(void);
 void gui_cleanup(void);
+f32  gui_dt(void);
 
 void gui_render_init(void);
 void gui_render(void);

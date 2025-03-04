@@ -73,6 +73,7 @@ typedef struct GUIContext {
     pthread_t thread_id;
     pthread_mutex_t data_mutex;
     GUIEventQueue event_queue;
+    f32 dt;
 } GUIContext;
 
 extern GUIContext gui_context;
