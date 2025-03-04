@@ -9,6 +9,7 @@ layout (location = 4) in float aTexLocation;
 layout (std140) uniform Window {
     int width;
     int height;
+    float aspect_ratio;
 } window;
 
 out vec2 TexCoord;

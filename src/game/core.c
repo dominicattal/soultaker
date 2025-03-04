@@ -18,6 +18,7 @@ void* game_update(void* vargp)
         do_something(dt);
         dt = get_time() - start;
     }
+    entity_cleanup();
     return NULL;
 }
 

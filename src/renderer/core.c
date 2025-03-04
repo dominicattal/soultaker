@@ -32,6 +32,7 @@ void renderer_render(void)
 void renderer_cleanup(void)
 {
     shader_cleanup();
+    texture_cleanup();
 }
 
 static void GLAPIENTRY message_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
