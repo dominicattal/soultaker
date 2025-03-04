@@ -8,7 +8,7 @@
 #define DEFAULT_YAW         PI
 #define DEFAULT_PITCH       PI / 6
 #define DEFAULT_FOV         PI / 4
-#define DEFAULT_ZOOM        1
+#define DEFAULT_ZOOM        7
 #define DEFAULT_ROTSPEED    1
 #define DEFAULT_MOVESPEED   1
 #define DEFAULT_POSITION    vec3_create(0, 5, 0)
@@ -18,6 +18,8 @@
 
 #define MIN_ZOOM 1
 #define MAX_ZOOM 15
+#define MIN_PITCH 0
+#define MAX_PITCH PI / 2
 
 extern GameContext game_context;
 
@@ -109,10 +111,10 @@ void camera_rotate(f32 mag, f32 dt)
 void camera_tilt(f32 mag, f32 dt)
 {
     game_context.camera.pitch += mag * dt * game_context.camera.rotate_speed;
-    if (game_context.camera.pitch > PI / 2 - EPSILON)
-        game_context.camera.pitch = PI / 2 - EPSILON;
-    else if (game_context.camera.pitch < -PI / 2 + EPSILON)
-        game_context.camera.pitch = -PI / 2 + EPSILON;
+    if (game_context.camera.pitch > MAX_PITCH - EPSILON)
+        game_context.camera.pitch = MAX_PITCH - EPSILON;
+    else if (game_context.camera.pitch < MIN_PITCH + EPSILON)
+        game_context.camera.pitch = MIN_PITCH + EPSILON;
     lock_onto_target();
     update_orientation_vectors();
     update_view_matrix();
