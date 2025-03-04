@@ -16,6 +16,9 @@
 
 #define DISTANCE_FROM_PLAYER 10
 
+#define MIN_ZOOM 1
+#define MAX_ZOOM 15
+
 extern GameContext game_context;
 
 static void view(f32 view[16], vec3 right, vec3 up, vec3 facing, vec3 position);
@@ -115,9 +118,13 @@ void camera_tilt(f32 mag, f32 dt)
     update_view_matrix();
 }
 
-void camera_zoom(f32 mag, f32 dt)
+void camera_zoom(i32 mag)
 {
-    game_context.camera.zoom += mag * dt;
+    game_context.camera.zoom += mag;
+    if (game_context.camera.zoom < MIN_ZOOM)
+        game_context.camera.zoom = MIN_ZOOM;
+    else if (game_context.camera.zoom > MAX_ZOOM)
+        game_context.camera.zoom = MAX_ZOOM;
     update_proj_matrix();
 }
 
