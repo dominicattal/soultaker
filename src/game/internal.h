@@ -33,7 +33,7 @@ void camera_init(void);
 void camera_move(vec2 mag, f32 dt);
 void camera_rotate(f32 mag, f32 dt);
 void camera_tilt(f32 mag, f32 dt);
-void camera_zoom(f32 mag, f32 dt);
+void camera_zoom(i32 mag);
 void camera_cleanup(void);
 
 vec3 camera_position(void);
