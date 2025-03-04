@@ -3,7 +3,10 @@
 
 #include "type.h"
 
-typedef struct List List;
+typedef struct List {
+    void** buffer;
+    i32 length, capacity;
+} List;
 
 List* list_create(void);
 void  list_append(List* list, void* item);
