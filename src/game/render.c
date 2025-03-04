@@ -35,10 +35,7 @@ void game_render_init(void)
     glEnableVertexAttribArray(0);
 
     glBindVertexArray(s_ent_vao);
-    glBindBuffer(GL_ARRAY_BUFFER, s_ent_vbo);
-    glBufferData(GL_ARRAY_BUFFER, 3 * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, s_ent_ssbo);
-    glBufferData(GL_ARRAY_BUFFER, 4 * 6 * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void*)0);
     glEnableVertexAttribArray(0);
 }
@@ -55,9 +52,15 @@ void game_render(void)
 
     glEnable(GL_DEPTH_TEST);
     shader_use(SHADER_PROGRAM_ENTITY_COMP);
-    glUniform1i(shader_get_uniform_location(SHADER_PROGRAM_ENTITY_COMP, "N"), 1);
+    pthread_mutex_lock(&game_context.data_mutex);
+    i32 entity_length = game_context.data.entity_length;
+    glUniform1i(shader_get_uniform_location(SHADER_PROGRAM_ENTITY_COMP, "N"), entity_length);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, s_ent_vbo);
-    glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, 3 * sizeof(GLfloat), &game_context.player->position);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, entity_length * sizeof(GLfloat), game_context.data.entity_buffer, GL_STATIC_DRAW);
+    pthread_mutex_unlock(&game_context.data_mutex);
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, s_ent_ssbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, 6 * entity_length * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, s_ent_vbo);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, s_ent_ssbo);
     glDispatchCompute(1, 1, 1);
@@ -65,7 +68,7 @@ void game_render(void)
 
     shader_use(SHADER_PROGRAM_ENTITY);
     glBindVertexArray(s_ent_vao);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glDrawArrays(GL_TRIANGLES, 0, 6 * entity_length / 4);
 }
 
 void game_render_cleanup(void)

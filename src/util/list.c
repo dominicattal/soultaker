@@ -4,11 +4,6 @@
 
 #define RESIZE_LENGTH 10
 
-typedef struct List {
-    void** buffer;
-    i32 length, capacity;
-} List;
-
 List* list_create(void)
 {
     List* list = malloc(sizeof(List));

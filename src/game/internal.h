@@ -15,11 +15,19 @@ typedef struct {
 } Entity;
 
 typedef struct {
+    GLint entity_length, entity_capacity;
+    GLfloat* entity_buffer;
+} GameData;
+
+typedef struct {
+    GameData data;
+    GameData data_swap;
     Entity* player;
     List* entities;
     Camera camera;
     bool kill_thread;
     pthread_t thread_id;
+    pthread_mutex_t data_mutex;
 } GameContext;
 
 extern GameContext game_context;
