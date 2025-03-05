@@ -42,10 +42,12 @@ typedef struct {
     u32 texture_units[NUM_TEXTURE_UNITS];
 } TextureContext;
 
-#define NUM_IMAGES_TO_PACK 2
+#define NUM_IMAGES_TO_PACK 4
 static Image images[NUM_IMAGES_TO_PACK] = {
     (Image) {TEX_NONE, "assets/textures/none.png"},
     (Image) {TEX_COLOR, "assets/textures/color.png"},
+    (Image) {TEX_TILE_1, "assets/textures/tile_1.png"},
+    (Image) {TEX_TILE_2, "assets/textures/tile_2.png"}
 };
 /*
 static const char* image_paths[NUM_TEXTURES] = {
@@ -314,12 +316,12 @@ static void initialize_rects(i32* tex_unit_location)
     free(image_data);
 }
 
-void texture_info(TextureEnum tex, f32* u1, f32* v1, f32* u2, f32* v2, i32* location)
+void texture_info(TextureEnum tex, f32* u, f32* v, f32* w, f32* h, i32* location)
 {
-    *u1 = ctx.textures[tex].u;
-    *v1 = ctx.textures[tex].v;
-    *u2 = ctx.textures[tex].u + ctx.textures[tex].w;
-    *v2 = ctx.textures[tex].v + ctx.textures[tex].h;
+    *u = ctx.textures[tex].u;
+    *v = ctx.textures[tex].v;
+    *w = ctx.textures[tex].w;
+    *h = ctx.textures[tex].h;
     *location = ctx.textures[tex].location;
 }
 

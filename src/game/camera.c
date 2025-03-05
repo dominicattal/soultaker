@@ -14,7 +14,7 @@
 #define DEFAULT_POSITION    vec3_create(0, 5, 0)
 #define Y_AXIS              vec3_create(0, 1, 0)
 
-#define DISTANCE_FROM_PLAYER 10
+#define DISTANCE_FROM_PLAYER 100
 
 #define MIN_ZOOM 1
 #define MAX_ZOOM 15

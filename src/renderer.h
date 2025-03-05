@@ -16,6 +16,8 @@ typedef enum {
 typedef enum {
     TEX_NONE,
     TEX_COLOR,
+    TEX_TILE_1,
+    TEX_TILE_2,
     NUM_TEXTURES
 } TextureEnum;
 
@@ -59,7 +61,7 @@ void shader_bind_uniform_block(ShaderProgramEnum program, u32 index, const char*
 void shader_cleanup(void);
 
 void texture_init(void);
-void texture_info(TextureEnum tex, f32* u1, f32* v1, f32* u2, f32* v2, i32* location);
+void texture_info(TextureEnum tex, f32* u, f32* v, f32* w, f32* h, i32* location);
 void texture_atlas_load(TextureAtlasEnum atlas);
 void texture_atlas_unload(TextureAtlasEnum atlas);
 void texture_cleanup(void);
