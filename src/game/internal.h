@@ -16,6 +16,7 @@ typedef struct {
 
 typedef struct {
     vec2 position;
+    i32 tex;
 } Tile;
 
 typedef struct {

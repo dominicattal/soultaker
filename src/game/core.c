@@ -1,5 +1,5 @@
 #include "internal.h"
-#include <assert.h>
+#include "../renderer.h"
 
 GameContext game_context;
 
@@ -29,7 +29,7 @@ static void update_entity_vertex_data()
 
 static void update_tile_vertex_data()
 {
-    #define FLOATS_PER_VERTEX 2
+    #define FLOATS_PER_VERTEX 7
     if (FLOATS_PER_VERTEX * game_context.tiles->capacity > game_context.data_swap.tile_capacity) {
         game_context.data_swap.tile_capacity = game_context.tiles->capacity;
         size_t size = FLOATS_PER_VERTEX * game_context.data_swap.tile_capacity * sizeof(GLfloat);
@@ -40,10 +40,18 @@ static void update_tile_vertex_data()
         assert(game_context.tiles != NULL);
     }
     game_context.data_swap.tile_length = 0;
+    f32 u, v, w, h;
+    i32 location;
     for (i32 i = 0; i < game_context.tiles->length; i++) {
         Tile* tile = list_get(game_context.tiles, i);
-        game_context.data_swap.tile_buffer[2*i]   = tile->position.x;
-        game_context.data_swap.tile_buffer[2*i+1] = tile->position.y;
+        texture_info(tile->tex, &u, &v, &w, &h, &location);
+        game_context.data_swap.tile_buffer[7*i]   = tile->position.x;
+        game_context.data_swap.tile_buffer[7*i+1] = tile->position.y;
+        game_context.data_swap.tile_buffer[7*i+2] = u;
+        game_context.data_swap.tile_buffer[7*i+3] = v;
+        game_context.data_swap.tile_buffer[7*i+4] = w;
+        game_context.data_swap.tile_buffer[7*i+5] = h;
+        game_context.data_swap.tile_buffer[7*i+6] = location;
         game_context.data_swap.tile_length += FLOATS_PER_VERTEX;
     }
     #undef FLOATS_PER_VERTEX

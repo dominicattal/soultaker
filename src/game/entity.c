@@ -25,5 +25,6 @@ void entity_destroy(Entity* entity)
 
 void entity_cleanup(void)
 {
-    list_destroy(game_context.entities);
+    if (game_context.entities != NULL)
+        list_destroy(game_context.entities);
 }

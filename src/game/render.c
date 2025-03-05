@@ -39,9 +39,15 @@ void game_render_init(void)
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (void*)0);
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, tile_buffers.instance_vbo);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (void*)0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)0);
+    glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)(2 * sizeof(GLfloat)));
+    glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)(6 * sizeof(GLfloat)));
     glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
+    glEnableVertexAttribArray(3);
     glVertexAttribDivisor(1, 1);
+    glVertexAttribDivisor(2, 1);
+    glVertexAttribDivisor(3, 1);
 
     glBindVertexArray(s_ent_vao);
     glBindBuffer(GL_ARRAY_BUFFER, s_ent_ssbo);
@@ -56,10 +62,10 @@ void game_render(void)
     glBindBuffer(GL_ARRAY_BUFFER, tile_buffers.instance_vbo);
     pthread_mutex_lock(&game_context.data_mutex);
     i32 tile_length = game_context.data.tile_length;
-    i32 num_tiles = tile_length / 2;
+    i32 num_tiles = tile_length / 7;
     glBufferData(GL_ARRAY_BUFFER, tile_length * sizeof(GLfloat), game_context.data.tile_buffer, GL_STATIC_DRAW);
     pthread_mutex_unlock(&game_context.data_mutex);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 6 * num_tiles);
+    glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, num_tiles);
     
     glEnable(GL_DEPTH_TEST);
     shader_use(SHADER_PROGRAM_ENTITY_COMP);
