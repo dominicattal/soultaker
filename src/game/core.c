@@ -3,10 +3,10 @@
 
 GameContext game_context;
 
-void game_update_vertex_data()
+static void update_entity_vertex_data()
 {
     #define FLOATS_PER_VERTEX 4
-    if (game_context.entities->capacity > game_context.data_swap.entity_capacity) {
+    if (FLOATS_PER_VERTEX * game_context.entities->capacity > game_context.data_swap.entity_capacity) {
         game_context.data_swap.entity_capacity = game_context.entities->capacity;
         size_t size = FLOATS_PER_VERTEX * game_context.data_swap.entity_capacity * sizeof(GLfloat);
         if (game_context.entities == NULL)
@@ -24,6 +24,35 @@ void game_update_vertex_data()
         game_context.data_swap.entity_buffer[4*i+3] = 1.0f;
         game_context.data_swap.entity_length += FLOATS_PER_VERTEX;
     }
+    #undef FLOATS_PER_VERTEX
+}
+
+static void update_tile_vertex_data()
+{
+    #define FLOATS_PER_VERTEX 2
+    if (FLOATS_PER_VERTEX * game_context.tiles->capacity > game_context.data_swap.tile_capacity) {
+        game_context.data_swap.tile_capacity = game_context.tiles->capacity;
+        size_t size = FLOATS_PER_VERTEX * game_context.data_swap.tile_capacity * sizeof(GLfloat);
+        if (game_context.tiles == NULL)
+            game_context.data_swap.tile_buffer = malloc(size);
+        else
+            game_context.data_swap.tile_buffer = realloc(game_context.data_swap.tile_buffer, size);
+        assert(game_context.tiles != NULL);
+    }
+    game_context.data_swap.tile_length = 0;
+    for (i32 i = 0; i < game_context.tiles->length; i++) {
+        Tile* tile = list_get(game_context.tiles, i);
+        game_context.data_swap.tile_buffer[2*i]   = tile->position.x;
+        game_context.data_swap.tile_buffer[2*i+1] = tile->position.y;
+        game_context.data_swap.tile_length += FLOATS_PER_VERTEX;
+    }
+    #undef FLOATS_PER_VERTEX
+}
+
+void game_update_vertex_data()
+{
+    update_entity_vertex_data();
+    update_tile_vertex_data();
     pthread_mutex_lock(&game_context.data_mutex);
     GameData tmp = game_context.data;
     game_context.data = game_context.data_swap;
@@ -34,23 +63,23 @@ void game_update_vertex_data()
 void* game_update(void* vargp)
 {
     f64 start;
-    entity_init();
     while (!game_context.kill_thread)
     {
         start = get_time();
         game_update_vertex_data();
         game_context.dt = get_time() - start;
     }
-    entity_cleanup();
     return NULL;
 }
 
 void game_init(void)
 {
-    pthread_mutex_init(&game_context.data_mutex, NULL);
-    pthread_create(&game_context.thread_id, NULL, game_update, NULL);
+    tile_init();
+    entity_init();
     camera_init();
     game_render_init();
+    pthread_mutex_init(&game_context.data_mutex, NULL);
+    pthread_create(&game_context.thread_id, NULL, game_update, NULL);
 }
 
 void game_cleanup(void)
@@ -60,6 +89,8 @@ void game_cleanup(void)
     pthread_mutex_destroy(&game_context.data_mutex);
     game_render_cleanup();
     camera_cleanup();
+    entity_cleanup();
+    tile_cleanup();
     free(game_context.data.entity_buffer);
     free(game_context.data_swap.entity_buffer);
 }
