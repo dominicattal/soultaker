@@ -15,6 +15,12 @@ typedef struct {
 } Entity;
 
 typedef struct {
+    vec2 position;
+} Tile;
+
+typedef struct {
+    GLint tile_length, tile_capacity;
+    GLfloat* tile_buffer;
     GLint entity_length, entity_capacity;
     GLfloat* entity_buffer;
 } GameData;
@@ -24,6 +30,7 @@ typedef struct {
     GameData data_swap;
     Entity* player;
     List* entities;
+    List* tiles;
     Camera camera;
     bool kill_thread;
     pthread_t thread_id;
@@ -37,6 +44,11 @@ void entity_init(void);
 Entity* entity_create(vec3 position);
 void entity_destroy(Entity* entity);
 void entity_cleanup(void);
+
+void tile_init(void);
+Tile* tile_create(vec2 position);
+void tile_destroy(Tile* tile);
+void tile_cleanup(void);
 
 void camera_init(void);
 void camera_move(vec2 mag, f32 dt);

@@ -79,6 +79,8 @@ void camera_init(void)
 
 void camera_move(vec2 mag, f32 dt)
 {
+    if (game_context.player == NULL)
+        return;
     vec2 direction = vec2_create(0, 0);
     vec2 facing, right;
     facing.x = game_context.camera.facing.x;
@@ -88,12 +90,10 @@ void camera_move(vec2 mag, f32 dt)
     direction = vec2_add(direction, vec2_scale(facing, mag.x));
     direction = vec2_add(direction, vec2_scale(right, mag.y));
     direction = vec2_scale(vec2_normalize(direction), game_context.camera.move_speed * dt);
-    if (game_context.player != NULL) {
-        game_context.player->position.x += direction.x;
-        game_context.player->position.z += direction.y;
-    }
-    update_view_matrix();
+    game_context.player->position.x += direction.x;
+    game_context.player->position.z += direction.y;
     lock_onto_target();
+    update_view_matrix();
 }
 
 void camera_rotate(f32 mag, f32 dt)
@@ -115,8 +115,8 @@ void camera_tilt(f32 mag, f32 dt)
         game_context.camera.pitch = MAX_PITCH - EPSILON;
     else if (game_context.camera.pitch < MIN_PITCH + EPSILON)
         game_context.camera.pitch = MIN_PITCH + EPSILON;
-    lock_onto_target();
     update_orientation_vectors();
+    lock_onto_target();
     update_view_matrix();
 }
 

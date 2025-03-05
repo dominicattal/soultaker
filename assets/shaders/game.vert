@@ -1,6 +1,6 @@
 #version 460 core
 
-layout (location = 0) in vec3 aPosition;
+layout (location = 0) in vec2 aPosition;
 
 layout (std140) uniform Matrices {
     mat4 view;
@@ -9,5 +9,5 @@ layout (std140) uniform Matrices {
 };
 
 void main() {
-    gl_Position = proj * view * vec4(aPosition, 1.0f);
+    gl_Position = proj * view * vec4(aPosition.x, 0.0f, aPosition.y, 1.0f);
 }
