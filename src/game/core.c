@@ -5,7 +5,7 @@ GameContext game_context;
 
 static void update_entity_vertex_data()
 {
-    #define FLOATS_PER_VERTEX 4
+    #define FLOATS_PER_VERTEX 8
     if (FLOATS_PER_VERTEX * game_context.entities->capacity > game_context.data_swap.entity_capacity) {
         game_context.data_swap.entity_capacity = game_context.entities->capacity;
         size_t size = FLOATS_PER_VERTEX * game_context.data_swap.entity_capacity * sizeof(GLfloat);
@@ -16,12 +16,19 @@ static void update_entity_vertex_data()
         assert(game_context.entities != NULL);
     }
     game_context.data_swap.entity_length = 0;
+    f32 u, v, w, h;
+    i32 location;
+    texture_info(TEX_KNIGHT, &u, &v, &w, &h, &location);
     for (i32 i = 0; i < game_context.entities->length; i++) {
         Entity* entity = list_get(game_context.entities, i);
-        game_context.data_swap.entity_buffer[4*i]   = entity->position.x;
-        game_context.data_swap.entity_buffer[4*i+1] = entity->position.y;
-        game_context.data_swap.entity_buffer[4*i+2] = entity->position.z;
-        game_context.data_swap.entity_buffer[4*i+3] = 1.0f;
+        game_context.data_swap.entity_buffer[FLOATS_PER_VERTEX*i]   = entity->position.x;
+        game_context.data_swap.entity_buffer[FLOATS_PER_VERTEX*i+1] = entity->position.y;
+        game_context.data_swap.entity_buffer[FLOATS_PER_VERTEX*i+2] = entity->position.z;
+        game_context.data_swap.entity_buffer[FLOATS_PER_VERTEX*i+3] = 0;
+        game_context.data_swap.entity_buffer[FLOATS_PER_VERTEX*i+4] = 0;
+        game_context.data_swap.entity_buffer[FLOATS_PER_VERTEX*i+5] = 0;
+        game_context.data_swap.entity_buffer[FLOATS_PER_VERTEX*i+6] = 0;
+        game_context.data_swap.entity_buffer[FLOATS_PER_VERTEX*i+7] = 0;
         game_context.data_swap.entity_length += FLOATS_PER_VERTEX;
     }
     #undef FLOATS_PER_VERTEX

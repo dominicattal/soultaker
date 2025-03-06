@@ -18,6 +18,7 @@ typedef enum {
     TEX_COLOR,
     TEX_TILE_1,
     TEX_TILE_2,
+    TEX_KNIGHT,
     NUM_TEXTURES
 } TextureEnum;
 

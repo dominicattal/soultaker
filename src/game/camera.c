@@ -3,8 +3,8 @@
 #include "../window.h"
 #include <math.h>
 
-#define NEAR_CLIP_DISTANCE  0.0001f
-#define FAR_CLIP_DISTANCE   10000.0f
+#define NEAR_CLIP_DISTANCE  0.001f
+#define FAR_CLIP_DISTANCE   1000.0f
 #define DEFAULT_YAW         PI
 #define DEFAULT_PITCH       PI / 6
 #define DEFAULT_FOV         PI / 4

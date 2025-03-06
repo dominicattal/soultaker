@@ -42,12 +42,13 @@ typedef struct {
     u32 texture_units[NUM_TEXTURE_UNITS];
 } TextureContext;
 
-#define NUM_IMAGES_TO_PACK 4
+#define NUM_IMAGES_TO_PACK 5
 static Image images[NUM_IMAGES_TO_PACK] = {
     (Image) {TEX_NONE, "assets/textures/none.png"},
     (Image) {TEX_COLOR, "assets/textures/color.png"},
     (Image) {TEX_TILE_1, "assets/textures/tile_1.png"},
-    (Image) {TEX_TILE_2, "assets/textures/tile_2.png"}
+    (Image) {TEX_TILE_2, "assets/textures/tile_2.png"},
+    (Image) {TEX_KNIGHT, "assets/textures/knight_idle_down.png"}
 };
 /*
 static const char* image_paths[NUM_TEXTURES] = {
