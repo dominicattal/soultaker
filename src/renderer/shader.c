@@ -82,24 +82,24 @@ static void delete(u32 shader)
     glDeleteShader(shader);
 }
 
-static void compile_shader_program_game(void)
+static void compile_shader_program_tile(void)
 {
     u32 vert, frag;
-    vert = compile(GL_VERTEX_SHADER, "assets/shaders/game.vert");
-    frag = compile(GL_FRAGMENT_SHADER, "assets/shaders/game.frag");
-    attach(SHADER_PROGRAM_GAME, vert);
-    attach(SHADER_PROGRAM_GAME, frag);
-    link(SHADER_PROGRAM_GAME);
-    detach(SHADER_PROGRAM_GAME, vert);
-    detach(SHADER_PROGRAM_GAME, frag);
+    vert = compile(GL_VERTEX_SHADER, "assets/shaders/tile.vert");
+    frag = compile(GL_FRAGMENT_SHADER, "assets/shaders/tile.frag");
+    attach(SHADER_PROGRAM_TILE, vert);
+    attach(SHADER_PROGRAM_TILE, frag);
+    link(SHADER_PROGRAM_TILE);
+    detach(SHADER_PROGRAM_TILE, vert);
+    detach(SHADER_PROGRAM_TILE, frag);
     delete(vert);
     delete(frag);
     i32 texs[NUM_TEXTURE_UNITS];
     for (i32 i = 0; i < NUM_TEXTURE_UNITS; ++i)
         texs[i] = i;
-    shader_use(SHADER_PROGRAM_GAME);
-    glUniform1iv(shader_get_uniform_location(SHADER_PROGRAM_GAME, "textures"), NUM_TEXTURE_UNITS, texs);
-    shader_bind_uniform_block(SHADER_PROGRAM_GAME, UBO_INDEX_MATRICES, "Matrices");
+    shader_use(SHADER_PROGRAM_TILE);
+    glUniform1iv(shader_get_uniform_location(SHADER_PROGRAM_TILE, "textures"), NUM_TEXTURE_UNITS, texs);
+    shader_bind_uniform_block(SHADER_PROGRAM_TILE, UBO_INDEX_MATRICES, "Matrices");
 }
 
 static void compile_shader_program_gui(void)
@@ -157,8 +157,8 @@ static void compile_shader_program_entity_comp(void)
 void shader_program_compile(ShaderProgramEnum program)
 {
     switch (program) {
-        case SHADER_PROGRAM_GAME:
-            compile_shader_program_game();
+        case SHADER_PROGRAM_TILE:
+            compile_shader_program_tile();
             break;
         case SHADER_PROGRAM_GUI:
             compile_shader_program_gui();
@@ -180,7 +180,7 @@ void shader_init(void)
     for (i32 i = 0; i < NUM_SHADER_PROGRAMS; i++)
         shader_programs[i] = glCreateProgram();
     
-    shader_program_compile(SHADER_PROGRAM_GAME);
+    shader_program_compile(SHADER_PROGRAM_TILE);
     shader_program_compile(SHADER_PROGRAM_GUI);
     shader_program_compile(SHADER_PROGRAM_ENTITY);
     shader_program_compile(SHADER_PROGRAM_ENTITY_COMP);

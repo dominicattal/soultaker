@@ -8,5 +8,5 @@ in flat int Location;
 in vec2 TexCoord;
 
 void main() {
-    FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+    FragColor = texture(textures[Location], TexCoord);
 }
