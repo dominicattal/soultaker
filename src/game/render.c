@@ -65,12 +65,12 @@ void game_render_init(void)
 
 void game_render(void)
 {
-    shader_use(SHADER_PROGRAM_GAME);
+    shader_use(SHADER_PROGRAM_TILE);
     glBindVertexArray(tile_buffers.vao);
     glBindBuffer(GL_ARRAY_BUFFER, tile_buffers.instance_vbo);
     pthread_mutex_lock(&game_context.data_mutex);
     i32 tile_length = game_context.data.tile_length;
-    i32 num_tiles = tile_length / 4;
+    i32 num_tiles = tile_length / 7;
     glBufferData(GL_ARRAY_BUFFER, tile_length * sizeof(GLfloat), game_context.data.tile_buffer, GL_STATIC_DRAW);
     pthread_mutex_unlock(&game_context.data_mutex);
     glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, num_tiles);

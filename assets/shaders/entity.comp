@@ -53,7 +53,7 @@ void main() {
     data_out[idx++] = position.z;
     data_out[idx++] = position.w;
     data_out[idx++] = u1;
-    data_out[idx++] = v1;
+    data_out[idx++] = v2;
     data_out[idx++] = location;
     // Vertex 2
     data_out[idx++] = position.x + x / zoom;
@@ -61,7 +61,7 @@ void main() {
     data_out[idx++] = position.z;
     data_out[idx++] = position.w;
     data_out[idx++] = u2;
-    data_out[idx++] = v1;
+    data_out[idx++] = v2;
     data_out[idx++] = location;
     // Vertex 3
     data_out[idx++] = position.x - x / zoom;
@@ -69,7 +69,7 @@ void main() {
     data_out[idx++] = position.z;
     data_out[idx++] = position.w;
     data_out[idx++] = u1;
-    data_out[idx++] = v2;
+    data_out[idx++] = v1;
     data_out[idx++] = location;
     // Vertex 4
     data_out[idx++] = position.x + x / zoom;
@@ -77,7 +77,7 @@ void main() {
     data_out[idx++] = position.z;
     data_out[idx++] = position.w;
     data_out[idx++] = u2;
-    data_out[idx++] = v1;
+    data_out[idx++] = v2;
     data_out[idx++] = location;
     // Vertex 5
     data_out[idx++] = position.x - x / zoom;
@@ -85,7 +85,7 @@ void main() {
     data_out[idx++] = position.z;
     data_out[idx++] = position.w;
     data_out[idx++] = u1;
-    data_out[idx++] = v2;
+    data_out[idx++] = v1;
     data_out[idx++] = location;
     // Vertex 6
     data_out[idx++] = position.x + x / zoom;
@@ -93,6 +93,6 @@ void main() {
     data_out[idx++] = position.z;
     data_out[idx++] = position.w;
     data_out[idx++] = u2;
-    data_out[idx++] = v2;
+    data_out[idx++] = v1;
     data_out[idx++] = location;
 }
