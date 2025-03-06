@@ -24,11 +24,11 @@ static void update_entity_vertex_data()
         game_context.data_swap.entity_buffer[FLOATS_PER_VERTEX*i]   = entity->position.x;
         game_context.data_swap.entity_buffer[FLOATS_PER_VERTEX*i+1] = entity->position.y;
         game_context.data_swap.entity_buffer[FLOATS_PER_VERTEX*i+2] = entity->position.z;
-        game_context.data_swap.entity_buffer[FLOATS_PER_VERTEX*i+3] = 0;
-        game_context.data_swap.entity_buffer[FLOATS_PER_VERTEX*i+4] = 0;
-        game_context.data_swap.entity_buffer[FLOATS_PER_VERTEX*i+5] = 0;
-        game_context.data_swap.entity_buffer[FLOATS_PER_VERTEX*i+6] = 0;
-        game_context.data_swap.entity_buffer[FLOATS_PER_VERTEX*i+7] = 0;
+        game_context.data_swap.entity_buffer[FLOATS_PER_VERTEX*i+3] = u;
+        game_context.data_swap.entity_buffer[FLOATS_PER_VERTEX*i+4] = v;
+        game_context.data_swap.entity_buffer[FLOATS_PER_VERTEX*i+5] = w;
+        game_context.data_swap.entity_buffer[FLOATS_PER_VERTEX*i+6] = h;
+        game_context.data_swap.entity_buffer[FLOATS_PER_VERTEX*i+7] = location;
         game_context.data_swap.entity_length += FLOATS_PER_VERTEX;
     }
     #undef FLOATS_PER_VERTEX

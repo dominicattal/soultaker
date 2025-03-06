@@ -17,10 +17,16 @@ layout (std140) uniform Window {
 uniform int N;
 
 layout (std430, binding = 0) readonly buffer Input {
+    // vec3 position
+    // vec4 tex info
+    // float location
     float data_in[];
 };
 
 layout (std430, binding = 1) writeonly buffer Output {
+    // vec4 position
+    // vec4 tex coord
+    // float location
     float data_out[];
 };
 
@@ -31,37 +37,62 @@ void main() {
     vec4 position;
     position = vec4(data_in[idx], data_in[idx+1], data_in[idx+2], 1.0f);
     position = proj * view * position;
-    float x = 1.0f / 2.0f / window.aspect_ratio;
 
-    idx = 6 * 4 * gl_GlobalInvocationID.x;
+    float x, u1, v1, u2, v2, location;
+    x = 1.0f / 2.0f / window.aspect_ratio;
+    u1 = data_in[idx+3];
+    v1 = data_in[idx+4];
+    u2 = data_in[idx+3] + data_in[idx+5];
+    v2 = data_in[idx+4] + data_in[idx+6];
+    location = data_in[idx+7];
+
+    idx = 6 * 7 * gl_GlobalInvocationID.x;
     // Vertex 1
     data_out[idx++] = position.x - x / zoom;
     data_out[idx++] = position.y;
     data_out[idx++] = position.z;
     data_out[idx++] = position.w;
+    data_out[idx++] = u1;
+    data_out[idx++] = v1;
+    data_out[idx++] = location;
     // Vertex 2
     data_out[idx++] = position.x + x / zoom;
     data_out[idx++] = position.y;
     data_out[idx++] = position.z;
     data_out[idx++] = position.w;
+    data_out[idx++] = u2;
+    data_out[idx++] = v1;
+    data_out[idx++] = location;
     // Vertex 3
     data_out[idx++] = position.x - x / zoom;
     data_out[idx++] = position.y + 1.0f / zoom;
     data_out[idx++] = position.z;
     data_out[idx++] = position.w;
+    data_out[idx++] = u1;
+    data_out[idx++] = v2;
+    data_out[idx++] = location;
     // Vertex 4
     data_out[idx++] = position.x + x / zoom;
     data_out[idx++] = position.y;
     data_out[idx++] = position.z;
     data_out[idx++] = position.w;
+    data_out[idx++] = u2;
+    data_out[idx++] = v1;
+    data_out[idx++] = location;
     // Vertex 5
     data_out[idx++] = position.x - x / zoom;
     data_out[idx++] = position.y + 1.0f / zoom;
     data_out[idx++] = position.z;
     data_out[idx++] = position.w;
+    data_out[idx++] = u1;
+    data_out[idx++] = v2;
+    data_out[idx++] = location;
     // Vertex 6
     data_out[idx++] = position.x + x / zoom;
     data_out[idx++] = position.y + 1.0f / zoom;
     data_out[idx++] = position.z;
     data_out[idx++] = position.w;
+    data_out[idx++] = u2;
+    data_out[idx++] = v2;
+    data_out[idx++] = location;
 }
