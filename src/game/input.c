@@ -26,6 +26,6 @@ void game_process_input(f32 dt)
         camera_tilt(1, dt);
     if (window_get_key(GLFW_KEY_Y) == GLFW_PRESS)
         camera_tilt(-1, dt);
-    camera_move(move_mag);
+    camera_move(vec2_normalize(move_mag));
 }
 

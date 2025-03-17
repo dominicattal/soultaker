@@ -91,8 +91,10 @@ void camera_move(vec2 mag)
     vec2 facing, right;
     facing.x = game_context.camera.facing.x;
     facing.y = game_context.camera.facing.z;
+    facing = vec2_normalize(facing);
     right.x = game_context.camera.right.x;
     right.y = game_context.camera.right.z;
+    right = vec2_normalize(right);
     direction = vec2_add(direction, vec2_scale(facing, mag.x));
     direction = vec2_add(direction, vec2_scale(right, mag.y));
     direction = vec2_normalize(direction);
