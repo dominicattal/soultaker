@@ -68,7 +68,7 @@ static void update_tile_vertex_data()
 
 static void update_wall_vertex_data(void)
 {
-    #define FLOATS_PER_VERTEX (6 * 6 * 5)
+    #define FLOATS_PER_VERTEX (8 * 6 * 5)
     if (FLOATS_PER_VERTEX * game_context.walls->capacity > game_context.data_swap.wall_capacity) {
         game_context.data_swap.wall_capacity = game_context.walls->capacity;
         size_t size = FLOATS_PER_VERTEX * game_context.data_swap.wall_capacity * sizeof(GLfloat);
@@ -109,6 +109,8 @@ static void update_wall_vertex_data(void)
                 V = u + dx[winding[j]] * w;
                 V = v + dy[winding[j]] * h;
                 V = location;
+                V = wall->position.x + 0.5;
+                V = wall->position.y + 0.5;
             }
         }
         texture_info(wall->top_tex, &u, &v, &w, &h, &location);
@@ -120,6 +122,8 @@ static void update_wall_vertex_data(void)
             V = u + tx[winding[j]] * w;
             V = v + ty[winding[j]] * h;
             V = location;
+            V = wall->position.x + 0.5;
+            V = wall->position.y + 0.5;
         }
     }
     #undef V
