@@ -3,7 +3,7 @@
 
 GameContext game_context;
 
-static void update_entity_vertex_data()
+static void update_entity_vertex_data(void)
 {
     #define FLOATS_PER_VERTEX 8
     if (FLOATS_PER_VERTEX * game_context.entities->capacity > game_context.data_swap.entity_capacity) {
@@ -35,7 +35,7 @@ static void update_entity_vertex_data()
     #undef V
 }
 
-static void update_tile_vertex_data()
+static void update_tile_vertex_data(void)
 {
     #define FLOATS_PER_VERTEX 7
     if (FLOATS_PER_VERTEX * game_context.tiles->capacity > game_context.data_swap.tile_capacity) {
@@ -129,7 +129,7 @@ static void update_wall_vertex_data(void)
     #undef V
 }
 
-void game_update_vertex_data()
+static void game_update_vertex_data(void)
 {
     update_entity_vertex_data();
     update_tile_vertex_data();
@@ -141,12 +141,63 @@ void game_update_vertex_data()
     pthread_mutex_unlock(&game_context.data_mutex);
 }
 
-void* game_update(void* vargp)
+static void game_update(void)
+{
+    for (i32 i = 0; i < game_context.entities->length; i++)
+        entity_update(list_get(game_context.entities, i), game_context.dt);
+}
+
+static void collide_entity_wall(Entity* entity, Wall* wall)
+{
+    f32 ex, ez, dx, dz, wx, wz, sx, sz, r;
+    ex = entity->position.x;
+    ez = entity->position.z;
+    dx = entity->direction.x;
+    dz = entity->direction.z;
+    r = entity->hitbox_radius;
+    wx = wall->position.x;
+    wz = wall->position.y;
+    sx = 1;
+    sz = 1;
+    if (!(ex + r > wx && ex - r < wx + sx
+       && ez + r > wz && ez - r < wz + sz))
+        return;
+    ex = entity->prev_position.x;
+    ez = entity->prev_position.z;
+    if (ez + r > wz && ez - r < wz + sz) {
+        if (dx > 0)
+            entity->position.x = wx - r;
+        else
+            entity->position.x = wx + sx + r;
+        entity->direction.x = 0;
+    } else if (ex + r > wx && ex - r < wx + sx) {
+        if (dz > 0)
+            entity->position.z = wz - r;
+        else
+            entity->position.z = wz + sz + r;
+        entity->direction.z = 0;
+    }
+}
+
+static void game_collide(void)
+{
+    for (i32 i = 0; i < game_context.entities->length; i++) {
+        Entity* entity = list_get(game_context.entities, i);
+        for (i32 j = 0; j < game_context.walls->length; j++) {
+            Wall* wall = list_get(game_context.walls, j);
+            collide_entity_wall(entity, wall);
+        }
+    }
+}
+
+void* game_loop(void* vargp)
 {
     f64 start;
     while (!game_context.kill_thread)
     {
         start = get_time();
+        game_collide();
+        game_update();
         game_update_vertex_data();
         game_context.dt = get_time() - start;
     }
@@ -161,7 +212,7 @@ void game_init(void)
     camera_init();
     game_render_init();
     pthread_mutex_init(&game_context.data_mutex, NULL);
-    pthread_create(&game_context.thread_id, NULL, game_update, NULL);
+    pthread_create(&game_context.thread_id, NULL, game_loop, NULL);
 }
 
 void game_cleanup(void)

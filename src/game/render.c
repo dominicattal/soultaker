@@ -83,6 +83,7 @@ void game_render_init(void)
 
 void game_render(void)
 {
+    camera_update();
     // render tiles
     shader_use(SHADER_PROGRAM_TILE);
     glBindVertexArray(tile_buffers.vao);

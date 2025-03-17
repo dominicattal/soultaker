@@ -12,6 +12,10 @@ typedef struct {
 
 typedef struct {
     vec3 position;
+    vec3 prev_position;
+    vec3 direction;
+    f32 speed;
+    f32 hitbox_radius;
 } Entity;
 
 typedef struct {
@@ -52,6 +56,7 @@ extern GameContext game_context;
 
 void entity_init(void);
 Entity* entity_create(vec3 position);
+void entity_update(Entity* entity, f32 dt);
 void entity_destroy(Entity* entity);
 void entity_cleanup(void);
 
@@ -66,7 +71,8 @@ void wall_destroy(Wall* wall);
 void wall_cleanup(void);
 
 void camera_init(void);
-void camera_move(vec2 mag, f32 dt);
+void camera_update(void);
+void camera_move(vec2 mag);
 void camera_rotate(f32 mag, f32 dt);
 void camera_tilt(f32 mag, f32 dt);
 void camera_zoom(i32 mag);

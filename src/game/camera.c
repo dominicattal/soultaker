@@ -9,8 +9,8 @@
 #define DEFAULT_PITCH       PI / 6
 #define DEFAULT_FOV         PI / 4
 #define DEFAULT_ZOOM        7
-#define DEFAULT_ROTSPEED    1
-#define DEFAULT_MOVESPEED   1
+#define DEFAULT_ROTSPEED    3.5
+#define DEFAULT_MOVESPEED   3.5
 #define DEFAULT_POSITION    vec3_create(0, 5, 0)
 #define Y_AXIS              vec3_create(0, 1, 0)
 
@@ -77,7 +77,13 @@ void camera_init(void)
     update_proj_matrix();
 }
 
-void camera_move(vec2 mag, f32 dt)
+void camera_update(void)
+{
+    lock_onto_target();
+    update_view_matrix();
+}
+
+void camera_move(vec2 mag)
 {
     if (game_context.player == NULL)
         return;
@@ -89,11 +95,8 @@ void camera_move(vec2 mag, f32 dt)
     right.y = game_context.camera.right.z;
     direction = vec2_add(direction, vec2_scale(facing, mag.x));
     direction = vec2_add(direction, vec2_scale(right, mag.y));
-    direction = vec2_scale(vec2_normalize(direction), game_context.camera.move_speed * dt);
-    game_context.player->position.x += direction.x;
-    game_context.player->position.z += direction.y;
-    lock_onto_target();
-    update_view_matrix();
+    direction = vec2_normalize(direction);
+    game_context.player->direction = vec3_create(direction.x, 0, direction.y);
 }
 
 void camera_rotate(f32 mag, f32 dt)
