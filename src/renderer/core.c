@@ -13,6 +13,7 @@ void renderer_init(void)
     #endif
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
+    glEnable(GL_CULL_FACE);
     glEnable(GL_PROGRAM_POINT_SIZE);
     glDebugMessageCallback(message_callback, 0);
     shader_init();

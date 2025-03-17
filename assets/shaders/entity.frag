@@ -9,4 +9,6 @@ in vec2 TexCoord;
 
 void main() {
     FragColor = texture(textures[Location], TexCoord);
+    if (FragColor.a < 0.1)
+        discard;
 }

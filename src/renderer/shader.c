@@ -102,6 +102,26 @@ static void compile_shader_program_tile(void)
     shader_bind_uniform_block(SHADER_PROGRAM_TILE, UBO_INDEX_MATRICES, "Matrices");
 }
 
+static void compile_shader_program_wall(void)
+{
+    u32 vert, frag;
+    vert = compile(GL_VERTEX_SHADER, "assets/shaders/wall.vert");
+    frag = compile(GL_FRAGMENT_SHADER, "assets/shaders/wall.frag");
+    attach(SHADER_PROGRAM_WALL, vert);
+    attach(SHADER_PROGRAM_WALL, frag);
+    link(SHADER_PROGRAM_WALL);
+    detach(SHADER_PROGRAM_WALL, vert);
+    detach(SHADER_PROGRAM_WALL, frag);
+    delete(vert);
+    delete(frag);
+    i32 texs[NUM_TEXTURE_UNITS];
+    for (i32 i = 0; i < NUM_TEXTURE_UNITS; ++i)
+        texs[i] = i;
+    shader_use(SHADER_PROGRAM_WALL);
+    glUniform1iv(shader_get_uniform_location(SHADER_PROGRAM_WALL, "textures"), NUM_TEXTURE_UNITS, texs);
+    shader_bind_uniform_block(SHADER_PROGRAM_WALL, UBO_INDEX_MATRICES, "Matrices");
+}
+
 static void compile_shader_program_gui(void)
 {
     u32 vert, frag;
@@ -160,6 +180,9 @@ void shader_program_compile(ShaderProgramEnum program)
         case SHADER_PROGRAM_TILE:
             compile_shader_program_tile();
             break;
+        case SHADER_PROGRAM_WALL:
+            compile_shader_program_wall();
+            break;
         case SHADER_PROGRAM_GUI:
             compile_shader_program_gui();
             break;
@@ -181,6 +204,7 @@ void shader_init(void)
         shader_programs[i] = glCreateProgram();
     
     shader_program_compile(SHADER_PROGRAM_TILE);
+    shader_program_compile(SHADER_PROGRAM_WALL);
     shader_program_compile(SHADER_PROGRAM_GUI);
     shader_program_compile(SHADER_PROGRAM_ENTITY);
     shader_program_compile(SHADER_PROGRAM_ENTITY_COMP);
