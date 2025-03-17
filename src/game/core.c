@@ -132,8 +132,14 @@ static void update_wall_vertex_data(void)
 static void game_update_vertex_data(void)
 {
     update_entity_vertex_data();
-    update_tile_vertex_data();
-    update_wall_vertex_data();
+    if (game_context.data_swap.update_tile_buffer) {
+        update_tile_vertex_data();
+        game_context.data_swap.update_tile_buffer = false;
+    }
+    if (game_context.data_swap.update_wall_buffer) {
+        update_wall_vertex_data();
+        game_context.data_swap.update_wall_buffer = false;
+    }
     pthread_mutex_lock(&game_context.data_mutex);
     GameData tmp = game_context.data;
     game_context.data = game_context.data_swap;
@@ -211,6 +217,10 @@ void game_init(void)
     entity_init();
     camera_init();
     game_render_init();
+    game_context.data.update_tile_buffer = true;
+    game_context.data.update_wall_buffer = true;
+    game_context.data_swap.update_tile_buffer = true;
+    game_context.data_swap.update_wall_buffer = true;
     pthread_mutex_init(&game_context.data_mutex, NULL);
     pthread_create(&game_context.thread_id, NULL, game_loop, NULL);
 }

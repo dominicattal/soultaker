@@ -32,8 +32,10 @@ typedef struct {
 typedef struct {
     i32 tile_length, tile_capacity;
     GLfloat* tile_buffer;
+    bool update_tile_buffer;
     i32 wall_length, wall_capacity;
     GLfloat* wall_buffer;
+    bool update_wall_buffer;
     i32 entity_length, entity_capacity;
     GLfloat* entity_buffer;
 } GameData;
