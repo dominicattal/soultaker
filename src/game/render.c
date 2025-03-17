@@ -21,11 +21,18 @@ static struct {
     GLuint quad_buffer;
 } entity_buffers;
 
+static struct {
+    GLuint vao;
+    GLuint vbo;
+} wall_buffers;
+
 void game_render_init(void)
 {
     glGenVertexArrays(1, &tile_buffers.vao);
     glGenBuffers(1, &tile_buffers.vbo);
     glGenBuffers(1, &tile_buffers.instance_vbo);
+    glGenVertexArrays(1, &wall_buffers.vao);
+    glGenBuffers(1, &wall_buffers.vbo);
     glGenVertexArrays(1, &entity_buffers.vao);
     glGenBuffers(1, &entity_buffers.point_buffer);
     glGenBuffers(1, &entity_buffers.quad_buffer);
@@ -53,6 +60,15 @@ void game_render_init(void)
     glVertexAttribDivisor(2, 1);
     glVertexAttribDivisor(3, 1);
 
+    glBindVertexArray(wall_buffers.vao);
+    glBindBuffer(GL_ARRAY_BUFFER, wall_buffers.vbo);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (void*)0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
+    glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (void*)(5 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
+
     glBindVertexArray(entity_buffers.vao);
     glBindBuffer(GL_ARRAY_BUFFER, entity_buffers.quad_buffer);
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)0);
@@ -65,6 +81,7 @@ void game_render_init(void)
 
 void game_render(void)
 {
+    // render tiles
     shader_use(SHADER_PROGRAM_TILE);
     glBindVertexArray(tile_buffers.vao);
     glBindBuffer(GL_ARRAY_BUFFER, tile_buffers.instance_vbo);
@@ -75,7 +92,19 @@ void game_render(void)
     pthread_mutex_unlock(&game_context.data_mutex);
     glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, num_tiles);
     
+    // render walls
     glEnable(GL_DEPTH_TEST);
+    shader_use(SHADER_PROGRAM_WALL);
+    glBindVertexArray(wall_buffers.vao);
+    glBindBuffer(GL_ARRAY_BUFFER, wall_buffers.vbo);
+    pthread_mutex_lock(&game_context.data_mutex);
+    i32 wall_length = game_context.data.wall_length;
+    i32 num_walls = wall_length / 6;
+    glBufferData(GL_ARRAY_BUFFER, wall_length * sizeof(GLfloat), game_context.data.wall_buffer, GL_STATIC_DRAW);
+    pthread_mutex_unlock(&game_context.data_mutex);
+    glDrawArrays(GL_TRIANGLES, 0, 6 * num_walls);
+
+    // render entities
     shader_use(SHADER_PROGRAM_ENTITY_COMP);
     pthread_mutex_lock(&game_context.data_mutex);
     i32 entity_length = game_context.data.entity_length;
@@ -101,6 +130,8 @@ void game_render_cleanup(void)
 {
     glDeleteVertexArrays(1, &tile_buffers.vao);
     glDeleteVertexArrays(1, &entity_buffers.vao);
+    glDeleteVertexArrays(1, &wall_buffers.vao);
+    glDeleteBuffers(1, &wall_buffers.vbo);
     glDeleteBuffers(1, &tile_buffers.vbo);
     glDeleteBuffers(1, &tile_buffers.instance_vbo);
     glDeleteBuffers(1, &entity_buffers.point_buffer);

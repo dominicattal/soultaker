@@ -8,6 +8,7 @@
 typedef enum {
     SHADER_PROGRAM_GUI,
     SHADER_PROGRAM_TILE,
+    SHADER_PROGRAM_WALL,
     SHADER_PROGRAM_ENTITY,
     SHADER_PROGRAM_ENTITY_COMP,
     NUM_SHADER_PROGRAMS
@@ -18,6 +19,8 @@ typedef enum {
     TEX_COLOR,
     TEX_TILE_1,
     TEX_TILE_2,
+    TEX_WALL_1,
+    TEX_WALL_2,
     TEX_KNIGHT,
     NUM_TEXTURES
 } TextureEnum;
