@@ -27,6 +27,8 @@ void tile_destroy(Tile* tile)
 
 void tile_cleanup(void)
 {
+    for (i32 i = 0; i < game_context.tiles->length; i++)
+        free(list_get(game_context.tiles, i));
     if (game_context.tiles != NULL)
         list_destroy(game_context.tiles);
 }

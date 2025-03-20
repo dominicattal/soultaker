@@ -7,8 +7,8 @@ void entity_init(void)
     game_context.entities = list_create();
     game_context.player = entity_create(vec3_create(0, 0, 0));
     game_context.player->direction = vec3_create(0, 0, 0);
-    //entity_create(vec3_create(5, 0, 0));
-    //entity_create(vec3_create(0, 0, 4));
+    entity_create(vec3_create(5, 0, 0));
+    entity_create(vec3_create(0, 0, 4));
 }
 
 Entity* entity_create(vec3 position)
@@ -36,6 +36,8 @@ void entity_destroy(Entity* entity)
 
 void entity_cleanup(void)
 {
+    for (i32 i = 0; i < game_context.entities->length; i++)
+        free(list_get(game_context.entities, i));
     if (game_context.entities != NULL)
         list_destroy(game_context.entities);
 }
