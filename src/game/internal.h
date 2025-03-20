@@ -19,6 +19,13 @@ typedef struct {
 } Entity;
 
 typedef struct {
+    vec3 position;
+    vec3 direction;
+    f32 speed;
+    f32 hitbox_radius;
+} Project;
+
+typedef struct {
     vec2 position;
     i32 tex;
 } Tile;
@@ -38,6 +45,8 @@ typedef struct {
     bool update_wall_buffer;
     i32 entity_length, entity_capacity;
     GLfloat* entity_buffer;
+    i32 proj_length, proj_capacity;
+    GLfloat* proj_buffer;
 } GameData;
 
 typedef struct {

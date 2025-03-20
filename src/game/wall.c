@@ -9,9 +9,9 @@ void wall_init(void)
     wall_create(vec2_create(-3, -3), 1.5f);
     for (i32 i = -11; i <= 10; i++) {
         wall_create(vec2_create(i, -11), 1.5f);
+        wall_create(vec2_create(11, i), 1.5f);
         wall_create(vec2_create(-i-1, 11), 1.5f);
-        wall_create(vec2_create(-11, i), 1.5f);
-        wall_create(vec2_create(11, -i-1), 1.5f);
+        wall_create(vec2_create(-11, -i-1), 1.5f);
     }
 }
 
@@ -33,6 +33,8 @@ void wall_destroy(Wall* wall)
 
 void wall_cleanup(void)
 {
+    for (i32 i = 0; i < game_context.walls->length; i++)
+        free(list_get(game_context.walls, i));
     if (game_context.walls != NULL)
         list_destroy(game_context.walls);
 }
