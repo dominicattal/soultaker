@@ -33,9 +33,10 @@ void wall_destroy(Wall* wall)
 
 void wall_cleanup(void)
 {
+    if (game_context.walls == NULL)
+        return;
     for (i32 i = 0; i < game_context.walls->length; i++)
         free(list_get(game_context.walls, i));
-    if (game_context.walls != NULL)
-        list_destroy(game_context.walls);
+    list_destroy(game_context.walls);
 }
 

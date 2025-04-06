@@ -35,6 +35,38 @@ static void update_entity_vertex_data(void)
     #undef V
 }
 
+void update_projectile_vertex_data()
+{
+    #define FLOATS_PER_VERTEX 8
+    if (FLOATS_PER_VERTEX * game_context.projectiles->capacity > game_context.data_swap.proj_capacity) {
+        game_context.data_swap.proj_capacity = game_context.projectiles->capacity;
+        size_t size = FLOATS_PER_VERTEX * game_context.data_swap.proj_capacity * sizeof(GLfloat);
+        if (game_context.data_swap.proj_buffer == NULL)
+            game_context.data_swap.proj_buffer = malloc(size);
+        else
+            game_context.data_swap.proj_buffer = realloc(game_context.data_swap.proj_buffer, size);
+        assert(game_context.projectiles != NULL);
+    }
+    #undef FLOATS_PER_VERTEX
+    game_context.data_swap.proj_length = 0;
+    f32 u, v, w, h;
+    i32 location;
+    texture_info(TEX_KNIGHT, &u, &v, &w, &h, &location);
+    #define V game_context.data_swap.proj_buffer[game_context.data_swap.proj_length++]
+    for (i32 i = 0; i < game_context.projectiles->length; i++) {
+        Projectile* proj = list_get(game_context.projectiles, i);
+        V = proj->position.x;
+        V = proj->position.y;
+        V = proj->position.z;
+        V = u;
+        V = v;
+        V = w;
+        V = h;
+        V = location;
+    }
+    #undef V
+}
+
 static void update_tile_vertex_data(void)
 {
     #define FLOATS_PER_VERTEX 7
@@ -129,9 +161,28 @@ static void update_wall_vertex_data(void)
     #undef V
 }
 
+static void update_parstacle_vertex_data(void)
+{
+}
+
+static void update_obstacle_vertex_data(void)
+{
+}
+
+static void update_particle_vertex_data(void)
+{
+}
+
+static void update_parjicle_vertex_data(void)
+{
+}
+
 static void game_update_vertex_data(void)
 {
     update_entity_vertex_data();
+    update_projectile_vertex_data();
+    update_particle_vertex_data();
+    update_parjicle_vertex_data();
     if (game_context.data_swap.update_tile_buffer) {
         update_tile_vertex_data();
         game_context.data_swap.update_tile_buffer = false;
@@ -139,6 +190,14 @@ static void game_update_vertex_data(void)
     if (game_context.data_swap.update_wall_buffer) {
         update_wall_vertex_data();
         game_context.data_swap.update_wall_buffer = false;
+    }
+    if (game_context.data_swap.update_parstacle_buffer) {
+        update_parstacle_vertex_data();
+        game_context.data_swap.update_parstacle_buffer = false;
+    }
+    if (game_context.data_swap.update_obstacle_buffer) {
+        update_obstacle_vertex_data();
+        game_context.data_swap.update_obstacle_buffer = false;
     }
     pthread_mutex_lock(&game_context.data_mutex);
     GameData tmp = game_context.data;
@@ -149,8 +208,26 @@ static void game_update_vertex_data(void)
 
 static void game_update(void)
 {
-    for (i32 i = 0; i < game_context.entities->length; i++)
-        entity_update(list_get(game_context.entities, i), game_context.dt);
+    i32 i;
+    i = 0;
+    while (i < game_context.entities->length) {
+        Entity* entity = list_get(game_context.entities, i);
+        entity_update(entity, game_context.dt);
+        if (entity->health <= 0)
+            list_remove(game_context.entities, i);
+        else
+            i++;
+    }
+    i = 0;
+    while (i < game_context.projectiles->length) {
+        Projectile* proj = list_get(game_context.projectiles, i);
+        projectile_update(proj, game_context.dt);
+        if (proj->lifetime <= 0)
+            list_remove(game_context.projectiles, i);
+        else
+            i++;
+    }
+    player_update(&game_context.player, game_context.dt);
 }
 
 static void collide_entity_wall(Entity* entity, Wall* wall)
@@ -215,12 +292,18 @@ void game_init(void)
     tile_init();
     wall_init();
     entity_init();
+    projectile_init();
+    parstacle_init();
     camera_init();
     game_render_init();
     game_context.data.update_tile_buffer = true;
     game_context.data.update_wall_buffer = true;
+    game_context.data.update_parstacle_buffer = true;
+    game_context.data.update_obstacle_buffer = true;
     game_context.data_swap.update_tile_buffer = true;
     game_context.data_swap.update_wall_buffer = true;
+    game_context.data_swap.update_parstacle_buffer = true;
+    game_context.data_swap.update_obstacle_buffer = true;
     pthread_mutex_init(&game_context.data_mutex, NULL);
     pthread_create(&game_context.thread_id, NULL, game_loop, NULL);
 }
@@ -233,10 +316,30 @@ void game_cleanup(void)
     game_render_cleanup();
     camera_cleanup();
     entity_cleanup();
+    projectile_cleanup();
     tile_cleanup();
     wall_cleanup();
+    parstacle_cleanup();
+    obstacle_cleanup();
+    particle_cleanup();
+    parjicle_cleanup();
+
+    free(game_context.data_swap.proj_buffer);
     free(game_context.data.entity_buffer);
     free(game_context.data_swap.entity_buffer);
+    free(game_context.data.tile_buffer);
+    free(game_context.data_swap.tile_buffer);
+    free(game_context.data.wall_buffer);
+    free(game_context.data_swap.wall_buffer);
+    free(game_context.data.proj_buffer);
+    free(game_context.data.parstacle_buffer);
+    free(game_context.data_swap.parstacle_buffer);
+    free(game_context.data.obstacle_buffer);
+    free(game_context.data_swap.obstacle_buffer);
+    free(game_context.data.particle_buffer);
+    free(game_context.data_swap.particle_buffer);
+    free(game_context.data.parjicle_buffer);
+    free(game_context.data_swap.parjicle_buffer);
 }
 
 f32 game_dt(void)
