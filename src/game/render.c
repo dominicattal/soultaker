@@ -23,6 +23,12 @@ static struct {
 
 static struct {
     GLuint vao;
+    GLuint point_buffer;
+    GLuint quad_buffer;
+} proj_buffers;
+
+static struct {
+    GLuint vao;
     GLuint vbo;
 } wall_buffers;
 
@@ -36,6 +42,9 @@ void game_render_init(void)
     glGenVertexArrays(1, &entity_buffers.vao);
     glGenBuffers(1, &entity_buffers.point_buffer);
     glGenBuffers(1, &entity_buffers.quad_buffer);
+    glGenVertexArrays(1, &proj_buffers.vao);
+    glGenBuffers(1, &proj_buffers.point_buffer);
+    glGenBuffers(1, &proj_buffers.quad_buffer);
 
     f32 quad_data[] = {
         0.0f, 0.0f,
@@ -73,6 +82,15 @@ void game_render_init(void)
 
     glBindVertexArray(entity_buffers.vao);
     glBindBuffer(GL_ARRAY_BUFFER, entity_buffers.quad_buffer);
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)(4 * sizeof(GLfloat)));
+    glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)(6 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
+
+    glBindVertexArray(proj_buffers.vao);
+    glBindBuffer(GL_ARRAY_BUFFER, proj_buffers.quad_buffer);
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)0);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)(4 * sizeof(GLfloat)));
     glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)(6 * sizeof(GLfloat)));
@@ -127,6 +145,27 @@ void game_render(void)
     shader_use(SHADER_PROGRAM_ENTITY);
     glBindVertexArray(entity_buffers.vao);
     glDrawArrays(GL_TRIANGLES, 0, 6 * num_entities);
+
+    // render projectiles
+    shader_use(SHADER_PROGRAM_PROJECTILE_COMP);
+    pthread_mutex_lock(&game_context.data_mutex);
+    i32 proj_length = game_context.data.proj_length;
+    i32 num_projs = proj_length / 8;
+    glUniform1i(shader_get_uniform_location(SHADER_PROGRAM_PROJECTILE_COMP, "N"), proj_length);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, proj_buffers.point_buffer);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, proj_length * sizeof(GLfloat), game_context.data.proj_buffer, GL_STATIC_DRAW);
+    pthread_mutex_unlock(&game_context.data_mutex);
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, proj_buffers.quad_buffer);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, 6 * proj_length * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, proj_buffers.point_buffer);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, proj_buffers.quad_buffer);
+    glDispatchCompute((num_projs + 31) / 32, 1, 1);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+    shader_use(SHADER_PROGRAM_PROJECTILE);
+    glBindVertexArray(proj_buffers.vao);
+    glDrawArrays(GL_TRIANGLES, 0, 6 * num_projs);
 }
 
 void game_render_cleanup(void)
@@ -134,10 +173,13 @@ void game_render_cleanup(void)
     glDeleteVertexArrays(1, &tile_buffers.vao);
     glDeleteVertexArrays(1, &entity_buffers.vao);
     glDeleteVertexArrays(1, &wall_buffers.vao);
+    glDeleteVertexArrays(1, &proj_buffers.vao);
     glDeleteBuffers(1, &wall_buffers.vbo);
     glDeleteBuffers(1, &tile_buffers.vbo);
     glDeleteBuffers(1, &tile_buffers.instance_vbo);
     glDeleteBuffers(1, &entity_buffers.point_buffer);
     glDeleteBuffers(1, &entity_buffers.quad_buffer);
+    glDeleteBuffers(1, &proj_buffers.point_buffer);
+    glDeleteBuffers(1, &proj_buffers.quad_buffer);
 }
 

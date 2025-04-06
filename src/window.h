@@ -16,6 +16,7 @@ void window_cursor_pos_callback(GLFWwindow* window, f64 xpos, f64 ypos);
 void window_key_callback(GLFWwindow* window, i32 key, i32 scancode, i32 action, i32 mods);
 
 bool window_get_key(i32 key);
+bool window_get_mouse_button(i32 button);
 
 i32 window_resolution_x(void);
 i32 window_resolution_y(void);
@@ -24,5 +25,6 @@ i32 window_width(void);
 i32 window_height(void);
 f64 window_cursor_position_x(void);
 f64 window_cursor_position_y(void);
+vec2 window_cursor_position(void);
 
 #endif

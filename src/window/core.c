@@ -73,6 +73,11 @@ bool window_get_key(i32 key)
     return glfwGetKey(window_context.handle, key);
 }
 
+bool window_get_mouse_button(i32 button)
+{
+    return glfwGetMouseButton(window_context.handle, button);
+}
+
 i32 window_resolution_x(void)
 {
     return window_context.resolution.x;
@@ -106,4 +111,9 @@ f64 window_cursor_position_x(void)
 f64 window_cursor_position_y(void)
 {
     return window_context.cursor.y;
+}
+
+vec2 window_cursor_position(void)
+{
+    return vec2_create(window_context.cursor.x, window_context.cursor.y);
 }

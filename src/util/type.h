@@ -16,6 +16,7 @@ typedef float    f32;
 typedef double   f64;
 
 #define PI 3.141592653589
+#define HALFPI 1.57079632679
 #define EPSILON 0.00001
 #define INF 1e10
 
