@@ -32,6 +32,12 @@ static struct {
     GLuint vbo;
 } wall_buffers;
 
+static struct {
+    GLuint vao;
+    GLuint point_buffer;
+    GLuint quad_buffer;
+} obstacle_buffers;
+
 void game_render_init(void)
 {
     glGenVertexArrays(1, &tile_buffers.vao);
@@ -45,6 +51,9 @@ void game_render_init(void)
     glGenVertexArrays(1, &proj_buffers.vao);
     glGenBuffers(1, &proj_buffers.point_buffer);
     glGenBuffers(1, &proj_buffers.quad_buffer);
+    glGenVertexArrays(1, &obstacle_buffers.vao);
+    glGenBuffers(1, &obstacle_buffers.point_buffer);
+    glGenBuffers(1, &obstacle_buffers.quad_buffer);
 
     f32 quad_data[] = {
         0.0f, 0.0f,
@@ -97,11 +106,21 @@ void game_render_init(void)
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
+    
+    glBindVertexArray(obstacle_buffers.vao);
+    glBindBuffer(GL_ARRAY_BUFFER, obstacle_buffers.quad_buffer);
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)(4 * sizeof(GLfloat)));
+    glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)(6 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
 }
 
 void game_render(void)
 {
     camera_update();
+
     // render tiles
     shader_use(SHADER_PROGRAM_TILE);
     glBindVertexArray(tile_buffers.vao);
@@ -166,6 +185,27 @@ void game_render(void)
     shader_use(SHADER_PROGRAM_PROJECTILE);
     glBindVertexArray(proj_buffers.vao);
     glDrawArrays(GL_TRIANGLES, 0, 6 * num_projs);
+
+    // render obstacles
+    shader_use(SHADER_PROGRAM_OBSTACLE_COMP);
+    pthread_mutex_lock(&game_context.data_mutex);
+    i32 obstacle_length = game_context.data.obstacle_length;
+    i32 num_obstacles = obstacle_length / 7;
+    glUniform1i(shader_get_uniform_location(SHADER_PROGRAM_OBSTACLE_COMP, "N"), obstacle_length);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, obstacle_buffers.point_buffer);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, obstacle_length * sizeof(GLfloat), game_context.data.obstacle_buffer, GL_STATIC_DRAW);
+    pthread_mutex_unlock(&game_context.data_mutex);
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, obstacle_buffers.quad_buffer);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, 6 * obstacle_length * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, obstacle_buffers.point_buffer);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, obstacle_buffers.quad_buffer);
+    glDispatchCompute((num_obstacles + 31) / 32, 1, 1);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+    shader_use(SHADER_PROGRAM_OBSTACLE);
+    glBindVertexArray(obstacle_buffers.vao);
+    glDrawArrays(GL_TRIANGLES, 0, 6 * num_obstacles);
 }
 
 void game_render_cleanup(void)
@@ -174,6 +214,7 @@ void game_render_cleanup(void)
     glDeleteVertexArrays(1, &entity_buffers.vao);
     glDeleteVertexArrays(1, &wall_buffers.vao);
     glDeleteVertexArrays(1, &proj_buffers.vao);
+    glDeleteVertexArrays(1, &obstacle_buffers.vao);
     glDeleteBuffers(1, &wall_buffers.vbo);
     glDeleteBuffers(1, &tile_buffers.vbo);
     glDeleteBuffers(1, &tile_buffers.instance_vbo);
@@ -181,5 +222,7 @@ void game_render_cleanup(void)
     glDeleteBuffers(1, &entity_buffers.quad_buffer);
     glDeleteBuffers(1, &proj_buffers.point_buffer);
     glDeleteBuffers(1, &proj_buffers.quad_buffer);
+    glDeleteBuffers(1, &obstacle_buffers.point_buffer);
+    glDeleteBuffers(1, &obstacle_buffers.quad_buffer);
 }
 

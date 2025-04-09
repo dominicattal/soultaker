@@ -206,6 +206,38 @@ static void compile_shader_program_projectile_comp(void)
     shader_bind_uniform_block(SHADER_PROGRAM_PROJECTILE_COMP, UBO_INDEX_WINDOW, "Window");
 }
 
+static void compile_shader_program_obstacle(void)
+{
+    u32 vert, frag;
+    vert = compile(GL_VERTEX_SHADER, "assets/shaders/obstacle.vert");
+    frag = compile(GL_FRAGMENT_SHADER, "assets/shaders/obstacle.frag");
+    attach(SHADER_PROGRAM_OBSTACLE, vert);
+    attach(SHADER_PROGRAM_OBSTACLE, frag);
+    link(SHADER_PROGRAM_OBSTACLE);
+    detach(SHADER_PROGRAM_OBSTACLE, vert);
+    detach(SHADER_PROGRAM_OBSTACLE, frag);
+    delete(vert);
+    delete(frag);
+    i32 texs[NUM_TEXTURE_UNITS];
+    for (i32 i = 0; i < NUM_TEXTURE_UNITS; ++i)
+        texs[i] = i;
+    shader_use(SHADER_PROGRAM_OBSTACLE);
+    glUniform1iv(shader_get_uniform_location(SHADER_PROGRAM_OBSTACLE, "textures"), NUM_TEXTURE_UNITS, texs);
+    shader_bind_uniform_block(SHADER_PROGRAM_OBSTACLE, UBO_INDEX_MATRICES, "Matrices");
+}
+
+static void compile_shader_program_obstacle_comp(void)
+{
+    u32 comp;
+    comp = compile(GL_COMPUTE_SHADER, "assets/shaders/obstacle.comp");
+    attach(SHADER_PROGRAM_OBSTACLE_COMP, comp);
+    link(SHADER_PROGRAM_OBSTACLE_COMP);
+    detach(SHADER_PROGRAM_OBSTACLE_COMP, comp);
+    delete(comp);
+    shader_bind_uniform_block(SHADER_PROGRAM_OBSTACLE_COMP, UBO_INDEX_MATRICES, "Matrices");
+    shader_bind_uniform_block(SHADER_PROGRAM_OBSTACLE_COMP, UBO_INDEX_WINDOW, "Window");
+}
+
 void shader_program_compile(ShaderProgramEnum program)
 {
     switch (program) {
@@ -230,6 +262,12 @@ void shader_program_compile(ShaderProgramEnum program)
         case SHADER_PROGRAM_PROJECTILE_COMP:
             compile_shader_program_projectile_comp();
             break;
+        case SHADER_PROGRAM_OBSTACLE:
+            compile_shader_program_obstacle();
+            break;
+        case SHADER_PROGRAM_OBSTACLE_COMP:
+            compile_shader_program_obstacle_comp();
+            break;
         default:
             printf("Unrecognized program %x\n", program);
             break;
@@ -248,6 +286,8 @@ void shader_init(void)
     shader_program_compile(SHADER_PROGRAM_ENTITY_COMP);
     shader_program_compile(SHADER_PROGRAM_PROJECTILE);
     shader_program_compile(SHADER_PROGRAM_PROJECTILE_COMP);
+    shader_program_compile(SHADER_PROGRAM_OBSTACLE);
+    shader_program_compile(SHADER_PROGRAM_OBSTACLE_COMP);
 }
 
 void shader_use(ShaderProgramEnum id)

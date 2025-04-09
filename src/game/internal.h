@@ -74,7 +74,7 @@ typedef struct {
     i32 parstacle_length, parstacle_capacity;
     GLfloat* parstacle_buffer;
     bool update_parstacle_buffer;
-    i32 obstalce_length, obstacle_capacity;
+    i32 obstacle_length, obstacle_capacity;
     GLfloat* obstacle_buffer;
     bool update_obstacle_buffer;
     i32 entity_length, entity_capacity;

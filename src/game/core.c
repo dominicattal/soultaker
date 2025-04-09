@@ -167,6 +167,33 @@ static void update_parstacle_vertex_data(void)
 
 static void update_obstacle_vertex_data(void)
 {
+    #define FLOATS_PER_VERTEX 7
+    if (FLOATS_PER_VERTEX * game_context.obstacles->capacity > game_context.data_swap.obstacle_capacity) {
+        game_context.data_swap.obstacle_capacity = game_context.obstacles->capacity;
+        size_t size = FLOATS_PER_VERTEX * game_context.data_swap.obstacle_capacity * sizeof(GLfloat);
+        if (game_context.data_swap.obstacle_buffer == NULL)
+            game_context.data_swap.obstacle_buffer = malloc(size);
+        else
+            game_context.data_swap.obstacle_buffer = realloc(game_context.data_swap.obstacle_buffer, size);
+        assert(game_context.obstacles != NULL);
+    }
+    #undef FLOATS_PER_VERTEX
+    game_context.data_swap.obstacle_length = 0;
+    f32 u, v, w, h;
+    i32 location;
+    texture_info(TEX_ROCK, &u, &v, &w, &h, &location);
+    #define V game_context.data_swap.obstacle_buffer[game_context.data_swap.obstacle_length++]
+    for (i32 i = 0; i < game_context.obstacles->length; i++) {
+        Obstacle* obstacle = list_get(game_context.obstacles, i);
+        V = obstacle->position.x;
+        V = obstacle->position.y;
+        V = u;
+        V = v;
+        V = w;
+        V = h;
+        V = location;
+    }
+    #undef V
 }
 
 static void update_particle_vertex_data(void)
@@ -294,6 +321,9 @@ void game_init(void)
     entity_init();
     projectile_init();
     parstacle_init();
+    obstacle_init();
+    particle_init();
+    parjicle_init();
     camera_init();
     game_render_init();
     game_context.data.update_tile_buffer = true;
