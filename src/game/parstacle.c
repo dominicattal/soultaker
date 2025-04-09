@@ -1,0 +1,28 @@
+#include "internal.h"
+
+extern GameContext game_context;
+
+void parstacle_init(void)
+{
+    game_context.parstacles = list_create();
+}
+
+Parstacle* parstacle_create(vec3 position)
+{
+    Parstacle* parstacle = malloc(sizeof(Parstacle));
+    return parstacle;
+}
+
+void parstacle_destroy(Parstacle* parstacle)
+{
+    free(parstacle);
+}
+
+void parstacle_cleanup(void)
+{
+    if (game_context.parstacles == NULL)
+        return;
+    for (i32 i = 0; i < game_context.parstacles->length; i++)
+        free(list_get(game_context.parstacles, i));
+    list_destroy(game_context.parstacles);
+}
