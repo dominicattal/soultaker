@@ -289,6 +289,24 @@ static void collide_entity_wall(Entity* entity, Wall* wall)
     }
 }
 
+static void collide_entity_obstacle(Entity* entity, Obstacle* obstacle)
+{
+    f32 ex, ez, er, ox, oz, or;
+    vec2 dir;
+    ex = entity->position.x;
+    ez = entity->position.z;
+    er = entity->hitbox_radius;
+    ox = obstacle->position.x;
+    oz = obstacle->position.y;
+    or = obstacle->hitbox_radius;
+    dir = vec2_create(ex - ox, ez - oz);
+    if (vec2_mag(dir) >= er + or)
+        return;
+    dir = vec2_scale(vec2_normalize(dir), er + or);
+    entity->position.x = ox + dir.x;
+    entity->position.z = oz + dir.y;
+}
+
 static void game_collide(void)
 {
     for (i32 i = 0; i < game_context.entities->length; i++) {
@@ -296,6 +314,10 @@ static void game_collide(void)
         for (i32 j = 0; j < game_context.walls->length; j++) {
             Wall* wall = list_get(game_context.walls, j);
             collide_entity_wall(entity, wall);
+        }
+        for (i32 j = 0; j < game_context.obstacles->length; j++) {
+            Obstacle* obstacle = list_get(game_context.obstacles, j);
+            collide_entity_obstacle(entity, obstacle);
         }
     }
 }

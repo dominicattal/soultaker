@@ -54,6 +54,13 @@ f32 vec2_mag(vec2 vec)
     return sqrt(vec.x * vec.x + vec.y * vec.y);
 }
 
+f32  vec2_distance(vec2 v1, vec2 v2)
+{
+    f32 dx = v2.x - v1.x;
+    f32 dy = v2.y - v1.y;
+    return sqrt(dx * dx + dy * dy);
+}
+
 f32 vec2_dot(vec2 v1, vec2 v2)
 {
     return v1.x * v2.x + v1.y * v2.y;
