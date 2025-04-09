@@ -4,8 +4,7 @@
 #include "type.h"
 
 typedef struct {
-    f32 x;
-    f32 y;
+    f32 x, y;
 } vec2;
 
 typedef struct {
@@ -60,6 +59,7 @@ vec2 vec2_direction(f32 rad);
 vec2 vec2_rotate(vec2 vec, f32 rad);
 f32  vec2_radians(vec2 vec);
 f32  vec2_mag(vec2 vec);
+f32  vec2_distance(vec2 v1, vec2 v2);
 f32  vec2_dot(vec2 v1, vec2 v2);
 void vec2_print(vec2 vec);
 

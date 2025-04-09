@@ -46,6 +46,7 @@ typedef struct {
 
 typedef struct {
     vec2 position;
+    f32 hitbox_radius;
     i32 tex;
 } Obstacle;
 
