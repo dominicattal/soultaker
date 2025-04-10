@@ -31,69 +31,64 @@ layout (std430, binding = 1) writeonly buffer Output {
 };
 
 void main() {
-    uint idx = 8 * gl_GlobalInvocationID.x;
+    uint idx = 7 * gl_GlobalInvocationID.x;
     if (idx >= N)
         return;
-    vec4 position;
+    vec4 position, color;
+    float size_x, size_y;
     position = vec4(data_in[idx], data_in[idx+1], data_in[idx+2], 1.0f);
     position = proj * view * position;
-
-    float size_x, size_y, u1, v1, u2, v2, location;
-    size_x = 1.0f / 2.0f / window.aspect_ratio / zoom;
-    size_y = 1.0f / zoom;
-    u1 = data_in[idx+3];
-    v1 = data_in[idx+4];
-    u2 = data_in[idx+3] + data_in[idx+5];
-    v2 = data_in[idx+4] + data_in[idx+6];
-    location = data_in[idx+7];
+    color = vec4(data_in[idx+3], data_in[idx+4], data_in[idx+5], 1.0f);
+    size_x = data_in[idx+6] / 2.0f / window.aspect_ratio / zoom;
+    size_y = data_in[idx+6] / 2.0f / zoom;
 
     idx = 6 * 7 * gl_GlobalInvocationID.x;
     // Vertex 1
     data_out[idx++] = position.x - size_x;
-    data_out[idx++] = position.y;
+    data_out[idx++] = position.y - size_y;
     data_out[idx++] = position.z;
     data_out[idx++] = position.w;
-    data_out[idx++] = u1;
-    data_out[idx++] = v2;
-    data_out[idx++] = location;
+    data_out[idx++] = color.x;
+    data_out[idx++] = color.y;
+    data_out[idx++] = color.z;
     // Vertex 2
     data_out[idx++] = position.x + size_x;
-    data_out[idx++] = position.y;
+    data_out[idx++] = position.y - size_y;
     data_out[idx++] = position.z;
     data_out[idx++] = position.w;
-    data_out[idx++] = u2;
-    data_out[idx++] = v2;
-    data_out[idx++] = location;
+    data_out[idx++] = color.x;
+    data_out[idx++] = color.y;
+    data_out[idx++] = color.z;
     // Vertex 3
     data_out[idx++] = position.x - size_x;
     data_out[idx++] = position.y + size_y;
     data_out[idx++] = position.z;
     data_out[idx++] = position.w;
-    data_out[idx++] = u1;
-    data_out[idx++] = v1;
-    data_out[idx++] = location;
+    data_out[idx++] = color.x;
+    data_out[idx++] = color.y;
+    data_out[idx++] = color.z;
     // Vertex 4
     data_out[idx++] = position.x - size_x;
     data_out[idx++] = position.y + size_y;
     data_out[idx++] = position.z;
     data_out[idx++] = position.w;
-    data_out[idx++] = u1;
-    data_out[idx++] = v1;
-    data_out[idx++] = location;
+    data_out[idx++] = color.x;
+    data_out[idx++] = color.y;
+    data_out[idx++] = color.z;
     // Vertex 5
     data_out[idx++] = position.x + size_x;
-    data_out[idx++] = position.y;
+    data_out[idx++] = position.y - size_y;
     data_out[idx++] = position.z;
     data_out[idx++] = position.w;
-    data_out[idx++] = u2;
-    data_out[idx++] = v2;
-    data_out[idx++] = location;
+    data_out[idx++] = color.x;
+    data_out[idx++] = color.y;
+    data_out[idx++] = color.z;
     // Vertex 6
     data_out[idx++] = position.x + size_x;
     data_out[idx++] = position.y + size_y;
     data_out[idx++] = position.z;
     data_out[idx++] = position.w;
-    data_out[idx++] = u2;
-    data_out[idx++] = v1;
-    data_out[idx++] = location;
+    data_out[idx++] = color.x;
+    data_out[idx++] = color.y;
+    data_out[idx++] = color.z;
 }
