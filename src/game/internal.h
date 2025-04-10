@@ -52,6 +52,10 @@ typedef struct {
 
 typedef struct {
     vec3 position;
+    vec3 direction;
+    vec3 color;
+    f32 lifetime;
+    f32 size;
 } Particle;
 
 typedef struct {
@@ -143,6 +147,7 @@ void obstacle_cleanup(void);
 
 void particle_init(void);
 Particle* particle_create(vec3 position);
+void particle_update(Particle* particle, f32 dt);
 void particle_destroy(Particle* particle);
 void particle_cleanup(void);
 

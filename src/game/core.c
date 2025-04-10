@@ -198,6 +198,30 @@ static void update_obstacle_vertex_data(void)
 
 static void update_particle_vertex_data(void)
 {
+    #define FLOATS_PER_VERTEX 7
+    if (FLOATS_PER_VERTEX * game_context.particles->capacity > game_context.data_swap.particle_capacity) {
+        game_context.data_swap.particle_capacity = game_context.particles->capacity;
+        size_t size = FLOATS_PER_VERTEX * game_context.data_swap.particle_capacity * sizeof(GLfloat);
+        if (game_context.data_swap.particle_buffer == NULL)
+            game_context.data_swap.particle_buffer = malloc(size);
+        else
+            game_context.data_swap.particle_buffer = realloc(game_context.data_swap.particle_buffer, size);
+        assert(game_context.particles != NULL);
+    }
+    #undef FLOATS_PER_VERTEX
+    game_context.data_swap.particle_length = 0;
+    #define V game_context.data_swap.particle_buffer[game_context.data_swap.particle_length++]
+    for (i32 i = 0; i < game_context.particles->length; i++) {
+        Particle* particle = list_get(game_context.particles, i);
+        V = particle->position.x;
+        V = particle->position.y;
+        V = particle->position.z;
+        V = particle->color.x;
+        V = particle->color.y;
+        V = particle->color.z;
+        V = particle->size;
+    }
+    #undef V
 }
 
 static void update_parjicle_vertex_data(void)
@@ -251,6 +275,15 @@ static void game_update(void)
         projectile_update(proj, game_context.dt);
         if (proj->lifetime <= 0)
             list_remove(game_context.projectiles, i);
+        else
+            i++;
+    }
+    i = 0;
+    while (i < game_context.particles->length) {
+        Particle* particle = list_get(game_context.particles, i);
+        particle_update(particle, game_context.dt);
+        if (particle->lifetime <= 0)
+            list_remove(game_context.particles, i);
         else
             i++;
     }

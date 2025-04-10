@@ -38,6 +38,12 @@ static struct {
     GLuint quad_buffer;
 } obstacle_buffers;
 
+static struct {
+    GLuint vao;
+    GLuint point_buffer;
+    GLuint quad_buffer;
+} particle_buffers;
+
 void game_render_init(void)
 {
     glGenVertexArrays(1, &tile_buffers.vao);
@@ -54,6 +60,9 @@ void game_render_init(void)
     glGenVertexArrays(1, &obstacle_buffers.vao);
     glGenBuffers(1, &obstacle_buffers.point_buffer);
     glGenBuffers(1, &obstacle_buffers.quad_buffer);
+    glGenVertexArrays(1, &particle_buffers.vao);
+    glGenBuffers(1, &particle_buffers.point_buffer);
+    glGenBuffers(1, &particle_buffers.quad_buffer);
 
     f32 quad_data[] = {
         0.0f, 0.0f,
@@ -115,6 +124,13 @@ void game_render_init(void)
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
+
+    glBindVertexArray(particle_buffers.vao);
+    glBindBuffer(GL_ARRAY_BUFFER, particle_buffers.quad_buffer);
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)(4 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
 }
 
 void game_render(void)
@@ -206,6 +222,27 @@ void game_render(void)
     shader_use(SHADER_PROGRAM_OBSTACLE);
     glBindVertexArray(obstacle_buffers.vao);
     glDrawArrays(GL_TRIANGLES, 0, 6 * num_obstacles);
+
+    // render particle
+    shader_use(SHADER_PROGRAM_PARTICLE_COMP);
+    pthread_mutex_lock(&game_context.data_mutex);
+    i32 particle_length = game_context.data.particle_length;
+    i32 num_particles = particle_length / 7;
+    glUniform1i(shader_get_uniform_location(SHADER_PROGRAM_PARTICLE_COMP, "N"), particle_length);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, particle_buffers.point_buffer);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, particle_length * sizeof(GLfloat), game_context.data.particle_buffer, GL_STATIC_DRAW);
+    pthread_mutex_unlock(&game_context.data_mutex);
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, particle_buffers.quad_buffer);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, 6 * particle_length * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, particle_buffers.point_buffer);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, particle_buffers.quad_buffer);
+    glDispatchCompute((num_particles + 31) / 32, 1, 1);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+    shader_use(SHADER_PROGRAM_PARTICLE);
+    glBindVertexArray(particle_buffers.vao);
+    glDrawArrays(GL_TRIANGLES, 0, 6 * num_particles);
 }
 
 void game_render_cleanup(void)
@@ -215,6 +252,7 @@ void game_render_cleanup(void)
     glDeleteVertexArrays(1, &wall_buffers.vao);
     glDeleteVertexArrays(1, &proj_buffers.vao);
     glDeleteVertexArrays(1, &obstacle_buffers.vao);
+    glDeleteVertexArrays(1, &particle_buffers.vao);
     glDeleteBuffers(1, &wall_buffers.vbo);
     glDeleteBuffers(1, &tile_buffers.vbo);
     glDeleteBuffers(1, &tile_buffers.instance_vbo);
@@ -224,5 +262,7 @@ void game_render_cleanup(void)
     glDeleteBuffers(1, &proj_buffers.quad_buffer);
     glDeleteBuffers(1, &obstacle_buffers.point_buffer);
     glDeleteBuffers(1, &obstacle_buffers.quad_buffer);
+    glDeleteBuffers(1, &particle_buffers.point_buffer);
+    glDeleteBuffers(1, &particle_buffers.quad_buffer);
 }
 
