@@ -38,6 +38,21 @@ void  list_remove(List* list, i32 idx)
     }
 }
 
+void* list_pop(List* list, i32 idx)
+{
+    void* data = list->buffer[idx];
+    list->buffer[idx] = list->buffer[--list->length];
+    if (list->length % RESIZE_LENGTH == 0) {
+        list->capacity = list->length;
+        if (list->capacity == 0) {
+            free(list->buffer);
+            list->buffer = NULL;
+        } else
+            list->buffer = realloc(list->buffer, list->capacity * sizeof(void*));
+    }
+    return data;
+}
+
 void  list_clear(List* list)
 {
     free(list->buffer);
