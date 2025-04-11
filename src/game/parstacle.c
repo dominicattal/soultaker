@@ -5,11 +5,14 @@ extern GameContext game_context;
 void parstacle_init(void)
 {
     game_context.parstacles = list_create();
+    parstacle_create(vec2_create(3.0, -4.0));
 }
 
-Parstacle* parstacle_create(vec3 position)
+Parstacle* parstacle_create(vec2 position)
 {
     Parstacle* parstacle = malloc(sizeof(Parstacle));
+    parstacle->position = position;
+    list_append(game_context.parstacles, parstacle);
     return parstacle;
 }
 

@@ -4,38 +4,7 @@
 
 RenderContext render_context;
 
-static void GLAPIENTRY message_callback(GLenum, GLenum, GLuint, GLenum, GLsizei, const GLchar*, const void*);
-
-void renderer_init(void)
-{
-    #ifdef DEBUG_BUILD
-    glEnable(GL_DEBUG_OUTPUT);
-    glDebugMessageCallback(message_callback, 0);
-    #endif
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_BLEND);
-    glEnable(GL_CULL_FACE);
-    glEnable(GL_PROGRAM_POINT_SIZE);
-    shader_init();
-    texture_init();
-}
-
-void renderer_render(void)
-{
-    //glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glClearColor(0.4f, 0.4f, 0.4f, 1.0f);
-
-    game_render();
-    gui_render();
-}
-
-void renderer_cleanup(void)
-{
-    shader_cleanup();
-    texture_cleanup();
-}
-
+#ifdef DEBUG_BUILD
 static void GLAPIENTRY message_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
 {
     if (severity == GL_DEBUG_SEVERITY_NOTIFICATION)
@@ -82,3 +51,34 @@ static void GLAPIENTRY message_callback(GLenum source, GLenum type, GLuint id, G
     if (severity != GL_DEBUG_SEVERITY_NOTIFICATION)
         exit(1);
 }
+#endif
+
+void renderer_init(void)
+{
+    #ifdef DEBUG_BUILD
+    glEnable(GL_DEBUG_OUTPUT);
+    glDebugMessageCallback(message_callback, 0);
+    #endif
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
+    glEnable(GL_CULL_FACE);
+    shader_init();
+    texture_init();
+}
+
+void renderer_render(void)
+{
+    //glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClearColor(0.4f, 0.4f, 0.4f, 1.0f);
+
+    game_render();
+    gui_render();
+}
+
+void renderer_cleanup(void)
+{
+    shader_cleanup();
+    texture_cleanup();
+}
+

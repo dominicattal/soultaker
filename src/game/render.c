@@ -223,6 +223,27 @@ void game_render(void)
     glBindVertexArray(obstacle_buffers.vao);
     glDrawArrays(GL_TRIANGLES, 0, 6 * num_obstacles);
 
+    // render parstacles
+    shader_use(SHADER_PROGRAM_OBSTACLE_COMP);
+    pthread_mutex_lock(&game_context.data_mutex);
+    i32 parstacle_length = game_context.data.parstacle_length;
+    i32 num_parstacles = parstacle_length / 7;
+    glUniform1i(shader_get_uniform_location(SHADER_PROGRAM_OBSTACLE_COMP, "N"), parstacle_length);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, obstacle_buffers.point_buffer);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, parstacle_length * sizeof(GLfloat), game_context.data.parstacle_buffer, GL_STATIC_DRAW);
+    pthread_mutex_unlock(&game_context.data_mutex);
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, obstacle_buffers.quad_buffer);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, 6 * parstacle_length * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, obstacle_buffers.point_buffer);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, obstacle_buffers.quad_buffer);
+    glDispatchCompute((num_parstacles + 31) / 32, 1, 1);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+    shader_use(SHADER_PROGRAM_OBSTACLE);
+    glBindVertexArray(obstacle_buffers.vao);
+    glDrawArrays(GL_TRIANGLES, 0, 6 * num_parstacles);
+
     // render particle
     shader_use(SHADER_PROGRAM_PARTICLE_COMP);
     pthread_mutex_lock(&game_context.data_mutex);
