@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -MMD -Wall -Wextra -Werror -Wfatal-errors -Wno-unused-parameter -Wno-stringop-overflow -fopenmp
+CFLAGS = -MMD -Wall -Wextra -Werror -Wfatal-errors -Wno-unused-parameter -Wno-stringop-overflow -fopenmp -pthread
 CFLAGS_DEV = -g3 -D DEBUG_BUILD
 CFLAGS_RELEASE = -O3 -D RELEASE_BUILD
 LINKER_FLAGS = -lglfw3dll -lm -pthread -lOpenAL32 -lsndfile

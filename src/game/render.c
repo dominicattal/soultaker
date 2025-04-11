@@ -133,11 +133,8 @@ void game_render_init(void)
     glEnableVertexAttribArray(1);
 }
 
-void game_render(void)
+static void render_tiles(void)
 {
-    camera_update();
-
-    // render tiles
     shader_use(SHADER_PROGRAM_TILE);
     glBindVertexArray(tile_buffers.vao);
     glBindBuffer(GL_ARRAY_BUFFER, tile_buffers.instance_vbo);
@@ -147,9 +144,10 @@ void game_render(void)
     glBufferData(GL_ARRAY_BUFFER, tile_length * sizeof(GLfloat), game_context.data.tile_buffer, GL_STATIC_DRAW);
     pthread_mutex_unlock(&game_context.data_mutex);
     glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, num_tiles);
-    
-    // render walls
-    glEnable(GL_DEPTH_TEST);
+}
+
+static void render_walls(void)
+{
     shader_use(SHADER_PROGRAM_WALL);
     glBindVertexArray(wall_buffers.vao);
     glBindBuffer(GL_ARRAY_BUFFER, wall_buffers.vbo);
@@ -159,8 +157,10 @@ void game_render(void)
     glBufferData(GL_ARRAY_BUFFER, wall_length * sizeof(GLfloat), game_context.data.wall_buffer, GL_STATIC_DRAW);
     pthread_mutex_unlock(&game_context.data_mutex);
     glDrawArrays(GL_TRIANGLES, 0, 6 * num_walls);
+}
 
-    // render entities
+static void render_entities(void)
+{
     shader_use(SHADER_PROGRAM_ENTITY_COMP);
     pthread_mutex_lock(&game_context.data_mutex);
     i32 entity_length = game_context.data.entity_length;
@@ -180,29 +180,10 @@ void game_render(void)
     shader_use(SHADER_PROGRAM_ENTITY);
     glBindVertexArray(entity_buffers.vao);
     glDrawArrays(GL_TRIANGLES, 0, 6 * num_entities);
+}
 
-    // render projectiles
-    shader_use(SHADER_PROGRAM_PROJECTILE_COMP);
-    pthread_mutex_lock(&game_context.data_mutex);
-    i32 proj_length = game_context.data.proj_length;
-    i32 num_projs = proj_length / 8;
-    glUniform1i(shader_get_uniform_location(SHADER_PROGRAM_PROJECTILE_COMP, "N"), proj_length);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, proj_buffers.point_buffer);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, proj_length * sizeof(GLfloat), game_context.data.proj_buffer, GL_STATIC_DRAW);
-    pthread_mutex_unlock(&game_context.data_mutex);
-
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, proj_buffers.quad_buffer);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, 6 * proj_length * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, proj_buffers.point_buffer);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, proj_buffers.quad_buffer);
-    glDispatchCompute((num_projs + 31) / 32, 1, 1);
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-    shader_use(SHADER_PROGRAM_PROJECTILE);
-    glBindVertexArray(proj_buffers.vao);
-    glDrawArrays(GL_TRIANGLES, 0, 6 * num_projs);
-
-    // render obstacles
+static void render_obstacles(void)
+{
     shader_use(SHADER_PROGRAM_OBSTACLE_COMP);
     pthread_mutex_lock(&game_context.data_mutex);
     i32 obstacle_length = game_context.data.obstacle_length;
@@ -222,8 +203,10 @@ void game_render(void)
     shader_use(SHADER_PROGRAM_OBSTACLE);
     glBindVertexArray(obstacle_buffers.vao);
     glDrawArrays(GL_TRIANGLES, 0, 6 * num_obstacles);
+}
 
-    // render parstacles
+static void render_parstacles(void)
+{
     shader_use(SHADER_PROGRAM_OBSTACLE_COMP);
     pthread_mutex_lock(&game_context.data_mutex);
     i32 parstacle_length = game_context.data.parstacle_length;
@@ -243,8 +226,10 @@ void game_render(void)
     shader_use(SHADER_PROGRAM_OBSTACLE);
     glBindVertexArray(obstacle_buffers.vao);
     glDrawArrays(GL_TRIANGLES, 0, 6 * num_parstacles);
+}
 
-    // render particle
+static void render_particles(void)
+{
     shader_use(SHADER_PROGRAM_PARTICLE_COMP);
     pthread_mutex_lock(&game_context.data_mutex);
     i32 particle_length = game_context.data.particle_length;
@@ -264,6 +249,47 @@ void game_render(void)
     shader_use(SHADER_PROGRAM_PARTICLE);
     glBindVertexArray(particle_buffers.vao);
     glDrawArrays(GL_TRIANGLES, 0, 6 * num_particles);
+}
+
+static void render_parjicles(void)
+{
+}
+
+static void render_projectiles(void)
+{
+    shader_use(SHADER_PROGRAM_PROJECTILE_COMP);
+    pthread_mutex_lock(&game_context.data_mutex);
+    i32 proj_length = game_context.data.proj_length;
+    i32 num_projs = proj_length / 8;
+    glUniform1i(shader_get_uniform_location(SHADER_PROGRAM_PROJECTILE_COMP, "N"), proj_length);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, proj_buffers.point_buffer);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, proj_length * sizeof(GLfloat), game_context.data.proj_buffer, GL_STATIC_DRAW);
+    pthread_mutex_unlock(&game_context.data_mutex);
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, proj_buffers.quad_buffer);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, 6 * proj_length * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, proj_buffers.point_buffer);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, proj_buffers.quad_buffer);
+    glDispatchCompute((num_projs + 31) / 32, 1, 1);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+    shader_use(SHADER_PROGRAM_PROJECTILE);
+    glBindVertexArray(proj_buffers.vao);
+    glDrawArrays(GL_TRIANGLES, 0, 6 * num_projs);
+}
+
+void game_render(void)
+{
+    camera_update();
+    render_tiles();
+    glEnable(GL_DEPTH_TEST);
+    render_walls();
+    render_obstacles();
+    render_parstacles();
+    render_entities();
+    render_projectiles();
+    render_particles();
+    render_parjicles();
 }
 
 void game_render_cleanup(void)

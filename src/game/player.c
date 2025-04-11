@@ -12,7 +12,6 @@ void player_update(Player* player, f32 dt)
 
 void weapon_shoot(Player* player, vec3 direction, vec3 target)
 {
-    projectile_create(player->entity->position);
 }
 
 void player_shoot(Player* player)
