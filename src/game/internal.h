@@ -136,7 +136,7 @@ void projectile_destroy(Projectile* projectile);
 void projectile_cleanup(void);
 
 void parstacle_init(void);
-Parstacle* parstacle_create(vec3 position);
+Parstacle* parstacle_create(vec2 position);
 void parstacle_destroy(Parstacle* parstacle);
 void parstacle_cleanup(void);
 

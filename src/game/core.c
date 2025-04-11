@@ -163,6 +163,33 @@ static void update_wall_vertex_data(void)
 
 static void update_parstacle_vertex_data(void)
 {
+    #define FLOATS_PER_VERTEX 7
+    if (FLOATS_PER_VERTEX * game_context.parstacles->capacity > game_context.data_swap.parstacle_capacity) {
+        game_context.data_swap.parstacle_capacity = game_context.parstacles->capacity;
+        size_t size = FLOATS_PER_VERTEX * game_context.data_swap.parstacle_capacity * sizeof(GLfloat);
+        if (game_context.data_swap.parstacle_buffer == NULL)
+            game_context.data_swap.parstacle_buffer = malloc(size);
+        else
+            game_context.data_swap.parstacle_buffer = realloc(game_context.data_swap.parstacle_buffer, size);
+        assert(game_context.parstacles != NULL);
+    }
+    #undef FLOATS_PER_VERTEX
+    game_context.data_swap.parstacle_length = 0;
+    f32 u, v, w, h;
+    i32 location;
+    texture_info(TEX_BUSH, &u, &v, &w, &h, &location);
+    #define V game_context.data_swap.parstacle_buffer[game_context.data_swap.parstacle_length++]
+    for (i32 i = 0; i < game_context.parstacles->length; i++) {
+        Parstacle* parstacle = list_get(game_context.parstacles, i);
+        V = parstacle->position.x;
+        V = parstacle->position.y;
+        V = u;
+        V = v;
+        V = w;
+        V = h;
+        V = location;
+    }
+    #undef V
 }
 
 static void update_obstacle_vertex_data(void)

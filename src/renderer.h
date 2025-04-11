@@ -29,6 +29,7 @@ typedef enum {
     TEX_WALL_2,
     TEX_KNIGHT,
     TEX_ROCK,
+    TEX_BUSH,
     NUM_TEXTURES
 } TextureEnum;
 
