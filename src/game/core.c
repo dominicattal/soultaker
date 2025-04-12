@@ -7,8 +7,8 @@ static void update_entity_vertex_data(void)
 {
     #define FLOATS_PER_VERTEX 8
     if (FLOATS_PER_VERTEX * game_context.entities->capacity > game_context.data_swap.entity_capacity) {
-        game_context.data_swap.entity_capacity = game_context.entities->capacity;
-        size_t size = FLOATS_PER_VERTEX * game_context.data_swap.entity_capacity * sizeof(GLfloat);
+        game_context.data_swap.entity_capacity = FLOATS_PER_VERTEX * game_context.entities->capacity;
+        size_t size = game_context.data_swap.entity_capacity * sizeof(GLfloat);
         if (game_context.data_swap.entity_buffer == NULL)
             game_context.data_swap.entity_buffer = malloc(size);
         else
@@ -287,6 +287,12 @@ static void game_update_vertex_data(void)
 static void game_update(void)
 {
     i32 i;
+    static f32 kk;
+    if (kk < 0) {
+        entity_create(vec3_create(0, 0, 0));
+        kk = 0.5;
+    }
+    kk -= game_context.dt;
     i = 0;
     while (i < game_context.entities->length) {
         Entity* entity = list_get(game_context.entities, i);

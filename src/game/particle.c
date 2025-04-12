@@ -5,6 +5,7 @@ extern GameContext game_context;
 void particle_init(void)
 {
     game_context.particles = list_create();
+    particle_create( vec3_create(0, 0.5, 1));
 }
 
 Particle* particle_create(vec3 position)

@@ -12,6 +12,7 @@ void player_update(Player* player, f32 dt)
 
 void weapon_shoot(Player* player, vec3 direction, vec3 target)
 {
+    particle_create(vec3_create(0.0, 0.5, 1.0));
 }
 
 void player_shoot(Player* player)

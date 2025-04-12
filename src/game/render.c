@@ -1,4 +1,4 @@
-    /*
+/*
  * Everything in this file
  * runs on the opengl context
  * thread
@@ -14,12 +14,6 @@ static struct {
     GLuint vbo;
     GLuint instance_vbo;
 } tile_buffers;
-
-static struct {
-    GLuint vao;
-    GLuint point_buffer;
-    GLuint quad_buffer;
-} entity_buffers;
 
 static struct {
     GLuint vao;
@@ -44,6 +38,19 @@ static struct {
     GLuint quad_buffer;
 } particle_buffers;
 
+static struct {
+    GLuint vao;
+    GLuint vbo;
+    i32 vbo_capacity;
+} entity_buffers;
+
+static struct {
+    GLuint in;
+    GLuint out;
+    i32 in_capacity;
+    i32 out_capacity;
+} comp_buffers;
+
 void game_render_init(void)
 {
     glGenVertexArrays(1, &tile_buffers.vao);
@@ -52,8 +59,8 @@ void game_render_init(void)
     glGenVertexArrays(1, &wall_buffers.vao);
     glGenBuffers(1, &wall_buffers.vbo);
     glGenVertexArrays(1, &entity_buffers.vao);
-    glGenBuffers(1, &entity_buffers.point_buffer);
-    glGenBuffers(1, &entity_buffers.quad_buffer);
+    glGenBuffers(1, &entity_buffers.vbo);
+    entity_buffers.vbo_capacity = 0;
     glGenVertexArrays(1, &proj_buffers.vao);
     glGenBuffers(1, &proj_buffers.point_buffer);
     glGenBuffers(1, &proj_buffers.quad_buffer);
@@ -63,6 +70,10 @@ void game_render_init(void)
     glGenVertexArrays(1, &particle_buffers.vao);
     glGenBuffers(1, &particle_buffers.point_buffer);
     glGenBuffers(1, &particle_buffers.quad_buffer);
+    glGenBuffers(1, &comp_buffers.in);
+    glGenBuffers(1, &comp_buffers.out);
+    comp_buffers.in_capacity = 0;
+    comp_buffers.out_capacity = 0;
 
     f32 quad_data[] = {
         0.0f, 0.0f,
@@ -99,7 +110,7 @@ void game_render_init(void)
     glEnableVertexAttribArray(3);
 
     glBindVertexArray(entity_buffers.vao);
-    glBindBuffer(GL_ARRAY_BUFFER, entity_buffers.quad_buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, entity_buffers.vbo);
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)0);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)(4 * sizeof(GLfloat)));
     glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)(6 * sizeof(GLfloat)));
@@ -161,21 +172,41 @@ static void render_walls(void)
 
 static void render_entities(void)
 {
+    i32 entity_length_in, entity_length_out, num_entities;
+    entity_length_in = game_context.data.entity_length;
+    num_entities = entity_length_in / 8;
+    entity_length_out = 6 * 7 * num_entities;
+
     shader_use(SHADER_PROGRAM_ENTITY_COMP);
     pthread_mutex_lock(&game_context.data_mutex);
-    i32 entity_length = game_context.data.entity_length;
-    i32 num_entities = entity_length / 8;
-    glUniform1i(shader_get_uniform_location(SHADER_PROGRAM_ENTITY_COMP, "N"), entity_length);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, entity_buffers.point_buffer);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, entity_length * sizeof(GLfloat), game_context.data.entity_buffer, GL_STATIC_DRAW);
+    glUniform1i(shader_get_uniform_location(SHADER_PROGRAM_ENTITY_COMP, "N"), num_entities);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, comp_buffers.in);
+    if (comp_buffers.in_capacity < entity_length_in) {
+        glBufferData(GL_SHADER_STORAGE_BUFFER, entity_length_in * sizeof(GLfloat), game_context.data.entity_buffer, GL_DYNAMIC_DRAW);
+        comp_buffers.in_capacity = entity_length_in;
+    }
+    else
+        glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, entity_length_in * sizeof(GLfloat), game_context.data.entity_buffer);
     pthread_mutex_unlock(&game_context.data_mutex);
 
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, entity_buffers.quad_buffer);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, 6 * entity_length * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, entity_buffers.point_buffer);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, entity_buffers.quad_buffer);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, comp_buffers.out);
+    if (comp_buffers.out_capacity < entity_length_out) {
+        glBufferData(GL_SHADER_STORAGE_BUFFER, entity_length_out * sizeof(GLfloat), NULL, GL_DYNAMIC_DRAW);
+        comp_buffers.out_capacity = entity_length_out;
+    }
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, comp_buffers.in);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, comp_buffers.out);
     glDispatchCompute((num_entities + 31) / 32, 1, 1);
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+    if (entity_buffers.vbo_capacity < entity_length_out) {
+        glBindBuffer(GL_ARRAY_BUFFER, entity_buffers.vbo);
+        glBufferData(GL_ARRAY_BUFFER, entity_length_out * sizeof(GLfloat), NULL, GL_DYNAMIC_DRAW);
+        entity_buffers.vbo_capacity = entity_length_out;
+    }
+    glBindBuffer(GL_COPY_READ_BUFFER, comp_buffers.out);
+    glBindBuffer(GL_COPY_WRITE_BUFFER, entity_buffers.vbo);
+    glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, entity_length_out * sizeof(GLfloat));
 
     shader_use(SHADER_PROGRAM_ENTITY);
     glBindVertexArray(entity_buffers.vao);
@@ -194,7 +225,7 @@ static void render_obstacles(void)
     pthread_mutex_unlock(&game_context.data_mutex);
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, obstacle_buffers.quad_buffer);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, 6 * obstacle_length * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, 100 * num_obstacles * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, obstacle_buffers.point_buffer);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, obstacle_buffers.quad_buffer);
     glDispatchCompute((num_obstacles + 31) / 32, 1, 1);
@@ -217,7 +248,7 @@ static void render_parstacles(void)
     pthread_mutex_unlock(&game_context.data_mutex);
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, obstacle_buffers.quad_buffer);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, 6 * parstacle_length * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, 100 * num_parstacles * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, obstacle_buffers.point_buffer);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, obstacle_buffers.quad_buffer);
     glDispatchCompute((num_parstacles + 31) / 32, 1, 1);
@@ -240,7 +271,7 @@ static void render_particles(void)
     pthread_mutex_unlock(&game_context.data_mutex);
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, particle_buffers.quad_buffer);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, 6 * particle_length * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, 200 * num_particles * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, particle_buffers.point_buffer);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, particle_buffers.quad_buffer);
     glDispatchCompute((num_particles + 31) / 32, 1, 1);
@@ -267,7 +298,7 @@ static void render_projectiles(void)
     pthread_mutex_unlock(&game_context.data_mutex);
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, proj_buffers.quad_buffer);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, 6 * proj_length * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, 100 * num_projs * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, proj_buffers.point_buffer);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, proj_buffers.quad_buffer);
     glDispatchCompute((num_projs + 31) / 32, 1, 1);
@@ -303,13 +334,14 @@ void game_render_cleanup(void)
     glDeleteBuffers(1, &wall_buffers.vbo);
     glDeleteBuffers(1, &tile_buffers.vbo);
     glDeleteBuffers(1, &tile_buffers.instance_vbo);
-    glDeleteBuffers(1, &entity_buffers.point_buffer);
-    glDeleteBuffers(1, &entity_buffers.quad_buffer);
+    glDeleteBuffers(1, &entity_buffers.vbo);
     glDeleteBuffers(1, &proj_buffers.point_buffer);
     glDeleteBuffers(1, &proj_buffers.quad_buffer);
     glDeleteBuffers(1, &obstacle_buffers.point_buffer);
     glDeleteBuffers(1, &obstacle_buffers.quad_buffer);
     glDeleteBuffers(1, &particle_buffers.point_buffer);
     glDeleteBuffers(1, &particle_buffers.quad_buffer);
+    glDeleteBuffers(1, &comp_buffers.in);
+    glDeleteBuffers(1, &comp_buffers.out);
 }
 
