@@ -9,6 +9,7 @@ void entity_init(void)
     game_context.player.entity->direction = vec3_create(0, 0, 0);
     entity_create(vec3_create(5, 0, 0));
     entity_create(vec3_create(0, 0, 4));
+    entity_create(vec3_create(5, 0, 4));
 }
 
 Entity* entity_create(vec3 position)
