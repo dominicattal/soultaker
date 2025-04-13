@@ -173,38 +173,6 @@ static void compile_shader_program_entity_comp(void)
     shader_bind_uniform_block(SHADER_PROGRAM_ENTITY_COMP, UBO_INDEX_WINDOW, "Window");
 }
 
-static void compile_shader_program_projectile(void)
-{
-    u32 vert, frag;
-    vert = compile(GL_VERTEX_SHADER, "assets/shaders/projectile.vert");
-    frag = compile(GL_FRAGMENT_SHADER, "assets/shaders/projectile.frag");
-    attach(SHADER_PROGRAM_PROJECTILE, vert);
-    attach(SHADER_PROGRAM_PROJECTILE, frag);
-    link(SHADER_PROGRAM_PROJECTILE);
-    detach(SHADER_PROGRAM_PROJECTILE, vert);
-    detach(SHADER_PROGRAM_PROJECTILE, frag);
-    delete(vert);
-    delete(frag);
-    i32 texs[NUM_TEXTURE_UNITS];
-    for (i32 i = 0; i < NUM_TEXTURE_UNITS; ++i)
-        texs[i] = i;
-    shader_use(SHADER_PROGRAM_PROJECTILE);
-    glUniform1iv(shader_get_uniform_location(SHADER_PROGRAM_PROJECTILE, "textures"), NUM_TEXTURE_UNITS, texs);
-    shader_bind_uniform_block(SHADER_PROGRAM_PROJECTILE, UBO_INDEX_MATRICES, "Matrices");
-}
-
-static void compile_shader_program_projectile_comp(void)
-{
-    u32 comp;
-    comp = compile(GL_COMPUTE_SHADER, "assets/shaders/projectile.comp");
-    attach(SHADER_PROGRAM_PROJECTILE_COMP, comp);
-    link(SHADER_PROGRAM_PROJECTILE_COMP);
-    detach(SHADER_PROGRAM_PROJECTILE_COMP, comp);
-    delete(comp);
-    shader_bind_uniform_block(SHADER_PROGRAM_PROJECTILE_COMP, UBO_INDEX_MATRICES, "Matrices");
-    shader_bind_uniform_block(SHADER_PROGRAM_PROJECTILE_COMP, UBO_INDEX_WINDOW, "Window");
-}
-
 static void compile_shader_program_obstacle(void)
 {
     u32 vert, frag;
@@ -260,6 +228,37 @@ static void compile_shader_program_particle_comp(void)
     delete(comp);
     shader_bind_uniform_block(SHADER_PROGRAM_PARTICLE_COMP, UBO_INDEX_MATRICES, "Matrices");
     shader_bind_uniform_block(SHADER_PROGRAM_PARTICLE_COMP, UBO_INDEX_WINDOW, "Window");
+}
+
+static void compile_shader_program_projectile(void)
+{
+    u32 vert, frag;
+    vert = compile(GL_VERTEX_SHADER, "assets/shaders/projectile.vert");
+    frag = compile(GL_FRAGMENT_SHADER, "assets/shaders/projectile.frag");
+    attach(SHADER_PROGRAM_PROJECTILE, vert);
+    attach(SHADER_PROGRAM_PROJECTILE, frag);
+    link(SHADER_PROGRAM_PROJECTILE);
+    detach(SHADER_PROGRAM_PROJECTILE, vert);
+    detach(SHADER_PROGRAM_PROJECTILE, frag);
+    delete(vert);
+    delete(frag);
+    i32 texs[NUM_TEXTURE_UNITS];
+    for (i32 i = 0; i < NUM_TEXTURE_UNITS; ++i)
+        texs[i] = i;
+    shader_use(SHADER_PROGRAM_PROJECTILE);
+    glUniform1iv(shader_get_uniform_location(SHADER_PROGRAM_PROJECTILE, "textures"), NUM_TEXTURE_UNITS, texs);
+}
+
+static void compile_shader_program_projectile_comp(void)
+{
+    u32 comp;
+    comp = compile(GL_COMPUTE_SHADER, "assets/shaders/projectile.comp");
+    attach(SHADER_PROGRAM_PROJECTILE_COMP, comp);
+    link(SHADER_PROGRAM_PROJECTILE_COMP);
+    detach(SHADER_PROGRAM_PROJECTILE_COMP, comp);
+    delete(comp);
+    shader_bind_uniform_block(SHADER_PROGRAM_PROJECTILE_COMP, UBO_INDEX_MATRICES, "Matrices");
+    shader_bind_uniform_block(SHADER_PROGRAM_PROJECTILE_COMP, UBO_INDEX_WINDOW, "Window");
 }
 
 void shader_program_compile(ShaderProgramEnum program)
@@ -320,6 +319,8 @@ void shader_init(void)
     shader_program_compile(SHADER_PROGRAM_OBSTACLE_COMP);
     shader_program_compile(SHADER_PROGRAM_PARTICLE);
     shader_program_compile(SHADER_PROGRAM_PARTICLE_COMP);
+    shader_program_compile(SHADER_PROGRAM_PROJECTILE);
+    shader_program_compile(SHADER_PROGRAM_PROJECTILE_COMP);
 }
 
 void shader_use(ShaderProgramEnum id)
