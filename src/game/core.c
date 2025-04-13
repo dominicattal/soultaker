@@ -155,14 +155,14 @@ void game_cleanup(void)
     particle_cleanup();
     parjicle_cleanup();
 
-    free(game_context.data_swap.proj_buffer);
+    free(game_context.data.projectile_buffer);
+    free(game_context.data_swap.projectile_buffer);
     free(game_context.data.entity_buffer);
     free(game_context.data_swap.entity_buffer);
     free(game_context.data.tile_buffer);
     free(game_context.data_swap.tile_buffer);
     free(game_context.data.wall_buffer);
     free(game_context.data_swap.wall_buffer);
-    free(game_context.data.proj_buffer);
     free(game_context.data.parstacle_buffer);
     free(game_context.data_swap.parstacle_buffer);
     free(game_context.data.obstacle_buffer);

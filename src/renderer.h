@@ -28,6 +28,7 @@ typedef enum {
     TEX_WALL_1,
     TEX_WALL_2,
     TEX_KNIGHT,
+    TEX_BULLET,
     TEX_ROCK,
     TEX_BUSH,
     NUM_TEXTURES

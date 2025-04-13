@@ -14,7 +14,7 @@ void weapon_shoot(Player* player, vec3 direction, vec3 target)
 {
     vec3 pos = player->entity->position;
     pos.y = 0.5;
-    particle_create(pos);
+    projectile_create(pos);
 }
 
 void player_shoot(Player* player)

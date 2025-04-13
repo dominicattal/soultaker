@@ -84,8 +84,8 @@ typedef struct {
     bool update_obstacle_buffer;
     i32 entity_length, entity_capacity;
     GLfloat* entity_buffer;
-    i32 proj_length, proj_capacity;
-    GLfloat* proj_buffer;
+    i32 projectile_length, projectile_capacity;
+    GLfloat* projectile_buffer;
     i32 particle_length, particle_capacity;
     GLfloat* particle_buffer;
     i32 parjicle_length, parjicle_capacity;

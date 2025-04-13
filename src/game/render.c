@@ -16,6 +16,7 @@
 #define PARTICLE_VERTEX_LENGTH_IN    7
 #define PARTICLE_VERTEX_LENGTH_OUT   7
 #define PROJECTILE_VERTEX_LENGTH_IN  8
+#define PROJECTILE_VERTEX_LENGTH_OUT 7
 
 extern GameContext game_context;
 
@@ -27,9 +28,9 @@ static struct {
 
 static struct {
     GLuint vao;
-    GLuint point_buffer;
-    GLuint quad_buffer;
-} proj_buffers;
+    GLuint vbo;
+    i32 vbo_capacity;
+} projectile_buffers;
 
 static struct {
     GLuint vao;
@@ -143,25 +144,25 @@ static void update_entity_vertex_data(void)
 
 static void update_projectile_vertex_data(void)
 {
-    if (PROJECTILE_VERTEX_LENGTH_IN * game_context.projectiles->capacity > game_context.data_swap.proj_capacity) {
-        game_context.data_swap.proj_capacity = game_context.projectiles->capacity;
-        size_t size = PROJECTILE_VERTEX_LENGTH_IN * game_context.data_swap.proj_capacity * sizeof(GLfloat);
-        if (game_context.data_swap.proj_buffer == NULL)
-            game_context.data_swap.proj_buffer = malloc(size);
+    if (PROJECTILE_VERTEX_LENGTH_IN * game_context.projectiles->capacity > game_context.data_swap.projectile_capacity) {
+        game_context.data_swap.projectile_capacity = game_context.projectiles->capacity;
+        size_t size = PROJECTILE_VERTEX_LENGTH_IN * game_context.data_swap.projectile_capacity * sizeof(GLfloat);
+        if (game_context.data_swap.projectile_buffer == NULL)
+            game_context.data_swap.projectile_buffer = malloc(size);
         else
-            game_context.data_swap.proj_buffer = realloc(game_context.data_swap.proj_buffer, size);
+            game_context.data_swap.projectile_buffer = realloc(game_context.data_swap.projectile_buffer, size);
         assert(game_context.projectiles != NULL);
     }
-    game_context.data_swap.proj_length = 0;
+    game_context.data_swap.projectile_length = 0;
     f32 u, v, w, h;
     i32 location;
-    texture_info(TEX_KNIGHT, &u, &v, &w, &h, &location);
-    #define V game_context.data_swap.proj_buffer[game_context.data_swap.proj_length++]
+    texture_info(TEX_BULLET, &u, &v, &w, &h, &location);
+    #define V game_context.data_swap.projectile_buffer[game_context.data_swap.projectile_length++]
     for (i32 i = 0; i < game_context.projectiles->length; i++) {
-        Projectile* proj = list_get(game_context.projectiles, i);
-        V = proj->position.x;
-        V = proj->position.y;
-        V = proj->position.z;
+        Projectile* projectile = list_get(game_context.projectiles, i);
+        V = projectile->position.x;
+        V = projectile->position.y;
+        V = projectile->position.z;
         V = u;
         V = v;
         V = w;
@@ -388,9 +389,8 @@ void game_render_init(void)
     glGenVertexArrays(1, &entity_buffers.vao);
     glGenBuffers(1, &entity_buffers.vbo);
     entity_buffers.vbo_capacity = 0;
-    glGenVertexArrays(1, &proj_buffers.vao);
-    glGenBuffers(1, &proj_buffers.point_buffer);
-    glGenBuffers(1, &proj_buffers.quad_buffer);
+    glGenVertexArrays(1, &projectile_buffers.vao);
+    glGenBuffers(1, &projectile_buffers.vbo);
     glGenVertexArrays(1, &obstacle_buffers.vao);
     glGenBuffers(1, &obstacle_buffers.vbo);
     obstacle_buffers.vbo_capacity = 0;
@@ -448,8 +448,8 @@ void game_render_init(void)
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
 
-    glBindVertexArray(proj_buffers.vao);
-    glBindBuffer(GL_ARRAY_BUFFER, proj_buffers.quad_buffer);
+    glBindVertexArray(projectile_buffers.vao);
+    glBindBuffer(GL_ARRAY_BUFFER, projectile_buffers.vbo);
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)0);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)(4 * sizeof(GLfloat)));
     glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)(6 * sizeof(GLfloat)));
@@ -611,6 +611,26 @@ static void render_parjicles(void)
 
 static void render_projectiles(void)
 {
+    i32 projectile_length_in, projectile_length_out, num_projectiles;
+    projectile_length_in = game_context.data.projectile_length;
+    num_projectiles = projectile_length_in / PROJECTILE_VERTEX_LENGTH_OUT;
+    projectile_length_out = 6 * PROJECTILE_VERTEX_LENGTH_OUT * num_projectiles;
+
+    ComputeShaderParams params = {
+        .compute_shader = SHADER_PROGRAM_PROJECTILE_COMP,
+        .num_objects = num_projectiles,
+        .object_length_in = projectile_length_in,
+        .object_length_out = projectile_length_out,
+        .object_buffer = game_context.data.projectile_buffer,
+        .output_buffer = projectile_buffers.vbo,
+        .output_buffer_capacity_ptr = &projectile_buffers.vbo_capacity
+    };
+
+    execute_compute_shader(&params);
+
+    shader_use(SHADER_PROGRAM_PROJECTILE);
+    glBindVertexArray(projectile_buffers.vao);
+    glDrawArrays(GL_TRIANGLES, 0, 6 * num_projectiles);
 }
 
 void game_render(void)
@@ -632,15 +652,14 @@ void game_render_cleanup(void)
     glDeleteVertexArrays(1, &tile_buffers.vao);
     glDeleteVertexArrays(1, &entity_buffers.vao);
     glDeleteVertexArrays(1, &wall_buffers.vao);
-    glDeleteVertexArrays(1, &proj_buffers.vao);
+    glDeleteVertexArrays(1, &projectile_buffers.vao);
     glDeleteVertexArrays(1, &obstacle_buffers.vao);
     glDeleteVertexArrays(1, &particle_buffers.vao);
     glDeleteBuffers(1, &wall_buffers.vbo);
     glDeleteBuffers(1, &tile_buffers.vbo);
     glDeleteBuffers(1, &tile_buffers.instance_vbo);
     glDeleteBuffers(1, &entity_buffers.vbo);
-    glDeleteBuffers(1, &proj_buffers.point_buffer);
-    glDeleteBuffers(1, &proj_buffers.quad_buffer);
+    glDeleteBuffers(1, &projectile_buffers.vbo);
     glDeleteBuffers(1, &obstacle_buffers.vbo);
     glDeleteBuffers(1, &parstacle_buffers.vbo);
     glDeleteBuffers(1, &particle_buffers.vbo);
