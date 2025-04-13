@@ -288,11 +288,9 @@ static void game_update(void)
 {
     i32 i;
     static f32 kk;
-    static i32 j;
     if (kk < 0) {
         entity_create(vec3_create(0, 0, 0));
         particle_create(vec3_create(0, 0, 0));
-        obstacle_create(vec2_create(0, j++));
         kk = 0.5;
         game_context.data.update_obstacle_buffer = true;
         game_context.data_swap.update_obstacle_buffer = true;
@@ -333,8 +331,8 @@ static void collide_entity_wall(Entity* entity, Wall* wall)
     f32 ex, ez, dx, dz, wx, wz, sx, sz, r;
     ex = entity->position.x;
     ez = entity->position.z;
-    dx = entity->direction.x;
-    dz = entity->direction.z;
+    dx = entity->position.x - entity->prev_position.x;
+    dz = entity->position.z - entity->prev_position.z;
     r = entity->hitbox_radius;
     wx = wall->position.x;
     wz = wall->position.y;
@@ -382,13 +380,13 @@ static void game_collide(void)
 {
     for (i32 i = 0; i < game_context.entities->length; i++) {
         Entity* entity = list_get(game_context.entities, i);
-        for (i32 j = 0; j < game_context.walls->length; j++) {
-            Wall* wall = list_get(game_context.walls, j);
-            collide_entity_wall(entity, wall);
-        }
         for (i32 j = 0; j < game_context.obstacles->length; j++) {
             Obstacle* obstacle = list_get(game_context.obstacles, j);
             collide_entity_obstacle(entity, obstacle);
+        }
+        for (i32 j = 0; j < game_context.walls->length; j++) {
+            Wall* wall = list_get(game_context.walls, j);
+            collide_entity_wall(entity, wall);
         }
     }
 }
