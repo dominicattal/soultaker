@@ -31,9 +31,9 @@ layout (std430, binding = 1) writeonly buffer Output {
 };
 
 void main() {
-    uint idx = 7 * gl_GlobalInvocationID.x;
-    if (idx >= N)
+    if (gl_GlobalInvocationID.x >= N)
         return;
+    uint idx = 7 * gl_GlobalInvocationID.x;
     vec4 position, color;
     float size_x, size_y;
     position = vec4(data_in[idx], data_in[idx+1], data_in[idx+2], 1.0f);

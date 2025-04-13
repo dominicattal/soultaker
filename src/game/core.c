@@ -288,9 +288,14 @@ static void game_update(void)
 {
     i32 i;
     static f32 kk;
+    static i32 j;
     if (kk < 0) {
         entity_create(vec3_create(0, 0, 0));
+        particle_create(vec3_create(0, 0, 0));
+        obstacle_create(vec2_create(0, j++));
         kk = 0.5;
+        game_context.data.update_obstacle_buffer = true;
+        game_context.data_swap.update_obstacle_buffer = true;
     }
     kk -= game_context.dt;
     i = 0;
