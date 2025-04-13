@@ -159,6 +159,8 @@ void parjicle_cleanup(void);
 void player_update(Player* player, f32 dt);
 void player_shoot(Player* player);
 
+void game_update_vertex_data(void);
+
 void camera_init(void);
 void camera_update(void);
 void camera_move(vec2 mag);
