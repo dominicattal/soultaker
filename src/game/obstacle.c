@@ -13,7 +13,7 @@ Obstacle* obstacle_create(vec2 position)
 {
     Obstacle* obstacle = malloc(sizeof(Obstacle));
     obstacle->position = position;
-    obstacle->hitbox_radius = 0.5;
+    obstacle->size = 1.0f;
     list_append(game_context.obstacles, obstacle);
     return obstacle;
 }

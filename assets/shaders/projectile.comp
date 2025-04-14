@@ -18,6 +18,7 @@ uniform int N;
 
 layout (std430, binding = 0) readonly buffer Input {
     // vec3 position
+    // float size
     // vec4 tex info
     // float location
     float data_in[];
@@ -33,63 +34,66 @@ layout (std430, binding = 1) writeonly buffer Output {
 void main() {
     if (gl_GlobalInvocationID.x >= N)
         return;
-    uint idx = 8 * gl_GlobalInvocationID.x;
+    uint idx = 9 * gl_GlobalInvocationID.x;
     vec4 position;
-    position = vec4(data_in[idx], data_in[idx+1], data_in[idx+2], 1.0f);
+    position = vec4(data_in[idx], 0.0f, data_in[idx+2], 1.0f);
     position = proj * view * position;
+    position.y += data_in[idx+1] / zoom;
 
-    float x, u1, v1, u2, v2, location;
-    x = 1.0f / 2.0f / window.aspect_ratio;
-    u1 = data_in[idx+3];
-    v1 = data_in[idx+4];
-    u2 = data_in[idx+3] + data_in[idx+5];
-    v2 = data_in[idx+4] + data_in[idx+6];
-    location = data_in[idx+7];
+    float size, size_x, size_y, u1, v1, u2, v2, location;
+    size = data_in[idx+3];
+    size_x = size / 2.0f / window.aspect_ratio / zoom;
+    size_y = size / 2.0f / zoom;
+    u1 = data_in[idx+4];
+    v1 = data_in[idx+5];
+    u2 = data_in[idx+4] + data_in[idx+6];
+    v2 = data_in[idx+5] + data_in[idx+7];
+    location = data_in[idx+8];
 
     idx = 6 * 7 * gl_GlobalInvocationID.x;
     // Vertex 1
-    data_out[idx++] = position.x - x / zoom;
-    data_out[idx++] = position.y;
+    data_out[idx++] = position.x - size_x;
+    data_out[idx++] = position.y - size_y;
     data_out[idx++] = position.z;
     data_out[idx++] = position.w;
     data_out[idx++] = u1;
     data_out[idx++] = v2;
     data_out[idx++] = location;
     // Vertex 2
-    data_out[idx++] = position.x + x / zoom;
-    data_out[idx++] = position.y;
+    data_out[idx++] = position.x + size_x;
+    data_out[idx++] = position.y - size_y;
     data_out[idx++] = position.z;
     data_out[idx++] = position.w;
     data_out[idx++] = u2;
     data_out[idx++] = v2;
     data_out[idx++] = location;
     // Vertex 3
-    data_out[idx++] = position.x - x / zoom;
-    data_out[idx++] = position.y + 1.0f / zoom;
+    data_out[idx++] = position.x - size_x;
+    data_out[idx++] = position.y + size_y;
     data_out[idx++] = position.z;
     data_out[idx++] = position.w;
     data_out[idx++] = u1;
     data_out[idx++] = v1;
     data_out[idx++] = location;
     // Vertex 4
-    data_out[idx++] = position.x - x / zoom;
-    data_out[idx++] = position.y + 1.0f / zoom;
+    data_out[idx++] = position.x - size_x;
+    data_out[idx++] = position.y + size_y;
     data_out[idx++] = position.z;
     data_out[idx++] = position.w;
     data_out[idx++] = u1;
     data_out[idx++] = v1;
     data_out[idx++] = location;
     // Vertex 5
-    data_out[idx++] = position.x + x / zoom;
-    data_out[idx++] = position.y;
+    data_out[idx++] = position.x + size_x;
+    data_out[idx++] = position.y - size_y;
     data_out[idx++] = position.z;
     data_out[idx++] = position.w;
     data_out[idx++] = u2;
     data_out[idx++] = v2;
     data_out[idx++] = location;
     // Vertex 6
-    data_out[idx++] = position.x + x / zoom;
-    data_out[idx++] = position.y + 1.0f / zoom;
+    data_out[idx++] = position.x + size_x;
+    data_out[idx++] = position.y + size_y;
     data_out[idx++] = position.z;
     data_out[idx++] = position.w;
     data_out[idx++] = u2;

@@ -1,21 +1,15 @@
-/*
- * Everything in this file
- * runs on the opengl context
- * thread
-*/
-
 #include "internal.h"
 #include "../renderer.h"
 
 #define TILE_VERTEX_LENGTH           7
 #define WALL_VERTEX_LENGTH           (8 * 6 * 5)
-#define ENTITY_VERTEX_LENGTH_IN      8
+#define ENTITY_VERTEX_LENGTH_IN      9
 #define ENTITY_VERTEX_LENGTH_OUT     7
-#define OBSTACLE_VERTEX_LENGTH_IN    7
+#define OBSTACLE_VERTEX_LENGTH_IN    8
 #define OBSTACLE_VERTEX_LENGTH_OUT   7
 #define PARTICLE_VERTEX_LENGTH_IN    7
 #define PARTICLE_VERTEX_LENGTH_OUT   7
-#define PROJECTILE_VERTEX_LENGTH_IN  8
+#define PROJECTILE_VERTEX_LENGTH_IN  9
 #define PROJECTILE_VERTEX_LENGTH_OUT 7
 
 extern GameContext game_context;
@@ -121,7 +115,6 @@ static void update_entity_vertex_data(void)
             game_context.data_swap.entity_buffer = malloc(size);
         else
             game_context.data_swap.entity_buffer = realloc(game_context.data_swap.entity_buffer, size);
-        assert(game_context.entities != NULL);
     }
     game_context.data_swap.entity_length = 0;
     f32 u, v, w, h;
@@ -133,6 +126,7 @@ static void update_entity_vertex_data(void)
         V = entity->position.x;
         V = entity->position.y;
         V = entity->position.z;
+        V = entity->size;
         V = u;
         V = v;
         V = w;
@@ -151,7 +145,6 @@ static void update_projectile_vertex_data(void)
             game_context.data_swap.projectile_buffer = malloc(size);
         else
             game_context.data_swap.projectile_buffer = realloc(game_context.data_swap.projectile_buffer, size);
-        assert(game_context.projectiles != NULL);
     }
     game_context.data_swap.projectile_length = 0;
     f32 u, v, w, h;
@@ -163,6 +156,7 @@ static void update_projectile_vertex_data(void)
         V = projectile->position.x;
         V = projectile->position.y;
         V = projectile->position.z;
+        V = projectile->size;
         V = u;
         V = v;
         V = w;
@@ -181,7 +175,6 @@ static void update_tile_vertex_data(void)
             game_context.data_swap.tile_buffer = malloc(size);
         else
             game_context.data_swap.tile_buffer = realloc(game_context.data_swap.tile_buffer, size);
-        assert(game_context.tiles != NULL);
     }
     game_context.data_swap.tile_length = 0;
     f32 u, v, w, h;
@@ -210,7 +203,6 @@ static void update_wall_vertex_data(void)
             game_context.data_swap.wall_buffer = malloc(size);
         else
             game_context.data_swap.wall_buffer = realloc(game_context.data_swap.wall_buffer, size);
-        assert(game_context.walls != NULL);
     }
     game_context.data_swap.wall_length = 0;
     static f32 dx[] = {0, 0, 0, 0, 1, 1, 1, 1};
@@ -271,7 +263,6 @@ static void update_parstacle_vertex_data(void)
             game_context.data_swap.parstacle_buffer = malloc(size);
         else
             game_context.data_swap.parstacle_buffer = realloc(game_context.data_swap.parstacle_buffer, size);
-        assert(game_context.parstacles != NULL);
     }
     game_context.data_swap.parstacle_length = 0;
     f32 u, v, w, h;
@@ -282,6 +273,7 @@ static void update_parstacle_vertex_data(void)
         Parstacle* parstacle = list_get(game_context.parstacles, i);
         V = parstacle->position.x;
         V = parstacle->position.y;
+        V = parstacle->size;
         V = u;
         V = v;
         V = w;
@@ -300,7 +292,6 @@ static void update_obstacle_vertex_data(void)
             game_context.data_swap.obstacle_buffer = malloc(size);
         else
             game_context.data_swap.obstacle_buffer = realloc(game_context.data_swap.obstacle_buffer, size);
-        assert(game_context.obstacles != NULL);
     }
     game_context.data_swap.obstacle_length = 0;
     f32 u, v, w, h;
@@ -311,6 +302,7 @@ static void update_obstacle_vertex_data(void)
         Obstacle* obstacle = list_get(game_context.obstacles, i);
         V = obstacle->position.x;
         V = obstacle->position.y;
+        V = obstacle->size;
         V = u;
         V = v;
         V = w;
@@ -329,7 +321,6 @@ static void update_particle_vertex_data(void)
             game_context.data_swap.particle_buffer = malloc(size);
         else
             game_context.data_swap.particle_buffer = realloc(game_context.data_swap.particle_buffer, size);
-        assert(game_context.particles != NULL);
     }
     game_context.data_swap.particle_length = 0;
     #define V game_context.data_swap.particle_buffer[game_context.data_swap.particle_length++]
@@ -391,6 +382,7 @@ void game_render_init(void)
     entity_buffers.vbo_capacity = 0;
     glGenVertexArrays(1, &projectile_buffers.vao);
     glGenBuffers(1, &projectile_buffers.vbo);
+    projectile_buffers.vbo_capacity = 0;
     glGenVertexArrays(1, &obstacle_buffers.vao);
     glGenBuffers(1, &obstacle_buffers.vbo);
     obstacle_buffers.vbo_capacity = 0;
@@ -613,7 +605,7 @@ static void render_projectiles(void)
 {
     i32 projectile_length_in, projectile_length_out, num_projectiles;
     projectile_length_in = game_context.data.projectile_length;
-    num_projectiles = projectile_length_in / PROJECTILE_VERTEX_LENGTH_OUT;
+    num_projectiles = projectile_length_in / PROJECTILE_VERTEX_LENGTH_IN;
     projectile_length_out = 6 * PROJECTILE_VERTEX_LENGTH_OUT * num_projectiles;
 
     ComputeShaderParams params = {

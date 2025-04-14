@@ -15,7 +15,7 @@ typedef struct {
     vec3 prev_position;
     vec3 direction;
     f32 speed;
-    f32 hitbox_radius;
+    f32 size;
     f32 health;
 } Entity;
 
@@ -24,7 +24,7 @@ typedef struct {
     vec3 direction;
     f32 rotation;
     f32 speed;
-    f32 hitbox_radius;
+    f32 size;
     f32 lifetime;
 } Projectile;
 
@@ -41,12 +41,13 @@ typedef struct {
 
 typedef struct {
     vec2 position;
+    f32 size;
     i32 tex;
 } Parstacle;
 
 typedef struct {
     vec2 position;
-    f32 hitbox_radius;
+    f32 size;
     i32 tex;
 } Obstacle;
 
@@ -55,12 +56,15 @@ typedef struct {
     vec3 direction;
     vec3 color;
     f32 lifetime;
+    f32 speed;
     f32 size;
 } Particle;
 
 typedef struct {
     vec3 position;
     f32 rotation;
+    f32 speed;
+    f32 size;
 } Parjicle;
 
 typedef struct {

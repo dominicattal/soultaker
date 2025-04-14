@@ -14,7 +14,11 @@ void weapon_shoot(Player* player, vec3 direction, vec3 target)
 {
     vec3 pos = player->entity->position;
     pos.y = 0.5;
-    projectile_create(pos);
+    Projectile* proj = projectile_create(pos);
+    proj->direction = direction;
+    proj->size = 0.1;
+    proj->speed = 10;
+    proj->lifetime = 1;
 }
 
 void player_shoot(Player* player)
@@ -25,8 +29,11 @@ void player_shoot(Player* player)
         return;
     if (player->shot_timer > 0)
         return;
-    player->shot_timer = 0.5;
+    player->shot_timer = 0.01;
     vec2 cursor_position = window_cursor_position();
+    cursor_position.x /= window_width();
+    cursor_position.y /= window_height();
+    cursor_position.y = 1 - cursor_position.y;
     f32 ar = window_aspect_ratio();
     f32 zoom = camera_get_zoom();
     f32 tilt = camera_get_pitch();
