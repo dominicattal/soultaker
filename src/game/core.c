@@ -38,32 +38,32 @@ static void game_update(void)
 
 static void collide_entity_wall(Entity* entity, Wall* wall)
 {
-    f32 ex, ez, dx, dz, wx, wz, sx, sz, r;
+    f32 ex, ez, er, dx, dz, wx, wz, sx, sz;
     ex = entity->position.x;
     ez = entity->position.z;
-    r = entity->hitbox_radius;
+    er = entity->size / 2;
     wx = wall->position.x;
     wz = wall->position.y;
     sx = 1;
     sz = 1;
-    if (!(ex + r > wx && ex - r < wx + sx
-       && ez + r > wz && ez - r < wz + sz))
+    if (!(ex + er > wx && ex - er < wx + sx
+       && ez + er > wz && ez - er < wz + sz))
         return;
     ex = entity->prev_position.x;
     ez = entity->prev_position.z;
     dx = entity->position.x - entity->prev_position.x;
     dz = entity->position.z - entity->prev_position.z;
-    if (ez + r > wz && ez - r < wz + sz) {
+    if (ez + er > wz && ez - er < wz + sz) {
         if (dx > 0)
-            entity->position.x = wx - r;
+            entity->position.x = wx - er;
         else
-            entity->position.x = wx + sx + r;
+            entity->position.x = wx + sx + er;
         entity->direction.x = 0;
-    } else if (ex + r > wx && ex - r < wx + sx) {
+    } else if (ex + er > wx && ex - er < wx + sx) {
         if (dz > 0)
-            entity->position.z = wz - r;
+            entity->position.z = wz - er;
         else
-            entity->position.z = wz + sz + r;
+            entity->position.z = wz + sz + er;
         entity->direction.z = 0;
     }
 }
@@ -74,10 +74,10 @@ static void collide_entity_obstacle(Entity* entity, Obstacle* obstacle)
     vec2 dir;
     ex = entity->position.x;
     ez = entity->position.z;
-    er = entity->hitbox_radius;
+    er = entity->size / 2;
     ox = obstacle->position.x;
     oz = obstacle->position.y;
-    or = obstacle->hitbox_radius;
+    or = obstacle->size / 2;
     dir = vec2_create(ex - ox, ez - oz);
     if (vec2_mag(dir) >= er + or)
         return;
@@ -156,20 +156,20 @@ void game_cleanup(void)
     parjicle_cleanup();
 
     free(game_context.data.projectile_buffer);
-    free(game_context.data_swap.projectile_buffer);
     free(game_context.data.entity_buffer);
-    free(game_context.data_swap.entity_buffer);
     free(game_context.data.tile_buffer);
-    free(game_context.data_swap.tile_buffer);
     free(game_context.data.wall_buffer);
-    free(game_context.data_swap.wall_buffer);
     free(game_context.data.parstacle_buffer);
-    free(game_context.data_swap.parstacle_buffer);
     free(game_context.data.obstacle_buffer);
-    free(game_context.data_swap.obstacle_buffer);
     free(game_context.data.particle_buffer);
-    free(game_context.data_swap.particle_buffer);
     free(game_context.data.parjicle_buffer);
+    free(game_context.data_swap.projectile_buffer);
+    free(game_context.data_swap.entity_buffer);
+    free(game_context.data_swap.tile_buffer);
+    free(game_context.data_swap.wall_buffer);
+    free(game_context.data_swap.parstacle_buffer);
+    free(game_context.data_swap.obstacle_buffer);
+    free(game_context.data_swap.particle_buffer);
     free(game_context.data_swap.parjicle_buffer);
 }
 

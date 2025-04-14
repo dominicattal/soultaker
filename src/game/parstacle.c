@@ -12,6 +12,7 @@ Parstacle* parstacle_create(vec2 position)
 {
     Parstacle* parstacle = malloc(sizeof(Parstacle));
     parstacle->position = position;
+    parstacle->size = 1.5;
     list_append(game_context.parstacles, parstacle);
     return parstacle;
 }

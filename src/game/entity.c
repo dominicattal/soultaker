@@ -7,6 +7,7 @@ void entity_init(void)
     game_context.entities = list_create();
     game_context.player.entity = entity_create(vec3_create(0, 0, 0));
     game_context.player.entity->direction = vec3_create(0, 0, 0);
+    game_context.player.entity->size = 1.0;
     entity_create(vec3_create(5, 0, 0));
     entity_create(vec3_create(0, 0, 4));
     entity_create(vec3_create(5, 0, 4));
@@ -20,7 +21,7 @@ Entity* entity_create(vec3 position)
     entity->direction = vec3_create(1, 0, 0.2);
     entity->direction = vec3_normalize(entity->direction);
     entity->speed = 3.5;
-    entity->hitbox_radius = 0.5f;
+    entity->size = 1.0f;
     entity->health = 1;
     list_append(game_context.entities, entity);
     return entity;

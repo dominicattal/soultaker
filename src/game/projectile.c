@@ -13,7 +13,7 @@ Projectile* projectile_create(vec3 position)
     proj->position = position;
     proj->direction = vec3_create(0, 0, 0);
     proj->speed = 1;
-    proj->hitbox_radius = 0.5;
+    proj->size = 0.5;
     proj->lifetime = 1;
     list_append(game_context.projectiles, proj);
     return proj;
