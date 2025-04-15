@@ -46,7 +46,7 @@ vec2 vec2_rotate(vec2 vec, f32 rad)
 
 f32 vec2_radians(vec2 vec)
 {
-    return atan(vec.y / vec.x) + (vec.x < 0) ? PI : 0;
+    return atan(vec.y / vec.x) + ((vec.x < 0) ? PI : 0);
 }
 
 f32 vec2_mag(vec2 vec)

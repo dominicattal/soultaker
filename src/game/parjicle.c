@@ -10,12 +10,30 @@ void parjicle_init(void)
 Parjicle* parjicle_create(vec3 position)
 {
     Parjicle* parjicle = malloc(sizeof(Parjicle));
+    parjicle->position = position;
+    parjicle->direction = vec3_create(1, 0, 0);
+    parjicle->color = vec3_create(1, 0, 1);
+    parjicle->size = 1.0f;
+    parjicle->speed = 1.0f;
+    parjicle->rotation = 0.0f;
+    list_append(game_context.parjicles, parjicle);
     return parjicle;
 }
 
 void parjicle_destroy(Parjicle* parjicle)
 {
     free(parjicle);
+}
+
+void parjicle_update(Parjicle* parjicle, f32 dt)
+{
+    parjicle->position = vec3_add(parjicle->position, vec3_scale(parjicle->direction, parjicle->speed * dt));
+    parjicle->lifetime -= dt;
+}
+
+void parjicle_set_rotation_flag(Parjicle* parjicle)
+{
+    parjicle->flags |= 1;
 }
 
 void parjicle_cleanup(void)

@@ -33,6 +33,15 @@ static void game_update(void)
         else
             i++;
     }
+    i = 0;
+    while (i < game_context.parjicles->length) {
+        Parjicle* parjicle = list_get(game_context.parjicles, i);
+        parjicle_update(parjicle, game_context.dt);
+        if (parjicle->lifetime <= 0)
+            list_remove(game_context.parjicles, i);
+        else
+            i++;
+    }
     player_update(&game_context.player, game_context.dt);
 }
 

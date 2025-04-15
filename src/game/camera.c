@@ -41,6 +41,8 @@ static void update_view_matrix(void)
     view(game_context.camera.view, game_context.camera.right, game_context.camera.up, game_context.camera.facing, game_context.camera.position);
     glBindBuffer(GL_UNIFORM_BUFFER, game_context.camera.matrices_ubo);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, 16 * sizeof(GLfloat), game_context.camera.view);
+    glBufferSubData(GL_UNIFORM_BUFFER, 33 * sizeof(GLfloat), sizeof(GLfloat), &game_context.camera.pitch);
+    glBufferSubData(GL_UNIFORM_BUFFER, 34 * sizeof(GLfloat), sizeof(GLfloat), &game_context.camera.yaw);
 }
 
 static void update_proj_matrix(void)
@@ -62,7 +64,7 @@ void camera_init(void)
 {
     glGenBuffers(1, &game_context.camera.matrices_ubo);
     glBindBuffer(GL_UNIFORM_BUFFER, game_context.camera.matrices_ubo);
-    glBufferData(GL_UNIFORM_BUFFER, 33 * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
+    glBufferData(GL_UNIFORM_BUFFER, 35 * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
     glBindBufferBase(GL_UNIFORM_BUFFER, UBO_INDEX_MATRICES, game_context.camera.matrices_ubo);
 
     game_context.camera.yaw = DEFAULT_YAW;
