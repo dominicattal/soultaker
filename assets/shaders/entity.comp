@@ -2,10 +2,12 @@
 
 layout (local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
 
-layout (std140) uniform Matrices {
+layout (std140) uniform Camera {
     mat4 view;
     mat4 proj;
     float zoom;
+    float pitch;
+    float yaw;
 };
 
 layout (std140) uniform Window {

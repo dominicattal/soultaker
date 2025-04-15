@@ -16,9 +16,11 @@ void weapon_shoot(Player* player, vec3 direction, vec3 target)
     pos.y = 0.5;
     Projectile* proj = projectile_create(pos);
     proj->direction = direction;
-    proj->size = 0.1;
+    proj->size = 0.5;
     proj->speed = 10;
     proj->lifetime = 1;
+    proj->rotation = atan(direction.z / direction.x) + (direction.x > 0 ? PI : 0);
+    //projectile_set_rotation_flag(proj);
 }
 
 void player_shoot(Player* player)
@@ -29,7 +31,7 @@ void player_shoot(Player* player)
         return;
     if (player->shot_timer > 0)
         return;
-    player->shot_timer = 0.01;
+    player->shot_timer = 0.1;
     vec2 cursor_position = window_cursor_position();
     cursor_position.x /= window_width();
     cursor_position.y /= window_height();

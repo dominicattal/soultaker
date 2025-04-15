@@ -9,7 +9,9 @@
 #define OBSTACLE_VERTEX_LENGTH_OUT   7
 #define PARTICLE_VERTEX_LENGTH_IN    7
 #define PARTICLE_VERTEX_LENGTH_OUT   7
-#define PROJECTILE_VERTEX_LENGTH_IN  9
+#define PARJICLE_VERTEX_LENGTH_IN    8
+#define PARJICLE_VERTEX_LENGTH_OUT   7
+#define PROJECTILE_VERTEX_LENGTH_IN  10
 #define PROJECTILE_VERTEX_LENGTH_OUT 7
 
 extern GameContext game_context;
@@ -48,6 +50,12 @@ static struct {
     GLuint vbo;
     i32 vbo_capacity;
 } particle_buffers;
+
+static struct {
+    GLuint vao;
+    GLuint vbo;
+    i32 vbo_capacity;
+} parjicle_buffers;
 
 static struct {
     GLuint vao;
@@ -156,12 +164,14 @@ static void update_projectile_vertex_data(void)
         V = projectile->position.x;
         V = projectile->position.y;
         V = projectile->position.z;
-        V = projectile->size;
+        // encode texture rotation as negative num
+        V = projectile->size * (projectile->flags & 1 ? 1 : -1);
+        V = projectile->rotation;
         V = u;
         V = v;
         V = w;
         V = h;
-        V = location;
+        V = location; 
     }
     #undef V
 }
@@ -339,6 +349,28 @@ static void update_particle_vertex_data(void)
 
 static void update_parjicle_vertex_data(void)
 {
+    if (PARJICLE_VERTEX_LENGTH_IN * game_context.parjicles->capacity > game_context.data_swap.parjicle_capacity) {
+        game_context.data_swap.parjicle_capacity = game_context.parjicles->capacity;
+        size_t size = PARJICLE_VERTEX_LENGTH_IN * game_context.data_swap.parjicle_capacity * sizeof(GLfloat);
+        if (game_context.data_swap.parjicle_buffer == NULL)
+            game_context.data_swap.parjicle_buffer = malloc(size);
+        else
+            game_context.data_swap.parjicle_buffer = realloc(game_context.data_swap.parjicle_buffer, size);
+    }
+    game_context.data_swap.parjicle_length = 0;
+    #define V game_context.data_swap.parjicle_buffer[game_context.data_swap.parjicle_length++]
+    for (i32 i = 0; i < game_context.parjicles->length; i++) {
+        Parjicle* parjicle = list_get(game_context.parjicles, i);
+        V = parjicle->position.x;
+        V = parjicle->position.y;
+        V = parjicle->position.z;
+        V = parjicle->color.x;
+        V = parjicle->color.y;
+        V = parjicle->color.z;
+        V = parjicle->size * (parjicle->flags & 1 ? 1 : -1);
+        V = parjicle->rotation;
+    }
+    #undef V
 }
 
 void game_update_vertex_data(void)
@@ -392,6 +424,9 @@ void game_render_init(void)
     glGenVertexArrays(1, &particle_buffers.vao);
     glGenBuffers(1, &particle_buffers.vbo);
     particle_buffers.vbo_capacity = 0;
+    glGenVertexArrays(1, &parjicle_buffers.vao);
+    glGenBuffers(1, &parjicle_buffers.vbo);
+    parjicle_buffers.vbo_capacity = 0;
     glGenBuffers(1, &comp_buffers.in);
     glGenBuffers(1, &comp_buffers.out);
     comp_buffers.in_capacity = 0;
@@ -469,6 +504,13 @@ void game_render_init(void)
 
     glBindVertexArray(particle_buffers.vao);
     glBindBuffer(GL_ARRAY_BUFFER, particle_buffers.vbo);
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)(4 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+
+    glBindVertexArray(parjicle_buffers.vao);
+    glBindBuffer(GL_ARRAY_BUFFER, parjicle_buffers.vbo);
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)0);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)(4 * sizeof(GLfloat)));
     glEnableVertexAttribArray(0);
@@ -577,7 +619,7 @@ static void render_particles(void)
 {
     i32 particle_length_in, particle_length_out, num_particles;
     particle_length_in = game_context.data.particle_length;
-    num_particles = particle_length_in / PARTICLE_VERTEX_LENGTH_OUT;
+    num_particles = particle_length_in / PARTICLE_VERTEX_LENGTH_IN;
     particle_length_out = 6 * PARTICLE_VERTEX_LENGTH_OUT * num_particles;
 
     ComputeShaderParams params = {
@@ -599,6 +641,26 @@ static void render_particles(void)
 
 static void render_parjicles(void)
 {
+    i32 parjicle_length_in, parjicle_length_out, num_parjicles;
+    parjicle_length_in = game_context.data.parjicle_length;
+    num_parjicles = parjicle_length_in / PARJICLE_VERTEX_LENGTH_IN;
+    parjicle_length_out = 6 * PARJICLE_VERTEX_LENGTH_OUT * num_parjicles;
+
+    ComputeShaderParams params = {
+        .compute_shader = SHADER_PROGRAM_PARJICLE_COMP,
+        .num_objects = num_parjicles,
+        .object_length_in = parjicle_length_in,
+        .object_length_out = parjicle_length_out,
+        .object_buffer = game_context.data.parjicle_buffer,
+        .output_buffer = parjicle_buffers.vbo,
+        .output_buffer_capacity_ptr = &parjicle_buffers.vbo_capacity
+    };
+
+    execute_compute_shader(&params);
+
+    shader_use(SHADER_PROGRAM_PARJICLE);
+    glBindVertexArray(parjicle_buffers.vao);
+    glDrawArrays(GL_TRIANGLES, 0, 6 * num_parjicles);
 }
 
 static void render_projectiles(void)
@@ -647,6 +709,7 @@ void game_render_cleanup(void)
     glDeleteVertexArrays(1, &projectile_buffers.vao);
     glDeleteVertexArrays(1, &obstacle_buffers.vao);
     glDeleteVertexArrays(1, &particle_buffers.vao);
+    glDeleteVertexArrays(1, &parjicle_buffers.vao);
     glDeleteBuffers(1, &wall_buffers.vbo);
     glDeleteBuffers(1, &tile_buffers.vbo);
     glDeleteBuffers(1, &tile_buffers.instance_vbo);
@@ -655,6 +718,7 @@ void game_render_cleanup(void)
     glDeleteBuffers(1, &obstacle_buffers.vbo);
     glDeleteBuffers(1, &parstacle_buffers.vbo);
     glDeleteBuffers(1, &particle_buffers.vbo);
+    glDeleteBuffers(1, &parjicle_buffers.vbo);
     glDeleteBuffers(1, &comp_buffers.in);
     glDeleteBuffers(1, &comp_buffers.out);
 }

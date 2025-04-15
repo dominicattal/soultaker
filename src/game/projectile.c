@@ -15,6 +15,7 @@ Projectile* projectile_create(vec3 position)
     proj->speed = 1;
     proj->size = 0.5;
     proj->lifetime = 1;
+    proj->flags = 0;
     list_append(game_context.projectiles, proj);
     return proj;
 }
@@ -23,6 +24,11 @@ void projectile_update(Projectile* proj, f32 dt)
 {
     proj->position = vec3_add(proj->position, vec3_scale(proj->direction, proj->speed * dt));
     proj->lifetime -= dt;
+}
+
+void projectile_set_rotation_flag(Projectile* proj)
+{
+    proj->flags |= 1;
 }
 
 void projectile_destroy(Projectile* proj)

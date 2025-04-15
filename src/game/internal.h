@@ -26,6 +26,7 @@ typedef struct {
     f32 speed;
     f32 size;
     f32 lifetime;
+    u32 flags;
 } Projectile;
 
 typedef struct {
@@ -62,9 +63,13 @@ typedef struct {
 
 typedef struct {
     vec3 position;
+    vec3 direction;
+    vec3 color;
+    f32 lifetime;
     f32 rotation;
     f32 speed;
     f32 size;
+    u32 flags;
 } Parjicle;
 
 typedef struct {
@@ -136,6 +141,7 @@ void wall_cleanup(void);
 void projectile_init(void);
 Projectile* projectile_create(vec3 position);
 void projectile_update(Projectile* projectile, f32 dt);
+void projectile_set_rotation_flag(Projectile* proj);
 void projectile_destroy(Projectile* projectile);
 void projectile_cleanup(void);
 
@@ -157,6 +163,8 @@ void particle_cleanup(void);
 
 void parjicle_init(void);
 Parjicle* parjicle_create(vec3 position);
+void parjicle_update(Parjicle* parjicle, f32 dt);
+void parjicle_set_rotation_flag(Parjicle* parjicle);
 void parjicle_destroy(Parjicle* parjicle);
 void parjicle_cleanup(void);
 

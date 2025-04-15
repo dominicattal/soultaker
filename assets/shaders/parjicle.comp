@@ -23,10 +23,9 @@ uniform int N;
 
 layout (std430, binding = 0) readonly buffer Input {
     // vec3 position
+    // vec3 color
     // float size
     // float rotation
-    // vec4 tex info
-    // float location
     float data_in[];
 };
 
@@ -40,28 +39,26 @@ layout (std430, binding = 1) writeonly buffer Output {
 void main() {
     if (gl_GlobalInvocationID.x >= N)
         return;
-    uint idx = 10 * gl_GlobalInvocationID.x;
+    uint idx = 8 * gl_GlobalInvocationID.x;
     vec4 position;
     position = vec4(data_in[idx], 0.0f, data_in[idx+2], 1.0f);
     position = proj * view * position;
     position.y += data_in[idx+1] / zoom;
 
     float size, rotation, u1, v1, u2, v2, location;
-    size = data_in[idx+3];
-    rotation = data_in[idx+4];
-    u1 = data_in[idx+5];
-    v1 = data_in[idx+6];
-    u2 = data_in[idx+5] + data_in[idx+7];
-    v2 = data_in[idx+6] + data_in[idx+8];
-    location = data_in[idx+9];
+    size = data_in[idx+6];
+    rotation = data_in[idx+7];
+
+    float r, g, b;
+    r = data_in[idx+3];
+    g = data_in[idx+4];
+    b = data_in[idx+5];
 
     vec2 offset;
     float drot, theta;
     drot = -rotation+yaw-PI;
     drot = atan(tan(drot) / cos(PI / 2 + pitch)) + (cos(drot) > 0 ? 0 : PI) + (size < 0 ? 0 : PI / 4);
-
-    size = abs(size);
-
+    
     idx = 6 * 7 * gl_GlobalInvocationID.x;
     // Vertex 1 (bottom left)
     theta = drot - 3 * PI / 4;
@@ -70,9 +67,9 @@ void main() {
     data_out[idx++] = position.y + offset.y;
     data_out[idx++] = position.z;
     data_out[idx++] = position.w;
-    data_out[idx++] = u1;
-    data_out[idx++] = v2;
-    data_out[idx++] = location;
+    data_out[idx++] = r;
+    data_out[idx++] = g;
+    data_out[idx++] = b;
     // Vertex 2 (bottom right)
     theta = drot - PI / 4;
     offset = size / zoom / SQRT2 * vec2(cos(theta), sin(theta)); 
@@ -80,9 +77,9 @@ void main() {
     data_out[idx++] = position.y + offset.y;
     data_out[idx++] = position.z;
     data_out[idx++] = position.w;
-    data_out[idx++] = u2;
-    data_out[idx++] = v2;
-    data_out[idx++] = location;
+    data_out[idx++] = r;
+    data_out[idx++] = g;
+    data_out[idx++] = b;
     // Vertex 3 (top left)
     theta = drot + 3 * PI / 4;
     offset = size / zoom / SQRT2 * vec2(cos(theta), sin(theta));
@@ -90,9 +87,9 @@ void main() {
     data_out[idx++] = position.y + offset.y;
     data_out[idx++] = position.z;
     data_out[idx++] = position.w;
-    data_out[idx++] = u1;
-    data_out[idx++] = v1;
-    data_out[idx++] = location;
+    data_out[idx++] = r;
+    data_out[idx++] = g;
+    data_out[idx++] = b;
     // Vertex 4 (top left)
     theta = drot + 3 * PI / 4;
     offset = size / zoom / SQRT2 * vec2(cos(theta), sin(theta));
@@ -100,9 +97,9 @@ void main() {
     data_out[idx++] = position.y + offset.y;
     data_out[idx++] = position.z;
     data_out[idx++] = position.w;
-    data_out[idx++] = u1;
-    data_out[idx++] = v1;
-    data_out[idx++] = location;
+    data_out[idx++] = r;
+    data_out[idx++] = g;
+    data_out[idx++] = b;
     // Vertex 5 (bottom right)
     theta = drot - PI / 4;
     offset = size / zoom / SQRT2 * vec2(cos(theta), sin(theta));
@@ -110,9 +107,9 @@ void main() {
     data_out[idx++] = position.y + offset.y;
     data_out[idx++] = position.z;
     data_out[idx++] = position.w;
-    data_out[idx++] = u2;
-    data_out[idx++] = v2;
-    data_out[idx++] = location;
+    data_out[idx++] = r;
+    data_out[idx++] = g;
+    data_out[idx++] = b;
     // Vertex 6 (top right)
     theta = drot + PI / 4;
     offset = size / zoom / SQRT2 * vec2(cos(theta), sin(theta));
@@ -120,7 +117,7 @@ void main() {
     data_out[idx++] = position.y + offset.y;
     data_out[idx++] = position.z;
     data_out[idx++] = position.w;
-    data_out[idx++] = u2;
-    data_out[idx++] = v1;
-    data_out[idx++] = location;
+    data_out[idx++] = r;
+    data_out[idx++] = g;
+    data_out[idx++] = b;
 }

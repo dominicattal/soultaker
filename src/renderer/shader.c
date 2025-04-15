@@ -32,6 +32,7 @@ static u32 compile(GLenum type, const char *path)
     char info_log[512];
     i32 success;
     DIR* dir = opendir(path);
+
     if (ENOENT == errno) {
         printf("File %s does not exist", path);
         exit(1);
@@ -99,7 +100,7 @@ static void compile_shader_program_tile(void)
         texs[i] = i;
     shader_use(SHADER_PROGRAM_TILE);
     glUniform1iv(shader_get_uniform_location(SHADER_PROGRAM_TILE, "textures"), NUM_TEXTURE_UNITS, texs);
-    shader_bind_uniform_block(SHADER_PROGRAM_TILE, UBO_INDEX_MATRICES, "Matrices");
+    shader_bind_uniform_block(SHADER_PROGRAM_TILE, UBO_INDEX_MATRICES, "Camera");
 }
 
 static void compile_shader_program_wall(void)
@@ -119,7 +120,7 @@ static void compile_shader_program_wall(void)
         texs[i] = i;
     shader_use(SHADER_PROGRAM_WALL);
     glUniform1iv(shader_get_uniform_location(SHADER_PROGRAM_WALL, "textures"), NUM_TEXTURE_UNITS, texs);
-    shader_bind_uniform_block(SHADER_PROGRAM_WALL, UBO_INDEX_MATRICES, "Matrices");
+    shader_bind_uniform_block(SHADER_PROGRAM_WALL, UBO_INDEX_MATRICES, "Camera");
 }
 
 static void compile_shader_program_gui(void)
@@ -169,7 +170,7 @@ static void compile_shader_program_entity_comp(void)
     link(SHADER_PROGRAM_ENTITY_COMP);
     detach(SHADER_PROGRAM_ENTITY_COMP, comp);
     delete(comp);
-    shader_bind_uniform_block(SHADER_PROGRAM_ENTITY_COMP, UBO_INDEX_MATRICES, "Matrices");
+    shader_bind_uniform_block(SHADER_PROGRAM_ENTITY_COMP, UBO_INDEX_MATRICES, "Camera");
     shader_bind_uniform_block(SHADER_PROGRAM_ENTITY_COMP, UBO_INDEX_WINDOW, "Window");
 }
 
@@ -200,7 +201,7 @@ static void compile_shader_program_obstacle_comp(void)
     link(SHADER_PROGRAM_OBSTACLE_COMP);
     detach(SHADER_PROGRAM_OBSTACLE_COMP, comp);
     delete(comp);
-    shader_bind_uniform_block(SHADER_PROGRAM_OBSTACLE_COMP, UBO_INDEX_MATRICES, "Matrices");
+    shader_bind_uniform_block(SHADER_PROGRAM_OBSTACLE_COMP, UBO_INDEX_MATRICES, "Camera");
     shader_bind_uniform_block(SHADER_PROGRAM_OBSTACLE_COMP, UBO_INDEX_WINDOW, "Window");
 }
 
@@ -226,7 +227,7 @@ static void compile_shader_program_particle_comp(void)
     link(SHADER_PROGRAM_PARTICLE_COMP);
     detach(SHADER_PROGRAM_PARTICLE_COMP, comp);
     delete(comp);
-    shader_bind_uniform_block(SHADER_PROGRAM_PARTICLE_COMP, UBO_INDEX_MATRICES, "Matrices");
+    shader_bind_uniform_block(SHADER_PROGRAM_PARTICLE_COMP, UBO_INDEX_MATRICES, "Camera");
     shader_bind_uniform_block(SHADER_PROGRAM_PARTICLE_COMP, UBO_INDEX_WINDOW, "Window");
 }
 
@@ -257,8 +258,34 @@ static void compile_shader_program_projectile_comp(void)
     link(SHADER_PROGRAM_PROJECTILE_COMP);
     detach(SHADER_PROGRAM_PROJECTILE_COMP, comp);
     delete(comp);
-    shader_bind_uniform_block(SHADER_PROGRAM_PROJECTILE_COMP, UBO_INDEX_MATRICES, "Matrices");
+    shader_bind_uniform_block(SHADER_PROGRAM_PROJECTILE_COMP, UBO_INDEX_MATRICES, "Camera");
     shader_bind_uniform_block(SHADER_PROGRAM_PROJECTILE_COMP, UBO_INDEX_WINDOW, "Window");
+}
+
+static void compile_shader_program_parjicle(void)
+{
+    u32 vert, frag;
+    vert = compile(GL_VERTEX_SHADER, "assets/shaders/parjicle.vert");
+    frag = compile(GL_FRAGMENT_SHADER, "assets/shaders/parjicle.frag");
+    attach(SHADER_PROGRAM_PARJICLE, vert);
+    attach(SHADER_PROGRAM_PARJICLE, frag);
+    link(SHADER_PROGRAM_PARJICLE);
+    detach(SHADER_PROGRAM_PARJICLE, vert);
+    detach(SHADER_PROGRAM_PARJICLE, frag);
+    delete(vert);
+    delete(frag);
+}
+
+static void compile_shader_program_parjicle_comp(void)
+{
+    u32 comp;
+    comp = compile(GL_COMPUTE_SHADER, "assets/shaders/parjicle.comp");
+    attach(SHADER_PROGRAM_PARJICLE_COMP, comp);
+    link(SHADER_PROGRAM_PARJICLE_COMP);
+    detach(SHADER_PROGRAM_PARJICLE_COMP, comp);
+    delete(comp);
+    shader_bind_uniform_block(SHADER_PROGRAM_PARJICLE_COMP, UBO_INDEX_MATRICES, "Camera");
+    shader_bind_uniform_block(SHADER_PROGRAM_PARJICLE_COMP, UBO_INDEX_WINDOW, "Window");
 }
 
 void shader_program_compile(ShaderProgramEnum program)
@@ -297,6 +324,12 @@ void shader_program_compile(ShaderProgramEnum program)
         case SHADER_PROGRAM_PARTICLE_COMP:
             compile_shader_program_particle_comp();
             break;
+        case SHADER_PROGRAM_PARJICLE:
+            compile_shader_program_parjicle();
+            break;
+        case SHADER_PROGRAM_PARJICLE_COMP:
+            compile_shader_program_parjicle_comp();
+            break;
         default:
             printf("Unrecognized program %x\n", program);
             break;
@@ -321,6 +354,8 @@ void shader_init(void)
     shader_program_compile(SHADER_PROGRAM_PARTICLE_COMP);
     shader_program_compile(SHADER_PROGRAM_PROJECTILE);
     shader_program_compile(SHADER_PROGRAM_PROJECTILE_COMP);
+    shader_program_compile(SHADER_PROGRAM_PARJICLE);
+    shader_program_compile(SHADER_PROGRAM_PARJICLE_COMP);
 }
 
 void shader_use(ShaderProgramEnum id)

@@ -5,10 +5,12 @@ layout (location = 1) in vec2 aTexCoords;
 layout (location = 2) in float aLocation;
 layout (location = 3) in vec2 aCenter;
 
-layout (std140) uniform Matrices {
+layout (std140) uniform Camera {
     mat4 view;
     mat4 proj;
     float zoom;
+    float pitch;
+    float yaw;
 };
 
 out flat float depthValue;
