@@ -161,11 +161,12 @@ static void update_projectile_vertex_data(void)
     #define V game_context.data_swap.projectile_buffer[game_context.data_swap.projectile_length++]
     for (i32 i = 0; i < game_context.projectiles->length; i++) {
         Projectile* projectile = list_get(game_context.projectiles, i);
+        bool rotate_tex = projectile_is_flag_set(projectile, PROJECTILE_FLAG_TEX_ROTATION);
         V = projectile->position.x;
         V = projectile->position.y;
         V = projectile->position.z;
         // encode texture rotation as negative num
-        V = projectile->size * (projectile->flags & 1 ? 1 : -1);
+        V = projectile->size * (rotate_tex ? 1 : -1);
         V = projectile->rotation;
         V = u;
         V = v;
@@ -361,13 +362,14 @@ static void update_parjicle_vertex_data(void)
     #define V game_context.data_swap.parjicle_buffer[game_context.data_swap.parjicle_length++]
     for (i32 i = 0; i < game_context.parjicles->length; i++) {
         Parjicle* parjicle = list_get(game_context.parjicles, i);
+        bool rotate_tex = parjicle_is_flag_set(parjicle, PARJICLE_FLAG_TEX_ROTATION);
         V = parjicle->position.x;
         V = parjicle->position.y;
         V = parjicle->position.z;
         V = parjicle->color.x;
         V = parjicle->color.y;
         V = parjicle->color.z;
-        V = parjicle->size * (parjicle->flags & 1 ? 1 : -1);
+        V = parjicle->size * (rotate_tex ? 1 : -1);
         V = parjicle->rotation;
     }
     #undef V

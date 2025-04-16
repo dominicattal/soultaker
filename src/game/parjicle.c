@@ -31,9 +31,14 @@ void parjicle_update(Parjicle* parjicle, f32 dt)
     parjicle->lifetime -= dt;
 }
 
-void parjicle_set_rotation_flag(Parjicle* parjicle)
+void parjicle_set_flag(Parjicle* parjicle, ParjicleFlagEnum flag, u32 val)
 {
-    parjicle->flags |= 1;
+    parjicle->flags = (parjicle->flags & ~(1<<flag)) | (val<<flag);
+}
+
+bool parjicle_is_flag_set(Parjicle* parjicle, ParjicleFlagEnum flag)
+{
+    return (parjicle->flags >> flag) & 1;
 }
 
 void parjicle_cleanup(void)

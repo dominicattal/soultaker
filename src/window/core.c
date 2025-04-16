@@ -2,7 +2,7 @@
 #include "../renderer.h"
 
 #define DEFAULT_WINDOW_WIDTH 1000
-#define DEFAULT_WINDOW_HEIGHT 1000
+#define DEFAULT_WINDOW_HEIGHT 750
 
 WindowContext window_context;
 

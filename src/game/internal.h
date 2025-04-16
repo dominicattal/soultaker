@@ -17,6 +17,7 @@ typedef struct {
     f32 speed;
     f32 size;
     f32 health;
+    u32 flags;
 } Entity;
 
 typedef struct {
@@ -122,9 +123,15 @@ typedef struct {
 
 extern GameContext game_context;
 
+typedef enum {
+    ENTITY_FLAG_FRIENDLY
+} EntityFlagEnum;
+
 void entity_init(void);
 Entity* entity_create(vec3 position);
 void entity_update(Entity* entity, f32 dt);
+void entity_set_flag(Entity* entity, EntityFlagEnum flag, u32 val);
+bool entity_is_flag_set(Entity* entity, EntityFlagEnum flag);
 void entity_destroy(Entity* entity);
 void entity_cleanup(void);
 
@@ -138,10 +145,16 @@ Wall* wall_create(vec2 position, f32 height);
 void wall_destroy(Wall* wall);
 void wall_cleanup(void);
 
+typedef enum {
+    PROJECTILE_FLAG_TEX_ROTATION,
+    PROJECTILE_FLAG_FRIENDLY
+} ProjectileFlagEnum;
+
 void projectile_init(void);
 Projectile* projectile_create(vec3 position);
 void projectile_update(Projectile* projectile, f32 dt);
-void projectile_set_rotation_flag(Projectile* proj);
+void projectile_set_flag(Projectile* proj, ProjectileFlagEnum flag, u32 val);
+bool projectile_is_flag_set(Projectile* proj, ProjectileFlagEnum flag);
 void projectile_destroy(Projectile* projectile);
 void projectile_cleanup(void);
 
@@ -161,16 +174,22 @@ void particle_update(Particle* particle, f32 dt);
 void particle_destroy(Particle* particle);
 void particle_cleanup(void);
 
+typedef enum {
+    PARJICLE_FLAG_TEX_ROTATION
+} ParjicleFlagEnum;
+
 void parjicle_init(void);
 Parjicle* parjicle_create(vec3 position);
 void parjicle_update(Parjicle* parjicle, f32 dt);
-void parjicle_set_rotation_flag(Parjicle* parjicle);
+void parjicle_set_flag(Parjicle* parjicle, ParjicleFlagEnum flag, u32 val);
+bool parjicle_is_flag_set(Parjicle* parjicle, ParjicleFlagEnum flag);
 void parjicle_destroy(Parjicle* parjicle);
 void parjicle_cleanup(void);
 
 void player_update(Player* player, f32 dt);
 void player_shoot(Player* player);
 
+void game_update(void);
 void game_update_vertex_data(void);
 
 void camera_init(void);
