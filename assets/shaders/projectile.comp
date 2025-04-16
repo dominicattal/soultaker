@@ -46,7 +46,8 @@ void main() {
     position = proj * view * position;
     position.y += data_in[idx+1] / zoom;
 
-    float size, rotation, u1, v1, u2, v2, location;
+    float ar, size, rotation, u1, v1, u2, v2, location;
+    ar = window.aspect_ratio;
     size = data_in[idx+3];
     rotation = data_in[idx+4];
     u1 = data_in[idx+5];
@@ -65,7 +66,7 @@ void main() {
     idx = 6 * 7 * gl_GlobalInvocationID.x;
     // Vertex 1 (bottom left)
     theta = drot - 3 * PI / 4;
-    offset = size / zoom / SQRT2 * vec2(cos(theta), sin(theta)); 
+    offset = size / zoom / SQRT2 * vec2(cos(theta) / window.aspect_ratio, sin(theta)); 
     data_out[idx++] = position.x + offset.x;
     data_out[idx++] = position.y + offset.y;
     data_out[idx++] = position.z;
@@ -75,7 +76,7 @@ void main() {
     data_out[idx++] = location;
     // Vertex 2 (bottom right)
     theta = drot - PI / 4;
-    offset = size / zoom / SQRT2 * vec2(cos(theta), sin(theta)); 
+    offset = size / zoom / SQRT2 * vec2(cos(theta) / window.aspect_ratio, sin(theta)); 
     data_out[idx++] = position.x + offset.x;
     data_out[idx++] = position.y + offset.y;
     data_out[idx++] = position.z;
@@ -85,7 +86,7 @@ void main() {
     data_out[idx++] = location;
     // Vertex 3 (top left)
     theta = drot + 3 * PI / 4;
-    offset = size / zoom / SQRT2 * vec2(cos(theta), sin(theta));
+    offset = size / zoom / SQRT2 * vec2(cos(theta) / window.aspect_ratio, sin(theta));
     data_out[idx++] = position.x + offset.x;
     data_out[idx++] = position.y + offset.y;
     data_out[idx++] = position.z;
@@ -95,7 +96,7 @@ void main() {
     data_out[idx++] = location;
     // Vertex 4 (top left)
     theta = drot + 3 * PI / 4;
-    offset = size / zoom / SQRT2 * vec2(cos(theta), sin(theta));
+    offset = size / zoom / SQRT2 * vec2(cos(theta) / window.aspect_ratio, sin(theta));
     data_out[idx++] = position.x + offset.x;
     data_out[idx++] = position.y + offset.y;
     data_out[idx++] = position.z;
@@ -105,7 +106,7 @@ void main() {
     data_out[idx++] = location;
     // Vertex 5 (bottom right)
     theta = drot - PI / 4;
-    offset = size / zoom / SQRT2 * vec2(cos(theta), sin(theta));
+    offset = size / zoom / SQRT2 * vec2(cos(theta) / window.aspect_ratio, sin(theta));
     data_out[idx++] = position.x + offset.x;
     data_out[idx++] = position.y + offset.y;
     data_out[idx++] = position.z;
@@ -115,7 +116,7 @@ void main() {
     data_out[idx++] = location;
     // Vertex 6 (top right)
     theta = drot + PI / 4;
-    offset = size / zoom / SQRT2 * vec2(cos(theta), sin(theta));
+    offset = size / zoom / SQRT2 * vec2(cos(theta) / window.aspect_ratio, sin(theta));
     data_out[idx++] = position.x + offset.x;
     data_out[idx++] = position.y + offset.y;
     data_out[idx++] = position.z;

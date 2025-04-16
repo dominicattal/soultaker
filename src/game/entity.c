@@ -23,6 +23,7 @@ Entity* entity_create(vec3 position)
     entity->speed = 3.5;
     entity->size = 1.0f;
     entity->health = 1;
+    entity->flags = 0;
     list_append(game_context.entities, entity);
     return entity;
 }
@@ -33,9 +34,19 @@ void entity_update(Entity* entity, f32 dt)
     entity->position = vec3_add(entity->position, vec3_scale(entity->direction, entity->speed * dt));
 }
 
-void entity_destroy(Entity* entity)
+void entity_set_friendly_flag(Entity* entity, u32 val)
 {
-    free(entity);
+    entity->flags = (entity->flags & ~1) | val;
+}
+
+void entity_set_flag(Entity* entity, EntityFlagEnum flag, u32 val)
+{
+    entity->flags = (entity->flags & ~(1<<flag)) | (val<<flag);
+}
+
+bool entity_is_flag_set(Entity* entity, EntityFlagEnum flag)
+{
+    return (entity->flags >> flag) & 1;
 }
 
 void entity_cleanup(void)
