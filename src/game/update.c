@@ -52,6 +52,28 @@ static void collide_entity_obstacle(Entity* entity, Obstacle* obstacle)
     entity->position.z = oz + dir.y;
 }
 
+static void collide_entity_projectile(Entity* entity, Projectile* projectile)
+{
+    bool is_entity_friendly = entity_is_flag_set(entity, ENTITY_FLAG_FRIENDLY);
+    bool is_projectile_friendly = projectile_is_flag_set(projectile, PROJECTILE_FLAG_FRIENDLY);
+    if (is_entity_friendly == is_projectile_friendly)
+        return;
+
+    f32 ex, ez, er, px, pz, pr;
+    vec2 offset;
+    ex = entity->position.x;
+    ez = entity->position.z;
+    er = entity->size / 2;
+    px = projectile->position.x;
+    pz = projectile->position.z;
+    pr = projectile->size / 2;
+    offset = vec2_create(ex - px, ez - pz);
+    if (vec2_mag(offset) >= er + pr)
+        return;
+
+    projectile->lifetime = 0;
+}
+
 static void collide_projectile_wall(Projectile* projectile, Wall* wall)
 {
     f32 px, pz, pr, wx, wz, sx, sz;
@@ -98,9 +120,14 @@ void game_update(void)
             Wall* wall = list_get(game_context.walls, j);
             collide_entity_wall(entity, wall);
         }
+        for (j = 0; j < game_context.projectiles->length; j++) {
+            Projectile* projectile = list_get(game_context.projectiles, j);
+            collide_entity_projectile(entity, projectile);
+        }
     }
     for (i = 0; i < game_context.projectiles->length; i++) {
         Projectile* projectile = list_get(game_context.projectiles, i);
+        if (projectile->lifetime <= 0) continue;
         for (j = 0; j < game_context.obstacles->length; j++) {
             Obstacle* obstacle = list_get(game_context.obstacles, j);
             collide_projectile_obstacle(projectile, obstacle);
@@ -122,9 +149,9 @@ void game_update(void)
     }
     i = 0;
     while (i < game_context.projectiles->length) {
-        Projectile* proj = list_get(game_context.projectiles, i);
-        projectile_update(proj, game_context.dt);
-        if (proj->lifetime <= 0)
+        Projectile* projectile = list_get(game_context.projectiles, i);
+        projectile_update(projectile, game_context.dt);
+        if (projectile->lifetime <= 0)
             list_remove(game_context.projectiles, i);
         else
             i++;

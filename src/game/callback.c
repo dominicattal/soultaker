@@ -2,6 +2,11 @@
 
 extern GameContext game_context;
 
+void game_framebuffer_size_callback(void)
+{
+    camera_framebuffer_size_callback();
+}
+
 void game_key_callback(i32 key, i32 scancode, i32 action, i32 mods)
 {
     if (key == GLFW_KEY_O && action == GLFW_PRESS)
