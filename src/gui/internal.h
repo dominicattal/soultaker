@@ -8,6 +8,7 @@
 
 typedef enum {
     GUI_EVENT_NONE,
+    GUI_EVENT_FRAMEBUFFER_SIZE_CALLBACK,
     GUI_EVENT_CURSOR_POS_CALLBACK,
     GUI_EVENT_MOUSE_BUTTON_CALLBACK,
     GUI_EVENT_KEY_CALLBACK,
@@ -30,6 +31,8 @@ typedef struct GUIEvent {
     struct {
         f32 xpos;
         f32 ypos;
+        i32 width;
+        i32 height;
         i32 button;
         i32 key;
         i32 scancode;

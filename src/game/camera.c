@@ -142,6 +142,11 @@ void camera_cleanup(void)
     glDeleteBuffers(1, &game_context.camera.matrices_ubo);
 }
 
+void camera_framebuffer_size_callback(void)
+{
+    update_proj_matrix();
+}
+
 vec3 camera_get_position(void)
 {
     return game_context.camera.position;

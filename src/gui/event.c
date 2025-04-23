@@ -42,6 +42,9 @@ static void gui_event_process(GUIEvent event)
         case GUI_EVENT_KEY_CALLBACK:
             gui_key_callback(event.args.key, event.args.scancode, event.args.action, event.args.mods);
             break;
+        case GUI_EVENT_FRAMEBUFFER_SIZE_CALLBACK:
+            gui_framebuffer_size_callback(event.args.width, event.args.height);
+            break;
         default:
             break;
     }

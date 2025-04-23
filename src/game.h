@@ -11,6 +11,7 @@ void game_render(void);
 void game_render_cleanup(void);
 void game_key_callback(i32 key, i32 scancode, i32 action, i32 mods);
 void game_mouse_button_callback(i32 button, i32 action, i32 mods);
+void game_framebuffer_size_callback(void);
 
 f32 game_dt(void);
 

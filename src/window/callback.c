@@ -9,7 +9,14 @@ void window_framebuffer_size_callback(GLFWwindow* window, i32 width, i32 height)
 {
     window_context.width = width;
     window_context.height = height;
+    GLfloat aspect_ratio = (GLfloat)window_context.width / window_context.height;
     glViewport(0, 0, window_context.width, window_context.height);
+    glBindBuffer(GL_UNIFORM_BUFFER, window_context.ubo);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(GLint), &window_context.width);
+    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLint), sizeof(GLint), &window_context.height);
+    glBufferSubData(GL_UNIFORM_BUFFER, 2 * sizeof(GLint), sizeof(GLfloat), &aspect_ratio);
+    gui_framebuffer_size_callback(width, height);
+    game_framebuffer_size_callback();
 }
 
 void window_mouse_button_callback(GLFWwindow* window, i32 button, i32 action, i32 mods)
@@ -19,8 +26,8 @@ void window_mouse_button_callback(GLFWwindow* window, i32 button, i32 action, i3
 
 void window_cursor_pos_callback(GLFWwindow* window, f64 xpos, f64 ypos)
 {
-    window_context.cursor.x = xpos * window_context.resolution.x / window_context.width;
-    window_context.cursor.y = (window_context.height - ypos) * window_context.resolution.y / window_context.height;
+    window_context.cursor.x = xpos;
+    window_context.cursor.y = window_context.height - ypos;
     gui_cursor_pos_callback(window_context.cursor.x, window_context.cursor.y);
 }
 

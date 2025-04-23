@@ -8,6 +8,7 @@ void entity_init(void)
     game_context.player.entity = entity_create(vec3_create(0, 0, 0));
     game_context.player.entity->direction = vec3_create(0, 0, 0);
     game_context.player.entity->size = 1.0;
+    entity_set_flag(game_context.player.entity, ENTITY_FLAG_FRIENDLY, 1);
     entity_create(vec3_create(5, 0, 0));
     entity_create(vec3_create(0, 0, 4));
     entity_create(vec3_create(5, 0, 4));
@@ -18,7 +19,7 @@ Entity* entity_create(vec3 position)
     Entity* entity = malloc(sizeof(Entity));
     entity->position = position;
     entity->prev_position = position;
-    entity->direction = vec3_create(1, 0, 0.2);
+    entity->direction = vec3_create(0, 0, 0);
     entity->direction = vec3_normalize(entity->direction);
     entity->speed = 3.5;
     entity->size = 1.0f;

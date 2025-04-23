@@ -3,6 +3,19 @@
 
 extern GUIContext gui_context;
 
+void gui_framebuffer_size_callback(i32 width, i32 height)
+{
+    if (pthread_equal(pthread_self(), gui_context.thread_id)) {
+        gui_comp_set_size(gui_context.root, width, height);
+    } else {
+        GUIEvent event;
+        event.type = GUI_EVENT_FRAMEBUFFER_SIZE_CALLBACK;
+        event.args.width = width;
+        event.args.height = height;
+        gui_event_enqueue(&gui_context.event_queue, event);
+    }
+}
+
 static bool gui_cursor_pos_callback_helper(GUIComp* comp, f64 xpos, f64 ypos, i32 position_x, i32 position_y, i32 size_x, i32 size_y)
 {
     i32 x, y, w, h;

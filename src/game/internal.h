@@ -199,6 +199,7 @@ void camera_rotate(f32 mag, f32 dt);
 void camera_tilt(f32 mag, f32 dt);
 void camera_zoom(i32 mag);
 void camera_cleanup(void);
+void camera_framebuffer_size_callback(void);
 
 vec3 camera_get_position(void);
 vec3 camera_get_facing(void);
