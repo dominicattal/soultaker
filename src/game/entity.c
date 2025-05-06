@@ -21,6 +21,7 @@ Entity* entity_create(vec3 position)
     entity->prev_position = position;
     entity->direction = vec3_create(0, 0, 0);
     entity->direction = vec3_normalize(entity->direction);
+    entity->facing = vec2_create(0, 0);
     entity->speed = 3.5;
     entity->size = 1.0f;
     entity->health = 1;

@@ -219,12 +219,12 @@ static void update_wall_vertex_data(void)
     static f32 dx[] = {0, 0, 0, 0, 1, 1, 1, 1};
     static f32 dy[] = {0, 0, 1, 1, 0, 0, 1, 1};
     static f32 dz[] = {0, 1, 0, 1, 0, 1, 0, 1};
-    static f32 tx[] = {0, 0, 1, 1};
-    static f32 ty[] = {0, 1, 0, 1};
+    static f32 tx[] = {0, 1, 1, 0};
+    static f32 ty[] = {0, 0, 1, 1};
     static i32 side_order[5][4] = {
         {4, 5, 7, 6}, // +x
-        {1, 3, 7, 5}, // +z
-        {0, 2, 3, 1}, // -x
+        {3, 7, 5, 1}, // +z
+        {1, 0, 2, 3}, // -x
         {0, 4, 6, 2}, // -z
         {2, 6, 7, 3}  // +y
     };
@@ -242,8 +242,8 @@ static void update_wall_vertex_data(void)
                 V = wall->position.x + dx[idx]; 
                 V = wall->height * dy[idx];
                 V = wall->position.y + dz[idx];
-                V = u + dx[winding[j]] * w;
-                V = v + dy[winding[j]] * h;
+                V = u + tx[winding[j]] * w;
+                V = v + ty[winding[j]] * h;
                 V = location;
                 V = wall->position.x + 0.5;
                 V = wall->position.y + 0.5;
