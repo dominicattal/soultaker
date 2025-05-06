@@ -14,6 +14,7 @@ typedef struct {
     vec3 position;
     vec3 prev_position;
     vec3 direction;
+    vec2 facing;
     f32 speed;
     f32 size;
     f32 health;

@@ -1,4 +1,5 @@
 #include "internal.h"
+#include <omp.h>
 
 extern GameContext game_context;
 
@@ -106,10 +107,9 @@ static void collide_projectile_obstacle(Projectile* projectile, Obstacle* obstac
     projectile->lifetime = 0;
 }
 
-void game_update(void)
+static void game_collide_objects(void)
 {
     i32 i, j;
-
     for (i = 0; i < game_context.entities->length; i++) {
         Entity* entity = list_get(game_context.entities, i);
         for (j = 0; j < game_context.obstacles->length; j++) {
@@ -137,7 +137,11 @@ void game_update(void)
             collide_projectile_wall(projectile, wall);
         }
     }
+}
 
+void game_update_objects(void)
+{
+    int i;
     i = 0;
     while (i < game_context.entities->length) {
         Entity* entity = list_get(game_context.entities, i);
@@ -175,5 +179,11 @@ void game_update(void)
             i++;
     }
     player_update(&game_context.player, game_context.dt);
+}
+
+void game_update(void)
+{
+    game_collide_objects();
+    game_update_objects();
 }
 
