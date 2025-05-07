@@ -2,6 +2,7 @@
 #define GAME_INTERNAL_H
 
 #include "../game.h"
+#include "../renderer.h"
 
 typedef struct {
     f32 yaw, pitch, zoom, fov, move_speed, rotate_speed;
@@ -125,18 +126,37 @@ typedef struct {
 
 extern GameContext game_context;
 
+//**************************************************************************
+
 typedef enum {
     ENTITY_FLAG_FRIENDLY
 } EntityFlagEnum;
 
+typedef enum {
+    ENTITY_KNIGHT,
+    NUM_ENTITY_TYPES
+} EntityType;
+
+// main api
 void entity_init(void);
 Entity* entity_create(vec3 position);
 void entity_update(Entity* entity, f32 dt);
 void entity_set_flag(Entity* entity, EntityFlagEnum flag, u32 val);
 bool entity_is_flag_set(Entity* entity, EntityFlagEnum flag);
+EntityType entity_get_type(Entity* entity);
+void entity_set_type(Entity* entity, EntityType type);
+i32 entity_get_state(Entity* entity);
+void entity_set_state(Entity* entity, i32 state);
+TextureEnum entity_get_tex(Entity* entity);
 void entity_destroy(Entity* entity);
 void entity_cleanup(void);
 
+// forward declarations
+void entity_knight_init(void);
+TextureEnum entity_knight_get_texture(Entity* entity);
+
+//**************************************************************************
+ 
 void tile_init(void);
 Tile* tile_create(vec2 position);
 void tile_destroy(Tile* tile);

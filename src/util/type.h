@@ -20,11 +20,15 @@ typedef double   f64;
 #define EPSILON 0.00001
 #define INF 1e10
 
+#define UP 0
+
 #define NEGX 0
 #define POSX 1
-#define NEGY 2
-#define POSY 3
-#define NEGZ 4
-#define POSZ 5
+#define NEGZ 2
+#define POSZ 3
+#define NEGY 4
+#define POSY 5
+
+i32 get_direction(f32 rad);
 
 #endif
