@@ -6,7 +6,8 @@ extern GameContext game_context;
 void wall_init(void)
 {
     game_context.walls = list_create();
-    wall_create(vec2_create(-3, -3), 1.5f);
+    Wall* wall = wall_create(vec2_create(-3, -3), 1.5f);
+    wall->size = vec2_create(0.5, 0.5);
     wall_create(vec2_create(-5, -3), 1.5f);
     for (i32 i = -101; i <= 101; i++) {
         wall_create(vec2_create(i, -101), 1.5f);
@@ -20,6 +21,7 @@ Wall* wall_create(vec2 position, f32 height)
 {
     Wall* wall = malloc(sizeof(Wall));
     wall->position = position;
+    wall->size = vec2_create(1, 1);
     wall->height = height;
     wall->top_tex = TEX_WALL_1;
     wall->side_tex = TEX_WALL_2;

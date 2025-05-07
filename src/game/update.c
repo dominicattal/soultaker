@@ -11,8 +11,8 @@ static void collide_entity_wall(Entity* entity, Wall* wall)
     er = entity->size / 2;
     wx = wall->position.x;
     wz = wall->position.y;
-    sx = 1;
-    sz = 1;
+    sx = wall->size.x;
+    sz = wall->size.y;
     if (!(ex + er > wx && ex - er < wx + sx
        && ez + er > wz && ez - er < wz + sz))
         return;
@@ -83,8 +83,8 @@ static void collide_projectile_wall(Projectile* projectile, Wall* wall)
     pr = projectile->size / 2;
     wx = wall->position.x;
     wz = wall->position.y;
-    sx = 1;
-    sz = 1;
+    sx = wall->size.x;
+    sz = wall->size.y;
     if (!(px + pr > wx && px - pr < wx + sx
        && pz + pr > wz && pz - pr < wz + sz))
         return;

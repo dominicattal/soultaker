@@ -239,27 +239,27 @@ static void update_wall_vertex_data(void)
         for (i32 side = 0; side < 4; side++) {
             for (i32 j = 0; j < 6; j++) {
                 idx = side_order[side][winding[j]];
-                V = wall->position.x + dx[idx]; 
+                V = wall->position.x + dx[idx] * wall->size.x; 
                 V = wall->height * dy[idx];
-                V = wall->position.y + dz[idx];
+                V = wall->position.y + dz[idx] * wall->size.y;
                 V = u + tx[winding[j]] * w;
                 V = v + ty[winding[j]] * h;
                 V = location;
-                V = wall->position.x + 0.5;
-                V = wall->position.y + 0.5;
+                V = wall->position.x + wall->size.x / 2;
+                V = wall->position.y + wall->size.y / 2;
             }
         }
         texture_info(wall->top_tex, &u, &v, &w, &h, &location);
         for (i32 j = 0; j < 6; j++) {
             idx = side_order[4][winding[j]];
-            V = wall->position.x + dx[idx]; 
+            V = wall->position.x + dx[idx] * wall->size.x; 
             V = wall->height * dy[idx];
-            V = wall->position.y + dz[idx];
+            V = wall->position.y + dz[idx] * wall->size.y;
             V = u + tx[winding[j]] * w;
             V = v + ty[winding[j]] * h;
             V = location;
-            V = wall->position.x + 0.5;
-            V = wall->position.y + 0.5;
+            V = wall->position.x + wall->size.x / 2;
+            V = wall->position.y + wall->size.y / 2;
         }
     }
     #undef V
