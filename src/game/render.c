@@ -127,10 +127,10 @@ static void update_entity_vertex_data(void)
     game_context.data_swap.entity_length = 0;
     f32 u, v, w, h;
     i32 location;
-    texture_info(TEX_KNIGHT, &u, &v, &w, &h, &location);
     #define V game_context.data_swap.entity_buffer[game_context.data_swap.entity_length++]
     for (i32 i = 0; i < game_context.entities->length; i++) {
         Entity* entity = list_get(game_context.entities, i);
+        texture_info(entity_get_tex(entity), &u, &v, &w, &h, &location);
         V = entity->position.x;
         V = entity->position.y;
         V = entity->position.z;
