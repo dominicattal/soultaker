@@ -38,6 +38,7 @@ typedef struct {
 
 typedef struct {
     vec2 position;
+    vec2 size;
     f32 height;
     i32 top_tex, side_tex;
 } Wall;
