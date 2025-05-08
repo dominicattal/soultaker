@@ -15,19 +15,22 @@ typedef uint64_t u64;
 typedef float    f32;
 typedef double   f64;
 
-#define PI 3.141592653589
-#define HALFPI 1.57079632679
+#define PI      3.141592653589
+#define HALFPI  1.57079632679
 #define EPSILON 0.00001
-#define INF 1e10
+#define INF     1e10
 
-#define UP 0
+#define UP      0
+#define RIGHT   1
+#define DOWN    2
+#define LEFT    3
 
-#define NEGX 0
-#define POSX 1
-#define NEGZ 2
-#define POSZ 3
-#define NEGY 4
-#define POSY 5
+#define NEGX    0
+#define POSX    1
+#define NEGZ    2
+#define POSZ    3
+#define NEGY    4
+#define POSY    5
 
 i32 get_direction(f32 rad);
 
