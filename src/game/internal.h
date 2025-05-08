@@ -147,6 +147,7 @@ EntityType entity_get_type(Entity* entity);
 void entity_set_type(Entity* entity, EntityType type);
 i32 entity_get_state(Entity* entity);
 void entity_set_state(Entity* entity, i32 state);
+i32 entity_get_direction(Entity* entity);
 TextureEnum entity_get_tex(Entity* entity);
 void entity_destroy(Entity* entity);
 void entity_cleanup(void);

@@ -56,6 +56,6 @@ void player_shoot(Player* player)
     direction = vec3_normalize(vec3_create(dirx, 0.0, dirz));
     target = vec3_sub(player->entity->position, vec3_scale(direction, -2 * zoom * r * r / ratio));
     weapon_shoot(player, direction, target);
-    //player.entity->facing = vec2_normalize(vec2f_create(dirx, dirz));
+    player->entity->facing = vec2_normalize(vec2_create(dirx, dirz));
     //player.entity->flag = TRUE;
 }

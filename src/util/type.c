@@ -7,10 +7,10 @@ i32 get_direction(f32 rad)
     rad = fmod(rad, 2*PI);
     if (rad < 0) rad += 2*PI;
     if (rad > 7 * PI / 4 || rad < PI / 4)
-        return POSX;
+        return UP;
     if (rad < 3 * PI / 4)
-        return POSZ;
+        return LEFT;
     if (rad < 5 * PI / 4)
-        return NEGX;
-    return NEGZ;
+        return DOWN;
+    return RIGHT;
 }

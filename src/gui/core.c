@@ -185,18 +185,18 @@ static void push_text_data(GUIComp* comp, i32 cx, i32 cy, i32 cw, i32 ch)
 static void push_comp_data(GUIComp* comp, i32 x, i32 y, i32 w, i32 h)
 {
     i32 loc;
-    f32 u1, v1, u2, v2;
+    f32 u, v, du, dv;
     u8 r, g, b, a;
     if (gui_context.data_swap.length >= gui_context.data_swap.capacity)
         resize_data_buffer(5);
 
     gui_comp_get_color(comp, &r, &g, &b, &a);
-    texture_info(gui_comp_tex(comp), &u1, &v1, &u2, &v2, &loc);
+    texture_info(gui_comp_tex(comp), &u, &v, &du, &dv, &loc);
 
     #define A gui_context.data_swap.buffer[gui_context.data_swap.length++]
     A = x; A = y; A = w; A = h;
     A = r; A = g; A = b; A = a;
-    A = u1; A = v1; A = u2; A = v2;
+    A = u; A = v; A = u+du; A = v+dv;
     A = loc;
     #undef A
 

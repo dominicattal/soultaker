@@ -51,9 +51,9 @@ static Image images[NUM_IMAGES_TO_PACK] = {
     (Image) {TEX_WALL_1, "assets/textures/wall_top.png"},
     (Image) {TEX_WALL_2, "assets/textures/wall_side.png"},
     (Image) {TEX_KNIGHT_IDLE_DOWN, "assets/textures/knight/knight_idle_down.png"},
-    (Image) {TEX_KNIGHT_IDLE_LEFT, "assets/textures/knight/knight_idle_left.png"},
     (Image) {TEX_KNIGHT_IDLE_UP, "assets/textures/knight/knight_idle_up.png"},
     (Image) {TEX_KNIGHT_IDLE_RIGHT, "assets/textures/knight/knight_idle_right.png"},
+    (Image) {TEX_KNIGHT_IDLE_LEFT, "assets/textures/knight/knight_idle_left.png"},
     (Image) {TEX_ROCK, "assets/textures/rock.png"},
     (Image) {TEX_BUSH, "assets/textures/bush.png"},
     (Image) {TEX_BULLET, "assets/textures/bullet.png"}
@@ -188,7 +188,7 @@ static void create_font_textures(i32* tex_unit_location)
 
     if (1) {
         char path[512];
-        sprintf(path, "data/packed_font%d.png", *tex_unit_location);
+        sprintf(path, "build/packed_font%d.png", *tex_unit_location);
         stbi_write_png(path, BITMAP_WIDTH, BITMAP_HEIGHT, 1, bitmap, 0);
     }
 
@@ -268,7 +268,7 @@ static void pack_textures(i32* tex_unit_location, unsigned char** image_data, st
 
     if (1) {
         char path[512];
-        sprintf(path, "data/packed_tex%d.png", *tex_unit_location);
+        sprintf(path, "build/packed_tex%d.png", *tex_unit_location);
         stbi_write_png(path, BITMAP_WIDTH, BITMAP_HEIGHT, num_channels, bitmap, 0);
     }
 

@@ -71,6 +71,13 @@ void entity_set_type(Entity* entity, EntityType type)
     entity->flags = (entity->flags & ~(((1<<8)-1)<<1)) | (type<<1);
 }
 
+i32 entity_get_direction(Entity* entity)
+{
+    f32 entity_rad = vec2_radians(entity->facing);
+    f32 camera_rad = game_context.camera.yaw;
+    return get_direction(entity_rad - camera_rad);
+}
+
 TextureEnum entity_get_tex(Entity* entity)
 {
     return texture_getters[entity_get_type(entity)](entity);
