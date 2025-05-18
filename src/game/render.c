@@ -130,7 +130,7 @@ static void update_entity_vertex_data(void)
     #define V game_context.data_swap.entity_buffer[game_context.data_swap.entity_length++]
     for (i32 i = 0; i < game_context.entities->length; i++) {
         Entity* entity = list_get(game_context.entities, i);
-        texture_info(entity_get_tex(entity), &u, &v, &w, &h, &location);
+        texture_info(entity_get_texture(entity), &u, &v, &w, &h, &location);
         V = entity->position.x;
         V = entity->position.y;
         V = entity->position.z;
@@ -161,7 +161,7 @@ static void update_projectile_vertex_data(void)
     #define V game_context.data_swap.projectile_buffer[game_context.data_swap.projectile_length++]
     for (i32 i = 0; i < game_context.projectiles->length; i++) {
         Projectile* projectile = list_get(game_context.projectiles, i);
-        bool rotate_tex = projectile_is_flag_set(projectile, PROJECTILE_FLAG_TEX_ROTATION);
+        bool rotate_tex = projectile_get_flag(projectile, PROJECTILE_FLAG_TEX_ROTATION);
         V = projectile->position.x;
         V = projectile->position.y;
         V = projectile->position.z;

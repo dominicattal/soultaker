@@ -8,6 +8,8 @@ void wall_init(void)
     game_context.walls = list_create();
     Wall* wall = wall_create(vec2_create(-3, -3), 1.5f);
     wall->size = vec2_create(0.5, 0.5);
+    wall = wall_create(vec2_create(-1, -1), 1.5f);
+    wall->size = vec2_create(1, 0);
     wall_create(vec2_create(-5, -3), 1.5f);
     for (i32 i = -101; i <= 101; i++) {
         wall_create(vec2_create(i, -101), 1.5f);

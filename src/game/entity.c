@@ -3,11 +3,19 @@
 extern GameContext game_context;
 
 static TextureEnum (*texture_getters[NUM_ENTITY_TYPES])(Entity* entity);
+static void (*create_functions[NUM_ENTITY_TYPES])(Entity* entity);
+static void (*update_functions[NUM_ENTITY_TYPES])(Entity* entity, f32 dt);
+static void (*destroy_functions[NUM_ENTITY_TYPES])(Entity* entity);
+static void (*state_setters[NUM_ENTITY_TYPES])(Entity* entity, i32 state);
 
 void entity_init(void)
 {
     entity_knight_init();
     texture_getters[ENTITY_KNIGHT] = entity_knight_get_texture;
+    update_functions[ENTITY_KNIGHT] = entity_knight_update;
+    create_functions[ENTITY_KNIGHT] = entity_knight_create;
+    destroy_functions[ENTITY_KNIGHT] = entity_knight_destroy;
+    state_setters[ENTITY_KNIGHT] = entity_knight_set_state;
 
     #ifdef DEBUG_BUILD
     for (i32 i = 0; i < NUM_ENTITY_TYPES; i++)
@@ -32,10 +40,21 @@ Entity* entity_create(vec3 position)
     entity->direction = vec3_create(0, 0, 0);
     entity->direction = vec3_normalize(entity->direction);
     entity->facing = vec2_create(1, 0);
+    entity->state_timer = 0;
+    entity->haste = 0;
     entity->speed = 3.5;
     entity->size = 1.0f;
     entity->health = 1;
     entity->flags = 0;
+    entity->type = 0;
+    entity->state = 0;
+    entity_set_flag(entity, ENTITY_FLAG_UPDATE_FACING, 1);
+
+    #ifdef DEBUG_BUILD
+    assert(create_functions[entity->type] != NULL);
+    #endif
+    create_functions[entity->type](entity);
+
     list_append(game_context.entities, entity);
     return entity;
 }
@@ -44,31 +63,38 @@ void entity_update(Entity* entity, f32 dt)
 {
     entity->prev_position = entity->position;
     entity->position = vec3_add(entity->position, vec3_scale(entity->direction, entity->speed * dt));
+    entity->state_timer += dt;
+    if (entity_get_flag(entity, ENTITY_FLAG_UPDATE_FACING) && vec3_mag(entity->direction) > 0)
+        entity->facing = vec2_create(entity->direction.x, entity->direction.z);
+
+    #ifdef DEBUG_BUILD
+    assert(update_functions[entity->type] != NULL);
+    #endif
+    update_functions[entity->type](entity, dt);
 }
 
-void entity_set_friendly_flag(Entity* entity, u32 val)
-{
-    entity->flags = (entity->flags & ~1) | val;
-}
+/*
+entity->flags
+00000000000000ddddddddccccccccba
+a = ENTITY_FLAG_FRIENDLY
+b = ENTITY_FLAG_UPDATE_FACING
+c = state
+d = type
+*/
 
 void entity_set_flag(Entity* entity, EntityFlagEnum flag, u32 val)
 {
     entity->flags = (entity->flags & ~(1<<flag)) | (val<<flag);
 }
 
-bool entity_is_flag_set(Entity* entity, EntityFlagEnum flag)
+bool entity_get_flag(Entity* entity, EntityFlagEnum flag)
 {
     return (entity->flags >> flag) & 1;
 }
 
-EntityType entity_get_type(Entity* entity)
+void entity_set_state(Entity* entity, i32 state)
 {
-    return (entity->flags >> 1) & ((1<<8)-1);
-}
-
-void entity_set_type(Entity* entity, EntityType type)
-{
-    entity->flags = (entity->flags & ~(((1<<8)-1)<<1)) | (type<<1);
+    state_setters[entity->type](entity, state);
 }
 
 i32 entity_get_direction(Entity* entity)
@@ -78,23 +104,17 @@ i32 entity_get_direction(Entity* entity)
     return get_direction(entity_rad - camera_rad);
 }
 
-TextureEnum entity_get_tex(Entity* entity)
+TextureEnum entity_get_texture(Entity* entity)
 {
-    return texture_getters[entity_get_type(entity)](entity);
-}
-
-i32 entity_get_state(Entity* entity)
-{
-    return (entity->flags >> 9) & ((1<<8)-1);
-}
-
-void entity_set_state(Entity* entity, i32 state)
-{
-    entity->flags = (entity->flags & ~(((1<<8)-1)<<9)) | (state<<9);
+    return texture_getters[entity->type](entity);
 }
 
 void entity_destroy(Entity* entity)
 {
+    #ifdef DEBUG_BUILD
+    assert(destroy_functions[entity->type] != NULL);
+    #endif
+    destroy_functions[entity->type](entity);
     free(entity);
 }
 
