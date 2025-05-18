@@ -4,10 +4,21 @@
 
 extern GameContext game_context;
 
+void player_set_state(Player* player, PlayerStates state)
+{
+    entity_set_state(player->entity, state);
+}
+
 void player_update(Player* player, f32 dt)
 {
     player->shot_timer -= dt;
     player_shoot(player);
+    if (player->shot_timer > 0)
+        player_set_state(player, PLAYER_STATE_SHOOTING);
+    else if (vec3_mag(player->entity->direction) > 0)
+        player_set_state(player, PLAYER_STATE_WALKING);
+    else
+        player_set_state(player, PLAYER_STATE_IDLE);
 }
 
 void weapon_shoot(Player* player, vec3 direction, vec3 target)
@@ -21,7 +32,6 @@ void weapon_shoot(Player* player, vec3 direction, vec3 target)
     proj->lifetime = 1;
     proj->rotation = atan(direction.z / direction.x) + (direction.x > 0 ? PI : 0);
     projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, 1);
-    //projectile_set_rotation_flag(proj);
 }
 
 void player_shoot(Player* player)
@@ -57,5 +67,4 @@ void player_shoot(Player* player)
     target = vec3_sub(player->entity->position, vec3_scale(direction, -2 * zoom * r * r / ratio));
     weapon_shoot(player, direction, target);
     player->entity->facing = vec2_normalize(vec2_create(dirx, dirz));
-    //player.entity->flag = TRUE;
 }

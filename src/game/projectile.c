@@ -31,7 +31,7 @@ void projectile_set_flag(Projectile* proj, ProjectileFlagEnum flag, u32 val)
     proj->flags = (proj->flags & ~(1<<flag)) | (val<<flag);
 }
 
-bool projectile_is_flag_set(Projectile* proj, ProjectileFlagEnum flag)
+bool projectile_get_flag(Projectile* proj, ProjectileFlagEnum flag)
 {
     return (proj->flags >> flag) & 1;
 }

@@ -1,6 +1,7 @@
 #ifndef GAME_INTERNAL_H
 #define GAME_INTERNAL_H
 
+#include "entities/entities.h"
 #include "../game.h"
 #include "../renderer.h"
 
@@ -19,7 +20,12 @@ typedef struct {
     f32 speed;
     f32 size;
     f32 health;
+    f32 haste;
+    f32 state_timer;
     u32 flags;
+    i32 type;
+    i32 state;
+    void* data;
 } Entity;
 
 typedef struct {
@@ -129,7 +135,8 @@ extern GameContext game_context;
 //**************************************************************************
 
 typedef enum {
-    ENTITY_FLAG_FRIENDLY
+    ENTITY_FLAG_FRIENDLY,
+    ENTITY_FLAG_UPDATE_FACING
 } EntityFlagEnum;
 
 typedef enum {
@@ -137,24 +144,36 @@ typedef enum {
     NUM_ENTITY_TYPES
 } EntityType;
 
+typedef enum {
+    PLAYER_STATE_IDLE,
+    PLAYER_STATE_WALKING,
+    PLAYER_STATE_SHOOTING,
+    NUM_PLAYER_STATES
+} PlayerStates;
+
 // main api
 void entity_init(void);
 Entity* entity_create(vec3 position);
 void entity_update(Entity* entity, f32 dt);
 void entity_set_flag(Entity* entity, EntityFlagEnum flag, u32 val);
-bool entity_is_flag_set(Entity* entity, EntityFlagEnum flag);
-EntityType entity_get_type(Entity* entity);
-void entity_set_type(Entity* entity, EntityType type);
-i32 entity_get_state(Entity* entity);
+bool entity_get_flag(Entity* entity, EntityFlagEnum flag);
 void entity_set_state(Entity* entity, i32 state);
 i32 entity_get_direction(Entity* entity);
-TextureEnum entity_get_tex(Entity* entity);
+TextureEnum entity_get_texture(Entity* entity);
 void entity_destroy(Entity* entity);
 void entity_cleanup(void);
+
+void player_update(Player* player, f32 dt);
+void player_shoot(Player* player);
+void player_set_state(Player* player, PlayerStates state);
 
 // forward declarations
 void entity_knight_init(void);
 TextureEnum entity_knight_get_texture(Entity* entity);
+void entity_knight_update(Entity* entity, f32 dt);
+void entity_knight_create(Entity* entity);
+void entity_knight_destroy(Entity* entity);
+void entity_knight_set_state(Entity* entity, i32 state);
 
 //**************************************************************************
  
@@ -177,7 +196,7 @@ void projectile_init(void);
 Projectile* projectile_create(vec3 position);
 void projectile_update(Projectile* projectile, f32 dt);
 void projectile_set_flag(Projectile* proj, ProjectileFlagEnum flag, u32 val);
-bool projectile_is_flag_set(Projectile* proj, ProjectileFlagEnum flag);
+bool projectile_get_flag(Projectile* proj, ProjectileFlagEnum flag);
 void projectile_destroy(Projectile* projectile);
 void projectile_cleanup(void);
 
@@ -208,9 +227,6 @@ void parjicle_set_flag(Parjicle* parjicle, ParjicleFlagEnum flag, u32 val);
 bool parjicle_is_flag_set(Parjicle* parjicle, ParjicleFlagEnum flag);
 void parjicle_destroy(Parjicle* parjicle);
 void parjicle_cleanup(void);
-
-void player_update(Player* player, f32 dt);
-void player_shoot(Player* player);
 
 void game_update(void);
 void game_update_vertex_data(void);

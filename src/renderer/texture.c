@@ -42,8 +42,8 @@ typedef struct {
     u32 texture_units[NUM_TEXTURE_UNITS];
 } TextureContext;
 
-#define NUM_IMAGES_TO_PACK 13
-static Image images[NUM_IMAGES_TO_PACK] = {
+#define NUM_IMAGES_TO_PACK (int)(sizeof(images) / sizeof(Image))
+static Image images[] = {
     (Image) {TEX_NONE, "assets/textures/none.png"},
     (Image) {TEX_COLOR, "assets/textures/color.png"},
     (Image) {TEX_TILE_1, "assets/textures/tile_1.png"},
@@ -54,6 +54,20 @@ static Image images[NUM_IMAGES_TO_PACK] = {
     (Image) {TEX_KNIGHT_IDLE_UP, "assets/textures/knight/knight_idle_up.png"},
     (Image) {TEX_KNIGHT_IDLE_RIGHT, "assets/textures/knight/knight_idle_right.png"},
     (Image) {TEX_KNIGHT_IDLE_LEFT, "assets/textures/knight/knight_idle_left.png"},
+    (Image) {TEX_KNIGHT_WALKING_DOWN_1, "assets/textures/knight/knight_walk_down_1.png"},
+    (Image) {TEX_KNIGHT_WALKING_DOWN_2, "assets/textures/knight/knight_walk_down_2.png"},
+    (Image) {TEX_KNIGHT_WALKING_UP_1, "assets/textures/knight/knight_walk_up_1.png"},
+    (Image) {TEX_KNIGHT_WALKING_UP_2, "assets/textures/knight/knight_walk_up_2.png"},
+    (Image) {TEX_KNIGHT_WALKING_RIGHT, "assets/textures/knight/knight_walk_right.png"},
+    (Image) {TEX_KNIGHT_WALKING_LEFT, "assets/textures/knight/knight_walk_left.png"},
+    (Image) {TEX_KNIGHT_SHOOTING_DOWN_1, "assets/textures/knight/knight_shoot_down_1.png"},
+    (Image) {TEX_KNIGHT_SHOOTING_UP_1, "assets/textures/knight/knight_shoot_up_1.png"},
+    (Image) {TEX_KNIGHT_SHOOTING_RIGHT_1, "assets/textures/knight/knight_shoot_right_1.png"},
+    (Image) {TEX_KNIGHT_SHOOTING_LEFT_1, "assets/textures/knight/knight_shoot_left_1.png"},
+    (Image) {TEX_KNIGHT_SHOOTING_DOWN_2, "assets/textures/knight/knight_shoot_down_2.png"},
+    (Image) {TEX_KNIGHT_SHOOTING_UP_2, "assets/textures/knight/knight_shoot_up_2.png"},
+    (Image) {TEX_KNIGHT_SHOOTING_RIGHT_2, "assets/textures/knight/knight_shoot_right_2.png"},
+    (Image) {TEX_KNIGHT_SHOOTING_LEFT_2, "assets/textures/knight/knight_shoot_left_2.png"},
     (Image) {TEX_ROCK, "assets/textures/rock.png"},
     (Image) {TEX_BUSH, "assets/textures/bush.png"},
     (Image) {TEX_BULLET, "assets/textures/bullet.png"}

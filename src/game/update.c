@@ -25,13 +25,11 @@ static void collide_entity_wall(Entity* entity, Wall* wall)
             entity->position.x = wx - er;
         else
             entity->position.x = wx + sx + er;
-        entity->direction.x = 0;
     } else if (ex + er > wx && ex - er < wx + sx) {
         if (dz > 0)
             entity->position.z = wz - er;
         else
             entity->position.z = wz + sz + er;
-        entity->direction.z = 0;
     }
 }
 
@@ -55,8 +53,8 @@ static void collide_entity_obstacle(Entity* entity, Obstacle* obstacle)
 
 static void collide_entity_projectile(Entity* entity, Projectile* projectile)
 {
-    bool is_entity_friendly = entity_is_flag_set(entity, ENTITY_FLAG_FRIENDLY);
-    bool is_projectile_friendly = projectile_is_flag_set(projectile, PROJECTILE_FLAG_FRIENDLY);
+    bool is_entity_friendly = entity_get_flag(entity, ENTITY_FLAG_FRIENDLY);
+    bool is_projectile_friendly = projectile_get_flag(projectile, PROJECTILE_FLAG_FRIENDLY);
     if (is_entity_friendly == is_projectile_friendly)
         return;
 
