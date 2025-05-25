@@ -6,6 +6,13 @@
 #include "audio.h"
 #include <stdio.h>
 #include <pthread.h>
+#include <json.h>
+
+#ifdef DEBUG_BUILD
+    #define BUILD_INFO "DEBUG"
+#elif RELEASE_BUILD
+    #define BUILD_INFO "RELEASE"
+#endif
 
 static f32 dt;
 
@@ -16,7 +23,6 @@ void state_init(void)
     gui_init();
     game_init();
     audio_init();
-
 }
 
 void state_loop(void)
@@ -48,12 +54,7 @@ f32 state_dt(void)
 
 int main()
 {
-    #ifdef DEBUG_BUILD
-    puts("DEBUG");
-    #endif
-    #ifdef RELEASE_BUILD
-    puts("RELEASE");
-    #endif
+    puts(BUILD_INFO);
     atexit(state_cleanup);
     state_init();
     state_loop();
