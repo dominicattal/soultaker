@@ -28,11 +28,7 @@ typedef struct {
 } Font;
 
 typedef struct {
-    TextureEnum tex;
-    char* path;
-} Image;
-
-typedef struct {
+    char* handle;
     f32 u, v, w, h;
     i32 location;
 } Texture;
@@ -40,39 +36,9 @@ typedef struct {
 typedef struct {
     Font fonts[NUM_FONTS];
     Texture* textures;
+    i32 num_textures;
     u32 texture_units[NUM_TEXTURE_UNITS];
 } TextureContext;
-
-#define NUM_IMAGES_TO_PACK (int)(sizeof(images) / sizeof(Image))
-static Image images[] = {
-    (Image) {TEX_NONE, "assets/textures/none.png"},
-    (Image) {TEX_COLOR, "assets/textures/color.png"},
-    (Image) {TEX_TILE_1, "assets/textures/tile_1.png"},
-    (Image) {TEX_TILE_2, "assets/textures/tile_2.png"},
-    (Image) {TEX_WALL_1, "assets/textures/wall_top.png"},
-    (Image) {TEX_WALL_2, "assets/textures/wall_side.png"},
-    (Image) {TEX_KNIGHT_IDLE_DOWN, "assets/textures/knight/knight_idle_down.png"},
-    (Image) {TEX_KNIGHT_IDLE_UP, "assets/textures/knight/knight_idle_up.png"},
-    (Image) {TEX_KNIGHT_IDLE_RIGHT, "assets/textures/knight/knight_idle_right.png"},
-    (Image) {TEX_KNIGHT_IDLE_LEFT, "assets/textures/knight/knight_idle_left.png"},
-    (Image) {TEX_KNIGHT_WALKING_DOWN_1, "assets/textures/knight/knight_walk_down_1.png"},
-    (Image) {TEX_KNIGHT_WALKING_DOWN_2, "assets/textures/knight/knight_walk_down_2.png"},
-    (Image) {TEX_KNIGHT_WALKING_UP_1, "assets/textures/knight/knight_walk_up_1.png"},
-    (Image) {TEX_KNIGHT_WALKING_UP_2, "assets/textures/knight/knight_walk_up_2.png"},
-    (Image) {TEX_KNIGHT_WALKING_RIGHT, "assets/textures/knight/knight_walk_right.png"},
-    (Image) {TEX_KNIGHT_WALKING_LEFT, "assets/textures/knight/knight_walk_left.png"},
-    (Image) {TEX_KNIGHT_SHOOTING_DOWN_1, "assets/textures/knight/knight_shoot_down_1.png"},
-    (Image) {TEX_KNIGHT_SHOOTING_UP_1, "assets/textures/knight/knight_shoot_up_1.png"},
-    (Image) {TEX_KNIGHT_SHOOTING_RIGHT_1, "assets/textures/knight/knight_shoot_right_1.png"},
-    (Image) {TEX_KNIGHT_SHOOTING_LEFT_1, "assets/textures/knight/knight_shoot_left_1.png"},
-    (Image) {TEX_KNIGHT_SHOOTING_DOWN_2, "assets/textures/knight/knight_shoot_down_2.png"},
-    (Image) {TEX_KNIGHT_SHOOTING_UP_2, "assets/textures/knight/knight_shoot_up_2.png"},
-    (Image) {TEX_KNIGHT_SHOOTING_RIGHT_2, "assets/textures/knight/knight_shoot_right_2.png"},
-    (Image) {TEX_KNIGHT_SHOOTING_LEFT_2, "assets/textures/knight/knight_shoot_left_2.png"},
-    (Image) {TEX_ROCK, "assets/textures/rock.png"},
-    (Image) {TEX_BUSH, "assets/textures/bush.png"},
-    (Image) {TEX_BULLET, "assets/textures/bullet.png"}
-};
 
 static TextureContext ctx;
 
@@ -311,43 +277,79 @@ static void initialize_rects(i32* tex_unit_location)
     JsonObject* json = json_read("assets/config/textures.json");
     assert(json != NULL);
 
-    int num_textures = json_object_length(json);
+    JsonIterator* it = json_iterator_create(json);
+    assert(it != NULL);
+    
+    JsonMember* member;
+    JsonValue* value;
+    char* image_handle;
+    const char* image_path;
 
-    ctx.textures = malloc(NUM_TEXTURES * sizeof(Texture));
-    rects  = malloc(sizeof(stbrp_rect) * NUM_IMAGES_TO_PACK);
-    image_data = malloc(sizeof(unsigned char*) * NUM_IMAGES_TO_PACK);
+    ctx.num_textures = json_object_length(json);
+
+    ctx.textures = malloc(ctx.num_textures * sizeof(Texture));
+    rects  = malloc(sizeof(stbrp_rect) * ctx.num_textures);
+    image_data = malloc(sizeof(unsigned char*) * ctx.num_textures);
 
     num_rects = 0;
-    for (i32 i = 0; i < NUM_IMAGES_TO_PACK; i++) {
-        image_data[i] = stbi_load(images[i].path, &width, &height, &num_channels, 4);
+    for (i32 i = 0; i < ctx.num_textures; i++) {
+        member = json_iterator_get(it);
+        image_handle = copy_string(json_member_key(member));
+        value = json_member_value(member);
+        assert(json_get_type(value) == JTYPE_STRING);
+        image_path = json_get_string(value);
+
+        image_data[i] = stbi_load(image_path, &width, &height, &num_channels, 4);
         if (image_data[i] == NULL) {
-            printf("Could not open %s\n", images[i].path);
+            printf("Could not open %s\n", image_path);
             continue;
         }
-        rects[num_rects].id = images[i].tex;
+        rects[num_rects].id = i;
         rects[num_rects].w = PADDING + width;
         rects[num_rects].h = PADDING + height;
-        ctx.textures[images[i].tex].location = i;
+        ctx.textures[i].handle = image_handle;
+        ctx.textures[i].location = i;
+
+        json_iterator_increment(it);
         num_rects++;
     }
 
     pack_textures(tex_unit_location, image_data, rects, num_rects, 4);
 
-    for (i32 i = 0; i < NUM_IMAGES_TO_PACK; i++)
+    for (i32 i = 0; i < ctx.num_textures; i++)
         stbi_image_free(image_data[i]);
 
     json_object_destroy(json);
+    json_iterator_destroy(it);
     free(rects);
     free(image_data);
 }
 
-void texture_info(TextureEnum tex, f32* u, f32* v, f32* w, f32* h, i32* location)
+i32 texture_get_id(const char* handle)
 {
-    *u = ctx.textures[tex].u;
-    *v = ctx.textures[tex].v;
-    *w = ctx.textures[tex].w;
-    *h = ctx.textures[tex].h;
-    *location = ctx.textures[tex].location;
+    i32 l, m, r, a;
+    l = 0, r = ctx.num_textures - 1;
+    while (l <= r) {
+        m = l + (r - l) / 2;
+        a = strcmp(handle, ctx.textures[m].handle);
+        if (a > 0)
+            l = m + 1;
+        else if (a < 0)
+            r = m - 1;
+        else
+            return m;
+    }
+    return -1;
+}
+
+void texture_info(i32 id, f32* u, f32* v, f32* w, f32* h, i32* location)
+{
+    assert(id != -1);
+    *u = ctx.textures[id].u;
+    *v = ctx.textures[id].v;
+    *w = ctx.textures[id].w;
+    *h = ctx.textures[id].h;
+    *location = ctx.textures[id].location;
 }
 
 void texture_init(void)
@@ -360,6 +362,8 @@ void texture_init(void)
 
 void texture_cleanup(void)
 {
+    for (int i = 0; i < ctx.num_textures; i++)
+        free(ctx.textures[i].handle);
     free(ctx.textures);
     glDeleteTextures(NUM_TEXTURE_UNITS, ctx.texture_units);
 }

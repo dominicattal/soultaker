@@ -19,7 +19,7 @@ GUIComp* gui_comp_create(i16 x, i16 y, i16 w, i16 h)
 {
     GUIComp* comp = calloc(1, sizeof(GUIComp));
     gui_comp_set_bbox(comp, x, y, w, h);
-    gui_comp_set_tex(comp, TEX_COLOR);
+    gui_comp_set_tex(comp, texture_get_id("color"));
     return comp;
 } 
 

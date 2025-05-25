@@ -23,37 +23,6 @@ typedef enum {
 } ShaderProgramEnum;
 
 typedef enum {
-    TEX_NONE,
-    TEX_COLOR,
-    TEX_TILE_1,
-    TEX_TILE_2,
-    TEX_WALL_1,
-    TEX_WALL_2,
-    TEX_KNIGHT_IDLE_DOWN,
-    TEX_KNIGHT_IDLE_LEFT,
-    TEX_KNIGHT_IDLE_UP,
-    TEX_KNIGHT_IDLE_RIGHT,
-    TEX_KNIGHT_WALKING_DOWN_1,
-    TEX_KNIGHT_WALKING_DOWN_2,
-    TEX_KNIGHT_WALKING_LEFT,
-    TEX_KNIGHT_WALKING_UP_1,
-    TEX_KNIGHT_WALKING_UP_2,
-    TEX_KNIGHT_WALKING_RIGHT,
-    TEX_KNIGHT_SHOOTING_DOWN_1,
-    TEX_KNIGHT_SHOOTING_LEFT_1,
-    TEX_KNIGHT_SHOOTING_UP_1,
-    TEX_KNIGHT_SHOOTING_RIGHT_1,
-    TEX_KNIGHT_SHOOTING_DOWN_2,
-    TEX_KNIGHT_SHOOTING_LEFT_2,
-    TEX_KNIGHT_SHOOTING_UP_2,
-    TEX_KNIGHT_SHOOTING_RIGHT_2,
-    TEX_BULLET,
-    TEX_ROCK,
-    TEX_BUSH,
-    NUM_TEXTURES
-} TextureEnum;
-
-typedef enum {
     FONT_MONOSPACE,
     FONT_MOJANGLES,
     NUM_FONTS
@@ -86,7 +55,8 @@ void shader_bind_uniform_block(ShaderProgramEnum program, u32 index, const char*
 void shader_cleanup(void);
 
 void texture_init(void);
-void texture_info(TextureEnum tex, f32* u, f32* v, f32* w, f32* h, i32* location);
+i32 texture_get_id(const char* handle);
+void texture_info(i32 id, f32* u, f32* v, f32* w, f32* h, i32* location);
 void texture_cleanup(void);
 
 void font_info(FontEnum font, i32 font_size, i32* ascent, i32* descent, i32* line_gap, i32* location);
