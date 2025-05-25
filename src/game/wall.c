@@ -25,8 +25,8 @@ Wall* wall_create(vec2 position, f32 height)
     wall->position = position;
     wall->size = vec2_create(1, 1);
     wall->height = height;
-    wall->top_tex = TEX_WALL_1;
-    wall->side_tex = TEX_WALL_2;
+    wall->top_tex = texture_get_id("wall_1");
+    wall->side_tex = texture_get_id("wall_2");
     list_append(game_context.walls, wall);
     return wall;
 }

@@ -157,7 +157,8 @@ static void update_projectile_vertex_data(void)
     game_context.data_swap.projectile_length = 0;
     f32 u, v, w, h;
     i32 location;
-    texture_info(TEX_BULLET, &u, &v, &w, &h, &location);
+    i32 tex = texture_get_id("bullet");
+    texture_info(tex, &u, &v, &w, &h, &location);
     #define V game_context.data_swap.projectile_buffer[game_context.data_swap.projectile_length++]
     for (i32 i = 0; i < game_context.projectiles->length; i++) {
         Projectile* projectile = list_get(game_context.projectiles, i);
@@ -278,7 +279,8 @@ static void update_parstacle_vertex_data(void)
     game_context.data_swap.parstacle_length = 0;
     f32 u, v, w, h;
     i32 location;
-    texture_info(TEX_BUSH, &u, &v, &w, &h, &location);
+    i32 tex = texture_get_id("bush");
+    texture_info(tex, &u, &v, &w, &h, &location);
     #define V game_context.data_swap.parstacle_buffer[game_context.data_swap.parstacle_length++]
     for (i32 i = 0; i < game_context.parstacles->length; i++) {
         Parstacle* parstacle = list_get(game_context.parstacles, i);
@@ -307,7 +309,8 @@ static void update_obstacle_vertex_data(void)
     game_context.data_swap.obstacle_length = 0;
     f32 u, v, w, h;
     i32 location;
-    texture_info(TEX_ROCK, &u, &v, &w, &h, &location);
+    i32 tex = texture_get_id("rock");
+    texture_info(tex, &u, &v, &w, &h, &location);
     #define V game_context.data_swap.obstacle_buffer[game_context.data_swap.obstacle_length++]
     for (i32 i = 0; i < game_context.obstacles->length; i++) {
         Obstacle* obstacle = list_get(game_context.obstacles, i);

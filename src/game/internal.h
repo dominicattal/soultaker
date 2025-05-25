@@ -159,7 +159,7 @@ void entity_set_flag(Entity* entity, EntityFlagEnum flag, u32 val);
 bool entity_get_flag(Entity* entity, EntityFlagEnum flag);
 void entity_set_state(Entity* entity, i32 state);
 i32 entity_get_direction(Entity* entity);
-TextureEnum entity_get_texture(Entity* entity);
+i32 entity_get_texture(Entity* entity);
 void entity_destroy(Entity* entity);
 void entity_cleanup(void);
 
@@ -169,7 +169,7 @@ void player_set_state(Player* player, PlayerStates state);
 
 // forward declarations
 void entity_knight_init(void);
-TextureEnum entity_knight_get_texture(Entity* entity);
+i32 entity_knight_get_texture(Entity* entity);
 void entity_knight_update(Entity* entity, f32 dt);
 void entity_knight_create(Entity* entity);
 void entity_knight_destroy(Entity* entity);

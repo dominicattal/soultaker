@@ -2,7 +2,7 @@
 
 extern GameContext game_context;
 
-static TextureEnum (*texture_getters[NUM_ENTITY_TYPES])(Entity* entity);
+static i32 (*texture_getters[NUM_ENTITY_TYPES])(Entity* entity);
 static void (*create_functions[NUM_ENTITY_TYPES])(Entity* entity);
 static void (*update_functions[NUM_ENTITY_TYPES])(Entity* entity, f32 dt);
 static void (*destroy_functions[NUM_ENTITY_TYPES])(Entity* entity);
@@ -104,7 +104,7 @@ i32 entity_get_direction(Entity* entity)
     return get_direction(entity_rad - camera_rad);
 }
 
-TextureEnum entity_get_texture(Entity* entity)
+i32 entity_get_texture(Entity* entity)
 {
     return texture_getters[entity->type](entity);
 }
