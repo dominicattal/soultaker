@@ -54,13 +54,6 @@ typedef enum {
 } TextureEnum;
 
 typedef enum {
-    TEX_ATLAS_FONT_STATIC,
-    TEX_ATLAS_GUI_STATIC,
-    TEX_ATLAS_GAME_STATIC,
-    NUM_TEXTURE_ATLASES
-} TextureAtlasEnum;
-
-typedef enum {
     FONT_MONOSPACE,
     FONT_MOJANGLES,
     NUM_FONTS
@@ -94,8 +87,6 @@ void shader_cleanup(void);
 
 void texture_init(void);
 void texture_info(TextureEnum tex, f32* u, f32* v, f32* w, f32* h, i32* location);
-void texture_atlas_load(TextureAtlasEnum atlas);
-void texture_atlas_unload(TextureAtlasEnum atlas);
 void texture_cleanup(void);
 
 void font_info(FontEnum font, i32 font_size, i32* ascent, i32* descent, i32* line_gap, i32* location);

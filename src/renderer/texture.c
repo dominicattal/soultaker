@@ -7,6 +7,7 @@
 #include <stb_truetype.h>
 #include <math.h>
 #include <string.h>
+#include <json.h>
 
 #define CHAR_OFFSET     32
 #define NUM_CHARS       96
@@ -38,7 +39,7 @@ typedef struct {
 
 typedef struct {
     Font fonts[NUM_FONTS];
-    Texture textures[NUM_TEXTURES];
+    Texture* textures;
     u32 texture_units[NUM_TEXTURE_UNITS];
 } TextureContext;
 
@@ -307,6 +308,12 @@ static void initialize_rects(i32* tex_unit_location)
     i32 width, height, num_channels;
     i32 num_rects;
 
+    JsonObject* json = json_read("assets/config/textures.json");
+    assert(json != NULL);
+
+    int num_textures = json_object_length(json);
+
+    ctx.textures = malloc(NUM_TEXTURES * sizeof(Texture));
     rects  = malloc(sizeof(stbrp_rect) * NUM_IMAGES_TO_PACK);
     image_data = malloc(sizeof(unsigned char*) * NUM_IMAGES_TO_PACK);
 
@@ -329,6 +336,7 @@ static void initialize_rects(i32* tex_unit_location)
     for (i32 i = 0; i < NUM_IMAGES_TO_PACK; i++)
         stbi_image_free(image_data[i]);
 
+    json_object_destroy(json);
     free(rects);
     free(image_data);
 }
@@ -352,6 +360,7 @@ void texture_init(void)
 
 void texture_cleanup(void)
 {
+    free(ctx.textures);
     glDeleteTextures(NUM_TEXTURE_UNITS, ctx.texture_units);
 }
 
