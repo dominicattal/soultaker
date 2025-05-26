@@ -20,7 +20,7 @@ char* copy_string(const char* string)
 {
     int n = strlen(string);
     char* copied = malloc((n+1) * sizeof(char));
-    strncpy(copied, string, n);
+    strncpy(copied, string, n+1);
     copied[n] = '\0';
     return copied;
 }

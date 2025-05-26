@@ -1,60 +1,172 @@
 #include "internal.h"
+#include <windows.h>
+#include <json.h>
 
 extern GameContext game_context;
 
-static i32 (*texture_getters[NUM_ENTITY_TYPES])(Entity* entity);
-static void (*create_functions[NUM_ENTITY_TYPES])(Entity* entity);
-static void (*update_functions[NUM_ENTITY_TYPES])(Entity* entity, f32 dt);
-static void (*destroy_functions[NUM_ENTITY_TYPES])(Entity* entity);
-static void (*state_setters[NUM_ENTITY_TYPES])(Entity* entity, i32 state);
+typedef void (*InitFuncPtr)(GameApi*);
+typedef void (*CleanupFuncPtr)(void);
+typedef void (*CreateFuncPtr)(Entity*);
+typedef void (*DestroyFuncPtr)(Entity*);
+typedef void (*UpdateFuncPtr)(Entity*, f32);
+typedef i32  (*TextureFuncPtr)(Entity*);
+
+typedef struct {
+    const char* handle;
+    InitFuncPtr init;
+    CleanupFuncPtr cleanup;
+    CreateFuncPtr create;
+    DestroyFuncPtr destroy;
+    UpdateFuncPtr update;
+    TextureFuncPtr texture;
+} EntityInfo;
+
+typedef struct {
+    EntityInfo* infos;
+    HMODULE lib;
+    int num_entities;
+} EntityContext;
+
+static EntityContext entity_context;
+
+static void load_entity_info(void)
+{
+    HMODULE lib = entity_context.lib;
+    JsonObject* json = json_read("config/entities.json");
+    assert(json != NULL);
+    JsonIterator* it = json_iterator_create(json);
+    assert(it);
+    JsonMember* member;
+    JsonValue* val_object;
+    JsonValue* val_string;
+    JsonObject* object;
+    const char* string;
+    entity_context.num_entities = json_object_length(json);
+    entity_context.infos = malloc(entity_context.num_entities * sizeof(EntityInfo));
+    for (i32 i = 0; i < entity_context.num_entities; i++) {
+        member = json_iterator_get(it);
+        assert(member);
+
+        string = json_member_key(member);
+        assert(string);
+        entity_context.infos[i].handle = copy_string(string);
+
+        val_object = json_member_value(member);
+        assert(val_object);
+        assert(json_get_type(val_object) == JTYPE_OBJECT);
+
+        object = json_get_object(val_object);
+        assert(object);
+
+        val_string = json_get_value(object, "init");
+        assert(val_string);
+        assert(json_get_type(val_string) == JTYPE_STRING);
+        string = json_get_string(val_string);
+        assert(string);
+        entity_context.infos[i].init = (InitFuncPtr)GetProcAddress(lib, string);
+        assert(entity_context.infos[i].init);
+
+        val_string = json_get_value(object, "cleanup");
+        assert(val_string);
+        assert(json_get_type(val_string) == JTYPE_STRING);
+        string = json_get_string(val_string);
+        assert(string);
+        entity_context.infos[i].cleanup = (CleanupFuncPtr)GetProcAddress(lib, string);
+        assert(entity_context.infos[i].cleanup);
+
+        val_string = json_get_value(object, "create");
+        assert(val_string);
+        assert(json_get_type(val_string) == JTYPE_STRING);
+        string = json_get_string(val_string);
+        assert(string);
+        entity_context.infos[i].create = (CreateFuncPtr)GetProcAddress(lib, string);
+        assert(entity_context.infos[i].create);
+
+        val_string = json_get_value(object, "destroy");
+        assert(val_string);
+        assert(json_get_type(val_string) == JTYPE_STRING);
+        string = json_get_string(val_string);
+        assert(string);
+        entity_context.infos[i].destroy = (DestroyFuncPtr)GetProcAddress(lib, string);
+        assert(entity_context.infos[i].destroy);
+
+        val_string = json_get_value(object, "update");
+        assert(val_string);
+        assert(json_get_type(val_string) == JTYPE_STRING);
+        string = json_get_string(val_string);
+        assert(string);
+        entity_context.infos[i].update = (UpdateFuncPtr)GetProcAddress(lib, string);
+        assert(entity_context.infos[i].update);
+
+        val_string = json_get_value(object, "texture");
+        assert(val_string);
+        assert(json_get_type(val_string) == JTYPE_STRING);
+        string = json_get_string(val_string);
+        assert(string);
+        entity_context.infos[i].texture = (TextureFuncPtr)GetProcAddress(lib, string);
+        assert(entity_context.infos[i].texture);
+
+        json_iterator_increment(it);
+    }
+    json_object_destroy(json);
+}
+
+i32 entity_map_id(const char* handle)
+{
+    int l, r, m, a;
+    l = 0;
+    r = entity_context.num_entities-1;
+    while (l <= r) {
+        m = l + (r - l) / 2;
+        a = strcmp(handle, entity_context.infos[m].handle);
+        if (a > 0)
+            l = m + 1;
+        else if (a < 0)
+            r = m - 1;
+        else
+            return m;
+    }
+    return -1;
+}
 
 void entity_init(void)
 {
-    entity_knight_init();
-    texture_getters[ENTITY_KNIGHT] = entity_knight_get_texture;
-    update_functions[ENTITY_KNIGHT] = entity_knight_update;
-    create_functions[ENTITY_KNIGHT] = entity_knight_create;
-    destroy_functions[ENTITY_KNIGHT] = entity_knight_destroy;
-    state_setters[ENTITY_KNIGHT] = entity_knight_set_state;
+    entity_context.lib = LoadLibrary("plugins/soultaker.dll");
+    assert(entity_context.lib);
+    load_entity_info();
+    for (i32 i = 0; i < entity_context.num_entities; i++)
+        entity_context.infos[i].init(&game_api);
 
-    #ifdef DEBUG_BUILD
-    for (i32 i = 0; i < NUM_ENTITY_TYPES; i++)
-        assert(texture_getters[i] != NULL);
-    #endif
-
+    i32 knight_id = entity_map_id("knight");
     game_context.entities = list_create();
-    game_context.player.entity = entity_create(vec3_create(0, 0, 0));
+    game_context.player.entity = entity_create(vec3_create(0, 0, 0), knight_id);
     game_context.player.entity->direction = vec3_create(0, 0, 0);
     game_context.player.entity->size = 1.0;
     entity_set_flag(game_context.player.entity, ENTITY_FLAG_FRIENDLY, 1);
-    entity_create(vec3_create(5, 0, 0));
-    entity_create(vec3_create(0, 0, 4));
-    entity_create(vec3_create(5, 0, 4));
+    entity_create(vec3_create(5, 0, 0), knight_id);
+    entity_create(vec3_create(0, 0, 4), knight_id);
+    entity_create(vec3_create(5, 0, 4), knight_id);
 }
 
-Entity* entity_create(vec3 position)
+Entity* entity_create(vec3 position, i32 type)
 {
     Entity* entity = malloc(sizeof(Entity));
     entity->position = position;
     entity->prev_position = position;
     entity->direction = vec3_create(0, 0, 0);
-    entity->direction = vec3_normalize(entity->direction);
     entity->facing = vec2_create(1, 0);
+    entity->type = type;
     entity->state_timer = 0;
+
     entity->haste = 0;
     entity->speed = 3.5;
     entity->size = 1.0f;
     entity->health = 1;
     entity->flags = 0;
-    entity->type = 0;
     entity->state = 0;
     entity_set_flag(entity, ENTITY_FLAG_UPDATE_FACING, 1);
 
-    #ifdef DEBUG_BUILD
-    assert(create_functions[entity->type] != NULL);
-    #endif
-    create_functions[entity->type](entity);
-
+    entity_context.infos[type].create(entity);
     list_append(game_context.entities, entity);
     return entity;
 }
@@ -67,10 +179,7 @@ void entity_update(Entity* entity, f32 dt)
     if (entity_get_flag(entity, ENTITY_FLAG_UPDATE_FACING) && vec3_mag(entity->direction) > 0)
         entity->facing = vec2_create(entity->direction.x, entity->direction.z);
 
-    #ifdef DEBUG_BUILD
-    assert(update_functions[entity->type] != NULL);
-    #endif
-    update_functions[entity->type](entity, dt);
+    entity_context.infos[entity->type].update(entity, dt);
 }
 
 /*
@@ -94,7 +203,6 @@ bool entity_get_flag(Entity* entity, EntityFlagEnum flag)
 
 void entity_set_state(Entity* entity, i32 state)
 {
-    state_setters[entity->type](entity, state);
 }
 
 i32 entity_get_direction(Entity* entity)
@@ -106,15 +214,12 @@ i32 entity_get_direction(Entity* entity)
 
 i32 entity_get_texture(Entity* entity)
 {
-    return texture_getters[entity->type](entity);
+    return entity_context.infos[entity->type].texture(entity);
 }
 
 void entity_destroy(Entity* entity)
 {
-    #ifdef DEBUG_BUILD
-    assert(destroy_functions[entity->type] != NULL);
-    #endif
-    destroy_functions[entity->type](entity);
+    entity_context.infos[entity->type].destroy(entity);
     free(entity);
 }
 
@@ -125,4 +230,8 @@ void entity_cleanup(void)
     for (i32 i = 0; i < game_context.entities->length; i++)
         free(list_get(game_context.entities, i));
     list_destroy(game_context.entities);
+    for (i32 i = 0; i < entity_context.num_entities; i++)
+        entity_context.infos[i].cleanup();
+    free(entity_context.infos);
+    FreeLibrary(entity_context.lib);
 }

@@ -274,7 +274,7 @@ static void initialize_rects(i32* tex_unit_location)
     i32 width, height, num_channels;
     i32 num_rects;
 
-    JsonObject* json = json_read("assets/config/textures.json");
+    JsonObject* json = json_read("config/textures.json");
     assert(json != NULL);
 
     JsonIterator* it = json_iterator_create(json);

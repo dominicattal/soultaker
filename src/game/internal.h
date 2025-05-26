@@ -1,7 +1,6 @@
 #ifndef GAME_INTERNAL_H
 #define GAME_INTERNAL_H
 
-#include "entities/entities.h"
 #include "../game.h"
 #include "../renderer.h"
 
@@ -151,9 +150,16 @@ typedef enum {
     NUM_PLAYER_STATES
 } PlayerStates;
 
+typedef struct {
+    i32 (*texture_get_id)(const char*);
+} GameApi;
+
+extern GameApi game_api;
+
 // main api
 void entity_init(void);
-Entity* entity_create(vec3 position);
+i32 entity_map_id(const char* handle);
+Entity* entity_create(vec3 position, i32 type);
 void entity_update(Entity* entity, f32 dt);
 void entity_set_flag(Entity* entity, EntityFlagEnum flag, u32 val);
 bool entity_get_flag(Entity* entity, EntityFlagEnum flag);
@@ -166,14 +172,6 @@ void entity_cleanup(void);
 void player_update(Player* player, f32 dt);
 void player_shoot(Player* player);
 void player_set_state(Player* player, PlayerStates state);
-
-// forward declarations
-void entity_knight_init(void);
-i32 entity_knight_get_texture(Entity* entity);
-void entity_knight_update(Entity* entity, f32 dt);
-void entity_knight_create(Entity* entity);
-void entity_knight_destroy(Entity* entity);
-void entity_knight_set_state(Entity* entity, i32 state);
 
 //**************************************************************************
  
