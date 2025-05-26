@@ -1,6 +1,10 @@
 #include "internal.h"
 #include "../renderer.h"
 
+GameApi game_api = {
+    .texture_get_id = texture_get_id
+};
+
 GameContext game_context;
 
 void* game_loop(void* vargp)
