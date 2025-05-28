@@ -1,0 +1,15 @@
+{
+    "knight": {
+        "init": "entity_knight_init",
+        "cleanup": "entity_knight_cleanup",
+        "texture": "entity_knight_texture",
+        "update": "entity_knight_update",
+        "create": "entity_knight_create",
+        "destroy": "entity_knight_destroy",
+        "states": {
+            "idle": 0,
+            "walking": 1,
+            "shooting": 2
+        }
+    }
+}

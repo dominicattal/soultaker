@@ -12,22 +12,53 @@ typedef void (*UpdateFuncPtr)(Entity*, f32);
 typedef i32  (*TextureFuncPtr)(Entity*);
 
 typedef struct {
-    const char* handle;
+    char* handle;
+    i32 id;
+} State;
+
+typedef struct {
+    char* handle;
     InitFuncPtr init;
     CleanupFuncPtr cleanup;
     CreateFuncPtr create;
     DestroyFuncPtr destroy;
     UpdateFuncPtr update;
     TextureFuncPtr texture;
+    State* states;
+    i32 num_states;
 } EntityInfo;
 
 typedef struct {
-    EntityInfo* infos;
     HMODULE lib;
-    int num_entities;
+    EntityInfo* infos;
+    i32 num_entities;
 } EntityContext;
 
 static EntityContext entity_context;
+
+static void load_state_info(i32 entity_id, JsonObject* object)
+{
+    i32 num_states = json_object_length(object);
+    State* state_ptr = malloc(num_states * sizeof(State));
+    JsonIterator* it = json_iterator_create(object);
+    JsonMember* member;
+    JsonValue* value;
+    const char* state;
+    for (i32 i = 0; i < num_states; i++) {
+        member = json_iterator_get(it);
+        assert(member);
+        state = json_member_key(member);
+        assert(state);
+        value = json_member_value(member);
+        assert(value);
+        assert(json_get_type(value) == JTYPE_INT);
+        state_ptr[i].handle = copy_string(state);
+        state_ptr[i].id = json_get_int(value);
+        json_iterator_increment(it);
+    }
+    entity_context.infos[entity_id].num_states = num_states;
+    entity_context.infos[entity_id].states = state_ptr;
+}
 
 static void load_entity_info(void)
 {
@@ -106,8 +137,17 @@ static void load_entity_info(void)
         entity_context.infos[i].texture = (TextureFuncPtr)GetProcAddress(lib, string);
         assert(entity_context.infos[i].texture);
 
+        val_object = json_get_value(object, "states");
+        assert(json_get_type(val_object) == JTYPE_OBJECT);
+        object = json_get_object(val_object);
+        load_state_info(i, object);
+
         json_iterator_increment(it);
     }
+
+    for (i32 i = 0; i < entity_context.num_entities; i++)
+        entity_context.infos[i].init(&game_api);
+
     json_object_destroy(json);
 }
 
@@ -129,13 +169,16 @@ i32 entity_map_id(const char* handle)
     return -1;
 }
 
+i32 entity_map_state_id(Entity* entity, const char* handle)
+{
+    return 0;
+}
+
 void entity_init(void)
 {
     entity_context.lib = LoadLibrary("plugins/soultaker.dll");
     assert(entity_context.lib);
     load_entity_info();
-    for (i32 i = 0; i < entity_context.num_entities; i++)
-        entity_context.infos[i].init(&game_api);
 
     i32 knight_id = entity_map_id("knight");
     game_context.entities = list_create();
@@ -182,15 +225,6 @@ void entity_update(Entity* entity, f32 dt)
     entity_context.infos[entity->type].update(entity, dt);
 }
 
-/*
-entity->flags
-00000000000000ddddddddccccccccba
-a = ENTITY_FLAG_FRIENDLY
-b = ENTITY_FLAG_UPDATE_FACING
-c = state
-d = type
-*/
-
 void entity_set_flag(Entity* entity, EntityFlagEnum flag, u32 val)
 {
     entity->flags = (entity->flags & ~(1<<flag)) | (val<<flag);
@@ -203,6 +237,7 @@ bool entity_get_flag(Entity* entity, EntityFlagEnum flag)
 
 void entity_set_state(Entity* entity, i32 state)
 {
+    entity->state = state;
 }
 
 i32 entity_get_direction(Entity* entity)
@@ -230,8 +265,13 @@ void entity_cleanup(void)
     for (i32 i = 0; i < game_context.entities->length; i++)
         free(list_get(game_context.entities, i));
     list_destroy(game_context.entities);
-    for (i32 i = 0; i < entity_context.num_entities; i++)
+    for (i32 i = 0; i < entity_context.num_entities; i++) {
         entity_context.infos[i].cleanup();
+        free(entity_context.infos[i].handle);
+        for (i32 j = 0; j < entity_context.infos[i].num_states; j++)
+            free(entity_context.infos[i].states[j].handle);
+        free(entity_context.infos[i].states);
+    }
     free(entity_context.infos);
     FreeLibrary(entity_context.lib);
 }

@@ -4,7 +4,7 @@
 
 extern GameContext game_context;
 
-void player_set_state(Player* player, PlayerStates state)
+void player_set_state(Player* player, i32 state)
 {
     entity_set_state(player->entity, state);
 }
@@ -14,11 +14,11 @@ void player_update(Player* player, f32 dt)
     player->shot_timer -= dt;
     player_shoot(player);
     if (player->shot_timer > 0)
-        player_set_state(player, PLAYER_STATE_SHOOTING);
+        player_set_state(player, 2);
     else if (vec3_mag(player->entity->direction) > 0)
-        player_set_state(player, PLAYER_STATE_WALKING);
+        player_set_state(player, 1);
     else
-        player_set_state(player, PLAYER_STATE_IDLE);
+        player_set_state(player, 0);
 }
 
 void weapon_shoot(Player* player, vec3 direction, vec3 target)
