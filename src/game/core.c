@@ -2,7 +2,8 @@
 #include "../renderer.h"
 
 GameApi game_api = {
-    .texture_get_id = texture_get_id
+    .texture_get_id = texture_get_id,
+    .entity_get_direction = entity_get_direction
 };
 
 GameContext game_context;

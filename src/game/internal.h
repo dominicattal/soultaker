@@ -143,15 +143,9 @@ typedef enum {
     NUM_ENTITY_TYPES
 } EntityType;
 
-typedef enum {
-    PLAYER_STATE_IDLE,
-    PLAYER_STATE_WALKING,
-    PLAYER_STATE_SHOOTING,
-    NUM_PLAYER_STATES
-} PlayerStates;
-
 typedef struct {
     i32 (*texture_get_id)(const char*);
+    i32 (*entity_get_direction)(Entity*);
 } GameApi;
 
 extern GameApi game_api;
@@ -159,6 +153,7 @@ extern GameApi game_api;
 // main api
 void entity_init(void);
 i32 entity_map_id(const char* handle);
+i32 entity_map_state_id(Entity* entity, const char* handle);
 Entity* entity_create(vec3 position, i32 type);
 void entity_update(Entity* entity, f32 dt);
 void entity_set_flag(Entity* entity, EntityFlagEnum flag, u32 val);
@@ -171,7 +166,7 @@ void entity_cleanup(void);
 
 void player_update(Player* player, f32 dt);
 void player_shoot(Player* player);
-void player_set_state(Player* player, PlayerStates state);
+void player_set_state(Player* player, i32 state);
 
 //**************************************************************************
  
