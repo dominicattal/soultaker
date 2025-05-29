@@ -24,6 +24,7 @@ typedef struct {
     u32 flags;
     i32 type;
     i32 state;
+    i32 frame;
     void* data;
 } Entity;
 
