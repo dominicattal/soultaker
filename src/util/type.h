@@ -32,6 +32,4 @@ typedef double   f64;
 #define NEGY    4
 #define POSY    5
 
-i32 get_direction(f32 rad);
-
 #endif

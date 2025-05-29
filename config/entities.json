@@ -6,10 +6,66 @@
         "update": "entity_knight_update",
         "create": "entity_knight_create",
         "destroy": "entity_knight_destroy",
-        "states": {
-            "idle": 0,
-            "walking": 1,
-            "shooting": 2
-        }
+        "states": [
+            { 
+                "name": "idle",
+                "id": 0,
+                "frames": 1,
+                "left": [
+                    "knight_idle_left"
+                ],
+                "right": [
+                    "knight_idle_right"
+                ],
+                "up": [
+                    "knight_idle_up"
+                ],
+                "down": [
+                    "knight_idle_down"
+                ]
+            },
+            { 
+                "name": "walking",
+                "id": 1,
+                "frames": 2,
+                "left": [
+                    "knight_walking_left",
+                    "knight_idle_left"
+                ],
+                "right": [
+                    "knight_walking_right",
+                    "knight_idle_right"
+                ],
+                "up": [
+                    "knight_walking_up_1",
+                    "knight_walking_up_2"
+                ],
+                "down": [
+                    "knight_walking_down_1",
+                    "knight_walking_down_2"
+                ]
+            },
+            { 
+                "name": "shooting",
+                "id": 2,
+                "frames": 2,
+                "left": [
+                    "knight_shooting_left_1",
+                    "knight_shooting_left_2"
+                ],
+                "right": [
+                    "knight_shooting_right_1",
+                    "knight_shooting_right_2"
+                ],
+                "up": [
+                    "knight_shooting_up_1",
+                    "knight_shooting_up_2"
+                ],
+                "down": [
+                    "knight_shooting_down_1",
+                    "knight_shooting_down_2"
+                ]
+            }
+        ]
     }
 }
