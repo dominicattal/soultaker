@@ -56,7 +56,7 @@ void shader_cleanup(void);
 
 void texture_init(void);
 i32 texture_get_id(const char* handle);
-void texture_info(i32 id, f32* u, f32* v, f32* w, f32* h, i32* location);
+void texture_info(i32 id, i32* location, f32* u, f32* v, f32* w, f32* h, vec2* pivot, vec2* stretch);
 void texture_cleanup(void);
 
 void font_info(FontEnum font, i32 font_size, i32* ascent, i32* descent, i32* line_gap, i32* location);

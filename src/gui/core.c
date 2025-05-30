@@ -186,12 +186,13 @@ static void push_comp_data(GUIComp* comp, i32 x, i32 y, i32 w, i32 h)
 {
     i32 loc;
     f32 u, v, du, dv;
+    vec2 pivot, stretch;
     u8 r, g, b, a;
     if (gui_context.data_swap.length >= gui_context.data_swap.capacity)
         resize_data_buffer(5);
 
     gui_comp_get_color(comp, &r, &g, &b, &a);
-    texture_info(gui_comp_tex(comp), &u, &v, &du, &dv, &loc);
+    texture_info(gui_comp_tex(comp), &loc, &u, &v, &du, &dv, &pivot, &stretch);
 
     #define A gui_context.data_swap.buffer[gui_context.data_swap.length++]
     A = x; A = y; A = w; A = h;
