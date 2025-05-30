@@ -21,8 +21,20 @@
     "knight_shooting_left_1": "assets/textures/knight/knight_shoot_left_1.png",
     "knight_shooting_down_2": "assets/textures/knight/knight_shoot_down_2.png",
     "knight_shooting_up_2": "assets/textures/knight/knight_shoot_up_2.png",
-    "knight_shooting_right_2": "assets/textures/knight/knight_shoot_right_2.png",
-    "knight_shooting_left_2": "assets/textures/knight/knight_shoot_left_2.png",
+    "knight_shooting_right_2": {
+        "path": "assets/textures/knight/knight_shoot_right_2.png",
+        "pivot_x": 0.375,
+        "pivot_y": 0.0,
+        "stretch_x": 1.375,
+        "stretch_y": 1.0
+    },
+    "knight_shooting_left_2": {
+        "path": "assets/textures/knight/knight_shoot_left_2.png",
+        "pivot_x": -0.375,
+        "pivot_y": 0.0,
+        "stretch_x": 1.375,
+        "stretch_y": 1.0
+    },
     "rock": "assets/textures/rock.png",
     "bush": "assets/textures/bush.png",
     "bullet": "assets/textures/bullet.png"

@@ -3,7 +3,7 @@
 
 #define TILE_VERTEX_LENGTH           7
 #define WALL_VERTEX_LENGTH           (8 * 6 * 5)
-#define ENTITY_VERTEX_LENGTH_IN      9
+#define ENTITY_VERTEX_LENGTH_IN      11
 #define ENTITY_VERTEX_LENGTH_OUT     7
 #define OBSTACLE_VERTEX_LENGTH_IN    8
 #define OBSTACLE_VERTEX_LENGTH_OUT   7
@@ -125,12 +125,13 @@ static void update_entity_vertex_data(void)
             game_context.data_swap.entity_buffer = realloc(game_context.data_swap.entity_buffer, size);
     }
     game_context.data_swap.entity_length = 0;
+    vec2 pivot, stretch;
     f32 u, v, w, h;
     i32 location;
     #define V game_context.data_swap.entity_buffer[game_context.data_swap.entity_length++]
     for (i32 i = 0; i < game_context.entities->length; i++) {
         Entity* entity = list_get(game_context.entities, i);
-        texture_info(entity_get_texture(entity), &u, &v, &w, &h, &location);
+        texture_info(entity_get_texture(entity), &location, &u, &v, &w, &h, &pivot, &stretch);
         V = entity->position.x;
         V = entity->position.y;
         V = entity->position.z;
@@ -140,6 +141,10 @@ static void update_entity_vertex_data(void)
         V = w;
         V = h;
         V = location;
+        V = pivot.x;
+        V = pivot.y;
+        V = stretch.x;
+        V = stretch.y;
     }
     #undef V
 }
@@ -155,10 +160,11 @@ static void update_projectile_vertex_data(void)
             game_context.data_swap.projectile_buffer = realloc(game_context.data_swap.projectile_buffer, size);
     }
     game_context.data_swap.projectile_length = 0;
+    vec2 pivot, stretch;
     f32 u, v, w, h;
     i32 location;
     i32 tex = texture_get_id("bullet");
-    texture_info(tex, &u, &v, &w, &h, &location);
+    texture_info(tex, &location, &u, &v, &w, &h, &pivot, &stretch);
     #define V game_context.data_swap.projectile_buffer[game_context.data_swap.projectile_length++]
     for (i32 i = 0; i < game_context.projectiles->length; i++) {
         Projectile* projectile = list_get(game_context.projectiles, i);
@@ -189,12 +195,13 @@ static void update_tile_vertex_data(void)
             game_context.data_swap.tile_buffer = realloc(game_context.data_swap.tile_buffer, size);
     }
     game_context.data_swap.tile_length = 0;
+    vec2 pivot, stretch;
     f32 u, v, w, h;
     i32 location;
     #define V game_context.data_swap.tile_buffer[game_context.data_swap.tile_length++]
     for (i32 i = 0; i < game_context.tiles->length; i++) {
         Tile* tile = list_get(game_context.tiles, i);
-        texture_info(tile->tex, &u, &v, &w, &h, &location);
+        texture_info(tile->tex, &location, &u, &v, &w, &h, &pivot, &stretch);
         V = tile->position.x;
         V = tile->position.y;
         V = u;
@@ -230,13 +237,14 @@ static void update_wall_vertex_data(void)
         {2, 6, 7, 3}  // +y
     };
     static i32 winding[] = {0, 1, 2, 0, 2, 3};
+    vec2 pivot, stretch;
     f32 u, v, w, h;
     i32 location;
     i32 idx;
     #define V game_context.data_swap.wall_buffer[game_context.data_swap.wall_length++]
     for (i32 i = 0; i < game_context.walls->length; i++) {
         Wall* wall = list_get(game_context.walls, i);
-        texture_info(wall->side_tex, &u, &v, &w, &h, &location);
+        texture_info(wall->side_tex, &location, &u, &v, &w, &h, &pivot, &stretch);
         for (i32 side = 0; side < 4; side++) {
             for (i32 j = 0; j < 6; j++) {
                 idx = side_order[side][winding[j]];
@@ -250,7 +258,7 @@ static void update_wall_vertex_data(void)
                 V = wall->position.y + wall->size.y / 2;
             }
         }
-        texture_info(wall->top_tex, &u, &v, &w, &h, &location);
+        texture_info(wall->top_tex, &location, &u, &v, &w, &h, &pivot, &stretch);
         for (i32 j = 0; j < 6; j++) {
             idx = side_order[4][winding[j]];
             V = wall->position.x + dx[idx] * wall->size.x; 
@@ -277,10 +285,11 @@ static void update_parstacle_vertex_data(void)
             game_context.data_swap.parstacle_buffer = realloc(game_context.data_swap.parstacle_buffer, size);
     }
     game_context.data_swap.parstacle_length = 0;
+    vec2 pivot, stretch;
     f32 u, v, w, h;
     i32 location;
     i32 tex = texture_get_id("bush");
-    texture_info(tex, &u, &v, &w, &h, &location);
+    texture_info(tex, &location, &u, &v, &w, &h, &pivot, &stretch);
     #define V game_context.data_swap.parstacle_buffer[game_context.data_swap.parstacle_length++]
     for (i32 i = 0; i < game_context.parstacles->length; i++) {
         Parstacle* parstacle = list_get(game_context.parstacles, i);
@@ -307,10 +316,11 @@ static void update_obstacle_vertex_data(void)
             game_context.data_swap.obstacle_buffer = realloc(game_context.data_swap.obstacle_buffer, size);
     }
     game_context.data_swap.obstacle_length = 0;
+    vec2 pivot, stretch;
     f32 u, v, w, h;
     i32 location;
     i32 tex = texture_get_id("rock");
-    texture_info(tex, &u, &v, &w, &h, &location);
+    texture_info(tex, &location, &u, &v, &w, &h, &pivot, &stretch);
     #define V game_context.data_swap.obstacle_buffer[game_context.data_swap.obstacle_length++]
     for (i32 i = 0; i < game_context.obstacles->length; i++) {
         Obstacle* obstacle = list_get(game_context.obstacles, i);

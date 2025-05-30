@@ -30,6 +30,8 @@ typedef struct {
 typedef struct {
     char* handle;
     f32 u, v, w, h;
+    vec2 pivot;
+    vec2 stretch;
     i32 location;
 } Texture;
 
@@ -267,6 +269,35 @@ static void pack_textures(i32* tex_unit_location, unsigned char** image_data, st
     }
 }
 
+static void parse_value(JsonValue* value, const char** image_path, vec2* pivot, vec2* stretch)
+{
+    JsonObject* object = json_get_object(value);
+    value = json_get_value(object, "path");
+    assert(value);
+    assert(json_get_type(value) == JTYPE_STRING);
+    *image_path = json_get_string(value);
+    value = json_get_value(object, "pivot_x");
+    if (value != NULL) {
+        assert(json_get_type(value) == JTYPE_FLOAT);
+        pivot->x = json_get_float(value);
+    }
+    value = json_get_value(object, "pivot_y");
+    if (value != NULL) {
+        assert(json_get_type(value) == JTYPE_FLOAT);
+        pivot->y = json_get_float(value);
+    }
+    value = json_get_value(object, "stretch_x");
+    if (value != NULL) {
+        assert(json_get_type(value) == JTYPE_FLOAT);
+        stretch->x = json_get_float(value);
+    }
+    value = json_get_value(object, "stretch_y");
+    if (value != NULL) {
+        assert(json_get_type(value) == JTYPE_FLOAT);
+        stretch->y = json_get_float(value);
+    }
+}
+
 static void initialize_rects(i32* tex_unit_location)
 {
     stbrp_rect* rects;
@@ -291,14 +322,22 @@ static void initialize_rects(i32* tex_unit_location)
     rects  = malloc(sizeof(stbrp_rect) * ctx.num_textures);
     image_data = malloc(sizeof(unsigned char*) * ctx.num_textures);
 
+    vec2 pivot, stretch;
     num_rects = 0;
     for (i32 i = 0; i < ctx.num_textures; i++) {
+        pivot = vec2_create(0,0);
+        stretch = vec2_create(1,1);
         member = json_iterator_get(it);
         image_handle = copy_string(json_member_key(member));
         value = json_member_value(member);
-        assert(json_get_type(value) == JTYPE_STRING);
-        image_path = json_get_string(value);
+        if (json_get_type(value) == JTYPE_STRING)
+            image_path = json_get_string(value);
+        else if (json_get_type(value) == JTYPE_OBJECT)
+            parse_value(value, &image_path, &pivot, &stretch);
+        else
+            assert(0);
 
+        assert(image_path);
         image_data[i] = stbi_load(image_path, &width, &height, &num_channels, 4);
         if (image_data[i] == NULL) {
             printf("Could not open %s\n", image_path);
@@ -309,6 +348,8 @@ static void initialize_rects(i32* tex_unit_location)
         rects[num_rects].h = PADDING + height;
         ctx.textures[i].handle = image_handle;
         ctx.textures[i].location = i;
+        ctx.textures[i].pivot = pivot;
+        ctx.textures[i].stretch = stretch;
 
         json_iterator_increment(it);
         num_rects++;
@@ -342,14 +383,16 @@ i32 texture_get_id(const char* handle)
     return -1;
 }
 
-void texture_info(i32 id, f32* u, f32* v, f32* w, f32* h, i32* location)
+void texture_info(i32 id, i32* location, f32* u, f32* v, f32* w, f32* h, vec2* pivot, vec2* stretch)
 {
     assert(id != -1);
+    *location = ctx.textures[id].location;
     *u = ctx.textures[id].u;
     *v = ctx.textures[id].v;
     *w = ctx.textures[id].w;
     *h = ctx.textures[id].h;
-    *location = ctx.textures[id].location;
+    *pivot = ctx.textures[id].pivot;
+    *stretch = ctx.textures[id].stretch;
 }
 
 void texture_init(void)

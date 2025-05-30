@@ -11,11 +11,12 @@ void wall_init(void)
     wall = wall_create(vec2_create(-1, -1), 1.5f);
     wall->size = vec2_create(1, 0);
     wall_create(vec2_create(-5, -3), 1.5f);
-    for (i32 i = -101; i <= 101; i++) {
-        wall_create(vec2_create(i, -101), 1.5f);
-        wall_create(vec2_create(101, i), 1.5f);
-        wall_create(vec2_create(-i-1, 101), 1.5f);
-        wall_create(vec2_create(-101, -i-1), 1.5f);
+    i32 a = 11;
+    for (i32 i = -a; i <= a; i++) {
+        wall_create(vec2_create(i, -a), 1.5f);
+        wall_create(vec2_create(a, i), 1.5f);
+        wall_create(vec2_create(-i-1, a), 1.5f);
+        wall_create(vec2_create(-a, -i-1), 1.5f);
     }
 }
 
