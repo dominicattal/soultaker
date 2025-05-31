@@ -28,8 +28,11 @@ typedef struct {
 } Font;
 
 typedef struct {
-    char* handle;
-    f32 u, v, w, h;
+    char* name;
+    union { f32 u; i32 xint; };
+    union { f32 v; i32 yint; };
+    union { f32 w; i32 wint; };
+    f32 h;
     vec2 pivot;
     vec2 stretch;
     i32 location;
@@ -43,6 +46,13 @@ typedef struct {
 } TextureContext;
 
 static TextureContext ctx;
+
+static i32 texture_cmp(const void* ptr1, const void* ptr2)
+{
+    const Texture* tex1 = (const Texture*)ptr1;
+    const Texture* tex2 = (const Texture*)ptr2;
+    return strcmp(tex1->name, tex2->name);
+}
 
 static void load_font(stbtt_pack_context* spc, FontEnum font, i32 font_size, const char* ttf_path)
 {
@@ -198,27 +208,33 @@ static void pack_textures(i32* tex_unit_location, unsigned char** image_data, st
     stbrp_init_target(context, BITMAP_WIDTH, BITMAP_HEIGHT, nodes, num_nodes);
     all_rects_packed = stbrp_pack_rects(context, rects, num_rects);
 
+    Texture* texture;
+    i32 width, offset_x, offset_y;
     num_rects_packed = 0;
     location = *tex_unit_location;
     bitmap = calloc(BITMAP_WIDTH * BITMAP_HEIGHT * num_channels, sizeof(unsigned char));
     for (i32 i = 0; i < num_rects; ++i) {
-        if (!rects[i].was_packed)
+        stbrp_rect rect = rects[i];
+        if (!rect.was_packed)
             continue;
         ++num_rects_packed;
-        for (y = 0; y < rects[i].h - PADDING; ++y) {
-            for (x = 0; x < rects[i].w - PADDING; ++x) {
+        texture = &ctx.textures[rect.id];
+        offset_x = texture->xint;
+        offset_y = texture->yint;
+        width = texture->wint;
+        for (y = 0; y < rect.h - PADDING; ++y) {
+            for (x = 0; x < rect.w - PADDING; ++x) {
                 for (c = 0; c < num_channels; ++c) {
-                    stbrp_rect rect = rects[i];
 
-                    data_idx   =    y * num_channels * (rect.w - PADDING)
-                                 +  x * num_channels 
+                    data_idx   =    (y + offset_y) * num_channels * width
+                                 +  (x + offset_x) * num_channels 
                                  +  c;
 
                     bitmap_idx =   (y + rect.y) * num_channels * BITMAP_WIDTH
                                  + (x + rect.x) * num_channels
                                  +  c;
 
-                    bitmap[bitmap_idx] = image_data[ctx.textures[rect.id].location][data_idx];
+                    bitmap[bitmap_idx] = image_data[texture->location][data_idx];
                 }
             }
         }
@@ -269,33 +285,183 @@ static void pack_textures(i32* tex_unit_location, unsigned char** image_data, st
     }
 }
 
-static void parse_value(JsonValue* value, const char** image_path, vec2* pivot, vec2* stretch)
+static i32 get_num_textures(JsonObject* json)
 {
-    JsonObject* object = json_get_object(value);
-    value = json_get_value(object, "path");
+    JsonIterator* it = json_iterator_create(json);
+    JsonMember* member;
+    JsonValue* value;
+    JsonObject* val_object;
+    JsonType type;
+    i32 num_members = json_object_length(json);
+    assert(it);
+    i32 res = 0;
+    for (i32 i = 0; i < num_members; i++) {
+        member = json_iterator_get(it);
+        value = json_member_value(member);
+        type = json_get_type(value);
+
+        if (type == JTYPE_STRING)
+            res++;
+        else if  (type == JTYPE_OBJECT) {
+            val_object = json_get_object(value);
+            value = json_get_value(val_object, "spritesheet");
+            if (value == NULL || json_get_type(value) != JTYPE_TRUE)
+                res++;
+            else {
+                value = json_get_value(val_object, "textures");
+                assert(value);
+                assert(json_get_type(value) == JTYPE_OBJECT);
+                val_object = json_get_object(value);
+                res += json_object_length(val_object);
+            }
+        } else
+            assert(0);
+
+        json_iterator_increment(it);
+    }
+    return res;
+}
+
+typedef struct {
+    vec2 pivot;
+    vec2 stretch;
+    i32 x, y, w, h;
+} ParseObjectArgs;
+
+static i32 get_int(JsonArray* array, i32 idx)
+{
+    JsonValue* value = json_array_get(array, idx);
     assert(value);
-    assert(json_get_type(value) == JTYPE_STRING);
-    *image_path = json_get_string(value);
+    assert(json_get_type(value) == JTYPE_INT);
+    return json_get_int(value);
+}
+
+static void parse_array(JsonArray* array, ParseObjectArgs* args)
+{
+    args->x = get_int(array, 0);
+    args->y = get_int(array, 1);
+    args->w = get_int(array, 2);
+    args->h = get_int(array, 3);
+}
+
+static void parse_object(JsonObject* object, ParseObjectArgs* args)
+{
+    JsonValue* value;
+    JsonArray* array;
     value = json_get_value(object, "pivot_x");
     if (value != NULL) {
         assert(json_get_type(value) == JTYPE_FLOAT);
-        pivot->x = json_get_float(value);
+        args->pivot.x = json_get_float(value);
     }
     value = json_get_value(object, "pivot_y");
     if (value != NULL) {
         assert(json_get_type(value) == JTYPE_FLOAT);
-        pivot->y = json_get_float(value);
+        args->pivot.y = json_get_float(value);
     }
     value = json_get_value(object, "stretch_x");
     if (value != NULL) {
         assert(json_get_type(value) == JTYPE_FLOAT);
-        stretch->x = json_get_float(value);
+        args->stretch.x = json_get_float(value);
     }
     value = json_get_value(object, "stretch_y");
     if (value != NULL) {
         assert(json_get_type(value) == JTYPE_FLOAT);
-        stretch->y = json_get_float(value);
+        args->stretch.y = json_get_float(value);
     }
+    value = json_get_value(object, "location");
+    if (value != NULL) {
+        assert(json_get_type(value) == JTYPE_ARRAY);
+        array = json_get_array(value);
+        assert(array);
+        parse_array(array, args);
+    }
+}
+
+static void parse_texture(JsonMember* member, stbrp_rect* rects, i32 width, i32 height, i32 image_idx, i32* num_rects)
+{
+    JsonValue* value;
+    JsonArray* array;
+    JsonObject* val_object;
+    JsonType type;
+    const char* key;
+    char* texture_name;
+    key = json_member_key(member);
+    assert(key);
+    texture_name = copy_string(key);
+    value = json_member_value(member);
+    assert(value);
+    ParseObjectArgs args;
+    args.pivot = vec2_create(0, 0);
+    args.stretch = vec2_create(1, 1);
+    args.x = args.y = 0;
+    args.w = width;
+    args.h = height;
+    ctx.textures[*num_rects].wint = width;
+    type = json_get_type(value);
+    if (type == JTYPE_OBJECT) {
+        val_object = json_get_object(value);
+        parse_object(val_object, &args);
+    } else if (type == JTYPE_ARRAY) {
+        array = json_get_array(value);
+        assert(array);
+        parse_array(array, &args);
+    }
+    rects[*num_rects].id = *num_rects;
+    rects[*num_rects].w = PADDING + args.w;
+    rects[*num_rects].h = PADDING + args.h;
+    ctx.textures[*num_rects].name = texture_name;
+    ctx.textures[*num_rects].location = image_idx;
+    ctx.textures[*num_rects].pivot = args.pivot;
+    ctx.textures[*num_rects].stretch = args.stretch;
+    ctx.textures[*num_rects].xint = args.x;
+    ctx.textures[*num_rects].yint = args.y;
+    (*num_rects)++;
+}
+
+static void parse_spritesheet(JsonValue* value, stbrp_rect* rects, i32 width, i32 height, i32 image_idx, i32* num_rects)
+{
+    i32 num_textures;
+    JsonObject* val_object;
+    JsonIterator* it;
+    JsonMember* member;
+    val_object = json_get_object(value);
+    value = json_get_value(val_object, "textures");
+    assert(value);
+    assert(json_get_type(value) == JTYPE_OBJECT);
+    val_object = json_get_object(value);
+    num_textures = json_object_length(val_object);
+    it = json_iterator_create(val_object);
+    for (i32 i = 0; i < num_textures; i++) {
+        member = json_iterator_get(it);
+        parse_texture(member, rects, width, height, image_idx, num_rects);
+        json_iterator_increment(it);
+    }
+}
+
+static const char* get_image_path(JsonValue* value, i32* is_spritesheet)
+{
+    JsonType type;
+    JsonObject* val_object;
+    const char* image_path = NULL;
+    type = json_get_type(value);
+    if (type == JTYPE_OBJECT) {
+        val_object = json_get_object(value);
+        assert(val_object);
+        value = json_get_value(val_object, "path");
+        assert(value);
+        assert(json_get_type(value) == JTYPE_STRING);
+        image_path = json_get_string(value);
+        value = json_get_value(val_object, "spritesheet");
+        if (value != NULL) {
+            type = json_get_type(value);
+            if (type == JTYPE_TRUE)
+                *is_spritesheet = 1;
+        }
+    } else if (type == JTYPE_STRING)
+        image_path = json_get_string(value);
+    else
+        assert(0);
+    return image_path;
 }
 
 static void initialize_rects(i32* tex_unit_location)
@@ -310,69 +476,61 @@ static void initialize_rects(i32* tex_unit_location)
 
     JsonIterator* it = json_iterator_create(json);
     assert(it != NULL);
+
     
     JsonMember* member;
     JsonValue* value;
-    char* image_handle;
     const char* image_path;
+    i32 is_spritesheet;
 
-    ctx.num_textures = json_object_length(json);
+    i32 num_images = json_object_length(json);
+    ctx.num_textures = get_num_textures(json);
 
-    ctx.textures = malloc(ctx.num_textures * sizeof(Texture));
+    ctx.textures = malloc(sizeof(Texture) * ctx.num_textures);
     rects  = malloc(sizeof(stbrp_rect) * ctx.num_textures);
-    image_data = malloc(sizeof(unsigned char*) * ctx.num_textures);
+    image_data = malloc(sizeof(unsigned char*) * num_images);
 
-    vec2 pivot, stretch;
     num_rects = 0;
-    for (i32 i = 0; i < ctx.num_textures; i++) {
-        pivot = vec2_create(0,0);
-        stretch = vec2_create(1,1);
+    for (i32 i = 0; i < num_images; i++, json_iterator_increment(it)) {
+        is_spritesheet = 0;
         member = json_iterator_get(it);
-        image_handle = copy_string(json_member_key(member));
         value = json_member_value(member);
-        if (json_get_type(value) == JTYPE_STRING)
-            image_path = json_get_string(value);
-        else if (json_get_type(value) == JTYPE_OBJECT)
-            parse_value(value, &image_path, &pivot, &stretch);
-        else
-            assert(0);
-
+        image_path = get_image_path(value, &is_spritesheet);
         assert(image_path);
+
         image_data[i] = stbi_load(image_path, &width, &height, &num_channels, 4);
         if (image_data[i] == NULL) {
             printf("Could not open %s\n", image_path);
-            continue;
+            // assign none texture
+            exit(1);
         }
-        rects[num_rects].id = i;
-        rects[num_rects].w = PADDING + width;
-        rects[num_rects].h = PADDING + height;
-        ctx.textures[i].handle = image_handle;
-        ctx.textures[i].location = i;
-        ctx.textures[i].pivot = pivot;
-        ctx.textures[i].stretch = stretch;
 
-        json_iterator_increment(it);
-        num_rects++;
+        if (!is_spritesheet)
+            parse_texture(member, rects, width, height, i, &num_rects);
+        else
+            parse_spritesheet(value, rects, width, height, i, &num_rects);
     }
 
     pack_textures(tex_unit_location, image_data, rects, num_rects, 4);
 
-    for (i32 i = 0; i < ctx.num_textures; i++)
+    qsort(ctx.textures, ctx.num_textures, sizeof(Texture), texture_cmp);
+
+    for (i32 i = 0; i < num_images; i++)
         stbi_image_free(image_data[i]);
 
-    json_object_destroy(json);
     json_iterator_destroy(it);
+    json_object_destroy(json);
     free(rects);
     free(image_data);
 }
 
-i32 texture_get_id(const char* handle)
+i32 texture_get_id(const char* name)
 {
     i32 l, m, r, a;
     l = 0, r = ctx.num_textures - 1;
     while (l <= r) {
         m = l + (r - l) / 2;
-        a = strcmp(handle, ctx.textures[m].handle);
+        a = strcmp(name, ctx.textures[m].name);
         if (a > 0)
             l = m + 1;
         else if (a < 0)
@@ -380,12 +538,12 @@ i32 texture_get_id(const char* handle)
         else
             return m;
     }
+    printf("Failed to get id for %s\n", name);
     return -1;
 }
 
 void texture_info(i32 id, i32* location, f32* u, f32* v, f32* w, f32* h, vec2* pivot, vec2* stretch)
 {
-    assert(id != -1);
     *location = ctx.textures[id].location;
     *u = ctx.textures[id].u;
     *v = ctx.textures[id].v;
@@ -406,7 +564,7 @@ void texture_init(void)
 void texture_cleanup(void)
 {
     for (int i = 0; i < ctx.num_textures; i++)
-        free(ctx.textures[i].handle);
+        free(ctx.textures[i].name);
     free(ctx.textures);
     glDeleteTextures(NUM_TEXTURE_UNITS, ctx.texture_units);
 }
