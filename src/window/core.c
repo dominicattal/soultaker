@@ -8,6 +8,8 @@ WindowContext window_context;
 
 void window_init(void)
 {
+    log_write(SEVERITY_NOTICE, "Creating window...");
+    glfwSetErrorCallback(window_error_callback);
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
@@ -26,17 +28,19 @@ void window_init(void)
     glfwSetMouseButtonCallback(window_context.handle, window_mouse_button_callback);
     glfwSetCursorPosCallback(window_context.handle, window_cursor_pos_callback);
     glfwSetKeyCallback(window_context.handle, window_key_callback);
-    glfwSetErrorCallback(window_error_callback);
     glfwSetInputMode(window_context.handle, GLFW_LOCK_KEY_MODS, GLFW_TRUE);
     window_context.cursor.hidden = false;
     gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
     glViewport(0, 0, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT);
     glfwSwapInterval(0);
+    
+    log_write(SEVERITY_NOTICE, "Created window");
 
     window_context.dt = 0;
 
     GLfloat aspect_ratio = (GLfloat)window_context.width / window_context.height;
 
+    log_write(SEVERITY_NOTICE, "Creating window buffers...");
     glGenBuffers(1, &window_context.ubo);
     glBindBuffer(GL_UNIFORM_BUFFER, window_context.ubo);
     glBindBufferBase(GL_UNIFORM_BUFFER, UBO_INDEX_WINDOW, window_context.ubo);
@@ -44,6 +48,7 @@ void window_init(void)
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(GLint), &window_context.width);
     glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLint), sizeof(GLint), &window_context.height);
     glBufferSubData(GL_UNIFORM_BUFFER, 2 * sizeof(GLint), sizeof(GLfloat), &aspect_ratio);
+    log_write(SEVERITY_NOTICE, "Created window buffers");
 }
 
 void window_update(void)
@@ -64,8 +69,11 @@ bool window_closed(void)
 
 void window_cleanup(void)
 {
-    glDeleteBuffers(1, &window_context.ubo);
+    log_write(SEVERITY_NOTICE, "Terminating GLFW...");
+    if (window_context.ubo != 0)
+        glDeleteBuffers(1, &window_context.ubo);
     glfwTerminate();
+    log_write(SEVERITY_NOTICE, "Terminated GLFW");
 }
 
 bool window_get_key(i32 key)
