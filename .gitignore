@@ -1,5 +1,6 @@
 bin
 build
 data
+logs
 gdb.exe.core
 
