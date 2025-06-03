@@ -13,10 +13,8 @@ static const char* read_file(const char *path)
     ptr = fopen(path, "r");
     fseek(ptr, 0, SEEK_END);
     i32 len = ftell(ptr);
-    if (len == 0) {
-        printf("File %s is empty", path);
-        exit(1);
-    }
+    if (len == 0)
+        log_write(FATAL, "File %s is empty", path);
     fseek(ptr, 0, SEEK_SET);
     content = calloc(len+1, sizeof(char));
     fread(content, 1, len, ptr);
@@ -33,10 +31,9 @@ static u32 compile(GLenum type, const char *path)
     i32 success;
     DIR* dir = opendir(path);
 
-    if (ENOENT == errno) {
-        printf("File %s does not exist", path);
-        exit(1);
-    }
+    if (ENOENT == errno)
+        log_write(FATAL, "File %s does not exist", path);
+
     closedir(dir);
     shader = glCreateShader(type);
     shader_code = read_file(path);
@@ -331,13 +328,14 @@ void shader_program_compile(ShaderProgramEnum program)
             compile_shader_program_parjicle_comp();
             break;
         default:
-            printf("Unrecognized program %x\n", program);
+            log_write(INFO, "Unrecognized program %x\n", program);
             break;
     }
 }
 
 void shader_init(void)
 {
+    log_write(INFO, "Compiling shaders...");
     for (i32 i = 0; i < NUM_SHADER_PROGRAMS; i++)
         shader_programs[i] = glCreateProgram();
     
@@ -356,6 +354,7 @@ void shader_init(void)
     shader_program_compile(SHADER_PROGRAM_PROJECTILE_COMP);
     shader_program_compile(SHADER_PROGRAM_PARJICLE);
     shader_program_compile(SHADER_PROGRAM_PARJICLE_COMP);
+    log_write(INFO, "Compiled shaders");
 }
 
 void shader_use(ShaderProgramEnum id)
@@ -365,8 +364,11 @@ void shader_use(ShaderProgramEnum id)
 
 void shader_cleanup(void)
 {
+    log_write(INFO, "Deleting shaders...");
     for (i32 i = 0; i < NUM_SHADER_PROGRAMS; i++)
-        glDeleteProgram(shader_programs[i]);
+        if (shader_programs[i] != 0)
+            glDeleteProgram(shader_programs[i]);
+    log_write(INFO, "Deleted shaders");
 }
 
 GLuint shader_get_uniform_location(ShaderProgramEnum program, const char* identifier)

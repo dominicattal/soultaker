@@ -4,16 +4,15 @@
 
 RenderContext render_context;
 
-#ifdef DEBUG_BUILD
 static void GLAPIENTRY message_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
 {
     if (severity == GL_DEBUG_SEVERITY_NOTIFICATION)
         return;
 
-    puts("======== gl message callback ========");
     char* source_str;
     char* type_str;
     char* severity_str;
+    LogLevel level;
     switch (source) {
         case GL_DEBUG_SOURCE_API:
             source_str = "GL_DEBUG_SOURCE_API"; break;
@@ -32,38 +31,49 @@ static void GLAPIENTRY message_callback(GLenum source, GLenum type, GLuint id, G
     }
     switch (severity) {
         case GL_DEBUG_SEVERITY_NOTIFICATION:
-            severity_str = "GL_DEBUG_SEVERITY_NOTIFICATION"; break;
+            severity_str = "GL_DEBUG_SEVERITY_NOTIFICATION"; 
+            level = INFO;
+            break;
         case GL_DEBUG_SEVERITY_LOW:
-            severity_str = "GL_DEBUG_SEVERITY_LOW"; break;
+            severity_str = "GL_DEBUG_SEVERITY_LOW"; 
+            level = WARNING;
+            break;
         case GL_DEBUG_SEVERITY_MEDIUM:
-            severity_str = "GL_DEBUG_SEVERITY_MEDIUM"; break;
+            severity_str = "GL_DEBUG_SEVERITY_MEDIUM"; 
+            level = ERROR;
+            break;
         case GL_DEBUG_SEVERITY_HIGH:
-            severity_str = "GL_DEBUG_SEVERITY_HIGH"; break;
+            severity_str = "GL_DEBUG_SEVERITY_HIGH"; 
+            level = FATAL;
+            break;
         default:
-            severity_str = ""; break;
+            severity_str = ""; 
+            level = INFO;
+            break;
     }
-    printf("%-8s = 0x%04x %s\n", "source", source, source_str);
-    printf("%-8s = 0x%04x %s\n", "type", type, type_str);
-    printf("%-8s = 0x%04x %s\n", "severity", severity, severity_str);
-    printf("%-8s = %u\n\n", "id", id);
-    printf("%s\n\n", message);
-    
-    if (severity != GL_DEBUG_SEVERITY_NOTIFICATION)
-        exit(1);
+    log_write(level, "OpenGL error\n"
+                     "%-8s = 0x%04x %s\n"
+                     "%-8s = 0x%04x %s\n"
+                     "%-8s = 0x%04x %s\n"
+                     "%-8s = %u\n"
+                     "%s",
+                      "source", source, source_str,
+                      "type", type, type_str,
+                      "severity", severity, severity_str,
+                      "id", id, message);
 }
-#endif
 
 void renderer_init(void)
 {
-    #ifdef DEBUG_BUILD
+    log_write(INFO, "Initializing renderer...");
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(message_callback, 0);
-    #endif
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
     glEnable(GL_CULL_FACE);
     shader_init();
     texture_init();
+    log_write(INFO, "Renderer initialized");
 }
 
 void renderer_render(void)
@@ -78,7 +88,9 @@ void renderer_render(void)
 
 void renderer_cleanup(void)
 {
+    log_write(INFO, "Cleaning up renderer...");
     shader_cleanup();
     texture_cleanup();
+    log_write(INFO, "Cleaned up renderer");
 }
 

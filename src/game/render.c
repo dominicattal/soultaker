@@ -419,6 +419,7 @@ void game_update_vertex_data(void)
 
 void game_render_init(void)
 {
+    log_write(INFO, "Creating game buffers...");
     glGenVertexArrays(1, &tile_buffers.vao);
     glGenBuffers(1, &tile_buffers.vbo);
     glGenBuffers(1, &tile_buffers.instance_vbo);
@@ -530,6 +531,8 @@ void game_render_init(void)
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)(4 * sizeof(GLfloat)));
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
+
+    log_write(INFO, "Created game buffers");
 }
 
 static void render_tiles(void)
@@ -718,23 +721,43 @@ void game_render(void)
 
 void game_render_cleanup(void)
 {
-    glDeleteVertexArrays(1, &tile_buffers.vao);
-    glDeleteVertexArrays(1, &entity_buffers.vao);
-    glDeleteVertexArrays(1, &wall_buffers.vao);
-    glDeleteVertexArrays(1, &projectile_buffers.vao);
-    glDeleteVertexArrays(1, &obstacle_buffers.vao);
-    glDeleteVertexArrays(1, &particle_buffers.vao);
-    glDeleteVertexArrays(1, &parjicle_buffers.vao);
-    glDeleteBuffers(1, &wall_buffers.vbo);
-    glDeleteBuffers(1, &tile_buffers.vbo);
-    glDeleteBuffers(1, &tile_buffers.instance_vbo);
-    glDeleteBuffers(1, &entity_buffers.vbo);
-    glDeleteBuffers(1, &projectile_buffers.vbo);
-    glDeleteBuffers(1, &obstacle_buffers.vbo);
-    glDeleteBuffers(1, &parstacle_buffers.vbo);
-    glDeleteBuffers(1, &particle_buffers.vbo);
-    glDeleteBuffers(1, &parjicle_buffers.vbo);
-    glDeleteBuffers(1, &comp_buffers.in);
-    glDeleteBuffers(1, &comp_buffers.out);
+    log_write(INFO, "Deleting game buffers...");
+    if (tile_buffers.vao != 0)
+        glDeleteVertexArrays(1, &tile_buffers.vao);
+    if (entity_buffers.vao != 0)
+        glDeleteVertexArrays(1, &entity_buffers.vao);
+    if (wall_buffers.vao != 0)
+        glDeleteVertexArrays(1, &wall_buffers.vao);
+    if (projectile_buffers.vao != 0)
+        glDeleteVertexArrays(1, &projectile_buffers.vao);
+    if (obstacle_buffers.vao != 0)
+        glDeleteVertexArrays(1, &obstacle_buffers.vao);
+    if (particle_buffers.vao != 0)
+        glDeleteVertexArrays(1, &particle_buffers.vao);
+    if (parjicle_buffers.vao != 0)
+        glDeleteVertexArrays(1, &parjicle_buffers.vao);
+    if (wall_buffers.vbo != 0)
+        glDeleteBuffers(1, &wall_buffers.vbo);
+    if (tile_buffers.vbo != 0)
+        glDeleteBuffers(1, &tile_buffers.vbo);
+    if (tile_buffers.instance_vbo != 0)
+        glDeleteBuffers(1, &tile_buffers.instance_vbo);
+    if (entity_buffers.vbo != 0)
+        glDeleteBuffers(1, &entity_buffers.vbo);
+    if (projectile_buffers.vbo != 0)
+        glDeleteBuffers(1, &projectile_buffers.vbo);
+    if (obstacle_buffers.vbo != 0)
+        glDeleteBuffers(1, &obstacle_buffers.vbo);
+    if (parstacle_buffers.vbo != 0)
+        glDeleteBuffers(1, &parstacle_buffers.vbo);
+    if (particle_buffers.vbo != 0)
+        glDeleteBuffers(1, &particle_buffers.vbo);
+    if (parjicle_buffers.vbo != 0)
+        glDeleteBuffers(1, &parjicle_buffers.vbo);
+    if (comp_buffers.in != 0)
+        glDeleteBuffers(1, &comp_buffers.in);
+    if (comp_buffers.out != 0)
+        glDeleteBuffers(1, &comp_buffers.out);
+    log_write(INFO, "Deleted game buffers");
 }
 

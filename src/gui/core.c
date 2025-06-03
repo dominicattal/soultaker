@@ -251,6 +251,7 @@ static void gui_update_comps(f32 dt)
 static void* gui_loop(void* vargp)
 {
     f64 start;
+    log_write(INFO, "Entering gui loop");
     gui_comp_init();
     gui_preset_load(GUI_PRESET_DEBUG);
     while (!gui_context.kill_thread)
@@ -262,6 +263,7 @@ static void* gui_loop(void* vargp)
         gui_context.dt = get_time() - start;
     }
     gui_comp_cleanup();
+    log_write(INFO, "Exiting gui loop");
     return NULL;
 }
 
@@ -271,18 +273,22 @@ f32 gui_dt(void)
 }
 void gui_init(void)
 {
+    log_write(INFO, "Initializing GUI...");
     gui_render_init();
     gui_event_queue_init(&gui_context.event_queue);
     pthread_mutex_init(&gui_context.data_mutex, NULL);
     pthread_create(&gui_context.thread_id, NULL, gui_loop, NULL);
+    log_write(INFO, "Iniitalized GUI");
 }
 
 void gui_cleanup(void)
 {
+    log_write(INFO, "Cleaning up GUI...");
     gui_context.kill_thread = true;
     pthread_join(gui_context.thread_id, NULL);
     pthread_mutex_destroy(&gui_context.data_mutex);
     gui_render_cleanup();
     gui_event_queue_cleanup(&gui_context.event_queue);
+    log_write(INFO, "Cleaned up GUI");
 }
 

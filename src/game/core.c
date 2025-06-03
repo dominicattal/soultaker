@@ -11,6 +11,7 @@ GameContext game_context;
 void* game_loop(void* vargp)
 {
     f64 start;
+    log_write(INFO, "Entering game loop");
     while (!game_context.kill_thread)
     {
         start = get_time();
@@ -18,11 +19,13 @@ void* game_loop(void* vargp)
         game_update_vertex_data();
         game_context.dt = get_time() - start;
     }
+    log_write(INFO, "Exiting game loop");
     return NULL;
 }
 
 void game_init(void)
 {
+    log_write(INFO, "Initializing game...");
     tile_init();
     wall_init();
     entity_init();
@@ -43,10 +46,12 @@ void game_init(void)
     game_context.data_swap.update_obstacle_buffer = true;
     pthread_mutex_init(&game_context.data_mutex, NULL);
     pthread_create(&game_context.thread_id, NULL, game_loop, NULL);
+    log_write(INFO, "Initialized game");
 }
 
 void game_cleanup(void)
 {
+    log_write(INFO, "Cleaning up game...");
     game_context.kill_thread = true;
     pthread_join(game_context.thread_id, NULL);
     pthread_mutex_destroy(&game_context.data_mutex);
@@ -77,6 +82,7 @@ void game_cleanup(void)
     free(game_context.data_swap.obstacle_buffer);
     free(game_context.data_swap.particle_buffer);
     free(game_context.data_swap.parjicle_buffer);
+    log_write(INFO, "Cleaned up game");
 }
 
 f32 game_dt(void)
