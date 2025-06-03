@@ -11,6 +11,7 @@ static GLuint s_vao, s_vbo, s_instance_vbo;
 
 void gui_render_init(void)
 {
+    log_write(INFO, "Initializing GUI buffers...");
     glGenVertexArrays(1, &s_vao);
     glGenBuffers(1, &s_vbo);
     glGenBuffers(1, &s_instance_vbo);
@@ -40,6 +41,7 @@ void gui_render_init(void)
     glEnableVertexAttribArray(2);
     glEnableVertexAttribArray(3);
     glEnableVertexAttribArray(4);
+    log_write(INFO, "Initialized GUI buffers");
 }
 
 void gui_render(void)
@@ -61,8 +63,13 @@ void gui_render(void)
 
 void gui_render_cleanup(void)
 {
-    glDeleteVertexArrays(1, &s_vao);
-    glDeleteBuffers(1, &s_vbo);
-    glDeleteBuffers(1, &s_instance_vbo);
+    log_write(INFO, "Deleting GUI buffers...");
+    if (s_vao != 0)
+        glDeleteVertexArrays(1, &s_vao);
+    if (s_vbo != 0)
+        glDeleteBuffers(1, &s_vbo);
+    if (s_instance_vbo != 0)
+        glDeleteBuffers(1, &s_instance_vbo);
+    log_write(INFO, "Deleted GUI buffers");
 }
 

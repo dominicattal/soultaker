@@ -471,8 +471,10 @@ static void initialize_rects(i32* tex_unit_location)
     i32 width, height, num_channels;
     i32 num_rects;
 
-    JsonObject* json = json_read("config/textures.json");
-    assert(json != NULL);
+    const char* textures_path = "config/textures.json";
+    JsonObject* json = json_read(textures_path);
+    if (json == NULL)
+        log_write(FATAL, "Failed to read texture json file %s", textures_path);
 
     JsonIterator* it = json_iterator_create(json);
     assert(it != NULL);
@@ -500,9 +502,7 @@ static void initialize_rects(i32* tex_unit_location)
 
         image_data[i] = stbi_load(image_path, &width, &height, &num_channels, 4);
         if (image_data[i] == NULL) {
-            printf("Could not open %s\n", image_path);
-            // assign none texture
-            exit(1);
+            log_write(WARNING, "Could not open %s", image_path);
         }
 
         if (!is_spritesheet)
@@ -538,7 +538,7 @@ i32 texture_get_id(const char* name)
         else
             return m;
     }
-    printf("Failed to get id for %s\n", name);
+    log_write(WARNING, "Failed to get id for %s\n", name);
     return -1;
 }
 
@@ -555,17 +555,23 @@ void texture_info(i32 id, i32* location, f32* u, f32* v, f32* w, f32* h, vec2* p
 
 void texture_init(void)
 {
+    log_write(INFO, "Loading textures...");
     i32 tex_unit_location;
     tex_unit_location = 0;
     create_font_textures(&tex_unit_location);
     initialize_rects(&tex_unit_location);
+    log_write(INFO, "Loaded textures");
 }
 
 void texture_cleanup(void)
 {
-    for (int i = 0; i < ctx.num_textures; i++)
+    log_write(INFO, "Cleaning up textures...");
+    for (i32 i = 0; i < ctx.num_textures; i++)
         free(ctx.textures[i].name);
     free(ctx.textures);
-    glDeleteTextures(NUM_TEXTURE_UNITS, ctx.texture_units);
+    for (i32 i = 0; i < NUM_TEXTURE_UNITS; i++)
+        if (ctx.texture_units[i] != 0)
+            glDeleteTextures(1, &ctx.texture_units[i]);
+    log_write(INFO, "Cleaned up textures");
 }
 

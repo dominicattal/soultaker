@@ -19,11 +19,10 @@ static f32 dt;
 void state_init(void)
 {
     window_init();
-    return;
     renderer_init();
     gui_init();
-    game_init();
     audio_init();
+    game_init();
 }
 
 void state_loop(void)
@@ -42,13 +41,12 @@ void state_loop(void)
 void state_cleanup(void)
 {
     log_unlock();
-    window_cleanup();
-    log_cleanup();
-    return;
-    gui_cleanup();
     game_cleanup();
     audio_cleanup();
+    gui_cleanup();
     renderer_cleanup();
+    window_cleanup();
+    log_cleanup();
 }
 
 f32 state_dt(void)
@@ -61,7 +59,6 @@ int main(int argc, char** argv)
     atexit(state_cleanup);
     log_init(argv[0]);
     state_init();
-    return 0;
     state_loop();
     return 0;
 }
