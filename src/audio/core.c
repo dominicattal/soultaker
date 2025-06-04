@@ -5,8 +5,7 @@ AudioContext audio_context;
 
 static void checkError(const char* msg) {
     ALenum error = alGetError();
-    if (error != AL_NO_ERROR)
-        log_write(FATAL, "OpenAL error (%X) %s", error, msg);
+    log_assert(error == AL_NO_ERROR, "OpenAL error (%X) %s", error, msg);
 }
 
 static void load_sound(ALuint id, char *path)

@@ -13,8 +13,7 @@ static const char* read_file(const char *path)
     ptr = fopen(path, "r");
     fseek(ptr, 0, SEEK_END);
     i32 len = ftell(ptr);
-    if (len == 0)
-        log_write(FATAL, "File %s is empty", path);
+    log_assert(len != 0, "File %s is empty", path);
     fseek(ptr, 0, SEEK_SET);
     content = calloc(len+1, sizeof(char));
     fread(content, 1, len, ptr);
@@ -31,8 +30,7 @@ static u32 compile(GLenum type, const char *path)
     i32 success;
     DIR* dir = opendir(path);
 
-    if (ENOENT == errno)
-        log_write(FATAL, "File %s does not exist", path);
+    log_assert(errno != ENOENT, "File %s does not exist", path);
 
     closedir(dir);
     shader = glCreateShader(type);
@@ -41,12 +39,12 @@ static u32 compile(GLenum type, const char *path)
     free((char*)shader_code);
     glCompileShader(shader);
     glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+
+    // error callback should handle this
     if (!success)
     {
-        puts(path);
         glGetShaderInfoLog(shader, 512, NULL, info_log);
-        printf(info_log);
-        exit(1);
+        log_write(FATAL, "Failed to compile %s\n%s", path, info_log);
     }
     return shader;
 }
@@ -57,11 +55,12 @@ static void link(ShaderProgramEnum id)
     i32 success;
     glLinkProgram(shader_programs[id]);
     glGetProgramiv(shader_programs[id], GL_LINK_STATUS, &success);
+
+    // error callback should handle this
     if (!success)
     {
         glGetProgramInfoLog(shader_programs[id], 512, NULL, info_log);
-        printf(info_log);
-        exit(1);
+        log_write(FATAL, "Failed to link shader %d\n%s", id, info_log);
     }
 }
 
