@@ -23,13 +23,17 @@ static void collide_entity_wall(Entity* entity, Wall* wall)
     if (ez + er > wz && ez - er < wz + sz) {
         if (dx > 0)
             entity->position.x = wx - er;
-        else
+        else if (dx < 0)
             entity->position.x = wx + sx + er;
+        else
+            log_write(DEBUG, "dx = 0");
     } else if (ex + er > wx && ex - er < wx + sx) {
         if (dz > 0)
             entity->position.z = wz - er;
-        else
+        else if (dz < 0)
             entity->position.z = wz + sz + er;
+        else
+            log_write(DEBUG, "dz = 0");
     }
 }
 

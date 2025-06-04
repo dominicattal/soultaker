@@ -46,17 +46,17 @@ static void load_state_textures(EntityState* state, JsonObject* object, const ch
     i32 int_val;
     i32 num_frames = state->num_frames;
     value = json_get_value(object, dir_str);
-    assert(value);
-    assert(json_get_type(value) == JTYPE_ARRAY);
+    log_assert(value, "Could not get value for direction %s for state %s", dir_str, state->name);
+    log_assert(value, "Textures for direction %s of state %s is not an array", dir_str, state->name);
     array = json_get_array(value);
     int_val = json_array_length(array);
-    assert(int_val == num_frames);
+    log_assert(int_val == num_frames, "Number of frames for state %s direction %s does not match the number of frames specified (%d)", state->name, dir_str, num_frames);
     for (i32 j = 0; j < int_val; j++) {
         value = json_array_get(array, j);
-        assert(value);
-        assert(json_get_type(value) == JTYPE_STRING);
+        log_assert(value, "Could not get value at index %d in array for state %s direction %s", j, state->name, dir_str);
+        log_assert(value, "Value at index %d in array for state %s direction %s is not a string", j, state->name, dir_str);
         string = json_get_string(value);
-        assert(string);
+        log_assert(string, "Could not get string at index %d in array for state %s direction %s", j, state->name, dir_str);
         state->textures[num_frames * dir_int + j] = texture_get_id(string);
     }
 }
@@ -69,32 +69,32 @@ static void load_state_info(i32 entity_id, JsonObject* object)
     i32 int_val;
 
     value = json_get_value(object, "states");
-    assert(value);
-    assert(json_get_type(value) == JTYPE_ARRAY);
+    log_assert(value, "Could not get states value");
+    log_assert(json_get_type(value) == JTYPE_ARRAY, "States array not found");
     array = json_get_array(value);
-    assert(array);
+    log_assert(array, "Could not get states array");
     i32 num_states = json_array_length(array);
     EntityState* state_ptr = malloc(num_states * sizeof(EntityState));
     for (i32 i = 0; i < num_states; i++) {
         value = json_array_get(array, i);
-        assert(value);
-        assert(json_get_type(value) == JTYPE_OBJECT);
+        log_assert(value, "Could not get value from array");
+        log_assert(json_get_type(value) == JTYPE_OBJECT, "Value is not the right type");
         object = json_get_object(value);
-        assert(object);
+        log_assert(object, "Could not get from value in array");
         value = json_get_value(object, "name");
-        assert(value);
-        assert(json_get_type(value) == JTYPE_STRING);
+        log_assert(value, "Could not get the name of the state");
+        log_assert(json_get_type(value) == JTYPE_STRING, "State name is not a string");
         string = json_get_string(value);
         state_ptr[i].name = copy_string(string);
         value = json_get_value(object, "id");
-        assert(value);
-        assert(json_get_type(value) == JTYPE_INT);
+        log_assert(value, "Could not get the id of state %s", string);
+        log_assert(json_get_type(value) == JTYPE_INT, "Id of state %s is not an int", string);
         int_val = json_get_int(value);
-        assert(int_val == i);
+        log_assert(int_val == i, "Id of state %s does not match its position in array", string);
         state_ptr[i].id = int_val;
         value = json_get_value(object, "frames");
-        assert(value);
-        assert(json_get_type(value) == JTYPE_INT);
+        log_assert(value, "Could not get the number of frames for state %s", string);
+        log_assert(json_get_type(value) == JTYPE_INT, "Number of frames for state %s is is not a int", string);
         int_val = json_get_int(value);
         state_ptr[i].num_frames = int_val;
         state_ptr[i].textures = malloc(4 * int_val * sizeof(i32));
@@ -110,19 +110,19 @@ static void load_state_info(i32 entity_id, JsonObject* object)
 
 #define LOAD_ENTITY_FUNCTION(type, object, name, location) \
     val_string = json_get_value(object, name); \
-    assert(val_string); \
-    assert(json_get_type(val_string) == JTYPE_STRING); \
+    log_assert(val_string, "Could not get function string %s from object", name); \
+    log_assert(json_get_type(val_string) == JTYPE_STRING, "Function string is not the right type");\
     string = json_get_string(val_string); \
-    assert(string); \
+    log_assert(string, "Could not get string"); \
     location = (type)GetProcAddress(entity_context.lib, string); \
-    assert(location);
+    log_assert(location, "Could not find function %s in library", name);
 
 static void load_entity_info(void)
 {
     JsonObject* json = json_read("config/entities.json");
-    assert(json != NULL);
+    log_assert(json, "Could not read entity config file");
     JsonIterator* it = json_iterator_create(json);
-    assert(it);
+    log_assert(it, "Could not created iterator for config file");
     JsonMember* member;
     JsonValue* val_object;
     JsonValue* val_string;
@@ -132,18 +132,18 @@ static void load_entity_info(void)
     entity_context.infos = malloc(entity_context.num_entities * sizeof(EntityInfo));
     for (i32 i = 0; i < entity_context.num_entities; i++) {
         member = json_iterator_get(it);
-        assert(member);
+        log_assert(member, "Could not get member from entity config file");
 
         string = json_member_key(member);
-        assert(string);
+        log_assert(member, "Could not get key from entity config file");
         entity_context.infos[i].name = copy_string(string);
 
         val_object = json_member_value(member);
-        assert(val_object);
-        assert(json_get_type(val_object) == JTYPE_OBJECT);
+        log_assert(val_object, "Could not get value from member");
+        log_assert(json_get_type(val_object) == JTYPE_OBJECT, "Unrecognized type encountered while reading entity config file");
 
         object = json_get_object(val_object);
-        assert(object);
+        log_assert(object, "Could not get object from value");
 
         LOAD_ENTITY_FUNCTION(InitFuncPtr, object, "init", entity_context.infos[i].init);
         LOAD_ENTITY_FUNCTION(CleanupFuncPtr, object, "cleanup", entity_context.infos[i].cleanup); 
@@ -178,6 +178,7 @@ i32 entity_map_id(const char* name)
         else
             return m;
     }
+    log_write(ERROR, "Could not map id %s", name);
     return -1;
 }
 
@@ -188,6 +189,7 @@ i32 entity_map_state_id(Entity* entity, const char* name)
 
 void entity_init(void)
 {
+    log_write(INFO, "Initializing entities...");
     entity_context.lib = LoadLibrary("plugins/soultaker.dll");
     assert(entity_context.lib);
     load_entity_info();
@@ -201,6 +203,7 @@ void entity_init(void)
     // entity_create(vec3_create(5, 0, 0), knight_id);
     // entity_create(vec3_create(0, 0, 4), knight_id);
     // entity_create(vec3_create(5, 0, 4), knight_id);
+    log_write(INFO, "Initialized entities");
 }
 
 Entity* entity_create(vec3 position, i32 type)

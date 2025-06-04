@@ -503,6 +503,7 @@ static void initialize_rects(i32* tex_unit_location)
         image_data[i] = stbi_load(image_path, &width, &height, &num_channels, 4);
         if (image_data[i] == NULL) {
             log_write(WARNING, "Could not open %s", image_path);
+            width = height = 0;
         }
 
         if (!is_spritesheet)

@@ -19,10 +19,16 @@ void log_cleanup(void);
     void _log_write(LogLevel severity, const char* message, const char* filename, int line, ...);
     #define log_write(severity, message, ...) \
         _log_write(severity, message, __FILE__, __LINE__, ##__VA_ARGS__)
+    #define log_assert(condition, message, ...) \
+        if (!(condition)) \
+            _log_write(FATAL, message, __FILE__, __LINE__, ##__VA_ARGS__)
 #else
     void _log_write(LogLevel severity, const char* message, ...);
     #define log_write(severity, message, ...) \
         _log_write(severity, message, ##__VA_ARGS__)
+    #define log_assert(condition, message, ...) \
+        if (!(condition)) \
+            _log_write(FATAL, message, ##_VAR_ARGS__)
 #endif
 
 #endif
