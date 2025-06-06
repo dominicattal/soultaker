@@ -1,4 +1,5 @@
 #include "internal.h"
+#include "../state.h"
 #include <windows.h>
 #include <json.h>
 
@@ -31,7 +32,6 @@ typedef struct {
 } EntityInfo;
 
 typedef struct {
-    HMODULE lib;
     EntityInfo* infos;
     i32 num_entities;
 } EntityContext;
@@ -80,7 +80,7 @@ static void load_state_info(i32 entity_id, JsonObject* object)
         log_assert(value, "Could not get value from array");
         log_assert(json_get_type(value) == JTYPE_OBJECT, "Value is not the right type");
         object = json_get_object(value);
-        log_assert(object, "Could not get from value in array");
+        log_assert(object, "Could not get object from value in array");
         value = json_get_value(object, "name");
         log_assert(value, "Could not get the name of the state");
         log_assert(json_get_type(value) == JTYPE_STRING, "State name is not a string");
@@ -114,7 +114,7 @@ static void load_state_info(i32 entity_id, JsonObject* object)
     log_assert(json_get_type(val_string) == JTYPE_STRING, "Function string is not the right type");\
     string = json_get_string(val_string); \
     log_assert(string, "Could not get string"); \
-    location = (type)GetProcAddress(entity_context.lib, string); \
+    location = (type)GetProcAddress(global_context.lib, string); \
     log_assert(location, "Could not find function %s in library", name);
 
 static void load_entity_info(void)
@@ -190,8 +190,6 @@ i32 entity_map_state_id(Entity* entity, const char* name)
 void entity_init(void)
 {
     log_write(INFO, "Initializing entities...");
-    entity_context.lib = LoadLibrary("plugins/soultaker.dll");
-    assert(entity_context.lib);
     load_entity_info();
 
     i32 knight_id = entity_map_id("knight");
@@ -200,9 +198,6 @@ void entity_init(void)
     game_context.player.entity->direction = vec3_create(0, 0, 0);
     game_context.player.entity->size = 1.0;
     entity_set_flag(game_context.player.entity, ENTITY_FLAG_FRIENDLY, 1);
-    // entity_create(vec3_create(5, 0, 0), knight_id);
-    // entity_create(vec3_create(0, 0, 4), knight_id);
-    // entity_create(vec3_create(5, 0, 4), knight_id);
     log_write(INFO, "Initialized entities");
 }
 
@@ -299,5 +294,4 @@ void entity_cleanup(void)
         free(entity_context.infos[i].states);
     }
     free(entity_context.infos);
-    FreeLibrary(entity_context.lib);
 }

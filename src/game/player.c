@@ -13,12 +13,16 @@ void player_update(Player* player, f32 dt)
 {
     player->shot_timer -= dt;
     player_shoot(player);
-    if (player->shot_timer > 0)
+    if (player->shot_timer > 0) {
         player_set_state(player, 2);
-    else if (vec3_mag(player->entity->direction) > 0)
-        player_set_state(player, 1);
-    else
-        player_set_state(player, 0);
+        entity_set_flag(player->entity, ENTITY_FLAG_UPDATE_FACING, 0);
+    } else {
+        entity_set_flag(player->entity, ENTITY_FLAG_UPDATE_FACING, 1);
+        if (vec3_mag(player->entity->direction) > 0)
+            player_set_state(player, 1);
+        else
+            player_set_state(player, 0);
+    }
 }
 
 void weapon_shoot(Player* player, vec3 direction, vec3 target)
@@ -42,7 +46,7 @@ void player_shoot(Player* player)
         return;
     if (player->shot_timer > 0)
         return;
-    player->shot_timer = 0.1;
+    player->shot_timer = 0.5;
     vec2 cursor_position = window_cursor_position();
     cursor_position.x /= window_width();
     cursor_position.y /= window_height();

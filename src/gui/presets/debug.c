@@ -1,5 +1,6 @@
 #include "../internal.h"
 #include "../../game.h"
+#include "../../state.h"
 #include <string.h>
 
 typedef struct {
@@ -36,7 +37,7 @@ static void update_info(GUIComp* comp, f32 dt)
         strncat(string, buf, 100);
         sprintf(buf, "pitch: %-7.3f yaw: %-7.3f zoom: %-7.3f\n", pitch, yaw, zoom);
         strncat(string, buf, 100);
-        sprintf(buf, "Main: %-6.3f GUI: %-6.3f Game: %-6.3f\n", state_dt() * 1000, gui_dt() * 1000, game_dt() * 1000);
+        sprintf(buf, "Main: %-6.3f GUI: %-6.3f Game: %-6.3f\n", global_context.dt * 1000, gui_dt() * 1000, game_dt() * 1000);
         strncat(string, buf, 100);
         gui_comp_set_text(comp, string);
     }
@@ -51,5 +52,15 @@ void load_preset_debug(GUIComp* root)
     gui_comp_set_font(info, FONT_MONOSPACE);
     info->update_func = update_info;
     info->data = create_comp_data(); 
+
+    GUIComp* textbox = gui_comp_create(0, 50, 400, 70);
+    gui_comp_set_color(textbox, 255, 255, 255, 100);
+    gui_comp_set_is_text(textbox, true);
+    gui_comp_set_valign(textbox, ALIGN_BOTTOM);
+    gui_comp_set_font_size(textbox, 16);
+    gui_comp_set_font(textbox, FONT_MONOSPACE);
+    gui_comp_set_text(textbox, "testing 123");
+
     gui_comp_attach(root, info);
+    gui_comp_attach(root, textbox);
 }

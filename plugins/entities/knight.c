@@ -5,8 +5,6 @@
 #include <math.h>
 
 #define NUM_STATES 3
-#define INSERT(state, dir, frame, tex) \
-    texture_table[state][dir][frame] = tex;
 
 typedef struct {
     f32 state_timer;

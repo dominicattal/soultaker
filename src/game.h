@@ -15,10 +15,11 @@ void game_framebuffer_size_callback(void);
 
 f32 game_dt(void);
 
-f32 camera_get_pitch(void);
-f32 camera_get_yaw(void);
-f32 camera_get_zoom(void);
 vec3 camera_get_position(void);
 vec3 camera_get_facing(void);
+f32  camera_get_pitch(void);
+f32  camera_get_yaw(void);
+f32  camera_get_pitch(void);
+f32  camera_get_zoom(void);
 
 #endif

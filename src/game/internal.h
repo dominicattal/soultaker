@@ -132,6 +132,13 @@ typedef struct {
 
 extern GameContext game_context;
 
+typedef struct {
+    i32 (*texture_get_id)(const char*);
+    i32 (*entity_get_direction)(Entity*);
+} GameApi;
+
+extern GameApi game_api;
+
 //**************************************************************************
 
 typedef enum {
@@ -143,13 +150,6 @@ typedef enum {
     ENTITY_KNIGHT,
     NUM_ENTITY_TYPES
 } EntityType;
-
-typedef struct {
-    i32 (*texture_get_id)(const char*);
-    i32 (*entity_get_direction)(Entity*);
-} GameApi;
-
-extern GameApi game_api;
 
 // main api
 void entity_init(void);
