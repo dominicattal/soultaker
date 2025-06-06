@@ -17,6 +17,7 @@ static const char* severity_string(LogLevel severity)
         case WARNING: return "\033[33mWARNING\033[0m";
         case INFO: return "\033[32mINFO\033[0m";
         case DEBUG: return "\033[34mDEBUG\033[0m";
+        case MEMCTRL: return "\033[38;2;128;68;255mMEMORY\033[0m";
         default: break;
     }
     return "";

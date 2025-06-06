@@ -4,7 +4,11 @@
 #include <dirent.h>
 #include <errno.h>
 
-static GLuint shader_programs[NUM_SHADER_PROGRAMS];
+typedef struct {
+    GLuint programs[NUM_SHADER_PROGRAMS];
+} ShaderContext;
+
+static ShaderContext shader_context;
 
 static const char* read_file(const char *path)
 {
@@ -53,25 +57,25 @@ static void link(ShaderProgramEnum id)
 {
     char info_log[512];
     i32 success;
-    glLinkProgram(shader_programs[id]);
-    glGetProgramiv(shader_programs[id], GL_LINK_STATUS, &success);
+    glLinkProgram(shader_context.programs[id]);
+    glGetProgramiv(shader_context.programs[id], GL_LINK_STATUS, &success);
 
     // error callback should handle this
     if (!success)
     {
-        glGetProgramInfoLog(shader_programs[id], 512, NULL, info_log);
+        glGetProgramInfoLog(shader_context.programs[id], 512, NULL, info_log);
         log_write(FATAL, "Failed to link shader %d\n%s", id, info_log);
     }
 }
 
 static void attach(ShaderProgramEnum id, u32 shader)
 {
-    glAttachShader(shader_programs[id], shader);
+    glAttachShader(shader_context.programs[id], shader);
 }
 
 static void detach(ShaderProgramEnum id, u32 shader)
 {
-    glDetachShader(shader_programs[id], shader);
+    glDetachShader(shader_context.programs[id], shader);
 }
 
 static void delete(u32 shader)
@@ -336,7 +340,7 @@ void shader_init(void)
 {
     log_write(INFO, "Compiling shaders...");
     for (i32 i = 0; i < NUM_SHADER_PROGRAMS; i++)
-        shader_programs[i] = glCreateProgram();
+        shader_context.programs[i] = glCreateProgram();
     
     shader_program_compile(SHADER_PROGRAM_TILE);
     shader_program_compile(SHADER_PROGRAM_WALL);
@@ -358,24 +362,26 @@ void shader_init(void)
 
 void shader_use(ShaderProgramEnum id)
 {
-    glUseProgram(shader_programs[id]);
+    glUseProgram(shader_context.programs[id]);
 }
 
 void shader_cleanup(void)
 {
     log_write(INFO, "Deleting shaders...");
     for (i32 i = 0; i < NUM_SHADER_PROGRAMS; i++)
-        if (shader_programs[i] != 0)
-            glDeleteProgram(shader_programs[i]);
+        if (shader_context.programs[i] != 0)
+            glDeleteProgram(shader_context.programs[i]);
     log_write(INFO, "Deleted shaders");
 }
 
 GLuint shader_get_uniform_location(ShaderProgramEnum program, const char* identifier)
 {
-    return glGetUniformLocation(shader_programs[program], identifier);
+    return glGetUniformLocation(shader_context.programs[program], identifier);
 }
 
 void shader_bind_uniform_block(ShaderProgramEnum program, u32 index, const char* identifier)
 {
-    glUniformBlockBinding(shader_programs[program], glGetUniformBlockIndex(shader_programs[program], identifier), index);
+    glUniformBlockBinding(shader_context.programs[program], 
+            glGetUniformBlockIndex(shader_context.programs[program], identifier), 
+            index);
 }

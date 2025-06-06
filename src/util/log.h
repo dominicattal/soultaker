@@ -8,7 +8,8 @@ typedef enum {
     ERROR,
     WARNING,
     INFO,
-    DEBUG
+    DEBUG,
+    MEMCTRL
 } LogLevel;
 
 void log_init(char* exe_path);

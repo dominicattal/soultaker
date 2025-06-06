@@ -45,7 +45,7 @@ typedef struct {
     u32 texture_units[NUM_TEXTURE_UNITS];
 } TextureContext;
 
-static TextureContext ctx;
+static TextureContext texture_context;
 
 static i32 texture_cmp(const void* ptr1, const void* ptr2)
 {
@@ -82,29 +82,29 @@ static void load_font(stbtt_pack_context* spc, FontEnum font, i32 font_size, con
     stbtt_PackFontRanges(spc, font_buffer, 0, &font_range, 1);
 
     scale = stbtt_ScaleForPixelHeight(&info, font_size);
-    stbtt_GetFontVMetrics(&info, &ctx.fonts[font].ascent, &ctx.fonts[font].descent, &ctx.fonts[font].line_gap);
-    ctx.fonts[font].ascent = roundf(ctx.fonts[font].ascent * scale);
-    ctx.fonts[font].descent = roundf(ctx.fonts[font].descent * scale);
-    ctx.fonts[font].line_gap = roundf(ctx.fonts[font].line_gap * scale);
-    ctx.fonts[font].font_size = font_size;
+    stbtt_GetFontVMetrics(&info, &texture_context.fonts[font].ascent, &texture_context.fonts[font].descent, &texture_context.fonts[font].line_gap);
+    texture_context.fonts[font].ascent = roundf(texture_context.fonts[font].ascent * scale);
+    texture_context.fonts[font].descent = roundf(texture_context.fonts[font].descent * scale);
+    texture_context.fonts[font].line_gap = roundf(texture_context.fonts[font].line_gap * scale);
+    texture_context.fonts[font].font_size = font_size;
     for (i32 i = 0; i < NUM_CHARS; i++) {
-        ctx.fonts[font].chars[i].u1 = chars[i].x0;
-        ctx.fonts[font].chars[i].v1 = chars[i].y0;
-        ctx.fonts[font].chars[i].u2 = chars[i].x1;
-        ctx.fonts[font].chars[i].v2 = chars[i].y1;
+        texture_context.fonts[font].chars[i].u1 = chars[i].x0;
+        texture_context.fonts[font].chars[i].v1 = chars[i].y0;
+        texture_context.fonts[font].chars[i].u2 = chars[i].x1;
+        texture_context.fonts[font].chars[i].v2 = chars[i].y1;
         stbtt_GetCodepointHMetrics(&info, i+CHAR_OFFSET, 
-                                   &ctx.fonts[font].chars[i].advance, 
-                                   &ctx.fonts[font].chars[i].left_side_bearing);
-        ctx.fonts[font].chars[i].advance = roundf(ctx.fonts[font].chars[i].advance * scale);
-        ctx.fonts[font].chars[i].left_side_bearing = roundf(ctx.fonts[font].chars[i].left_side_bearing * scale);
+                                   &texture_context.fonts[font].chars[i].advance, 
+                                   &texture_context.fonts[font].chars[i].left_side_bearing);
+        texture_context.fonts[font].chars[i].advance = roundf(texture_context.fonts[font].chars[i].advance * scale);
+        texture_context.fonts[font].chars[i].left_side_bearing = roundf(texture_context.fonts[font].chars[i].left_side_bearing * scale);
         stbtt_GetCodepointBitmapBox(&info, i+CHAR_OFFSET, scale, scale, 
-                                    &ctx.fonts[font].chars[i].x1,  
-                                    &ctx.fonts[font].chars[i].y1,  
-                                    &ctx.fonts[font].chars[i].x2,  
-                                    &ctx.fonts[font].chars[i].y2);
+                                    &texture_context.fonts[font].chars[i].x1,  
+                                    &texture_context.fonts[font].chars[i].y1,  
+                                    &texture_context.fonts[font].chars[i].x2,  
+                                    &texture_context.fonts[font].chars[i].y2);
         for (i32 j = 0; j < NUM_CHARS; j++) {
-            ctx.fonts[font].chars[i].kern[j] = stbtt_GetCodepointKernAdvance(&info, i+CHAR_OFFSET, j+CHAR_OFFSET);
-            ctx.fonts[font].chars[i].kern[j] = roundf(ctx.fonts[font].chars[i].kern[j] * scale);
+            texture_context.fonts[font].chars[i].kern[j] = stbtt_GetCodepointKernAdvance(&info, i+CHAR_OFFSET, j+CHAR_OFFSET);
+            texture_context.fonts[font].chars[i].kern[j] = roundf(texture_context.fonts[font].chars[i].kern[j] * scale);
         }
     }
 
@@ -113,41 +113,41 @@ static void load_font(stbtt_pack_context* spc, FontEnum font, i32 font_size, con
 
 void font_info(FontEnum font, i32 font_size, i32* ascent, i32* descent, i32* line_gap, i32* location)
 {
-    f32 scale = (f32)font_size / ctx.fonts[font].font_size;
-    *ascent   = roundf(ctx.fonts[font].ascent   * scale);
-    *descent  = roundf(ctx.fonts[font].descent  * scale);
-    *line_gap = roundf(ctx.fonts[font].line_gap * scale);
-    *location = ctx.fonts[font].location;
+    f32 scale = (f32)font_size / texture_context.fonts[font].font_size;
+    *ascent   = roundf(texture_context.fonts[font].ascent   * scale);
+    *descent  = roundf(texture_context.fonts[font].descent  * scale);
+    *line_gap = roundf(texture_context.fonts[font].line_gap * scale);
+    *location = texture_context.fonts[font].location;
 }
 
 void font_char_hmetrics(FontEnum font, i32 font_size, char character, i32* advance, i32* left_side_bearing)
 {
-    f32 scale = (f32)font_size / ctx.fonts[font].font_size;
-    *advance = roundf(ctx.fonts[font].chars[character-CHAR_OFFSET].advance * scale);
-    *left_side_bearing = roundf(ctx.fonts[font].chars[character-CHAR_OFFSET].left_side_bearing * scale);
+    f32 scale = (f32)font_size / texture_context.fonts[font].font_size;
+    *advance = roundf(texture_context.fonts[font].chars[character-CHAR_OFFSET].advance * scale);
+    *left_side_bearing = roundf(texture_context.fonts[font].chars[character-CHAR_OFFSET].left_side_bearing * scale);
 }
 
 void font_char_bbox(FontEnum font, i32 font_size, char character, i32* bbox_x1, i32* bbox_y1, i32* bbox_x2, i32* bbox_y2)
 {
-    f32 scale = (f32)font_size / ctx.fonts[font].font_size;
-    *bbox_x1 = roundf(ctx.fonts[font].chars[character-CHAR_OFFSET].x1 * scale);
-    *bbox_y1 = roundf(ctx.fonts[font].chars[character-CHAR_OFFSET].y1 * scale);
-    *bbox_x2 = roundf(ctx.fonts[font].chars[character-CHAR_OFFSET].x2 * scale);
-    *bbox_y2 = roundf(ctx.fonts[font].chars[character-CHAR_OFFSET].y2 * scale);
+    f32 scale = (f32)font_size / texture_context.fonts[font].font_size;
+    *bbox_x1 = roundf(texture_context.fonts[font].chars[character-CHAR_OFFSET].x1 * scale);
+    *bbox_y1 = roundf(texture_context.fonts[font].chars[character-CHAR_OFFSET].y1 * scale);
+    *bbox_x2 = roundf(texture_context.fonts[font].chars[character-CHAR_OFFSET].x2 * scale);
+    *bbox_y2 = roundf(texture_context.fonts[font].chars[character-CHAR_OFFSET].y2 * scale);
 }
 
 void font_char_bmap(FontEnum font, i32 font_size, char character, f32* bmap_u1, f32* bmap_v1, f32* bmap_u2, f32* bmap_v2)
 {
-    *bmap_u1 = (f32)(ctx.fonts[font].chars[character-CHAR_OFFSET].u1) / BITMAP_WIDTH;
-    *bmap_v1 = (f32)(ctx.fonts[font].chars[character-CHAR_OFFSET].v1) / BITMAP_HEIGHT;
-    *bmap_u2 = (f32)(ctx.fonts[font].chars[character-CHAR_OFFSET].u2) / BITMAP_WIDTH;
-    *bmap_v2 = (f32)(ctx.fonts[font].chars[character-CHAR_OFFSET].v2) / BITMAP_HEIGHT;
+    *bmap_u1 = (f32)(texture_context.fonts[font].chars[character-CHAR_OFFSET].u1) / BITMAP_WIDTH;
+    *bmap_v1 = (f32)(texture_context.fonts[font].chars[character-CHAR_OFFSET].v1) / BITMAP_HEIGHT;
+    *bmap_u2 = (f32)(texture_context.fonts[font].chars[character-CHAR_OFFSET].u2) / BITMAP_WIDTH;
+    *bmap_v2 = (f32)(texture_context.fonts[font].chars[character-CHAR_OFFSET].v2) / BITMAP_HEIGHT;
 }
 
 void font_char_kern(FontEnum font, i32 font_size, char character, char next_character, i32* kern)
 {
-    f32 scale = (f32)font_size / ctx.fonts[font].font_size;
-    *kern = roundf(ctx.fonts[font].chars[character-CHAR_OFFSET].kern[next_character-CHAR_OFFSET] * scale);
+    f32 scale = (f32)font_size / texture_context.fonts[font].font_size;
+    *kern = roundf(texture_context.fonts[font].chars[character-CHAR_OFFSET].kern[next_character-CHAR_OFFSET] * scale);
 }
 
 static void create_font_textures(i32* tex_unit_location) 
@@ -165,7 +165,7 @@ static void create_font_textures(i32* tex_unit_location)
     stbtt_PackEnd(&spc);
 
     for (i32 font = 0; font < NUM_FONTS; font++)
-        ctx.fonts[font].location = *tex_unit_location;
+        texture_context.fonts[font].location = *tex_unit_location;
 
     glGenTextures(1, &tex);
     glBindTexture(GL_TEXTURE_2D, tex);
@@ -175,9 +175,9 @@ static void create_font_textures(i32* tex_unit_location)
     i32 swizzle_mask[] = {GL_ZERO, GL_ZERO, GL_ZERO, GL_RED};
     glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzle_mask);
 
-    ctx.texture_units[*tex_unit_location] = tex;
+    texture_context.texture_units[*tex_unit_location] = tex;
     glActiveTexture(GL_TEXTURE0 + *tex_unit_location);
-    glBindTexture(GL_TEXTURE_2D, ctx.texture_units[*tex_unit_location]);
+    glBindTexture(GL_TEXTURE_2D, texture_context.texture_units[*tex_unit_location]);
 
     if (1) {
         char path[512];
@@ -218,7 +218,7 @@ static void pack_textures(i32* tex_unit_location, unsigned char** image_data, st
         if (!rect.was_packed)
             continue;
         ++num_rects_packed;
-        texture = &ctx.textures[rect.id];
+        texture = &texture_context.textures[rect.id];
         offset_x = texture->xint;
         offset_y = texture->yint;
         width = texture->wint;
@@ -250,7 +250,7 @@ static void pack_textures(i32* tex_unit_location, unsigned char** image_data, st
     glActiveTexture(GL_TEXTURE0 + location);
     glBindTexture(GL_TEXTURE_2D, tex);
 
-    ctx.texture_units[location] = tex;
+    texture_context.texture_units[location] = tex;
     new_rect_idx = 0;
     for (i32 i = 0; i < num_rects; ++i) {
         stbrp_rect rect = rects[i];
@@ -258,11 +258,11 @@ static void pack_textures(i32* tex_unit_location, unsigned char** image_data, st
             rects[new_rect_idx++] = rect;
             continue;
         }
-        ctx.textures[rect.id].u = (f32)rect.x / BITMAP_WIDTH;
-        ctx.textures[rect.id].v = (f32)rect.y / BITMAP_HEIGHT;
-        ctx.textures[rect.id].w = (f32)(rect.w-PADDING) / BITMAP_WIDTH;
-        ctx.textures[rect.id].h = (f32)(rect.h-PADDING) / BITMAP_HEIGHT;
-        ctx.textures[rect.id].location = location;
+        texture_context.textures[rect.id].u = (f32)rect.x / BITMAP_WIDTH;
+        texture_context.textures[rect.id].v = (f32)rect.y / BITMAP_HEIGHT;
+        texture_context.textures[rect.id].w = (f32)(rect.w-PADDING) / BITMAP_WIDTH;
+        texture_context.textures[rect.id].h = (f32)(rect.h-PADDING) / BITMAP_HEIGHT;
+        texture_context.textures[rect.id].location = location;
     }
 
     if (1) {
@@ -396,7 +396,7 @@ static void parse_texture(JsonMember* member, stbrp_rect* rects, i32 width, i32 
     args.x = args.y = 0;
     args.w = width;
     args.h = height;
-    ctx.textures[*num_rects].wint = width;
+    texture_context.textures[*num_rects].wint = width;
     type = json_get_type(value);
     if (type == JTYPE_OBJECT) {
         val_object = json_get_object(value);
@@ -409,12 +409,12 @@ static void parse_texture(JsonMember* member, stbrp_rect* rects, i32 width, i32 
     rects[*num_rects].id = *num_rects;
     rects[*num_rects].w = PADDING + args.w;
     rects[*num_rects].h = PADDING + args.h;
-    ctx.textures[*num_rects].name = texture_name;
-    ctx.textures[*num_rects].location = image_idx;
-    ctx.textures[*num_rects].pivot = args.pivot;
-    ctx.textures[*num_rects].stretch = args.stretch;
-    ctx.textures[*num_rects].xint = args.x;
-    ctx.textures[*num_rects].yint = args.y;
+    texture_context.textures[*num_rects].name = texture_name;
+    texture_context.textures[*num_rects].location = image_idx;
+    texture_context.textures[*num_rects].pivot = args.pivot;
+    texture_context.textures[*num_rects].stretch = args.stretch;
+    texture_context.textures[*num_rects].xint = args.x;
+    texture_context.textures[*num_rects].yint = args.y;
     (*num_rects)++;
 }
 
@@ -486,10 +486,10 @@ static void initialize_rects(i32* tex_unit_location)
     i32 is_spritesheet;
 
     i32 num_images = json_object_length(json);
-    ctx.num_textures = get_num_textures(json);
+    texture_context.num_textures = get_num_textures(json);
 
-    ctx.textures = malloc(sizeof(Texture) * ctx.num_textures);
-    rects  = malloc(sizeof(stbrp_rect) * ctx.num_textures);
+    texture_context.textures = malloc(sizeof(Texture) * texture_context.num_textures);
+    rects  = malloc(sizeof(stbrp_rect) * texture_context.num_textures);
     image_data = malloc(sizeof(unsigned char*) * num_images);
 
     num_rects = 0;
@@ -514,7 +514,7 @@ static void initialize_rects(i32* tex_unit_location)
 
     pack_textures(tex_unit_location, image_data, rects, num_rects, 4);
 
-    qsort(ctx.textures, ctx.num_textures, sizeof(Texture), texture_cmp);
+    qsort(texture_context.textures, texture_context.num_textures, sizeof(Texture), texture_cmp);
 
     for (i32 i = 0; i < num_images; i++)
         stbi_image_free(image_data[i]);
@@ -528,10 +528,10 @@ static void initialize_rects(i32* tex_unit_location)
 i32 texture_get_id(const char* name)
 {
     i32 l, m, r, a;
-    l = 0, r = ctx.num_textures - 1;
+    l = 0, r = texture_context.num_textures - 1;
     while (l <= r) {
         m = l + (r - l) / 2;
-        a = strcmp(name, ctx.textures[m].name);
+        a = strcmp(name, texture_context.textures[m].name);
         if (a > 0)
             l = m + 1;
         else if (a < 0)
@@ -545,13 +545,13 @@ i32 texture_get_id(const char* name)
 
 void texture_info(i32 id, i32* location, f32* u, f32* v, f32* w, f32* h, vec2* pivot, vec2* stretch)
 {
-    *location = ctx.textures[id].location;
-    *u = ctx.textures[id].u;
-    *v = ctx.textures[id].v;
-    *w = ctx.textures[id].w;
-    *h = ctx.textures[id].h;
-    *pivot = ctx.textures[id].pivot;
-    *stretch = ctx.textures[id].stretch;
+    *location = texture_context.textures[id].location;
+    *u = texture_context.textures[id].u;
+    *v = texture_context.textures[id].v;
+    *w = texture_context.textures[id].w;
+    *h = texture_context.textures[id].h;
+    *pivot = texture_context.textures[id].pivot;
+    *stretch = texture_context.textures[id].stretch;
 }
 
 void texture_init(void)
@@ -567,12 +567,12 @@ void texture_init(void)
 void texture_cleanup(void)
 {
     log_write(INFO, "Cleaning up textures...");
-    for (i32 i = 0; i < ctx.num_textures; i++)
-        free(ctx.textures[i].name);
-    free(ctx.textures);
+    for (i32 i = 0; i < texture_context.num_textures; i++)
+        free(texture_context.textures[i].name);
+    free(texture_context.textures);
     for (i32 i = 0; i < NUM_TEXTURE_UNITS; i++)
-        if (ctx.texture_units[i] != 0)
-            glDeleteTextures(1, &ctx.texture_units[i]);
+        if (texture_context.texture_units[i] != 0)
+            glDeleteTextures(1, &texture_context.texture_units[i]);
     log_write(INFO, "Cleaned up textures");
 }
 

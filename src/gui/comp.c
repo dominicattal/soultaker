@@ -82,8 +82,8 @@ void gui_comp_detach_and_destroy(GUIComp* parent, GUIComp* child)
 
 void gui_comp_set_text(GUIComp* comp, const char* text)
 {
-    assert(gui_comp_is_text(comp));
-    assert(text != NULL);
+    log_assert(text != NULL, "Tried to assign NULL text to component");
+    log_assert(gui_comp_is_text(comp), "Try to assign text to non-text component: %s", text);
     u32 length;
     char* copied_text;
     free(comp->text);

@@ -81,6 +81,8 @@ typedef struct GUIContext {
 
 extern GUIContext gui_context;
 
+void gui_update_vertex_data(void);
+
 void gui_event_queue_init(GUIEventQueue* queue);
 void gui_event_enqueue(GUIEventQueue* queue, GUIEvent event);
 GUIEvent gui_event_dequeue(GUIEventQueue* queue);

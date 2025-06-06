@@ -2,8 +2,6 @@
 #include "../gui.h"
 #include "../game.h"
 
-RenderContext render_context;
-
 static void GLAPIENTRY message_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
 {
     if (severity == GL_DEBUG_SEVERITY_NOTIFICATION)
