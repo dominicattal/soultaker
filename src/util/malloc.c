@@ -42,7 +42,10 @@ void* _st_calloc(int cnt, size_t size, const char* file, int line)
 }
 void  _st_free(void* ptr, const char* file, int line)
 {
-    log_write(MEMCTRL, "%s:%d\nfreed memory %p", file, line, ptr);
+    if (ptr == NULL)
+        log_write(MEMCTRL, "%s:%d\nfreed NULL", file, line, ptr);
+    else
+        log_write(MEMCTRL, "%s:%d\nfreed memory %p", file, line, ptr);
     free(ptr);
 }
 #endif

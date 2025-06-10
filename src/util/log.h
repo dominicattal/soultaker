@@ -29,7 +29,7 @@ void log_cleanup(void);
         _log_write(severity, message, ##__VA_ARGS__)
     #define log_assert(condition, message, ...) \
         if (!(condition)) \
-            _log_write(FATAL, message, ##_VAR_ARGS__)
+            _log_write(FATAL, message, ##__VA_ARGS__)
 #endif
 
 #endif

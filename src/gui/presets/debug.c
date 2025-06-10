@@ -9,7 +9,7 @@ typedef struct {
 
 static CompData* create_comp_data(void)
 {
-    CompData* data = malloc(sizeof(CompData));
+    CompData* data = st_malloc(sizeof(CompData));
     data->timer = 0;
     return data;
 }
@@ -39,7 +39,8 @@ static void update_info(GUIComp* comp, f32 dt)
         strncat(string, buf, 100);
         sprintf(buf, "Main: %-6.3f GUI: %-6.3f Game: %-6.3f\n", global_context.dt * 1000, gui_dt() * 1000, game_dt() * 1000);
         strncat(string, buf, 100);
-        gui_comp_set_text(comp, string);
+        string[399] = '\n';
+        gui_comp_set_text(comp, 400, string);
     }
 }
 
@@ -59,7 +60,8 @@ void load_preset_debug(GUIComp* root)
     gui_comp_set_valign(textbox, ALIGN_BOTTOM);
     gui_comp_set_font_size(textbox, 16);
     gui_comp_set_font(textbox, FONT_MONOSPACE);
-    gui_comp_set_text(textbox, "testing 123");
+    gui_comp_set_text(textbox, 30, "testing 123");
+    gui_set_typing_comp(textbox);
 
     gui_comp_attach(root, info);
     gui_comp_attach(root, textbox);
