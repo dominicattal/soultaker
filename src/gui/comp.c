@@ -6,6 +6,7 @@
 void gui_comp_init(void)
 { 
     gui_context.root = gui_comp_create(0, 0, window_resolution_x(), window_resolution_y());
+    gui_context.typing_comp = NULL;
     gui_comp_set_color(gui_context.root, 0, 0, 0, 0);
     gui_comp_set_valign(gui_context.root, ALIGN_BOTTOM);
 }
@@ -17,7 +18,7 @@ void gui_comp_cleanup(void)
 
 GUIComp* gui_comp_create(i16 x, i16 y, i16 w, i16 h)
 {
-    GUIComp* comp = calloc(1, sizeof(GUIComp));
+    GUIComp* comp = st_calloc(1, sizeof(GUIComp));
     gui_comp_set_bbox(comp, x, y, w, h);
     gui_comp_set_tex(comp, texture_get_id("color"));
     return comp;
@@ -29,9 +30,9 @@ void gui_comp_attach(GUIComp* parent, GUIComp* child)
     gui_comp_get_num_children(parent, &num_children);
     assert(num_children < MAX_NUM_CHILDREN);
     if (parent->children == NULL)
-        parent->children = malloc(sizeof(GUIComp*));
+        parent->children = st_malloc(sizeof(GUIComp*));
     else
-        parent->children = realloc(parent->children, (num_children + 1) * sizeof(GUIComp*));
+        parent->children = st_realloc(parent->children, (num_children + 1) * sizeof(GUIComp*));
     parent->children[num_children++] = child;
     child->parent = parent;
     gui_comp_set_num_children(parent, num_children);
@@ -59,17 +60,19 @@ void gui_comp_detach(GUIComp* parent, GUIComp* child)
 
 void gui_comp_destroy(GUIComp* comp)
 {
+    if (gui_context.typing_comp == comp)
+        gui_context.typing_comp = NULL;
     for (int i = 0; i < gui_comp_num_children(comp); i++)
         gui_comp_destroy(comp->children[i]);
-    free(comp->children);
-    free(comp->data);
-    free(comp);
+    st_free(comp->children);
+    st_free(comp->data);
+    st_free(comp);
 }
 
 void gui_comp_destroy_children(GUIComp* comp) {
     for (int i = 0; i < gui_comp_num_children(comp); i++)
         gui_comp_destroy(comp->children[i]);
-    free(comp->children);
+    st_free(comp->children);
     gui_comp_set_num_children(comp, 0);
     comp->children = NULL;
 }
@@ -80,28 +83,22 @@ void gui_comp_detach_and_destroy(GUIComp* parent, GUIComp* child)
     gui_comp_destroy(child);
 }
 
-void gui_comp_set_text(GUIComp* comp, const char* text)
+void gui_comp_set_text(GUIComp* comp, i32 length, const char* text)
 {
     log_assert(text != NULL, "Tried to assign NULL text to component");
     log_assert(gui_comp_is_text(comp), "Try to assign text to non-text component: %s", text);
-    u32 length;
-    char* copied_text;
-    free(comp->text);
-    length = strlen(text);
-    if (length == 0) {
-        comp->text = NULL;
+    gui_comp_set_text_length(comp, length);
+    if (length == 0)
         return;
-    }
-    copied_text = malloc((length + 1) * sizeof(char));
-    strncpy(copied_text, text, length + 1);
-    comp->text = copied_text;
+    strncpy(comp->text, text, length + 1);
 }
 
 void gui_comp_insert_char(GUIComp* comp, const char c, i32 idx)
 {
-    assert(gui_comp_is_text(comp));
+    log_assert(gui_comp_is_text(comp), "Tried inserting char into non-text comp");
+    log_assert(idx >= -1, "Invalid index for string insertion %d", idx);
     u32 length = (comp->text == NULL) ? 0 : strlen(comp->text);
-    char* new_text = malloc((length + 2) * sizeof(char));
+    char* new_text = st_malloc((length + 2) * sizeof(char));
     if (idx == -1 || (u32)idx >= length) {
         strncpy(new_text, comp->text, length);
         new_text[length] = c;
@@ -111,13 +108,14 @@ void gui_comp_insert_char(GUIComp* comp, const char c, i32 idx)
         strncpy(new_text, comp->text + idx + 1, length - idx + 1);
     }
     new_text[length+1] = '\0';
-    free(comp->text);
+    st_free(comp->text);
     comp->text = new_text;
 }
 
 void gui_comp_delete_char(GUIComp* comp, i32 idx)
 {
-    assert(gui_comp_is_text(comp));
+    log_assert(gui_comp_is_text(comp), "Tried deleting char from non-text comp");
+    log_assert(idx >= -1, "Invalid index for string deletion %d", idx);
     if (comp->text == NULL) return;
     u32 length = strlen(comp->text);
     if (length == 1) {
@@ -154,7 +152,11 @@ void gui_comp_click(GUIComp* comp, i32 button, i32 action, i32 mods)
 
 void gui_comp_key(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods)
 {
-
+    if (gui_context.typing_comp != NULL) {
+    }
+    if (comp->key_func == NULL)
+        return;
+    ((GUIKeyFPtr)(comp->key_func))(comp, key, scancode, action, mods);
 }
 
 void gui_comp_update(GUIComp* comp, f32 dt)
@@ -174,19 +176,19 @@ void* gui_comp_remove_data(GUIComp* comp)
 }
 
 // ---------------------------------------------------------------------------
-// info1            | info2 (text)      | info2 (ele)
-// 48 - x, y, w, h  | 2  - text_halign  | 8 - num_children
-// 16 - tex         | 2  - text_valign  | 1 - update_children
-// info2            | 10 - font_size    |
-// 32 - rgba        | 4  - font         |
-//  1 - is_text     |                   |
-//  1 - hoverable   |                   |
-//  1 - hovered     |                   |
-//  1 - clickable   |                   |
-//  1 - visible     |                   |
-//  1 - relative    |                   |
-//  2 - halign      |                   |
-//  2 - valign      |                   |
+// info1            | info2 (text)      | info2 (ele)         | info3 (text)
+// 48 - x, y, w, h  | 2  - text_halign  | 8 - num_children    | 21 - length
+// 16 - tex         | 2  - text_valign  | 1 - update_children |
+// info2            | 10 - font_size    |                     |
+// 32 - rgba        | 4  - font         |                     |
+//  1 - is_text     |                   |                     |
+//  1 - hoverable   |                   |                     |
+//  1 - hovered     |                   |                     |
+//  1 - clickable   |                   |                     |
+//  1 - visible     |                   |                     |
+//  1 - relative    |                   |                     |
+//  2 - halign      |                   |                     |
+//  2 - valign      |                   |                     |
 // ---------------------------------------------------------------------------
 
 // info1
@@ -242,6 +244,11 @@ void* gui_comp_remove_data(GUIComp* comp)
 #define FS_BITS     10
 #define FT_SHIFT    56
 #define FT_BITS     4
+
+// info 3
+// text comp
+#define TL_SHIFT    0
+#define TL_BITS     21
 
 #define SMASK(BITS)         ((1<<BITS)-1)
 #define GMASK(BITS, SHIFT)  ~((u64)SMASK(BITS)<<SHIFT)
@@ -341,6 +348,18 @@ void gui_comp_set_font(GUIComp* comp, FontEnum ft) {
 void gui_comp_set_font_size(GUIComp* comp, i32 fs) {
     comp->info2 = (comp->info2 & GMASK(FS_BITS, FS_SHIFT)) | ((u64)(fs & SMASK(FS_BITS)) << FS_SHIFT);
 }
+void gui_comp_set_text_length(GUIComp* comp, i32 tl) {
+    log_assert(gui_comp_is_text(comp), "Tried to set text length of non-text component");
+    log_assert(tl >= 0, "Tried to make string at %p with negative size", comp);
+    comp->info3 = (comp->info3 & GMASK(TL_BITS, TL_SHIFT)) | ((u64)(tl & SMASK(TL_BITS)) << TL_SHIFT);
+    st_free(comp->text);
+    if (tl == 0) {
+        comp->text = NULL;
+        return;
+    }
+    comp->text = st_malloc((tl+1) * sizeof(char));
+    comp->text[tl] = '\n';
+}
 
 // getters 1
 void gui_comp_get_bbox(GUIComp* comp, i32* x, i32* y, i32* w, i32* h) {
@@ -437,6 +456,9 @@ void gui_comp_get_font(GUIComp* comp, FontEnum* ft) {
 void gui_comp_get_font_size(GUIComp* comp, i32* fs) {
     *fs = (comp->info2 >> FS_SHIFT) & SMASK(FS_BITS);
 }
+void gui_comp_get_text_length(GUIComp* comp, i32* tl) {
+    *tl = (comp->info3 >> TL_SHIFT) & SMASK(TL_BITS);
+}
 
 // getters 2
 i32 gui_comp_num_children(GUIComp* comp) {
@@ -461,4 +483,11 @@ bool gui_comp_is_clickable(GUIComp* comp) {
 }
 bool gui_comp_is_visible(GUIComp* comp) {
     return (comp->info2 >> VS_SHIFT) & SMASK(VS_BITS);
+}
+i32 gui_comp_text_length(GUIComp* comp) {
+    return (comp->info3 >> TL_SHIFT) & SMASK(TL_BITS);
+}
+char* gui_comp_text(GUIComp* comp) {
+    log_assert(gui_comp_is_text(comp), "Attempt to get text from non-text comp at %p", comp);
+    return comp->text;
 }

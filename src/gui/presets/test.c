@@ -48,7 +48,7 @@ void load_preset_test(GUIComp* root)
     GUIComp* textbox = gui_comp_create(0, 30, 250, 700);
     gui_comp_set_halign(textbox, ALIGN_RIGHT);
     gui_comp_set_is_text(textbox, true);
-    gui_comp_set_text(textbox, "The quick brown fox jumps over the lazy dog");
+    gui_comp_set_text(textbox, 100, "The quick brown fox jumps over the lazy dog");
     gui_comp_set_color(textbox, 255, 255, 255, 255);
     gui_comp_set_font_size(textbox, 16);
     gui_comp_set_font(textbox, FONT_MOJANGLES);

@@ -55,6 +55,11 @@ f32 gui_dt(void)
     return gui_context.dt;
 }
 
+void gui_set_typing_comp(GUIComp* comp)
+{
+    gui_context.typing_comp = comp;
+}
+
 void gui_init(void)
 {
     log_write(INFO, "Initializing GUI...");
