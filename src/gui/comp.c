@@ -87,13 +87,16 @@ void gui_comp_set_text(GUIComp* comp, i32 length, const char* text)
 {
     log_assert(text != NULL, "Tried to assign NULL text to component");
     log_assert(gui_comp_is_text(comp), "Try to assign text to non-text component: %s", text);
-    if (gui_comp_text_length(comp) != length)
-        gui_comp_set_text_length(comp, length);
-    if (length == 0)
+    gui_comp_set_text_length(comp, length);
+    st_free(comp->text);
+    if (length == 0) {
+        comp->text = NULL;
         return;
-    comp->text = st_malloc((length+1) * sizeof(char));
-    strncpy(comp->text, text, length + 1);
-    comp->text[length] = '\0';
+    }
+    char* new_text = st_malloc((length+1) * sizeof(char));
+    strncpy(new_text, text, length + 1);
+    new_text[length] = '\0';
+    comp->text = new_text;
 }
 
 void gui_comp_insert_char(GUIComp* comp, const char c, i32 idx)
@@ -184,7 +187,7 @@ void* gui_comp_remove_data(GUIComp* comp)
 // ---------------------------------------------------------------------------
 // info1            | info2 (text)      | info2 (ele)         | info3 (text)
 // 48 - x, y, w, h  | 2  - text_halign  | 8 - num_children    | 21 - length
-// 16 - tex         | 2  - text_valign  | 1 - update_children |
+// 16 - tex         | 2  - text_valign  | 1 - update_children | 21 - cursor_pos
 // info2            | 10 - font_size    |                     |
 // 32 - rgba        | 4  - font         |                     |
 //  1 - is_text     |                   |                     |
@@ -255,6 +258,8 @@ void* gui_comp_remove_data(GUIComp* comp)
 // text comp
 #define TL_SHIFT    0
 #define TL_BITS     21
+#define TP_SHIFT    21
+#define TP_BITS     21
 
 #define SMASK(BITS)         ((1<<BITS)-1)
 #define GMASK(BITS, SHIFT)  ~((u64)SMASK(BITS)<<SHIFT)
@@ -359,6 +364,22 @@ void gui_comp_set_text_length(GUIComp* comp, i32 tl) {
     log_assert(tl >= 0, "Tried to make string at %p with negative size", comp);
     comp->info3 = (comp->info3 & GMASK(TL_BITS, TL_SHIFT)) | ((u64)(tl & SMASK(TL_BITS)) << TL_SHIFT);
 }
+void gui_comp_set_text_pos(GUIComp* comp, i32 tp) {
+    i32 length = gui_comp_text_length(comp);
+    if (tp == -1)         tp = length;
+    else if (tp < 0)      tp = 0;
+    else if (tp > length) tp = length;
+    comp->info3 = (comp->info3 & GMASK(TP_BITS, TP_SHIFT)) | ((u64)(tp & SMASK(TP_BITS)) << TP_SHIFT);
+}
+void gui_comp_inc_text_pos(GUIComp* comp) {
+    i32 tp = gui_comp_text_pos(comp);
+    gui_comp_set_text_pos(comp, tp+1);
+}
+void gui_comp_dec_text_pos(GUIComp* comp) {
+    i32 tp = gui_comp_text_pos(comp);
+    if (tp == 0) return;
+    gui_comp_set_text_pos(comp, tp-1);
+}
 
 // getters 1
 void gui_comp_get_bbox(GUIComp* comp, i32* x, i32* y, i32* w, i32* h) {
@@ -458,6 +479,9 @@ void gui_comp_get_font_size(GUIComp* comp, i32* fs) {
 void gui_comp_get_text_length(GUIComp* comp, i32* tl) {
     *tl = (comp->info3 >> TL_SHIFT) & SMASK(TL_BITS);
 }
+void gui_comp_get_text_pos(GUIComp* comp, i32* tp) {
+    *tp = (comp->info3 >> TP_SHIFT) & SMASK(TP_BITS);
+}
 
 // getters 2
 i32 gui_comp_num_children(GUIComp* comp) {
@@ -489,4 +513,7 @@ i32 gui_comp_text_length(GUIComp* comp) {
 char* gui_comp_text(GUIComp* comp) {
     log_assert(gui_comp_is_text(comp), "Attempt to get text from non-text comp at %p", comp);
     return comp->text;
+}
+i32 gui_comp_text_pos(GUIComp* comp) {
+    return (comp->info3 >> TP_SHIFT) & SMASK(TP_BITS);
 }

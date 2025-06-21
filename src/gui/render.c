@@ -67,7 +67,7 @@ static void push_text_data(GUIComp* comp, i32 cx, i32 cy, i32 cw, i32 ch)
     i32 num_spaces;         // count whitespace for horizontal alignment
     f32 dy;                 // change in y for vertical alignment
     i32 vbo_idx;            // vbo index of first glyph
-    i32 length;             // index in text, length of text
+    i32 length;        // length of text, index in text
     char* text;             // text, equal to comp->text
     i32 location;           // active texture slot of bitmap
     Quad quad;
@@ -81,7 +81,7 @@ static void push_text_data(GUIComp* comp, i32 cx, i32 cy, i32 cw, i32 ch)
     gui_comp_get_font_size(comp, &font_size);
 
     text = comp->text;
-    length = strlen(text);
+    length = gui_comp_text_length(comp);
     
     justify = 0;
     if (ha == ALIGN_JUSTIFY) {

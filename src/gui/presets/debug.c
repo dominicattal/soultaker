@@ -52,6 +52,7 @@ static void clickfunc(GUIComp* comp, i32 button, i32 action, i32 mods)
             gui_comp_set_color(comp, 255, 255, 255, 100);
         }
         else {
+            gui_comp_set_text(comp, 0, "");
             gui_set_typing_comp(comp);
             gui_comp_set_color(comp, 255, 255, 255, 200);
         }
