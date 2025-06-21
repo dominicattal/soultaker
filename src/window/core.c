@@ -28,6 +28,7 @@ void window_init(void)
     glfwSetMouseButtonCallback(window_context.handle, window_mouse_button_callback);
     glfwSetCursorPosCallback(window_context.handle, window_cursor_pos_callback);
     glfwSetKeyCallback(window_context.handle, window_key_callback);
+    glfwSetCharCallback(window_context.handle, window_char_callback);
     glfwSetInputMode(window_context.handle, GLFW_LOCK_KEY_MODS, GLFW_TRUE);
     window_context.cursor.hidden = false;
     gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);

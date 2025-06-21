@@ -39,6 +39,11 @@ void window_key_callback(GLFWwindow* window, i32 key, i32 scancode, i32 action, 
     game_key_callback(key, scancode, action, mods);
 }
 
+void window_char_callback(GLFWwindow* window, u32 codepoint)
+{
+    gui_char_callback(codepoint);
+}
+
 void window_error_callback(i32 x, const char* message) 
 { 
     log_write(FATAL, "GLFW error %x %s", x, message);
