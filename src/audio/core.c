@@ -33,7 +33,7 @@ static void load_sound(ALuint id, char *path)
     }
 
     size = sfinfo.frames * sfinfo.channels * sizeof(ALshort);
-    samples = malloc(size);
+    samples = st_malloc(size);
     if (!samples) {
         sf_close(file);
         log_write(FATAL, "Failed to allocate memory for audio samples %s", path);

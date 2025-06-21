@@ -19,7 +19,7 @@ static const char* read_file(const char *path)
     i32 len = ftell(ptr);
     log_assert(len != 0, "File %s is empty", path);
     fseek(ptr, 0, SEEK_SET);
-    content = calloc(len+1, sizeof(char));
+    content = st_calloc(len+1, sizeof(char));
     fread(content, 1, len, ptr);
     fclose(ptr);
     content[len] = '\0';

@@ -116,13 +116,13 @@ static void execute_compute_shader(const ComputeShaderParams* params)
     
 static void update_entity_vertex_data(void)
 {
-    if (ENTITY_VERTEX_LENGTH_IN * game_context.entities->capacity > game_context.data_swap.entity_capacity) {
-        game_context.data_swap.entity_capacity = ENTITY_VERTEX_LENGTH_IN * game_context.entities->capacity;
-        size_t size = game_context.data_swap.entity_capacity * sizeof(GLfloat);
+    if (game_context.entities->capacity > game_context.data_swap.entity_capacity) {
+        game_context.data_swap.entity_capacity = game_context.entities->capacity;
+        size_t size = ENTITY_VERTEX_LENGTH_IN * game_context.data_swap.entity_capacity * sizeof(GLfloat);
         if (game_context.data_swap.entity_buffer == NULL)
-            game_context.data_swap.entity_buffer = malloc(size);
+            game_context.data_swap.entity_buffer = st_malloc(size);
         else
-            game_context.data_swap.entity_buffer = realloc(game_context.data_swap.entity_buffer, size);
+            game_context.data_swap.entity_buffer = st_realloc(game_context.data_swap.entity_buffer, size);
     }
     game_context.data_swap.entity_length = 0;
     vec2 pivot, stretch;
@@ -151,13 +151,14 @@ static void update_entity_vertex_data(void)
 
 static void update_projectile_vertex_data(void)
 {
-    if (PROJECTILE_VERTEX_LENGTH_IN * game_context.projectiles->capacity > game_context.data_swap.projectile_capacity) {
+    if (game_context.projectiles->capacity > game_context.data_swap.projectile_capacity) {
+        log_write(DEBUG, "Changed projectile vertex buffer capacity from %d to %d", game_context.data_swap.projectile_capacity, game_context.projectiles->capacity);
         game_context.data_swap.projectile_capacity = game_context.projectiles->capacity;
         size_t size = PROJECTILE_VERTEX_LENGTH_IN * game_context.data_swap.projectile_capacity * sizeof(GLfloat);
         if (game_context.data_swap.projectile_buffer == NULL)
-            game_context.data_swap.projectile_buffer = malloc(size);
+            game_context.data_swap.projectile_buffer = st_malloc(size);
         else
-            game_context.data_swap.projectile_buffer = realloc(game_context.data_swap.projectile_buffer, size);
+            game_context.data_swap.projectile_buffer = st_realloc(game_context.data_swap.projectile_buffer, size);
     }
     game_context.data_swap.projectile_length = 0;
     vec2 pivot, stretch;
@@ -190,9 +191,9 @@ static void update_tile_vertex_data(void)
         game_context.data_swap.tile_capacity = game_context.tiles->capacity;
         size_t size = TILE_VERTEX_LENGTH * game_context.data_swap.tile_capacity * sizeof(GLfloat);
         if (game_context.data_swap.tile_buffer == NULL)
-            game_context.data_swap.tile_buffer = malloc(size);
+            game_context.data_swap.tile_buffer = st_malloc(size);
         else
-            game_context.data_swap.tile_buffer = realloc(game_context.data_swap.tile_buffer, size);
+            game_context.data_swap.tile_buffer = st_realloc(game_context.data_swap.tile_buffer, size);
     }
     game_context.data_swap.tile_length = 0;
     vec2 pivot, stretch;
@@ -219,9 +220,9 @@ static void update_wall_vertex_data(void)
         game_context.data_swap.wall_capacity = game_context.walls->capacity;
         size_t size = WALL_VERTEX_LENGTH * game_context.data_swap.wall_capacity * sizeof(GLfloat);
         if (game_context.data_swap.wall_buffer == NULL)
-            game_context.data_swap.wall_buffer = malloc(size);
+            game_context.data_swap.wall_buffer = st_malloc(size);
         else
-            game_context.data_swap.wall_buffer = realloc(game_context.data_swap.wall_buffer, size);
+            game_context.data_swap.wall_buffer = st_realloc(game_context.data_swap.wall_buffer, size);
     }
     game_context.data_swap.wall_length = 0;
     static f32 dx[] = {0, 0, 0, 0, 1, 1, 1, 1};
@@ -280,9 +281,9 @@ static void update_parstacle_vertex_data(void)
         game_context.data_swap.parstacle_capacity = game_context.parstacles->capacity;
         size_t size = OBSTACLE_VERTEX_LENGTH_IN * game_context.data_swap.parstacle_capacity * sizeof(GLfloat);
         if (game_context.data_swap.parstacle_buffer == NULL)
-            game_context.data_swap.parstacle_buffer = malloc(size);
+            game_context.data_swap.parstacle_buffer = st_malloc(size);
         else
-            game_context.data_swap.parstacle_buffer = realloc(game_context.data_swap.parstacle_buffer, size);
+            game_context.data_swap.parstacle_buffer = st_realloc(game_context.data_swap.parstacle_buffer, size);
     }
     game_context.data_swap.parstacle_length = 0;
     vec2 pivot, stretch;
@@ -311,9 +312,9 @@ static void update_obstacle_vertex_data(void)
         game_context.data_swap.obstacle_capacity = game_context.obstacles->capacity;
         size_t size = OBSTACLE_VERTEX_LENGTH_IN * game_context.data_swap.obstacle_capacity * sizeof(GLfloat);
         if (game_context.data_swap.obstacle_buffer == NULL)
-            game_context.data_swap.obstacle_buffer = malloc(size);
+            game_context.data_swap.obstacle_buffer = st_malloc(size);
         else
-            game_context.data_swap.obstacle_buffer = realloc(game_context.data_swap.obstacle_buffer, size);
+            game_context.data_swap.obstacle_buffer = st_realloc(game_context.data_swap.obstacle_buffer, size);
     }
     game_context.data_swap.obstacle_length = 0;
     vec2 pivot, stretch;
@@ -338,13 +339,14 @@ static void update_obstacle_vertex_data(void)
 
 static void update_particle_vertex_data(void)
 {
-    if (PARTICLE_VERTEX_LENGTH_IN * game_context.particles->capacity > game_context.data_swap.particle_capacity) {
+    if (game_context.particles->capacity > game_context.data_swap.particle_capacity) {
+        log_write(DEBUG, "Changed particle vertex buffer capacity from %d to %d", game_context.data_swap.projectile_capacity, game_context.projectiles->capacity);
         game_context.data_swap.particle_capacity = game_context.particles->capacity;
         size_t size = PARTICLE_VERTEX_LENGTH_IN * game_context.data_swap.particle_capacity * sizeof(GLfloat);
         if (game_context.data_swap.particle_buffer == NULL)
-            game_context.data_swap.particle_buffer = malloc(size);
+            game_context.data_swap.particle_buffer = st_malloc(size);
         else
-            game_context.data_swap.particle_buffer = realloc(game_context.data_swap.particle_buffer, size);
+            game_context.data_swap.particle_buffer = st_realloc(game_context.data_swap.particle_buffer, size);
     }
     game_context.data_swap.particle_length = 0;
     #define V game_context.data_swap.particle_buffer[game_context.data_swap.particle_length++]
@@ -367,9 +369,9 @@ static void update_parjicle_vertex_data(void)
         game_context.data_swap.parjicle_capacity = game_context.parjicles->capacity;
         size_t size = PARJICLE_VERTEX_LENGTH_IN * game_context.data_swap.parjicle_capacity * sizeof(GLfloat);
         if (game_context.data_swap.parjicle_buffer == NULL)
-            game_context.data_swap.parjicle_buffer = malloc(size);
+            game_context.data_swap.parjicle_buffer = st_malloc(size);
         else
-            game_context.data_swap.parjicle_buffer = realloc(game_context.data_swap.parjicle_buffer, size);
+            game_context.data_swap.parjicle_buffer = st_realloc(game_context.data_swap.parjicle_buffer, size);
     }
     game_context.data_swap.parjicle_length = 0;
     #define V game_context.data_swap.parjicle_buffer[game_context.data_swap.parjicle_length++]

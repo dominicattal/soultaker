@@ -1,4 +1,5 @@
 #include "list.h"
+#include "malloc.h"
 #include <stdlib.h>
 #include <assert.h>
 
@@ -6,7 +7,7 @@
 
 List* list_create(void)
 {
-    List* list = malloc(sizeof(List));
+    List* list = st_malloc(sizeof(List));
     list->buffer = NULL;
     list->length = list->capacity = 0;
     return list;
@@ -17,9 +18,9 @@ void  list_append(List* list, void* item)
     if (list->length >= list->capacity) {
         list->capacity += RESIZE_LENGTH;
         if (list->buffer == NULL)
-            list->buffer = malloc(list->capacity * sizeof(void*));
+            list->buffer = st_malloc(list->capacity * sizeof(void*));
         else
-            list->buffer = realloc(list->buffer, list->capacity * sizeof(void*));
+            list->buffer = st_realloc(list->buffer, list->capacity * sizeof(void*));
         assert(list->buffer != NULL);
     }
     list->buffer[list->length++] = item;
@@ -34,7 +35,7 @@ void  list_remove(List* list, i32 idx)
             free(list->buffer);
             list->buffer = NULL;
         } else
-            list->buffer = realloc(list->buffer, list->capacity * sizeof(void*));
+            list->buffer = st_realloc(list->buffer, list->capacity * sizeof(void*));
     }
 }
 
@@ -48,7 +49,7 @@ void* list_pop(List* list, i32 idx)
             free(list->buffer);
             list->buffer = NULL;
         } else
-            list->buffer = realloc(list->buffer, list->capacity * sizeof(void*));
+            list->buffer = st_realloc(list->buffer, list->capacity * sizeof(void*));
     }
     return data;
 }

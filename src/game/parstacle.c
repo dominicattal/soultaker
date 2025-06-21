@@ -10,7 +10,7 @@ void parstacle_init(void)
 
 Parstacle* parstacle_create(vec2 position)
 {
-    Parstacle* parstacle = malloc(sizeof(Parstacle));
+    Parstacle* parstacle = st_malloc(sizeof(Parstacle));
     parstacle->position = position;
     parstacle->size = 1.5;
     list_append(game_context.parstacles, parstacle);

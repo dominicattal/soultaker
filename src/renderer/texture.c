@@ -67,7 +67,7 @@ static void load_font(stbtt_pack_context* spc, FontEnum font, i32 font_size, con
     fseek(font_file, 0, SEEK_END);
     size = ftell(font_file);
     fseek(font_file, 0, SEEK_SET);
-    font_buffer = malloc(size);
+    font_buffer = st_malloc(size);
     fread(font_buffer, size, 1, font_file);
     fclose(font_file);
     
@@ -156,7 +156,7 @@ static void create_font_textures(i32* tex_unit_location)
     unsigned char* bitmap;
     u32 tex;
 
-    bitmap = calloc(BITMAP_WIDTH * BITMAP_HEIGHT, sizeof(unsigned char));
+    bitmap = st_calloc(BITMAP_WIDTH * BITMAP_HEIGHT, sizeof(unsigned char));
     stbtt_PackBegin(&spc, bitmap, BITMAP_WIDTH, BITMAP_HEIGHT, 0, 1, NULL);
 
     load_font(&spc, FONT_MOJANGLES, 16, "assets/fonts/mojangles.ttf");
@@ -202,8 +202,8 @@ static void pack_textures(i32* tex_unit_location, unsigned char** image_data, st
 
     num_nodes = BITMAP_WIDTH;
 
-    context  = malloc(sizeof(stbrp_context));
-    nodes    = malloc(sizeof(stbrp_node) * num_nodes);
+    context  = st_malloc(sizeof(stbrp_context));
+    nodes    = st_malloc(sizeof(stbrp_node) * num_nodes);
 
     stbrp_init_target(context, BITMAP_WIDTH, BITMAP_HEIGHT, nodes, num_nodes);
     all_rects_packed = stbrp_pack_rects(context, rects, num_rects);
@@ -212,7 +212,7 @@ static void pack_textures(i32* tex_unit_location, unsigned char** image_data, st
     i32 width, offset_x, offset_y;
     num_rects_packed = 0;
     location = *tex_unit_location;
-    bitmap = calloc(BITMAP_WIDTH * BITMAP_HEIGHT * num_channels, sizeof(unsigned char));
+    bitmap = st_calloc(BITMAP_WIDTH * BITMAP_HEIGHT * num_channels, sizeof(unsigned char));
     for (i32 i = 0; i < num_rects; ++i) {
         stbrp_rect rect = rects[i];
         if (!rect.was_packed)
@@ -488,9 +488,9 @@ static void initialize_rects(i32* tex_unit_location)
     i32 num_images = json_object_length(json);
     texture_context.num_textures = get_num_textures(json);
 
-    texture_context.textures = malloc(sizeof(Texture) * texture_context.num_textures);
-    rects  = malloc(sizeof(stbrp_rect) * texture_context.num_textures);
-    image_data = malloc(sizeof(unsigned char*) * num_images);
+    texture_context.textures = st_malloc(sizeof(Texture) * texture_context.num_textures);
+    rects  = st_malloc(sizeof(stbrp_rect) * texture_context.num_textures);
+    image_data = st_malloc(sizeof(unsigned char*) * num_images);
 
     num_rects = 0;
     for (i32 i = 0; i < num_images; i++, json_iterator_increment(it)) {
