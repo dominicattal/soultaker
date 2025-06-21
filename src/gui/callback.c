@@ -72,11 +72,21 @@ static bool gui_key_callback_helper(GUIComp* comp, i32 key, i32 scancode, i32 ac
     return false;
 }
 
+static void process_typing_input(i32 key, i32 scancode, i32 action, i32 mods)
+{
+    if (key == GLFW_KEY_BACKSPACE && action != GLFW_RELEASE) {
+        gui_comp_delete_char(gui_context.typing_comp, -1);
+    }
+}
+
 bool gui_key_callback(i32 key, i32 scancode, i32 action, i32 mods)
 {
     if (gui_context.thread_id == pthread_self()) {
-        bool comp_found = false;
-        comp_found = gui_key_callback_helper(gui_context.root, key, scancode, action, mods);
+        bool comp_found = true;
+        if (gui_context.typing_comp == NULL)
+            comp_found = gui_key_callback_helper(gui_context.root, key, scancode, action, mods);
+        else
+            process_typing_input(key, scancode, action, mods);
         return comp_found;
     } else {
         GUIEvent event;
@@ -140,3 +150,20 @@ bool gui_mouse_button_callback(i32 button, i32 action, i32 mods)
         return true;
     }
 }
+
+bool gui_char_callback(u32 codepoint)
+{
+    if (gui_context.thread_id == pthread_self()) {
+        bool comp_found = false;
+        if (gui_context.typing_comp != NULL)
+            gui_comp_insert_char(gui_context.typing_comp, codepoint, -1);
+        return comp_found;
+    } else {
+        GUIEvent event;
+        event.type = GUI_EVENT_CHAR_CALLBACK;
+        event.args.codepoint = codepoint;
+        gui_event_enqueue(&gui_context.event_queue, event);
+        return true;
+    }
+}
+

@@ -27,11 +27,6 @@ typedef enum {
     NUM_GUI_PRESETS
 } GUIPreset;
 
-typedef void (*GUIHoverFPtr)(GUIComp* comp, bool status); 
-typedef void (*GUIClickFPtr)(GUIComp* comp, i32 button, i32 action, i32 mods);
-typedef void (*GUIKeyFPtr)(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods);
-typedef void (*GUIUpdateFPtr)(GUIComp* comp, f32 dt);
-
 void gui_preset_load(GUIPreset preset);
 
 void gui_init(void);
@@ -43,5 +38,6 @@ void gui_framebuffer_size_callback(i32 width, i32 height);
 bool gui_cursor_pos_callback(f64 xpos, f64 ypos);
 bool gui_key_callback(i32 key, i32 scancode, i32 action, i32 mods);
 bool gui_mouse_button_callback(i32 button, i32 action, i32 mods);
+bool gui_char_callback(u32 codepoint);
 
 #endif

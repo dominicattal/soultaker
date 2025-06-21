@@ -91,14 +91,16 @@ void gui_comp_set_text(GUIComp* comp, i32 length, const char* text)
         gui_comp_set_text_length(comp, length);
     if (length == 0)
         return;
+    comp->text = st_malloc((length+1) * sizeof(char));
     strncpy(comp->text, text, length + 1);
+    comp->text[length] = '\0';
 }
 
 void gui_comp_insert_char(GUIComp* comp, const char c, i32 idx)
 {
     log_assert(gui_comp_is_text(comp), "Tried inserting char into non-text comp");
     log_assert(idx >= -1, "Invalid index for string insertion %d", idx);
-    u32 length = (comp->text == NULL) ? 0 : strlen(comp->text);
+    u32 length = (comp->text == NULL) ? 0 : gui_comp_text_length(comp);
     char* new_text = st_malloc((length + 2) * sizeof(char));
     if (idx == -1 || (u32)idx >= length) {
         strncpy(new_text, comp->text, length);
@@ -111,6 +113,7 @@ void gui_comp_insert_char(GUIComp* comp, const char c, i32 idx)
     new_text[length+1] = '\0';
     st_free(comp->text);
     comp->text = new_text;
+    gui_comp_set_text_length(comp, length+1);
 }
 
 void gui_comp_delete_char(GUIComp* comp, i32 idx)
@@ -118,9 +121,10 @@ void gui_comp_delete_char(GUIComp* comp, i32 idx)
     log_assert(gui_comp_is_text(comp), "Tried deleting char from non-text comp");
     log_assert(idx >= -1, "Invalid index for string deletion %d", idx);
     if (comp->text == NULL) return;
-    u32 length = strlen(comp->text);
+    u32 length = gui_comp_text_length(comp);
     if (length == 1) {
-        free(comp->text);
+        st_free(comp->text);
+        gui_comp_set_text_length(comp, 0);
         comp->text = NULL;
         return;
     }
@@ -134,6 +138,7 @@ void gui_comp_delete_char(GUIComp* comp, i32 idx)
     new_text[length-1] = '\0';
     free(comp->text);
     comp->text = new_text;
+    gui_comp_set_text_length(comp, length-1);
 }
 
 void gui_comp_hover(GUIComp* comp, bool status)
@@ -353,13 +358,6 @@ void gui_comp_set_text_length(GUIComp* comp, i32 tl) {
     log_assert(gui_comp_is_text(comp), "Tried to set text length of non-text component");
     log_assert(tl >= 0, "Tried to make string at %p with negative size", comp);
     comp->info3 = (comp->info3 & GMASK(TL_BITS, TL_SHIFT)) | ((u64)(tl & SMASK(TL_BITS)) << TL_SHIFT);
-    st_free(comp->text);
-    if (tl == 0) {
-        comp->text = NULL;
-        return;
-    }
-    comp->text = st_malloc((tl+1) * sizeof(char));
-    comp->text[tl] = '\n';
 }
 
 // getters 1

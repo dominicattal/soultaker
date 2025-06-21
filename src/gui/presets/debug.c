@@ -44,6 +44,20 @@ static void update_info(GUIComp* comp, f32 dt)
     }
 }
 
+static void clickfunc(GUIComp* comp, i32 button, i32 action, i32 mods)
+{
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+        if (gui_context.typing_comp == comp) {
+            gui_set_typing_comp(NULL);
+            gui_comp_set_color(comp, 255, 255, 255, 100);
+        }
+        else {
+            gui_set_typing_comp(comp);
+            gui_comp_set_color(comp, 255, 255, 255, 200);
+        }
+    }
+}
+
 void load_preset_debug(GUIComp* root)
 {
     GUIComp* info = gui_comp_create(0, 0, 400, 70);
@@ -60,8 +74,10 @@ void load_preset_debug(GUIComp* root)
     gui_comp_set_valign(textbox, ALIGN_BOTTOM);
     gui_comp_set_font_size(textbox, 16);
     gui_comp_set_font(textbox, FONT_MONOSPACE);
-    gui_comp_set_text(textbox, 30, "testing 123");
-    gui_set_typing_comp(textbox);
+    textbox->click_func = clickfunc;
+    gui_comp_set_clickable(textbox, true);
+    const char* text = "testing 123";
+    gui_comp_set_text(textbox, strlen(text), text);
 
     gui_comp_attach(root, info);
     gui_comp_attach(root, textbox);

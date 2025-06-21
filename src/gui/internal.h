@@ -6,12 +6,18 @@
 
 #define EVENT_QUEUE_LENGTH 32
 
+typedef void (*GUIHoverFPtr)(GUIComp* comp, bool status); 
+typedef void (*GUIClickFPtr)(GUIComp* comp, i32 button, i32 action, i32 mods);
+typedef void (*GUIKeyFPtr)(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods);
+typedef void (*GUIUpdateFPtr)(GUIComp* comp, f32 dt);
+
 typedef enum {
     GUI_EVENT_NONE,
     GUI_EVENT_FRAMEBUFFER_SIZE_CALLBACK,
     GUI_EVENT_CURSOR_POS_CALLBACK,
     GUI_EVENT_MOUSE_BUTTON_CALLBACK,
     GUI_EVENT_KEY_CALLBACK,
+    GUI_EVENT_CHAR_CALLBACK,
     GUI_EVENT_ATTACH,
     GUI_EVENT_DETACH,
     GUI_EVENT_DESTROY,
@@ -38,6 +44,7 @@ typedef struct GUIEvent {
         i32 scancode;
         i32 action;
         i32 mods;
+        u32 codepoint;
     } args;
 } GUIEvent;
 
