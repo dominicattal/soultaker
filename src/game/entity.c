@@ -74,7 +74,7 @@ static void load_state_info(i32 entity_id, JsonObject* object)
     array = json_get_array(value);
     log_assert(array, "Could not get states array");
     i32 num_states = json_array_length(array);
-    EntityState* state_ptr = malloc(num_states * sizeof(EntityState));
+    EntityState* state_ptr = st_malloc(num_states * sizeof(EntityState));
     for (i32 i = 0; i < num_states; i++) {
         value = json_array_get(array, i);
         log_assert(value, "Could not get value from array");
@@ -97,7 +97,7 @@ static void load_state_info(i32 entity_id, JsonObject* object)
         log_assert(json_get_type(value) == JTYPE_INT, "Number of frames for state %s is is not a int", string);
         int_val = json_get_int(value);
         state_ptr[i].num_frames = int_val;
-        state_ptr[i].textures = malloc(4 * int_val * sizeof(i32));
+        state_ptr[i].textures = st_malloc(4 * int_val * sizeof(i32));
 
         load_state_textures(&state_ptr[i], object, "left", LEFT);
         load_state_textures(&state_ptr[i], object, "right", RIGHT);
@@ -129,7 +129,7 @@ static void load_entity_info(void)
     JsonObject* object;
     const char* string;
     entity_context.num_entities = json_object_length(json);
-    entity_context.infos = malloc(entity_context.num_entities * sizeof(EntityInfo));
+    entity_context.infos = st_malloc(entity_context.num_entities * sizeof(EntityInfo));
     for (i32 i = 0; i < entity_context.num_entities; i++) {
         member = json_iterator_get(it);
         log_assert(member, "Could not get member from entity config file");
@@ -203,7 +203,7 @@ void entity_init(void)
 
 Entity* entity_create(vec3 position, i32 type)
 {
-    Entity* entity = malloc(sizeof(Entity));
+    Entity* entity = st_malloc(sizeof(Entity));
     entity->position = position;
     entity->prev_position = position;
     entity->direction = vec3_create(0, 0, 0);

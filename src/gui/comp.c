@@ -50,7 +50,7 @@ void gui_comp_detach(GUIComp* parent, GUIComp* child)
                 free(parent->children);
                 parent->children = NULL;
             } else {
-                parent->children = realloc(parent->children, num_children * sizeof(GUIComp*));
+                parent->children = st_realloc(parent->children, num_children * sizeof(GUIComp*));
             }
             gui_comp_set_num_children(parent, num_children);
             return;
@@ -87,7 +87,8 @@ void gui_comp_set_text(GUIComp* comp, i32 length, const char* text)
 {
     log_assert(text != NULL, "Tried to assign NULL text to component");
     log_assert(gui_comp_is_text(comp), "Try to assign text to non-text component: %s", text);
-    gui_comp_set_text_length(comp, length);
+    if (gui_comp_text_length(comp) != length)
+        gui_comp_set_text_length(comp, length);
     if (length == 0)
         return;
     strncpy(comp->text, text, length + 1);
@@ -123,7 +124,7 @@ void gui_comp_delete_char(GUIComp* comp, i32 idx)
         comp->text = NULL;
         return;
     }
-    char* new_text = malloc(length * sizeof(char));
+    char* new_text = st_malloc(length * sizeof(char));
     if (idx == -1 || (u32)idx >= length) {
         strncpy(new_text, comp->text, length-1);
     } else {

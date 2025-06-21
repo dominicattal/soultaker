@@ -9,7 +9,7 @@ void projectile_init(void)
 
 Projectile* projectile_create(vec3 position)
 {
-    Projectile* proj = malloc(sizeof(Projectile));
+    Projectile* proj = st_malloc(sizeof(Projectile));
     proj->position = position;
     proj->direction = vec3_create(0, 0, 0);
     proj->speed = 1;

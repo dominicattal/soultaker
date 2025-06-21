@@ -24,7 +24,7 @@ void wall_init(void)
 
 Wall* wall_create(vec2 position, f32 height)
 {
-    Wall* wall = malloc(sizeof(Wall));
+    Wall* wall = st_malloc(sizeof(Wall));
     wall->position = position;
     wall->size = vec2_create(1, 1);
     wall->height = height;

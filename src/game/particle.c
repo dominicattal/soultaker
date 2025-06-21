@@ -10,7 +10,7 @@ void particle_init(void)
 
 Particle* particle_create(vec3 position)
 {
-    Particle* particle = malloc(sizeof(Particle));
+    Particle* particle = st_malloc(sizeof(Particle));
     particle->position = position;
     particle->direction = vec3_create(0, 0, 1);
     particle->size = 0.5f;

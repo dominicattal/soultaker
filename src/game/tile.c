@@ -15,7 +15,7 @@ void tile_init(void)
 
 Tile* tile_create(vec2 position)
 {
-    Tile* tile = malloc(sizeof(Tile));
+    Tile* tile = st_malloc(sizeof(Tile));
     tile->position = position;
     tile->tex = texture_get_id("tile_1");
     list_append(game_context.tiles, tile);

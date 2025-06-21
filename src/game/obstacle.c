@@ -11,7 +11,7 @@ void obstacle_init(void)
 
 Obstacle* obstacle_create(vec2 position)
 {
-    Obstacle* obstacle = malloc(sizeof(Obstacle));
+    Obstacle* obstacle = st_malloc(sizeof(Obstacle));
     obstacle->position = position;
     obstacle->size = 1.0f;
     list_append(game_context.obstacles, obstacle);

@@ -2,6 +2,7 @@
 #define ST_MALLOC_H
 
 #include <stdlib.h>
+#include "type.h"
 
 #ifdef DEBUG_BUILD
     void* _st_malloc(size_t size, const char* file, int line);

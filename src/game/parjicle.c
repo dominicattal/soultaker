@@ -9,7 +9,7 @@ void parjicle_init(void)
 
 Parjicle* parjicle_create(vec3 position)
 {
-    Parjicle* parjicle = malloc(sizeof(Parjicle));
+    Parjicle* parjicle = st_malloc(sizeof(Parjicle));
     parjicle->position = position;
     parjicle->direction = vec3_create(1, 0, 0);
     parjicle->color = vec3_create(1, 0, 1);

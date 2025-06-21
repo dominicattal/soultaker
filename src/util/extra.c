@@ -1,4 +1,5 @@
 #include "extra.h"
+#include "malloc.h"
 #include <Windows.h>
 #include <sys/time.h>
 #include <stdlib.h>
@@ -19,7 +20,7 @@ f64 get_time(void)
 char* copy_string(const char* string)
 {
     int n = strlen(string);
-    char* copied = malloc((n+1) * sizeof(char));
+    char* copied = st_malloc((n+1) * sizeof(char));
     strncpy(copied, string, n+1);
     copied[n] = '\0';
     return copied;
