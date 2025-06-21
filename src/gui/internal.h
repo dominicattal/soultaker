@@ -158,6 +158,9 @@ void gui_comp_set_text_valign(GUIComp* comp, u8 tva);
 void gui_comp_set_font(GUIComp* comp, FontEnum ft);
 void gui_comp_set_font_size(GUIComp* comp, i32 fs);
 void gui_comp_set_text_length(GUIComp* comp, i32 tl);
+void gui_comp_set_text_pos(GUIComp* comp, i32 tp);
+void gui_comp_inc_text_pos(GUIComp* comp);
+void gui_comp_dec_text_pos(GUIComp* comp);
 
 void gui_comp_get_bbox(GUIComp* comp, i32* x, i32* y, i32* w, i32* h);
 void gui_comp_get_position(GUIComp* comp, i32* x, i32* y);
@@ -188,6 +191,7 @@ void gui_comp_get_text_valign(GUIComp* comp, u8* tva);
 void gui_comp_get_font(GUIComp* comp, FontEnum* ft);
 void gui_comp_get_font_size(GUIComp* comp, i32* fs);
 void gui_comp_get_text_length(GUIComp* comp, i32* tl);
+void gui_comp_get_text_pos(GUIComp* comp, i32* tp);
 
 i32  gui_comp_num_children(GUIComp* comp);
 i32  gui_comp_tex(GUIComp* comp);
@@ -198,5 +202,6 @@ bool gui_comp_is_clickable(GUIComp* comp);
 bool gui_comp_is_visible(GUIComp* comp);
 i32  gui_comp_text_length(GUIComp* comp);
 char* gui_comp_text(GUIComp* comp);
+i32  gui_comp_text_pos(GUIComp* comp);
 
 #endif
