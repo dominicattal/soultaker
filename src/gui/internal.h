@@ -90,6 +90,7 @@ typedef struct GUIContext {
 
 extern GUIContext gui_context;
 
+const char* gui_parse_command(char* command);
 void gui_set_typing_comp(GUIComp* comp);
 
 void gui_render_init(void);
