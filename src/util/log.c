@@ -7,6 +7,7 @@
 
 static FILE* stream;
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+static int level = MEMCTRL;
 
 #ifdef DEBUG_BUILD
 static const char* severity_string(LogLevel severity)
@@ -93,6 +94,8 @@ void log_init(char* exe_path)
 #ifdef DEBUG_BUILD
 void _log_write(LogLevel severity, const char* message, const char* filename, int line, ...)
 {
+    if ((int)severity > level)
+        return;
     int Y, M, D, h, m, s;
     int thread_id = pthread_self();
     va_list args;
@@ -129,6 +132,11 @@ void _log_write(LogLevel severity, const char* message, ...)
     pthread_mutex_unlock(&mutex);
 }
 #endif
+
+void log_set_level(int _level)
+{
+    level = _level;
+}
 
 void log_unlock(void)
 {

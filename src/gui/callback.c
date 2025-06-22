@@ -77,6 +77,7 @@ static void process_typing_input(i32 key, i32 scancode, i32 action, i32 mods)
     if (key == GLFW_KEY_BACKSPACE && action != GLFW_RELEASE) {
         gui_comp_delete_char(gui_context.typing_comp, -1);
     }
+    gui_comp_key(gui_context.typing_comp, key, scancode, action, mods);
 }
 
 bool gui_key_callback(i32 key, i32 scancode, i32 action, i32 mods)

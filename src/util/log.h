@@ -14,6 +14,7 @@ typedef enum {
 
 void log_init(char* exe_path);
 void log_unlock(void);
+void log_set_level(int level);
 void log_cleanup(void);
 
 #ifdef DEBUG_BUILD

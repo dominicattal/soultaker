@@ -13,9 +13,9 @@ typedef struct {
 static GameApi* api;
 
 __declspec(dllexport)
-void entity_knight_init(GameApi* api_ext)
+void entity_knight_init(GameApi* _api)
 {
-    api = api_ext;
+    api = _api;
 }
 
 __declspec(dllexport)
@@ -34,7 +34,7 @@ void entity_knight_update(Entity* entity, f32 dt)
             entity->frame = fmod(entity->state_timer, frame_length) > frame_length / 2;
             break;
         case 2:
-            frame_length = 1 + entity->haste;
+            frame_length = (1 + entity->haste) / 2;
             entity->frame = fmod(entity->state_timer, frame_length) > frame_length / 2;
             break;
         default:
