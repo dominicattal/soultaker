@@ -38,7 +38,7 @@ bool projectile_get_flag(Projectile* proj, ProjectileFlagEnum flag)
 
 void projectile_destroy(Projectile* proj)
 {
-    free(proj);
+    st_free(proj);
 }
 
 void projectile_cleanup(void)
@@ -46,6 +46,6 @@ void projectile_cleanup(void)
     if (game_context.projectiles == NULL)
         return;
     for (i32 i = 0; i < game_context.projectiles->length; i++)
-        free(list_get(game_context.projectiles, i));
+        projectile_destroy(list_get(game_context.projectiles, i));
     list_destroy(game_context.projectiles);
 }

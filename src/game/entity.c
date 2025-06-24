@@ -161,6 +161,7 @@ static void load_entity_info(void)
     for (i32 i = 0; i < entity_context.num_entities; i++)
         entity_context.infos[i].init(&global_api);
 
+    json_iterator_destroy(it);
     json_object_destroy(json);
 }
 
@@ -276,24 +277,26 @@ i32 entity_get_texture(Entity* entity)
 void entity_destroy(Entity* entity)
 {
     entity_context.infos[entity->type].destroy(entity);
-    free(entity);
+    st_free(entity);
 }
 
 void entity_cleanup(void)
 {
-    if (game_context.entities == NULL)
-        return;
-    for (i32 i = 0; i < game_context.entities->length; i++)
-        free(list_get(game_context.entities, i));
-    list_destroy(game_context.entities);
+    log_write(INFO, "Deleting entities...");
+    if (game_context.entities != NULL) {
+        for (i32 i = 0; i < game_context.entities->length; i++)
+            entity_destroy(list_get(game_context.entities, i));
+        list_destroy(game_context.entities);
+    }
     for (i32 i = 0; i < entity_context.num_entities; i++) {
         entity_context.infos[i].cleanup();
-        free(entity_context.infos[i].name);
+        st_free(entity_context.infos[i].name);
         for (i32 j = 0; j < entity_context.infos[i].num_states; j++) {
-            free(entity_context.infos[i].states[j].name);
-            free(entity_context.infos[i].states[j].textures);
+            st_free(entity_context.infos[i].states[j].name);
+            st_free(entity_context.infos[i].states[j].textures);
         }
-        free(entity_context.infos[i].states);
+        st_free(entity_context.infos[i].states);
     }
-    free(entity_context.infos);
+    st_free(entity_context.infos);
+    log_write(INFO, "Deleted entities");
 }

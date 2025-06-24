@@ -13,7 +13,9 @@ void gui_comp_init(void)
 
 void gui_comp_cleanup(void)
 {
+    log_write(INFO, "Cleaning up gui components...");
     gui_comp_destroy(gui_context.root);
+    log_write(INFO, "Cleaned up gui components");
 }
 
 GUIComp* gui_comp_create(i16 x, i16 y, i16 w, i16 h)
@@ -47,7 +49,7 @@ void gui_comp_detach(GUIComp* parent, GUIComp* child)
             parent->children[i] = parent->children[--num_children];
             child->parent = NULL;
             if (num_children == 0) {
-                free(parent->children);
+                st_free(parent->children);
                 parent->children = NULL;
             } else {
                 parent->children = st_realloc(parent->children, num_children * sizeof(GUIComp*));
@@ -139,7 +141,7 @@ void gui_comp_delete_char(GUIComp* comp, i32 idx)
         strncpy(new_text, comp->text + idx, length - idx + 1);
     }
     new_text[length-1] = '\0';
-    free(comp->text);
+    st_free(comp->text);
     comp->text = new_text;
     gui_comp_set_text_length(comp, length-1);
 }

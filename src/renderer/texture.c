@@ -108,7 +108,7 @@ static void load_font(stbtt_pack_context* spc, FontEnum font, i32 font_size, con
         }
     }
 
-    free(font_buffer);
+    st_free(font_buffer);
 }
 
 void font_info(FontEnum font, i32 font_size, i32* ascent, i32* descent, i32* line_gap, i32* location)
@@ -185,7 +185,7 @@ static void create_font_textures(i32* tex_unit_location)
         stbi_write_png(path, BITMAP_WIDTH, BITMAP_HEIGHT, 1, bitmap, 0);
     }
 
-    free(bitmap);
+    st_free(bitmap);
     (*tex_unit_location)++;
 }
 
@@ -272,9 +272,9 @@ static void pack_textures(i32* tex_unit_location, unsigned char** image_data, st
     }
 
     (*tex_unit_location)++;
-    free(context);
-    free(nodes);
-    free(bitmap);
+    st_free(context);
+    st_free(nodes);
+    st_free(bitmap);
 
     if (!all_rects_packed) {
         if (*tex_unit_location == NUM_TEXTURE_UNITS) {
@@ -521,8 +521,8 @@ static void initialize_rects(i32* tex_unit_location)
 
     json_iterator_destroy(it);
     json_object_destroy(json);
-    free(rects);
-    free(image_data);
+    st_free(rects);
+    st_free(image_data);
 }
 
 i32 texture_get_id(const char* name)
@@ -568,8 +568,8 @@ void texture_cleanup(void)
 {
     log_write(INFO, "Cleaning up textures...");
     for (i32 i = 0; i < texture_context.num_textures; i++)
-        free(texture_context.textures[i].name);
-    free(texture_context.textures);
+        st_free(texture_context.textures[i].name);
+    st_free(texture_context.textures);
     for (i32 i = 0; i < NUM_TEXTURE_UNITS; i++)
         if (texture_context.texture_units[i] != 0)
             glDeleteTextures(1, &texture_context.texture_units[i]);

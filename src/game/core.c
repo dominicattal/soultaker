@@ -72,22 +72,22 @@ void game_cleanup(void)
     particle_cleanup();
     parjicle_cleanup();
 
-    free(game_context.data.projectile_buffer);
-    free(game_context.data.entity_buffer);
-    free(game_context.data.tile_buffer);
-    free(game_context.data.wall_buffer);
-    free(game_context.data.parstacle_buffer);
-    free(game_context.data.obstacle_buffer);
-    free(game_context.data.particle_buffer);
-    free(game_context.data.parjicle_buffer);
-    free(game_context.data_swap.projectile_buffer);
-    free(game_context.data_swap.entity_buffer);
-    free(game_context.data_swap.tile_buffer);
-    free(game_context.data_swap.wall_buffer);
-    free(game_context.data_swap.parstacle_buffer);
-    free(game_context.data_swap.obstacle_buffer);
-    free(game_context.data_swap.particle_buffer);
-    free(game_context.data_swap.parjicle_buffer);
+    st_free(game_context.data.projectile_buffer);
+    st_free(game_context.data.entity_buffer);
+    st_free(game_context.data.tile_buffer);
+    st_free(game_context.data.wall_buffer);
+    st_free(game_context.data.parstacle_buffer);
+    st_free(game_context.data.obstacle_buffer);
+    st_free(game_context.data.particle_buffer);
+    st_free(game_context.data.parjicle_buffer);
+    st_free(game_context.data_swap.projectile_buffer);
+    st_free(game_context.data_swap.entity_buffer);
+    st_free(game_context.data_swap.tile_buffer);
+    st_free(game_context.data_swap.wall_buffer);
+    st_free(game_context.data_swap.parstacle_buffer);
+    st_free(game_context.data_swap.obstacle_buffer);
+    st_free(game_context.data_swap.particle_buffer);
+    st_free(game_context.data_swap.parjicle_buffer);
     log_write(INFO, "Cleaned up game");
 }
 

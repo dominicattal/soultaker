@@ -40,7 +40,7 @@ static u32 compile(GLenum type, const char *path)
     shader = glCreateShader(type);
     shader_code = read_file(path);
     glShaderSource(shader, 1, &shader_code, NULL);
-    free((char*)shader_code);
+    st_free((char*)shader_code);
     glCompileShader(shader);
     glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 

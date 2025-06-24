@@ -317,6 +317,8 @@ void gui_render_cleanup(void)
         glDeleteBuffers(1, &s_vbo);
     if (s_instance_vbo != 0)
         glDeleteBuffers(1, &s_instance_vbo);
+    st_free(gui_context.data.buffer);
+    st_free(gui_context.data_swap.buffer);
     log_write(INFO, "Deleted GUI buffers");
 }
 

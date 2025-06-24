@@ -49,6 +49,7 @@ void state_cleanup(void)
     gui_cleanup();
     renderer_cleanup();
     window_cleanup();
+    log_write(INFO, "Current heap size: %lld", get_heap_size());
     log_cleanup();
 
     FreeLibrary(global_context.lib);

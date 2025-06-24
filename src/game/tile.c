@@ -24,7 +24,7 @@ Tile* tile_create(vec2 position)
 
 void tile_destroy(Tile* tile)
 {
-    free(tile);
+    st_free(tile);
 }
 
 void tile_cleanup(void)
@@ -33,7 +33,7 @@ void tile_cleanup(void)
     if (game_context.tiles == NULL)
         return;
     for (i32 i = 0; i < game_context.tiles->length; i++)
-        free(list_get(game_context.tiles, i));
+        tile_destroy(list_get(game_context.tiles, i));
     list_destroy(game_context.tiles);
     log_write(INFO, "Cleaned up tiles");
 }

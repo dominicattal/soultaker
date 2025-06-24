@@ -29,14 +29,14 @@ void particle_update(Particle* particle, f32 dt)
 
 void particle_destroy(Particle* particle)
 {
-    free(particle);
+    st_free(particle);
 }
 
 void particle_cleanup(void)
 {
     if (game_context.particles != NULL) {
         for (i32 i = 0; i < game_context.particles->length; i++)
-            free(list_get(game_context.particles, i));
+            particle_destroy(list_get(game_context.particles, i));
         list_destroy(game_context.particles);
     }
 }
