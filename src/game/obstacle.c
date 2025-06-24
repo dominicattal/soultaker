@@ -5,8 +5,6 @@ extern GameContext game_context;
 void obstacle_init(void)
 {
     game_context.obstacles = list_create();
-    obstacle_create(vec2_create(0, 10));
-    //obstacle_create(vec2_create(0, 11));
 }
 
 Obstacle* obstacle_create(vec2 position)

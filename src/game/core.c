@@ -21,6 +21,7 @@ void* game_loop(void* vargp)
 void game_init(void)
 {
     log_write(INFO, "Initializing game...");
+    game_preset_init();
     tile_init();
     wall_init();
     entity_init();
@@ -31,6 +32,9 @@ void game_init(void)
     parjicle_init();
     camera_init();
     game_render_init();
+
+    game_preset_load(game_preset_map_id("test"));
+
     game_context.data.update_tile_buffer = true;
     game_context.data.update_wall_buffer = true;
     game_context.data.update_parstacle_buffer = true;
@@ -71,6 +75,7 @@ void game_cleanup(void)
     obstacle_cleanup();
     particle_cleanup();
     parjicle_cleanup();
+    game_preset_cleanup();
 
     st_free(game_context.data.projectile_buffer);
     st_free(game_context.data.entity_buffer);
