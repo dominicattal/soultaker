@@ -1,7 +1,6 @@
 #include "malloc.h"
 #include "log.h"
 
-#ifdef DEBUG_BUILD
 void* _st_malloc(size_t size, const char* file, int line)
 {
     void* ptr = malloc(size);
@@ -40,7 +39,7 @@ void* _st_calloc(int cnt, size_t size, const char* file, int line)
     }
     return ptr;
 }
-void  _st_free(void* ptr, const char* file, int line)
+void _st_free(void* ptr, const char* file, int line)
 {
     if (ptr == NULL)
         log_write(MEMCTRL, "%s:%d\nfreed NULL", file, line, ptr);
@@ -48,4 +47,3 @@ void  _st_free(void* ptr, const char* file, int line)
         log_write(MEMCTRL, "%s:%d\nfreed memory %p", file, line, ptr);
     free(ptr);
 }
-#endif

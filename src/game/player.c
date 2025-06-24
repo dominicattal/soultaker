@@ -4,6 +4,13 @@
 
 extern GameContext game_context;
 
+vec3 game_get_nearest_player_position(void)
+{
+    if (game_context.player.entity == NULL)
+        return vec3_create(0, 0, 0);
+    return game_context.player.entity->position;
+}
+
 void player_set_state(Player* player, i32 state)
 {
     entity_set_state(player->entity, state);
@@ -11,6 +18,7 @@ void player_set_state(Player* player, i32 state)
 
 void player_update(Player* player, f32 dt)
 {
+    if (player->entity == NULL) return;
     player->shot_timer -= dt;
     player_shoot(player);
     if (player->shot_timer > 0) {

@@ -9,6 +9,8 @@ void game_framebuffer_size_callback(void)
 
 void game_key_callback(i32 key, i32 scancode, i32 action, i32 mods)
 {
+    if (game_context.halt_input)
+        return;
     if (key == GLFW_KEY_O && action == GLFW_PRESS)
         camera_zoom(1);
     if (key == GLFW_KEY_P && action == GLFW_PRESS)

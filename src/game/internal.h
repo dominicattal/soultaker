@@ -3,12 +3,14 @@
 
 #include "../game.h"
 #include "../renderer.h"
+#include "../util.h"
 
 typedef struct {
     f32 yaw, pitch, zoom, fov, move_speed, rotate_speed;
     f32 view[16], proj[16];
     vec3 position, facing, right, up;
     u32 matrices_ubo;
+    bool follow;
 } Camera;
 
 typedef struct {
@@ -125,6 +127,7 @@ typedef struct {
     List* parjicles;
     Camera camera;
     bool kill_thread;
+    bool halt_input;
     pthread_t thread_id;
     pthread_mutex_t data_mutex;
     f32 dt;
@@ -132,12 +135,7 @@ typedef struct {
 
 extern GameContext game_context;
 
-typedef struct {
-    i32 (*texture_get_id)(const char*);
-    i32 (*entity_get_direction)(Entity*);
-} GameApi;
-
-extern GameApi game_api;
+vec3 game_get_nearest_player_position(void);
 
 //**************************************************************************
 
@@ -146,12 +144,6 @@ typedef enum {
     ENTITY_FLAG_UPDATE_FACING
 } EntityFlagEnum;
 
-typedef enum {
-    ENTITY_KNIGHT,
-    NUM_ENTITY_TYPES
-} EntityType;
-
-// main api
 void entity_init(void);
 i32 entity_map_id(const char* handle);
 i32 entity_map_state_id(Entity* entity, const char* handle);
@@ -227,7 +219,7 @@ void game_update_vertex_data(void);
 
 void camera_init(void);
 void camera_update(void);
-void camera_move(vec2 mag);
+void camera_move(vec2 mag, f32 dt);
 void camera_rotate(f32 mag, f32 dt);
 void camera_tilt(f32 mag, f32 dt);
 void camera_zoom(i32 mag);

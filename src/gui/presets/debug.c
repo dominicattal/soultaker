@@ -48,6 +48,7 @@ static void keyfunc(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods)
 {
     if (key == GLFW_KEY_ENTER && action == GLFW_PRESS) {
         if (gui_context.typing_comp == comp) {
+            game_resume_input();
             const char* output;
             if (comp->text != NULL) {
                 output = gui_parse_command(comp->text);
@@ -57,6 +58,7 @@ static void keyfunc(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods)
             gui_comp_set_color(comp, 255, 255, 255, 100);
         }
         else {
+            game_halt_input();
             gui_comp_set_text(comp, 0, "");
             gui_set_typing_comp(comp);
             gui_comp_set_color(comp, 255, 255, 255, 200);
@@ -82,8 +84,6 @@ void load_preset_debug(GUIComp* root)
     gui_comp_set_font(textbox, FONT_MONOSPACE);
     textbox->key_func = keyfunc;
     gui_comp_set_clickable(textbox, true);
-    const char* text = "testing 123";
-    gui_comp_set_text(textbox, strlen(text), text);
 
     gui_comp_attach(root, info);
     gui_comp_attach(root, textbox);

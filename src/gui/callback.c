@@ -5,15 +5,15 @@ extern GUIContext gui_context;
 
 void gui_framebuffer_size_callback(i32 width, i32 height)
 {
-    if (pthread_equal(pthread_self(), gui_context.thread_id)) {
-        gui_comp_set_size(gui_context.root, width, height);
-    } else {
+    if (!pthread_equal(pthread_self(), gui_context.thread_id)) {
         GUIEvent event;
         event.type = GUI_EVENT_FRAMEBUFFER_SIZE_CALLBACK;
         event.args.width = width;
         event.args.height = height;
         gui_event_enqueue(&gui_context.event_queue, event);
+        return;
     }
+    gui_comp_set_size(gui_context.root, width, height);
 }
 
 static bool gui_cursor_pos_callback_helper(GUIComp* comp, f64 xpos, f64 ypos, i32 position_x, i32 position_y, i32 size_x, i32 size_y)
@@ -50,11 +50,7 @@ static bool gui_cursor_pos_callback_helper(GUIComp* comp, f64 xpos, f64 ypos, i3
 
 bool gui_cursor_pos_callback(f64 xpos, f64 ypos)
 {
-    if (gui_context.thread_id == pthread_self()) {
-        bool comp_found = false;
-        comp_found = gui_cursor_pos_callback_helper(gui_context.root, xpos, ypos, 0, 0, 0, 0);
-        return comp_found;
-    } else {
+    if (!pthread_equal(pthread_self(), gui_context.thread_id)) {
         GUIEvent event;
         event.type = GUI_EVENT_CURSOR_POS_CALLBACK;
         event.args.xpos = xpos;
@@ -62,6 +58,9 @@ bool gui_cursor_pos_callback(f64 xpos, f64 ypos)
         gui_event_enqueue(&gui_context.event_queue, event);
         return true;
     }
+    bool comp_found = false;
+    comp_found = gui_cursor_pos_callback_helper(gui_context.root, xpos, ypos, 0, 0, 0, 0);
+    return comp_found;
 }
 
 static bool gui_key_callback_helper(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods)
@@ -82,14 +81,7 @@ static void process_typing_input(i32 key, i32 scancode, i32 action, i32 mods)
 
 bool gui_key_callback(i32 key, i32 scancode, i32 action, i32 mods)
 {
-    if (gui_context.thread_id == pthread_self()) {
-        bool comp_found = true;
-        if (gui_context.typing_comp == NULL)
-            comp_found = gui_key_callback_helper(gui_context.root, key, scancode, action, mods);
-        else
-            process_typing_input(key, scancode, action, mods);
-        return comp_found;
-    } else {
+    if (!pthread_equal(pthread_self(), gui_context.thread_id)) {
         GUIEvent event;
         event.type = GUI_EVENT_KEY_CALLBACK;
         event.args.key = key;
@@ -99,6 +91,12 @@ bool gui_key_callback(i32 key, i32 scancode, i32 action, i32 mods)
         gui_event_enqueue(&gui_context.event_queue, event);
         return true;
     }
+    bool comp_found = true;
+    if (gui_context.typing_comp == NULL)
+        comp_found = gui_key_callback_helper(gui_context.root, key, scancode, action, mods);
+    else
+        process_typing_input(key, scancode, action, mods);
+    return comp_found;
 }
 
 static bool gui_mouse_button_callback_helper(GUIComp* comp, i32 xpos, i32 ypos, i32 button, i32 action, i32 mods, i32 position_x, i32 position_y, i32 size_x, i32 size_y)
@@ -132,14 +130,7 @@ static bool gui_mouse_button_callback_helper(GUIComp* comp, i32 xpos, i32 ypos, 
 
 bool gui_mouse_button_callback(i32 button, i32 action, i32 mods)
 {
-    if (gui_context.thread_id == pthread_self()) {
-        f64 xpos, ypos;
-        bool comp_found = false;
-        xpos = window_cursor_position_x();
-        ypos = window_cursor_position_y();
-        comp_found = gui_mouse_button_callback_helper(gui_context.root, xpos, ypos, button, action, mods, 0, 0, 0, 0);
-        return comp_found;
-    } else {
+    if (!pthread_equal(pthread_self(), gui_context.thread_id)) {
         GUIEvent event;
         event.type = GUI_EVENT_MOUSE_BUTTON_CALLBACK;
         event.args.xpos = window_cursor_position_x();
@@ -150,21 +141,26 @@ bool gui_mouse_button_callback(i32 button, i32 action, i32 mods)
         gui_event_enqueue(&gui_context.event_queue, event);
         return true;
     }
+    f64 xpos, ypos;
+    bool comp_found = false;
+    xpos = window_cursor_position_x();
+    ypos = window_cursor_position_y();
+    comp_found = gui_mouse_button_callback_helper(gui_context.root, xpos, ypos, button, action, mods, 0, 0, 0, 0);
+    return comp_found;
 }
 
 bool gui_char_callback(u32 codepoint)
 {
-    if (gui_context.thread_id == pthread_self()) {
-        bool comp_found = false;
-        if (gui_context.typing_comp != NULL)
-            gui_comp_insert_char(gui_context.typing_comp, codepoint, -1);
-        return comp_found;
-    } else {
+    if (!pthread_equal(pthread_self(), gui_context.thread_id)) {
         GUIEvent event;
         event.type = GUI_EVENT_CHAR_CALLBACK;
         event.args.codepoint = codepoint;
         gui_event_enqueue(&gui_context.event_queue, event);
         return true;
     }
+    bool comp_found = false;
+    if (gui_context.typing_comp != NULL)
+        gui_comp_insert_char(gui_context.typing_comp, codepoint, -1);
+    return comp_found;
 }
 

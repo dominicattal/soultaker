@@ -55,6 +55,8 @@ static void update_proj_matrix(void)
 
 static void lock_onto_target(void)
 {
+    if (!game_context.camera.follow)
+        return;
     if (game_context.player.entity == NULL)
         return;
     game_context.camera.position = vec3_sub(game_context.player.entity->position, vec3_scale(game_context.camera.facing, DISTANCE_FROM_PLAYER));
@@ -73,6 +75,7 @@ void camera_init(void)
     game_context.camera.fov = DEFAULT_FOV;
     game_context.camera.move_speed = DEFAULT_MOVESPEED;
     game_context.camera.rotate_speed = DEFAULT_ROTSPEED;
+    game_context.camera.follow = true;
     update_orientation_vectors();
     lock_onto_target();
     update_view_matrix();
@@ -85,9 +88,9 @@ void camera_update(void)
     update_view_matrix();
 }
 
-void camera_move(vec2 mag)
+void camera_move(vec2 mag, f32 dt)
 {
-    if (game_context.player.entity == NULL)
+    if (game_context.camera.follow && game_context.player.entity == NULL)
         return;
     vec2 direction = vec2_create(0, 0);
     vec2 facing, right;
@@ -100,7 +103,11 @@ void camera_move(vec2 mag)
     direction = vec2_add(direction, vec2_scale(facing, mag.x));
     direction = vec2_add(direction, vec2_scale(right, mag.y));
     direction = vec2_normalize(direction);
-    game_context.player.entity->direction = vec3_create(direction.x, 0, direction.y);
+    vec3 dir3 = vec3_create(direction.x, 0, direction.y);
+    if (game_context.camera.follow)
+        game_context.player.entity->direction = dir3;
+    else
+        game_context.camera.position = vec3_add(game_context.camera.position, vec3_scale(dir3, dt));
 }
 
 void camera_rotate(f32 mag, f32 dt)

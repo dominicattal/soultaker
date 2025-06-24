@@ -1,7 +1,7 @@
 #ifndef ENTITY_KNIGHT_H
 #define ENTITY_KNIGHT_H
 
-#include "../../src/game/internal.h"
+#include "../../../src/api.h"
 #include <math.h>
 
 #define NUM_STATES 3
@@ -10,10 +10,10 @@ typedef struct {
     f32 state_timer;
 } Data;
 
-static GameApi* api;
+static GlobalApi* api;
 
 __declspec(dllexport)
-void entity_knight_init(GameApi* _api)
+void entity_knight_init(GlobalApi* _api)
 {
     api = _api;
 }
@@ -45,13 +45,13 @@ void entity_knight_update(Entity* entity, f32 dt)
 __declspec(dllexport)
 void entity_knight_create(Entity* entity)
 {
-    entity->data = malloc(sizeof(Data));
+    entity->data = api->st_malloc(sizeof(Data));
 }
 
 __declspec(dllexport)
 void entity_knight_destroy(Entity* entity)
 {
-    free(entity->data);
+    api->st_free(entity->data);
 }
 
 __declspec(dllexport)

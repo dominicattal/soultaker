@@ -67,5 +67,32 @@
                 ]
             }
         ]
+    },
+    "enemy": {
+        "init": "entity_enemy_init",
+        "cleanup": "entity_enemy_cleanup",
+        "texture": "entity_enemy_texture",
+        "update": "entity_enemy_update",
+        "create": "entity_enemy_create",
+        "destroy": "entity_enemy_destroy",
+        "states": [
+            { 
+                "name": "idle",
+                "id": 0,
+                "frames": 1,
+                "left": [
+                    "knight_idle_left"
+                ],
+                "right": [
+                    "knight_idle_right"
+                ],
+                "up": [
+                    "knight_idle_up"
+                ],
+                "down": [
+                    "knight_idle_down"
+                ]
+            }
+        ]
     }
 }

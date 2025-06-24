@@ -1,11 +1,12 @@
 #include "internal.h"
 #include "../state.h"
+#include "../api.h"
 #include <windows.h>
 #include <json.h>
 
 extern GameContext game_context;
 
-typedef void (*InitFuncPtr)(GameApi*);
+typedef void (*InitFuncPtr)(GlobalApi*);
 typedef void (*CleanupFuncPtr)(void);
 typedef void (*CreateFuncPtr)(Entity*);
 typedef void (*DestroyFuncPtr)(Entity*);
@@ -158,7 +159,7 @@ static void load_entity_info(void)
     }
 
     for (i32 i = 0; i < entity_context.num_entities; i++)
-        entity_context.infos[i].init(&game_api);
+        entity_context.infos[i].init(&global_api);
 
     json_object_destroy(json);
 }
@@ -178,7 +179,7 @@ i32 entity_map_id(const char* name)
         else
             return m;
     }
-    log_write(ERROR, "Could not map id %s", name);
+    log_write(FATAL, "Could not map id %s", name);
     return -1;
 }
 
@@ -198,6 +199,7 @@ void entity_init(void)
     game_context.player.entity->direction = vec3_create(0, 0, 0);
     game_context.player.entity->size = 1.0;
     entity_set_flag(game_context.player.entity, ENTITY_FLAG_FRIENDLY, 1);
+    entity_create(vec3_create(5,0,5), entity_map_id("enemy"));
     log_write(INFO, "Initialized entities");
 }
 
