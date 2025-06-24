@@ -46,5 +46,6 @@ void window_char_callback(GLFWwindow* window, u32 codepoint)
 
 void window_error_callback(i32 x, const char* message) 
 { 
+    printf("%x %s\n", x, message);
     log_write(FATAL, "GLFW error %x %s", x, message);
 }

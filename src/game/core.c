@@ -1,11 +1,6 @@
 #include "internal.h"
 #include "../renderer.h"
 
-GameApi game_api = {
-    .texture_get_id = texture_get_id,
-    .entity_get_direction = entity_get_direction
-};
-
 GameContext game_context;
 
 void* game_loop(void* vargp)
@@ -49,10 +44,21 @@ void game_init(void)
     log_write(INFO, "Initialized game");
 }
 
+void game_halt_input(void)
+{
+    game_context.halt_input = true;
+}
+
+void game_resume_input(void)
+{
+    game_context.halt_input = false;
+}
+
 void game_cleanup(void)
 {
     log_write(INFO, "Cleaning up game...");
     game_context.kill_thread = true;
+    game_context.halt_input = false;
     pthread_join(game_context.thread_id, NULL);
     pthread_mutex_destroy(&game_context.data_mutex);
     game_render_cleanup();

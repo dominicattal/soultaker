@@ -4,11 +4,12 @@
 #include <stdlib.h>
 #include "type.h"
 
+void* _st_malloc(size_t size, const char* file, int line);
+void* _st_realloc(void* ptr, size_t size, const char* file, int line);
+void* _st_calloc(int cnt, size_t size, const char* file, int line);
+void  _st_free(void* ptr, const char* file, int line);
+
 #ifdef DEBUG_BUILD
-    void* _st_malloc(size_t size, const char* file, int line);
-    void* _st_realloc(void* ptr, size_t size, const char* file, int line);
-    void* _st_calloc(int cnt, size_t size, const char* file, int line);
-    void  _st_free(void* ptr, const char* file, int line);
     #define st_malloc(size) _st_malloc(size, __FILE__, __LINE__)
     #define st_realloc(ptr, size) _st_realloc(ptr, size, __FILE__, __LINE__)
     #define st_calloc(cnt, size) _st_calloc(cnt, size, __FILE__, __LINE__)
