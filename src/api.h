@@ -11,6 +11,8 @@ typedef struct {
     vec3 (*vec3_create)(f32, f32, f32);
     vec2 (*vec2_create)(f32, f32);
     vec3 (*vec3_normalize)(vec3);
+    Tile* (*tile_create)(vec2);
+    Wall* (*wall_create)(vec2, f32);
     void* (*_st_malloc)(size_t, const char*, int);
     void (*_st_free)(void*, const char*, int);
     void (*_log_write)(LogLevel, const char*, const char*, int, ...);

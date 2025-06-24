@@ -10,22 +10,13 @@ typedef struct {
     f32 shot_timer;
 } Data;
 
-static GlobalApi* api;
-
 __declspec(dllexport)
-void entity_enemy_init(GlobalApi* _api)
+void entity_enemy_init(GlobalApi* api)
 {
-    api = _api;
 }
 
 __declspec(dllexport)
-i32 entity_enemy_texture(Entity* entity)
-{
-    return 0;
-}
-
-__declspec(dllexport)
-void entity_enemy_update(Entity* entity, f32 dt)
+void entity_enemy_update(GlobalApi* api, Entity* entity, f32 dt)
 {
     vec3 position;
     vec2 direction;
@@ -48,7 +39,7 @@ void entity_enemy_update(Entity* entity, f32 dt)
 }
 
 __declspec(dllexport)
-void entity_enemy_create(Entity* entity)
+void entity_enemy_create(GlobalApi* api, Entity* entity)
 {
     Data* data = api->st_malloc(sizeof(Data));
     data->shot_timer = 0;
@@ -56,13 +47,13 @@ void entity_enemy_create(Entity* entity)
 }
 
 __declspec(dllexport)
-void entity_enemy_destroy(Entity* entity)
+void entity_enemy_destroy(GlobalApi* api, Entity* entity)
 {
     api->st_free(entity->data);
 }
 
 __declspec(dllexport)
-void entity_enemy_cleanup(void)
+void entity_enemy_cleanup(GlobalApi* api)
 {
 }
 

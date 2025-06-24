@@ -7,11 +7,10 @@
 extern GameContext game_context;
 
 typedef void (*InitFuncPtr)(GlobalApi*);
-typedef void (*CleanupFuncPtr)(void);
-typedef void (*CreateFuncPtr)(Entity*);
-typedef void (*DestroyFuncPtr)(Entity*);
-typedef void (*UpdateFuncPtr)(Entity*, f32);
-typedef i32  (*TextureFuncPtr)(Entity*);
+typedef void (*CleanupFuncPtr)(GlobalApi*);
+typedef void (*CreateFuncPtr)(GlobalApi*, Entity*);
+typedef void (*DestroyFuncPtr)(GlobalApi*, Entity*);
+typedef void (*UpdateFuncPtr)(GlobalApi*, Entity*, f32);
 
 typedef struct {
     char* name;
@@ -27,7 +26,6 @@ typedef struct {
     CreateFuncPtr create;
     DestroyFuncPtr destroy;
     UpdateFuncPtr update;
-    TextureFuncPtr texture;
     EntityState* states;
     i32 num_states;
 } EntityInfo;
@@ -123,7 +121,7 @@ static void load_entity_info(void)
     JsonObject* json = json_read("config/entities.json");
     log_assert(json, "Could not read entity config file");
     JsonIterator* it = json_iterator_create(json);
-    log_assert(it, "Could not created iterator for config file");
+    log_assert(it, "Could not create iterator for config file");
     JsonMember* member;
     JsonValue* val_object;
     JsonValue* val_string;
@@ -136,7 +134,7 @@ static void load_entity_info(void)
         log_assert(member, "Could not get member from entity config file");
 
         string = json_member_key(member);
-        log_assert(member, "Could not get key from entity config file");
+        log_assert(string, "Could not get key from entity config file");
         entity_context.infos[i].name = copy_string(string);
 
         val_object = json_member_value(member);
@@ -151,7 +149,6 @@ static void load_entity_info(void)
         LOAD_ENTITY_FUNCTION(CreateFuncPtr, object, "create", entity_context.infos[i].create);
         LOAD_ENTITY_FUNCTION(DestroyFuncPtr, object, "destroy", entity_context.infos[i].destroy);
         LOAD_ENTITY_FUNCTION(UpdateFuncPtr, object, "update", entity_context.infos[i].update);
-        LOAD_ENTITY_FUNCTION(TextureFuncPtr, object, "texture", entity_context.infos[i].texture);
 
         load_state_info(i, object);
 
@@ -223,7 +220,7 @@ Entity* entity_create(vec3 position, i32 type)
     entity->frame = 0;
     entity_set_flag(entity, ENTITY_FLAG_UPDATE_FACING, 1);
 
-    entity_context.infos[type].create(entity);
+    entity_context.infos[type].create(&global_api, entity);
     list_append(game_context.entities, entity);
     return entity;
 }
@@ -236,7 +233,7 @@ void entity_update(Entity* entity, f32 dt)
     if (entity_get_flag(entity, ENTITY_FLAG_UPDATE_FACING) && vec3_mag(entity->direction) > 0)
         entity->facing = vec2_create(entity->direction.x, entity->direction.z);
 
-    entity_context.infos[entity->type].update(entity, dt);
+    entity_context.infos[entity->type].update(&global_api, entity, dt);
 }
 
 void entity_set_flag(Entity* entity, EntityFlagEnum flag, u32 val)
@@ -276,7 +273,7 @@ i32 entity_get_texture(Entity* entity)
 
 void entity_destroy(Entity* entity)
 {
-    entity_context.infos[entity->type].destroy(entity);
+    entity_context.infos[entity->type].destroy(&global_api, entity);
     st_free(entity);
 }
 
@@ -289,7 +286,7 @@ void entity_cleanup(void)
         list_destroy(game_context.entities);
     }
     for (i32 i = 0; i < entity_context.num_entities; i++) {
-        entity_context.infos[i].cleanup();
+        entity_context.infos[i].cleanup(&global_api);
         st_free(entity_context.infos[i].name);
         for (i32 j = 0; j < entity_context.infos[i].num_states; j++) {
             st_free(entity_context.infos[i].states[j].name);

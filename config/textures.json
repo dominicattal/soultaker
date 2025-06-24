@@ -34,15 +34,45 @@
                 "pivot_y": 0.0,
                 "stretch_x": 1.375,
                 "stretch_y": 1.0
+            },
+            "knight_shooting_left_2":{
+                "location": [72, 0, 11, 8],
+                "pivot_x": -0.375,
+                "pivot_y": 0.0,
+                "stretch_x": 1.375,
+                "stretch_y": 1.0
             }
         }
     },
-    "knight_shooting_left_2": {
-        "path": "assets/textures/knight/knight_shoot_left_2.png",
-        "location": [0, 0, 11, 8],
-        "pivot_x": -0.375,
-        "pivot_y": 0.0,
-        "stretch_x": 1.375,
-        "stretch_y": 1.0
+    "shaitan": {
+        "spritesheet": true,
+        "path": "assets/textures/shaitan.png",
+        "textures": {
+            "shaitan_the_advisor_open": [0, 0, 16, 16],
+            "shaitan_the_advisor_closed": [17, 0, 16, 16],
+            "shaitan_hand_closed_left_1": [34, 0, 16, 16],
+            "shaitan_hand_closed_left_2": [51, 0, 16, 16],
+            "shaitan_hand_closed_right_1": [68, 0, 16, 16],
+            "shaitan_hand_closed_right_2": [86, 0, 16, 16],
+            "shaitan_hand_open_left": [103, 0, 16, 16],
+            "shaitan_hand_open_right": [0, 17, 16, 16],
+            "shaitan_fireball": [17, 17, 8, 8],
+            "shaitan_flamebreath": [26, 17, 8, 8],
+            "shaitan_firestorm": [35, 17, 12, 12],
+            "shaitan_firewave": [48, 16, 13, 13],
+            "shaitan_firebullet": [63, 16, 8, 8],
+            "shaitan_laser_body": [73, 16, 15, 5],
+            "shaitan_laser_head": [73, 22, 15, 7],
+            "shaitan_laser_tail": [18, 26, 15, 5],
+            "shaitan_floor_1": [90, 16, 8, 8],
+            "shaitan_floor_2": [99, 16, 8, 8],
+            "shaitan_hellstone": [108, 16, 8, 8],
+            "shaitan_lava": [117, 16, 8, 8],
+            "shaitan_wall_side": [0, 34, 8, 16],
+            "shaitan_wall_top": [9, 34, 8, 8],
+            "shaitan_web": [18, 34, 7, 7],
+            "shaitan_bars_top": [26, 34, 8, 4],
+            "shaitan_bars_side": [89, 26, 8, 16]
+        }
     }
 }

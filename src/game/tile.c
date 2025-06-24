@@ -7,9 +7,6 @@ void tile_init(void)
 {
     log_write(INFO, "Initializing tiles...");
     game_context.tiles = list_create();
-    for (i32 i = -10; i <= 10; i++)
-        for (i32 j = -10; j <= 10; j++)
-            tile_create(vec2_create(i, j));
     log_write(INFO, "Initialized tiles");
 }
 

@@ -26,7 +26,9 @@ PLUGIN_OBJS_DEV = $(PLUGIN_SOURCES:%.c=$(DIR_OBJ)/dev/%.o)
 OBJS_REL = $(SOURCES:%.c=$(DIR_OBJ)/release/%.o)
 PLUGIN_OBJS_REL = $(PLUGIN_SOURCES:%.c=$(DIR_OBJ)/release/%.o)
 DEPS_DEV = $(OBJS_DEV:%.o=%.d)
+PLUGIN_DEPS_DEV = $(PLUGIN_OBJS_DEV:%.o=%.d)
 DEPS_REL = $(OBJS_REL:%.o=%.d)
+PLUGIN_DEPS_REL = $(PLUGIN_OBJS_REL:%.o=%.d)
 
 all: dev
 
@@ -64,6 +66,8 @@ $(DIR_OBJ)/release/%.o: %.c
 
 -include $(DEPS_DEV)
 -include $(DEPS_REL)
+-include $(PLUGIN_DEPS_DEV)
+-include $(PLUGIN_DEPS_REL)
 
 clean:
 	rm -rf $(DIR_OBJ) $(DIR_DEP) $(DIR_BIN)

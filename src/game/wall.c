@@ -7,18 +7,6 @@ void wall_init(void)
 {
     log_write(INFO, "Initializing walls...");
     game_context.walls = list_create();
-    Wall* wall = wall_create(vec2_create(-3, -3), 1.5f);
-    wall->size = vec2_create(0.5, 0.5);
-    wall = wall_create(vec2_create(-1, -1), 1.5f);
-    wall->size = vec2_create(1, 0);
-    wall_create(vec2_create(-5, -3), 1.5f);
-    i32 a = 11;
-    for (i32 i = -a; i <= a; i++) {
-        wall_create(vec2_create(i, -a), 1.5f);
-        wall_create(vec2_create(a, i), 1.5f);
-        wall_create(vec2_create(-i-1, a), 1.5f);
-        wall_create(vec2_create(-a, -i-1), 1.5f);
-    }
     log_write(INFO, "Initialized walls");
 }
 

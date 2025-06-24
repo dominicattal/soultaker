@@ -137,6 +137,11 @@ extern GameContext game_context;
 
 vec3 game_get_nearest_player_position(void);
 
+void game_preset_init(void);
+i32  game_preset_map_id(const char* name);
+void game_preset_load(i32 id);
+void game_preset_cleanup(void);
+
 //**************************************************************************
 
 typedef enum {

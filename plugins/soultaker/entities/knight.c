@@ -1,6 +1,3 @@
-#ifndef ENTITY_KNIGHT_H
-#define ENTITY_KNIGHT_H
-
 #include "../../../src/api.h"
 #include <math.h>
 
@@ -10,22 +7,13 @@ typedef struct {
     f32 state_timer;
 } Data;
 
-static GlobalApi* api;
-
 __declspec(dllexport)
-void entity_knight_init(GlobalApi* _api)
+void entity_knight_init(GlobalApi* api)
 {
-    api = _api;
 }
 
 __declspec(dllexport)
-i32 entity_knight_texture(Entity* entity)
-{
-    return 0;
-}
-
-__declspec(dllexport)
-void entity_knight_update(Entity* entity, f32 dt)
+void entity_knight_update(GlobalApi* api, Entity* entity, f32 dt)
 {
     f32 frame_length;
     switch (entity->state) {
@@ -43,20 +31,18 @@ void entity_knight_update(Entity* entity, f32 dt)
 }
 
 __declspec(dllexport)
-void entity_knight_create(Entity* entity)
+void entity_knight_create(GlobalApi* api, Entity* entity)
 {
     entity->data = api->st_malloc(sizeof(Data));
 }
 
 __declspec(dllexport)
-void entity_knight_destroy(Entity* entity)
+void entity_knight_destroy(GlobalApi* api, Entity* entity)
 {
     api->st_free(entity->data);
 }
 
 __declspec(dllexport)
-void entity_knight_cleanup(void)
+void entity_knight_cleanup(GlobalApi* api)
 {
 }
-
-#endif
