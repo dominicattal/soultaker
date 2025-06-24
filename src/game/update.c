@@ -149,7 +149,7 @@ void game_update_objects(void)
         Entity* entity = list_get(game_context.entities, i);
         entity_update(entity, game_context.dt);
         if (entity->health <= 0)
-            list_remove(game_context.entities, i);
+            entity_destroy(list_remove(game_context.entities, i));
         else
             i++;
     }
@@ -158,7 +158,7 @@ void game_update_objects(void)
         Projectile* projectile = list_get(game_context.projectiles, i);
         projectile_update(projectile, game_context.dt);
         if (projectile->lifetime <= 0)
-            list_remove(game_context.projectiles, i);
+            projectile_destroy(list_remove(game_context.projectiles, i));
         else
             i++;
     }
@@ -167,7 +167,7 @@ void game_update_objects(void)
         Particle* particle = list_get(game_context.particles, i);
         particle_update(particle, game_context.dt);
         if (particle->lifetime <= 0)
-            list_remove(game_context.particles, i);
+            particle_destroy(list_remove(game_context.particles, i));
         else
             i++;
     }
@@ -176,7 +176,7 @@ void game_update_objects(void)
         Parjicle* parjicle = list_get(game_context.parjicles, i);
         parjicle_update(parjicle, game_context.dt);
         if (parjicle->lifetime <= 0)
-            list_remove(game_context.parjicles, i);
+            parjicle_destroy(list_remove(game_context.parjicles, i));
         else
             i++;
     }

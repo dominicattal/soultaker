@@ -20,7 +20,7 @@ Obstacle* obstacle_create(vec2 position)
 
 void obstacle_destroy(Obstacle* obstacle)
 {
-    free(obstacle);
+    st_free(obstacle);
 }
 
 void obstacle_cleanup(void)
@@ -28,6 +28,6 @@ void obstacle_cleanup(void)
     if (game_context.obstacles == NULL)
         return;
     for (i32 i = 0; i < game_context.obstacles->length; i++)
-        free(list_get(game_context.obstacles, i));
+        obstacle_destroy(list_get(game_context.obstacles, i));
     list_destroy(game_context.obstacles);
 }

@@ -22,7 +22,7 @@ Parjicle* parjicle_create(vec3 position)
 
 void parjicle_destroy(Parjicle* parjicle)
 {
-    free(parjicle);
+    st_free(parjicle);
 }
 
 void parjicle_update(Parjicle* parjicle, f32 dt)
@@ -46,6 +46,6 @@ void parjicle_cleanup(void)
     if (game_context.parjicles == NULL)
         return;
     for (i32 i = 0; i < game_context.parjicles->length; i++)
-        free(list_get(game_context.parjicles, i));
+        parjicle_destroy(list_get(game_context.parjicles, i));
     list_destroy(game_context.parjicles);
 }

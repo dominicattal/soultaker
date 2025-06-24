@@ -36,7 +36,7 @@ Wall* wall_create(vec2 position, f32 height)
 
 void wall_destroy(Wall* wall)
 {
-    free(wall);
+    st_free(wall);
 }
 
 void wall_cleanup(void)
@@ -45,7 +45,7 @@ void wall_cleanup(void)
     if (game_context.walls == NULL)
         return;
     for (i32 i = 0; i < game_context.walls->length; i++)
-        free(list_get(game_context.walls, i));
+        wall_destroy(list_get(game_context.walls, i));
     list_destroy(game_context.walls);
     log_write(INFO, "Cleaned up walls");
 }

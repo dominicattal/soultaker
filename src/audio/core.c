@@ -41,7 +41,7 @@ static void load_sound(ALuint id, char *path)
 
     numSamples = sf_read_short(file, samples, sfinfo.frames * sfinfo.channels);
     if (numSamples != sfinfo.frames * sfinfo.channels) {
-        free(samples);
+        st_free(samples);
         sf_close(file);
         log_write(FATAL, "Failed to read all samples from file %s", path);
     }
@@ -51,7 +51,7 @@ static void load_sound(ALuint id, char *path)
     alBufferData(audio_context.buffers[id], format, samples, size, freq);
     checkError("Failed to fill buffer with data.");
 
-    free(samples);
+    st_free(samples);
 }
 
 static void load_sounds(void)
