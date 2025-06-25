@@ -11,6 +11,7 @@ void* game_loop(void* vargp)
     {
         start = get_time();
         game_update();
+        game_event_queue_flush();
         game_update_vertex_data();
         game_context.dt = get_time() - start;
     }
@@ -31,9 +32,10 @@ void game_init(void)
     particle_init();
     parjicle_init();
     camera_init();
+    player_reset();
     game_render_init();
 
-    game_preset_load(game_preset_map_id("test"));
+    game_preset_load(game_preset_map_id("shaitan"));
 
     game_context.data.update_tile_buffer = true;
     game_context.data.update_wall_buffer = true;

@@ -189,16 +189,18 @@ i32 entity_map_state_id(Entity* entity, const char* name)
 void entity_init(void)
 {
     log_write(INFO, "Initializing entities...");
-    load_entity_info();
-
-    i32 knight_id = entity_map_id("knight");
     game_context.entities = list_create();
-    game_context.player.entity = entity_create(vec3_create(0, 0, 0), knight_id);
-    game_context.player.entity->direction = vec3_create(0, 0, 0);
-    game_context.player.entity->size = 1.0;
-    entity_set_flag(game_context.player.entity, ENTITY_FLAG_FRIENDLY, 1);
-    entity_create(vec3_create(5,0,5), entity_map_id("enemy"));
+    load_entity_info();
     log_write(INFO, "Initialized entities");
+}
+
+void entity_clear(void)
+{
+    if (game_context.entities == NULL)
+        return;
+    while (game_context.entities->length > 0)
+        entity_destroy(list_remove(game_context.entities, 0));
+    game_context.player.entity = NULL;
 }
 
 Entity* entity_create(vec3 position, i32 type)

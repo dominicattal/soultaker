@@ -7,6 +7,14 @@ void parjicle_init(void)
     game_context.parjicles = list_create();
 }
 
+void parjicle_clear(void)
+{
+    if (game_context.parjicles == NULL)
+        return;
+    while (game_context.parjicles->length > 0)
+        parjicle_destroy(list_remove(game_context.parjicles, 0));
+}
+
 Parjicle* parjicle_create(vec3 position)
 {
     Parjicle* parjicle = st_malloc(sizeof(Parjicle));

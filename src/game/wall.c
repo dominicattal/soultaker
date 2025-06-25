@@ -10,6 +10,14 @@ void wall_init(void)
     log_write(INFO, "Initialized walls");
 }
 
+void wall_clear(void)
+{
+    if (game_context.walls == NULL)
+        return;
+    while (game_context.walls->length > 0)
+        wall_destroy(list_remove(game_context.walls, 0));
+}
+
 Wall* wall_create(vec2 position, f32 height)
 {
     Wall* wall = st_malloc(sizeof(Wall));

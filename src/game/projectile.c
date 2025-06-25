@@ -7,6 +7,14 @@ void projectile_init(void)
     game_context.projectiles = list_create();
 }
 
+void projectile_clear(void)
+{
+    if (game_context.projectiles == NULL)
+        return;
+    while (game_context.projectiles->length > 0)
+        projectile_destroy(list_remove(game_context.projectiles, 0));
+}
+
 Projectile* projectile_create(vec3 position)
 {
     Projectile* proj = st_malloc(sizeof(Projectile));
