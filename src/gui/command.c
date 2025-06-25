@@ -2,12 +2,15 @@
 #define COMMAND_H
 
 #include "internal.h"
+#include "../game.h"
 #include <ctype.h>
 
 #define ERROR       -1
 #define START       0
 #define LOGLEVEL    1
 #define LOGLEVELFIN 2
+#define PRESET      3
+#define PRESETFIN   4
 
 extern GUIContext gui_context;
 
@@ -24,6 +27,10 @@ static const char* state_string(i32 state)
             return "Must provide log level";
         case LOGLEVELFIN:
             return "Successfully changed log level";
+        case PRESET:
+            return "Must provide preset name";
+        case PRESETFIN:
+            return "Successfully loaded preset";
     }
     return "";
 }
@@ -43,6 +50,8 @@ static i32 new_state(i32 state, char* command, i32 left, i32 right)
         case START:
             if (cmp("loglevel", command, left, right))
                 return LOGLEVEL;
+            if (cmp("load", command, left, right))
+                return PRESET;
             return ERROR;
         case LOGLEVEL:
             i32 level;
@@ -57,6 +66,16 @@ static i32 new_state(i32 state, char* command, i32 left, i32 right)
             }
             log_set_level(level);
             return LOGLEVELFIN;
+        case PRESET:
+            command[right+1] = '\0';
+            i32 id = game_preset_map_id(command+left);
+            command[right+1] = '\0';
+            if (id == -1) {
+                error_message = "Invalid preset name";
+                return ERROR;
+            }
+            game_event_create_preset_load(id);
+            return PRESETFIN;
     }
     return 0;
 }

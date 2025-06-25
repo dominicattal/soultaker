@@ -21,7 +21,7 @@ PresetContext preset_context;
 
 void game_preset_init(void)
 {
-    JsonObject* json = json_read("config/preset.json");
+    JsonObject* json = json_read("config/presets.json");
     log_assert(json, "Could not read preset config file");
     JsonIterator* it = json_iterator_create(json);
     log_assert(json, "Could not create iterator for preset config file");
@@ -53,7 +53,7 @@ void game_preset_init(void)
     json_object_destroy(json);
 }
 
-i32  game_preset_map_id(const char* name)
+i32 game_preset_map_id(const char* name)
 {
     int l, r, m, a;
     l = 0;
@@ -68,12 +68,29 @@ i32  game_preset_map_id(const char* name)
         else
             return m;
     }
-    log_write(FATAL, "Could not map id %s", name);
+    log_write(WARNING, "Could not map preset %s", name);
     return -1;
 }
 
 void game_preset_load(i32 id)
 {
+    entity_clear();
+    tile_clear();
+    wall_clear();
+    projectile_clear();
+    parstacle_clear();
+    obstacle_clear();
+    particle_clear();
+    parjicle_clear();
+    player_reset();
+    game_context.data.update_tile_buffer = true;
+    game_context.data.update_wall_buffer = true;
+    game_context.data.update_parstacle_buffer = true;
+    game_context.data.update_obstacle_buffer = true;
+    game_context.data_swap.update_tile_buffer = true;
+    game_context.data_swap.update_wall_buffer = true;
+    game_context.data_swap.update_parstacle_buffer = true;
+    game_context.data_swap.update_obstacle_buffer = true;
     preset_context.presets[id].load(&global_api);
 }
 

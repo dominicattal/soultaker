@@ -7,6 +7,14 @@ void obstacle_init(void)
     game_context.obstacles = list_create();
 }
 
+void obstacle_clear(void)
+{
+    if (game_context.obstacles == NULL)
+        return;
+    while (game_context.obstacles->length > 0)
+        obstacle_destroy(list_remove(game_context.obstacles, 0));
+}
+
 Obstacle* obstacle_create(vec2 position)
 {
     Obstacle* obstacle = st_malloc(sizeof(Obstacle));

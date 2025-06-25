@@ -4,6 +4,17 @@
 
 extern GameContext game_context;
 
+void player_reset(void)
+{
+    if (game_context.player.entity != NULL)
+        log_write(WARNING, "Did not free player entity before resetting");
+    i32 knight_id = entity_map_id("knight");
+    game_context.player.entity = entity_create(vec3_create(0, 0, 0), knight_id);
+    game_context.player.entity->direction = vec3_create(0, 0, 0);
+    game_context.player.entity->size = 1.0;
+    entity_set_flag(game_context.player.entity, ENTITY_FLAG_FRIENDLY, 1);
+}
+
 vec3 game_get_nearest_player_position(void)
 {
     if (game_context.player.entity == NULL)

@@ -10,6 +10,14 @@ void tile_init(void)
     log_write(INFO, "Initialized tiles");
 }
 
+void tile_clear(void)
+{
+    if (game_context.tiles == NULL)
+        return;
+    while (game_context.tiles->length > 0)
+        tile_destroy(list_remove(game_context.tiles, 0));
+}
+
 Tile* tile_create(vec2 position)
 {
     Tile* tile = st_malloc(sizeof(Tile));

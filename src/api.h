@@ -7,7 +7,10 @@
 typedef struct {
     i32 (*entity_get_direction)(Entity*);
     vec3 (*game_get_nearest_player_position)(void);
-    Projectile* (*projectile_create)(vec3 position);
+    Entity* (*entity_create)(vec3, i32);
+    i32 (*entity_map_id)(const char*);
+    Projectile* (*projectile_create)(vec3);
+    i32 (*texture_get_id)(const char*);
     vec3 (*vec3_create)(f32, f32, f32);
     vec2 (*vec2_create)(f32, f32);
     vec3 (*vec3_normalize)(vec3);

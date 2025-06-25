@@ -79,7 +79,6 @@ void log_init(char* exe_path)
     char log_dir[n+10];
     strncpy(log_dir, dir, n+1);
     strncpy(&log_dir[n], "\\logs", 6);
-    level = DEBUG;
     stream = stderr;
 #ifdef RELEASE_BUILD
     if (mkdir(log_dir) != 0 && errno != EEXIST) {

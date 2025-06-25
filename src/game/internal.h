@@ -135,10 +135,10 @@ typedef struct {
 
 extern GameContext game_context;
 
+void game_event_queue_flush(void);
 vec3 game_get_nearest_player_position(void);
 
 void game_preset_init(void);
-i32  game_preset_map_id(const char* name);
 void game_preset_load(i32 id);
 void game_preset_cleanup(void);
 
@@ -150,6 +150,7 @@ typedef enum {
 } EntityFlagEnum;
 
 void entity_init(void);
+void entity_clear(void);
 i32 entity_map_id(const char* handle);
 i32 entity_map_state_id(Entity* entity, const char* handle);
 Entity* entity_create(vec3 position, i32 type);
@@ -162,6 +163,7 @@ i32 entity_get_texture(Entity* entity);
 void entity_destroy(Entity* entity);
 void entity_cleanup(void);
 
+void player_reset(void);
 void player_update(Player* player, f32 dt);
 void player_shoot(Player* player);
 void player_set_state(Player* player, i32 state);
@@ -169,11 +171,13 @@ void player_set_state(Player* player, i32 state);
 //**************************************************************************
  
 void tile_init(void);
+void tile_clear(void);
 Tile* tile_create(vec2 position);
 void tile_destroy(Tile* tile);
 void tile_cleanup(void);
 
 void wall_init(void);
+void wall_clear(void);
 Wall* wall_create(vec2 position, f32 height);
 void wall_destroy(Wall* wall);
 void wall_cleanup(void);
@@ -184,6 +188,7 @@ typedef enum {
 } ProjectileFlagEnum;
 
 void projectile_init(void);
+void projectile_clear(void);
 Projectile* projectile_create(vec3 position);
 void projectile_update(Projectile* projectile, f32 dt);
 void projectile_set_flag(Projectile* proj, ProjectileFlagEnum flag, u32 val);
@@ -192,16 +197,19 @@ void projectile_destroy(Projectile* projectile);
 void projectile_cleanup(void);
 
 void parstacle_init(void);
+void parstacle_clear(void);
 Parstacle* parstacle_create(vec2 position);
 void parstacle_destroy(Parstacle* parstacle);
 void parstacle_cleanup(void);
 
 void obstacle_init(void);
+void obstacle_clear(void);
 Obstacle* obstacle_create(vec2 position);
 void obstacle_destroy(Obstacle* obstacle);
 void obstacle_cleanup(void);
 
 void particle_init(void);
+void particle_clear(void);
 Particle* particle_create(vec3 position);
 void particle_update(Particle* particle, f32 dt);
 void particle_destroy(Particle* particle);
@@ -212,6 +220,7 @@ typedef enum {
 } ParjicleFlagEnum;
 
 void parjicle_init(void);
+void parjicle_clear(void);
 Parjicle* parjicle_create(vec3 position);
 void parjicle_update(Parjicle* parjicle, f32 dt);
 void parjicle_set_flag(Parjicle* parjicle, ParjicleFlagEnum flag, u32 val);

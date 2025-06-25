@@ -7,6 +7,14 @@ void parstacle_init(void)
     game_context.parstacles = list_create();
 }
 
+void parstacle_clear(void)
+{
+    if (game_context.parstacles == NULL)
+        return;
+    while (game_context.parstacles->length > 0)
+        parstacle_destroy(list_remove(game_context.parstacles, 0));
+}
+
 Parstacle* parstacle_create(vec2 position)
 {
     Parstacle* parstacle = st_malloc(sizeof(Parstacle));

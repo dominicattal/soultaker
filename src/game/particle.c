@@ -7,6 +7,14 @@ void particle_init(void)
     game_context.particles = list_create();
 }
 
+void particle_clear(void)
+{
+    if (game_context.particles == NULL)
+        return;
+    while (game_context.particles->length > 0)
+        particle_destroy(list_remove(game_context.particles, 0));
+}
+
 Particle* particle_create(vec3 position)
 {
     Particle* particle = st_malloc(sizeof(Particle));

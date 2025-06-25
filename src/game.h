@@ -3,6 +3,9 @@
 
 #include "util.h"
 
+i32  game_preset_map_id(const char* name);
+void game_event_create_preset_load(i32 id);
+
 void game_init(void);
 void game_cleanup(void);
 void game_process_input(f32 dt);
