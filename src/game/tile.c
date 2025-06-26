@@ -33,8 +33,19 @@ Tile* tile_create(vec2 position)
     tile->collide = tile_do_nothing;
     tile->position = position;
     tile->tex = texture_get_id("tile_1");
+    tile->flags = 0;
     list_append(game_context.tiles, tile);
     return tile;
+}
+
+void tile_set_flag(Tile* tile, TileFlagEnum flag, u32 val)
+{
+    tile->flags = (tile->flags & ~(1<<flag)) | (val<<flag);
+}
+
+bool tile_get_flag(Tile* tile, TileFlagEnum flag)
+{
+    return (tile->flags >> flag) & 1;
 }
 
 void tile_destroy(Tile* tile)

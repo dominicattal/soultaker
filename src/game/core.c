@@ -14,6 +14,7 @@ void* game_loop(void* vargp)
         game_event_queue_flush();
         game_update_vertex_data();
         game_context.dt = get_time() - start;
+        game_context.time += game_context.dt;
     }
     log_write(INFO, "Exiting game loop");
     return NULL;

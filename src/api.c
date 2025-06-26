@@ -10,6 +10,8 @@ GlobalApi global_api = {
     REGISTER(game_get_nearest_player_position),
     REGISTER(game_set_player_position),
     REGISTER(projectile_create),
+    REGISTER(tile_set_flag),
+    REGISTER(tile_get_flag),
     REGISTER(tile_lava_collision),
     REGISTER(entity_create),
     REGISTER(entity_map_id),

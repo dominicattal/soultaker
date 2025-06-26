@@ -47,6 +47,7 @@ typedef struct {
     TileCollisionFuncPtr collide;
     vec2 position;
     i32 tex;
+    u32 flags;
 } Tile;
 
 typedef struct {
@@ -139,6 +140,7 @@ typedef struct {
     bool halt_input;
     pthread_t thread_id;
     pthread_mutex_t data_mutex;
+    f32 time;
     f32 dt;
 } GameContext;
 
@@ -183,9 +185,18 @@ void player_shoot(Player* player);
 void player_set_state(Player* player, i32 state);
 
 //**************************************************************************
+
+typedef enum {
+    TILE_FLAG_ANIMATE_HORIZONTAL_POS,
+    TILE_FLAG_ANIMATE_HORIZONTAL_NEG,
+    TILE_FLAG_ANIMATE_VERTICAL_POS,
+    TILE_FLAG_ANIMATE_VERTICAL_NEG
+} TileFlagEnum;
  
 void tile_init(void);
 void tile_clear(void);
+void tile_set_flag(Tile* tile, TileFlagEnum flag, u32 val);
+bool tile_get_flag(Tile* tile, TileFlagEnum flag);
 Tile* tile_create(vec2 position);
 void tile_destroy(Tile* tile);
 void tile_cleanup(void);

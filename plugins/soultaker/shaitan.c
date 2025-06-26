@@ -14,6 +14,8 @@ static void create_unit(GlobalApi* api, u32 color, vec2 position)
             tile = api->tile_create(position);
             tile->tex = api->texture_get_id("shaitan_lava");
             tile->collide = api->tile_lava_collision;
+            api->tile_set_flag(tile, TILE_FLAG_ANIMATE_VERTICAL_POS, 1);
+            api->tile_set_flag(tile, TILE_FLAG_ANIMATE_HORIZONTAL_POS, 1);
             break;
         case FLOOR_1:
             tile = api->tile_create(position);
@@ -34,10 +36,10 @@ static void create_unit(GlobalApi* api, u32 color, vec2 position)
 static void create_bars(GlobalApi* api, i32 side_tex, i32 top_tex, vec2 position)
 {
     Wall* wall;
-    wall = api->wall_create(api->vec2_create(position.x, position.y+0.4), 1.5f);
+    wall = api->wall_create(api->vec2_create(position.x, position.y+0.5), 1.5f);
     wall->side_tex = side_tex;
     wall->top_tex = top_tex;
-    wall->size.y = 0.1;
+    wall->size.y = 0.0;
 }
 
 __declspec(dllexport)
