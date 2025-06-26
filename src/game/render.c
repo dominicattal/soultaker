@@ -710,8 +710,8 @@ static void render_projectiles(void)
 void game_render(void)
 {
     camera_update();
-    render_tiles();
     glEnable(GL_DEPTH_TEST);
+    render_tiles();
     render_walls();
     render_obstacles();
     render_parstacles();

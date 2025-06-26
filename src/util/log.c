@@ -7,7 +7,7 @@
 
 static FILE* stream;
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-static int level = MEMCTRL;
+static int level = DEBUG;
 
 #ifdef DEBUG_BUILD
 static const char* severity_string(LogLevel severity)

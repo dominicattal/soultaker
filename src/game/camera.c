@@ -59,7 +59,9 @@ static void lock_onto_target(void)
         return;
     if (game_context.player.entity == NULL)
         return;
-    game_context.camera.position = vec3_sub(game_context.player.entity->position, vec3_scale(game_context.camera.facing, DISTANCE_FROM_PLAYER));
+    vec3 position = game_context.player.entity->position;
+    position.y = 0.0;
+    game_context.camera.position = vec3_sub(position, vec3_scale(game_context.camera.facing, DISTANCE_FROM_PLAYER));
 }
 
 void camera_init(void)
@@ -76,6 +78,14 @@ void camera_init(void)
     game_context.camera.move_speed = DEFAULT_MOVESPEED;
     game_context.camera.rotate_speed = DEFAULT_ROTSPEED;
     game_context.camera.follow = true;
+    update_orientation_vectors();
+    lock_onto_target();
+    update_view_matrix();
+    update_proj_matrix();
+}
+
+void camera_reset(void)
+{
     update_orientation_vectors();
     lock_onto_target();
     update_view_matrix();

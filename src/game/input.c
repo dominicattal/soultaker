@@ -31,6 +31,6 @@ void game_process_input(f32 dt)
         camera_tilt(-1, dt);
     if (window_get_mouse_button(GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
         game_context.player.shooting = true;
-    camera_move(vec2_normalize(move_mag), dt);
+    game_event_create_camera_rotate(vec2_normalize(move_mag));
 }
 

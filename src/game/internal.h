@@ -23,6 +23,7 @@ typedef struct {
     f32 health;
     f32 haste;
     f32 state_timer;
+    f32 tile_timer;
     u32 flags;
     i32 type;
     i32 state;
@@ -40,7 +41,10 @@ typedef struct {
     u32 flags;
 } Projectile;
 
+typedef void (*TileCollisionFuncPtr)(Entity* entity);
+
 typedef struct {
+    TileCollisionFuncPtr collide;
     vec2 position;
     i32 tex;
 } Tile;
@@ -91,6 +95,11 @@ typedef struct {
 } Player;
 
 typedef struct {
+    i32 width, length;
+    u32* data;
+} Map;
+
+typedef struct {
     i32 tile_length, tile_capacity;
     GLfloat* tile_buffer;
     bool update_tile_buffer;
@@ -135,6 +144,10 @@ typedef struct {
 
 extern GameContext game_context;
 
+Map* map_load(const char* path);
+void map_free(Map* map);
+void game_set_player_position(vec3 position);
+
 void game_event_queue_flush(void);
 vec3 game_get_nearest_player_position(void);
 
@@ -146,7 +159,8 @@ void game_preset_cleanup(void);
 
 typedef enum {
     ENTITY_FLAG_FRIENDLY,
-    ENTITY_FLAG_UPDATE_FACING
+    ENTITY_FLAG_UPDATE_FACING,
+    ENTITY_FLAG_IN_LAVA
 } EntityFlagEnum;
 
 void entity_init(void);
@@ -175,6 +189,7 @@ void tile_clear(void);
 Tile* tile_create(vec2 position);
 void tile_destroy(Tile* tile);
 void tile_cleanup(void);
+void tile_lava_collision(Entity* entity);
 
 void wall_init(void);
 void wall_clear(void);
@@ -232,6 +247,7 @@ void game_update(void);
 void game_update_vertex_data(void);
 
 void camera_init(void);
+void camera_reset(void);
 void camera_update(void);
 void camera_move(vec2 mag, f32 dt);
 void camera_rotate(f32 mag, f32 dt);

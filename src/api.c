@@ -4,9 +4,13 @@
     .name = name
 
 GlobalApi global_api = {
+    REGISTER(map_load),
+    REGISTER(map_free),
     REGISTER(entity_get_direction),
     REGISTER(game_get_nearest_player_position),
+    REGISTER(game_set_player_position),
     REGISTER(projectile_create),
+    REGISTER(tile_lava_collision),
     REGISTER(entity_create),
     REGISTER(entity_map_id),
     REGISTER(texture_get_id),
