@@ -101,6 +101,7 @@ static void compile_shader_program_tile(void)
     shader_use(SHADER_PROGRAM_TILE);
     glUniform1iv(shader_get_uniform_location(SHADER_PROGRAM_TILE, "textures"), NUM_TEXTURE_UNITS, texs);
     shader_bind_uniform_block(SHADER_PROGRAM_TILE, UBO_INDEX_MATRICES, "Camera");
+    shader_bind_uniform_block(SHADER_PROGRAM_TILE, UBO_INDEX_GAME_TIME, "GameTime");
 }
 
 static void compile_shader_program_wall(void)

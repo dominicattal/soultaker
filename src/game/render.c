@@ -1,7 +1,7 @@
 #include "internal.h"
 #include "../renderer.h"
 
-#define TILE_VERTEX_LENGTH           7
+#define TILE_VERTEX_LENGTH           8
 #define WALL_VERTEX_LENGTH           (8 * 6 * 5)
 #define ENTITY_VERTEX_LENGTH_IN      11
 #define ENTITY_VERTEX_LENGTH_OUT     7
@@ -70,6 +70,8 @@ static struct {
     i32 out_capacity;
 } comp_buffers;
 
+static u32 game_time_ubo;
+
 typedef struct {
     ShaderProgramEnum compute_shader;
     i32 num_objects;
@@ -112,6 +114,14 @@ static void execute_compute_shader(const ComputeShaderParams* params)
     glBindBuffer(GL_COPY_READ_BUFFER, comp_buffers.out);
     glBindBuffer(GL_COPY_WRITE_BUFFER, params->output_buffer);
     glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, params->object_length_out * sizeof(GLfloat));
+}
+
+static void update_game_time(void)
+{
+    pthread_mutex_lock(&game_context.data_mutex);
+    glBindBuffer(GL_UNIFORM_BUFFER, game_time_ubo);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(GLfloat), &game_context.time);
+    pthread_mutex_unlock(&game_context.data_mutex);
 }
     
 static void update_entity_vertex_data(void)
@@ -199,9 +209,15 @@ static void update_tile_vertex_data(void)
     vec2 pivot, stretch;
     f32 u, v, w, h;
     i32 location;
+    bool animate_horizontal_pos, animate_vertical_pos;
+    bool animate_horizontal_neg, animate_vertical_neg;
     #define V game_context.data_swap.tile_buffer[game_context.data_swap.tile_length++]
     for (i32 i = 0; i < game_context.tiles->length; i++) {
         Tile* tile = list_get(game_context.tiles, i);
+        animate_horizontal_pos = tile_get_flag(tile, TILE_FLAG_ANIMATE_HORIZONTAL_POS);
+        animate_vertical_pos = tile_get_flag(tile, TILE_FLAG_ANIMATE_VERTICAL_POS);
+        animate_horizontal_neg = tile_get_flag(tile, TILE_FLAG_ANIMATE_HORIZONTAL_NEG);
+        animate_vertical_neg = tile_get_flag(tile, TILE_FLAG_ANIMATE_VERTICAL_NEG);
         texture_info(tile->tex, &location, &u, &v, &w, &h, &pivot, &stretch);
         V = tile->position.x;
         V = tile->position.y;
@@ -210,6 +226,8 @@ static void update_tile_vertex_data(void)
         V = w;
         V = h;
         V = location;
+        V = animate_horizontal_pos + (animate_horizontal_neg<<1)
+            + (animate_vertical_pos<<2) + (animate_vertical_neg<<3);
     }
     #undef V
 }
@@ -422,6 +440,12 @@ void game_update_vertex_data(void)
 void game_render_init(void)
 {
     log_write(INFO, "Creating game buffers...");
+
+    glGenBuffers(1, &game_time_ubo);
+    glBindBuffer(GL_UNIFORM_BUFFER, game_time_ubo);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(GLfloat), NULL, GL_DYNAMIC_DRAW);
+    glBindBufferBase(GL_UNIFORM_BUFFER, UBO_INDEX_GAME_TIME, game_time_ubo);
+
     glGenVertexArrays(1, &tile_buffers.vao);
     glGenBuffers(1, &tile_buffers.vbo);
     glGenBuffers(1, &tile_buffers.instance_vbo);
@@ -463,15 +487,18 @@ void game_render_init(void)
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (void*)0);
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, tile_buffers.instance_vbo);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)0);
-    glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)(2 * sizeof(GLfloat)));
-    glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)(6 * sizeof(GLfloat)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void*)0);
+    glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void*)(2 * sizeof(GLfloat)));
+    glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void*)(6 * sizeof(GLfloat)));
+    glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void*)(7 * sizeof(GLfloat)));
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
     glEnableVertexAttribArray(3);
+    glEnableVertexAttribArray(4);
     glVertexAttribDivisor(1, 1);
     glVertexAttribDivisor(2, 1);
     glVertexAttribDivisor(3, 1);
+    glVertexAttribDivisor(4, 1);
 
     glBindVertexArray(wall_buffers.vao);
     glBindBuffer(GL_ARRAY_BUFFER, wall_buffers.vbo);
@@ -709,6 +736,7 @@ static void render_projectiles(void)
 
 void game_render(void)
 {
+    update_game_time();
     camera_update();
     glEnable(GL_DEPTH_TEST);
     render_tiles();
@@ -760,6 +788,8 @@ void game_render_cleanup(void)
         glDeleteBuffers(1, &comp_buffers.in);
     if (comp_buffers.out != 0)
         glDeleteBuffers(1, &comp_buffers.out);
+    if (game_time_ubo != 0)
+        glDeleteBuffers(1, &game_time_ubo);
     log_write(INFO, "Deleted game buffers");
 }
 
