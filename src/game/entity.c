@@ -212,9 +212,10 @@ Entity* entity_create(vec3 position, i32 type)
     entity->facing = vec2_create(1, 0);
     entity->type = type;
     entity->state_timer = 0;
+    entity->tile_timer = 0;
 
     entity->haste = 0;
-    entity->speed = 3.5;
+    entity->speed = 7.0f;
     entity->size = 1.0f;
     entity->health = 1;
     entity->flags = 0;
@@ -227,11 +228,28 @@ Entity* entity_create(vec3 position, i32 type)
     return entity;
 }
 
+static void handle_lava(Entity* entity, f32 dt)
+{
+    if (entity_get_flag(entity, ENTITY_FLAG_IN_LAVA)) {
+        entity->tile_timer += dt;
+        entity->position.y = -0.2;
+        if (entity->tile_timer > 0.5) {
+            entity->tile_timer -= 0.5;
+            //entity->health -= 1;
+        }
+        entity_set_flag(entity, ENTITY_FLAG_IN_LAVA, 0);
+    } else {
+        entity->position.y = 0;
+        entity->tile_timer = 0;
+    }
+}
+
 void entity_update(Entity* entity, f32 dt)
 {
     entity->prev_position = entity->position;
     entity->position = vec3_add(entity->position, vec3_scale(entity->direction, entity->speed * dt));
     entity->state_timer += dt;
+    handle_lava(entity, dt);
     if (entity_get_flag(entity, ENTITY_FLAG_UPDATE_FACING) && vec3_mag(entity->direction) > 0)
         entity->facing = vec2_create(entity->direction.x, entity->direction.z);
 

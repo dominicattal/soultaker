@@ -18,9 +18,19 @@ void tile_clear(void)
         tile_destroy(list_remove(game_context.tiles, 0));
 }
 
+void tile_lava_collision(Entity* entity)
+{
+    entity_set_flag(entity, ENTITY_FLAG_IN_LAVA, 1);
+}
+
+static void tile_do_nothing(Entity* entity)
+{
+}
+
 Tile* tile_create(vec2 position)
 {
     Tile* tile = st_malloc(sizeof(Tile));
+    tile->collide = tile_do_nothing;
     tile->position = position;
     tile->tex = texture_get_id("tile_1");
     list_append(game_context.tiles, tile);

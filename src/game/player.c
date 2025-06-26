@@ -4,6 +4,34 @@
 
 extern GameContext game_context;
 
+vec3 game_get_player_position(void)
+{
+    if (game_context.player.entity == NULL)
+        return vec3_create(0, 0, 0);
+    return game_context.player.entity->position;
+}
+
+vec3 game_get_player_direction(void)
+{
+    if (game_context.player.entity == NULL)
+        return vec3_create(0, 0, 0);
+    return game_context.player.entity->direction;
+}
+
+vec2 game_get_player_facing(void)
+{
+    if (game_context.player.entity == NULL)
+        return vec2_create(0, 0);
+    return game_context.player.entity->facing;
+}
+
+void game_set_player_position(vec3 position)
+{
+    if (game_context.player.entity == NULL)
+        return;
+    game_context.player.entity->position = position;
+}
+
 void player_reset(void)
 {
     if (game_context.player.entity != NULL)

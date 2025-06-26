@@ -37,6 +37,19 @@ static void collide_entity_wall(Entity* entity, Wall* wall)
     }
 }
 
+static void collide_entity_tile(Entity* entity, Tile* tile)
+{
+    f32 ex, ez, tx, tz, sx, sz;
+    ex = entity->position.x;
+    ez = entity->position.z;
+    tx = tile->position.x;
+    tz = tile->position.y;
+    sx = sz = 1.0f;
+    if (!(ex > tx && ex < tx + sx && ez > tz && ez < tz + sz))
+        return;
+    tile->collide(entity);
+}
+
 static void collide_entity_obstacle(Entity* entity, Obstacle* obstacle)
 {
     f32 ex, ez, er, ox, oz, or;
@@ -114,6 +127,10 @@ static void game_collide_objects(void)
     i32 i, j;
     for (i = 0; i < game_context.entities->length; i++) {
         Entity* entity = list_get(game_context.entities, i);
+        for (j = 0; j < game_context.tiles->length; j++) {
+            Tile* tile = list_get(game_context.tiles, j);
+            collide_entity_tile(entity, tile);
+        }
         for (j = 0; j < game_context.obstacles->length; j++) {
             Obstacle* obstacle = list_get(game_context.obstacles, j);
             collide_entity_obstacle(entity, obstacle);

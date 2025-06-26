@@ -5,7 +5,8 @@
 
 typedef enum {
     GAME_EVENT_NONE,
-    GAME_EVENT_PRESET_LOAD
+    GAME_EVENT_PRESET_LOAD,
+    GAME_EVENT_CAMERA_MOVE
 } GameEventEnum;
 
 // to avoid needlessly complicated structs and
@@ -13,7 +14,8 @@ typedef enum {
 // event information into 8-byte integers
 typedef struct {
     GameEventEnum type;
-    u64 data;
+    u64 data1;
+    u64 data2;
 } GameEvent;
 
 typedef struct {
@@ -27,6 +29,14 @@ typedef struct {
     i32 num_queues;
 } GameEventContext;
 
+typedef struct {
+    union {
+        u32 _int;
+        f32 _flt;
+    };
+} IntFloat32;
+
+extern GameContext game_context;
 static GameEventContext event_context;
 
 static bool event_queue_full(GameEventQueue* queue)
@@ -78,7 +88,13 @@ static void execute_event(GameEvent event)
 {
     switch (event.type) {
         case GAME_EVENT_PRESET_LOAD:
-            game_preset_load((i32)event.data);
+            game_preset_load((i32)event.data1);
+            break;
+        case GAME_EVENT_CAMERA_MOVE:
+            IntFloat32 u1, u2;
+            u2._int = event.data1 & ((1LL<<32)-1);
+            u1._int = (event.data1>>32) & ((1LL<<32)-1);
+            camera_move(vec2_create(u1._flt, u2._flt), game_context.dt);
             break;
         default:
             break;
@@ -100,9 +116,21 @@ void game_event_create_preset_load(i32 preset_id)
 {
     GameEvent event = (GameEvent) {
         .type = GAME_EVENT_PRESET_LOAD,
-        .data = preset_id
+        .data1 = preset_id
     };
     GameEventQueue* queue = get_event_queue();
     event_enqueue(queue, event);
 }
 
+void game_event_create_camera_rotate(vec2 mag)
+{
+    IntFloat32 u1, u2;
+    u1._flt = mag.x;
+    u2._flt = mag.y;
+    GameEvent event = (GameEvent) {
+        .type = GAME_EVENT_CAMERA_MOVE,
+        .data1 = ((u64)u1._int << 32) | u2._int
+    };
+    GameEventQueue* queue = get_event_queue();
+    event_enqueue(queue, event);
+}
