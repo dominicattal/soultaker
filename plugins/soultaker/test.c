@@ -1,7 +1,6 @@
 #include "../../src/api.h"
 
-__declspec(dllexport)
-void game_preset_load_test(GlobalApi* api)
+st_export void game_preset_load_test(GlobalApi* api)
 {
     api->entity_create(api->vec3_create(5,0,5), api->entity_map_id("enemy"));
     i32 tile_tex = api->texture_get_id("tile_2");

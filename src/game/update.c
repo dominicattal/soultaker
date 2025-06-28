@@ -79,7 +79,7 @@ static void collide_entity_projectile(Entity* entity, Projectile* projectile)
     vec2 offset;
     ex = entity->position.x;
     ez = entity->position.z;
-    er = entity->size / 2;
+    er = entity->hitbox_radius;
     px = projectile->position.x;
     pz = projectile->position.z;
     pr = projectile->size / 2;
@@ -88,6 +88,7 @@ static void collide_entity_projectile(Entity* entity, Projectile* projectile)
         return;
 
     projectile->lifetime = 0;
+    entity->health -= 1;
 }
 
 static void collide_projectile_wall(Projectile* projectile, Wall* wall)
@@ -162,9 +163,19 @@ void game_update_objects(void)
 {
     int i;
     i = 0;
+    while (i < game_context.bosses->length) {
+        Entity* entity = list_get(game_context.bosses, i);
+        if (entity->health <= 0)
+            list_remove(game_context.bosses, i);
+        else
+            i++;
+    }
+    i = 0;
     while (i < game_context.entities->length) {
         Entity* entity = list_get(game_context.entities, i);
         entity_update(entity, game_context.dt);
+        i++;
+        continue;
         if (entity->health <= 0)
             entity_destroy(list_remove(game_context.entities, i));
         else

@@ -5,16 +5,23 @@ GameContext game_context;
 
 void* game_loop(void* vargp)
 {
-    f64 start;
+    f64 start, end;
+    start = get_time();
+    game_context.dt = 0;
     log_write(INFO, "Entering game loop");
     while (!game_context.kill_thread)
     {
-        start = get_time();
-        game_update();
-        game_event_queue_flush();
-        game_update_vertex_data();
-        game_context.dt = get_time() - start;
-        game_context.time += game_context.dt;
+        if (game_context.dt > 0.0001) {
+            start = get_time();
+            if (!game_context.paused) {
+                game_context.time += game_context.dt;
+                game_update();
+                game_event_queue_flush();
+                game_update_vertex_data();
+            }
+        }
+        end = get_time();
+        game_context.dt = end - start;
     }
     log_write(INFO, "Exiting game loop");
     return NULL;
@@ -102,4 +109,14 @@ void game_cleanup(void)
 f32 game_dt(void)
 {
     return game_context.dt;
+}
+
+f32 game_get_boss_health(void)
+{
+    if (game_context.bosses == NULL)
+        return 0;
+    if (game_context.bosses->length == 0)
+        return 0;
+    Entity* entity = list_get(game_context.bosses, 0);
+    return entity->health;
 }

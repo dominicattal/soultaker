@@ -95,6 +95,7 @@ void gui_comp_set_text(GUIComp* comp, i32 length, const char* text)
         comp->text = NULL;
         return;
     }
+
     char* new_text = st_malloc((length+1) * sizeof(char));
     strncpy(new_text, text, length + 1);
     new_text[length] = '\0';

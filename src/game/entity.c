@@ -3,6 +3,7 @@
 #include "../api.h"
 #include <windows.h>
 #include <json.h>
+#include <math.h>
 
 extern GameContext game_context;
 
@@ -28,6 +29,7 @@ typedef struct {
     UpdateFuncPtr update;
     EntityState* states;
     i32 num_states;
+    bool bidirectional;
 } EntityInfo;
 
 typedef struct {
@@ -64,8 +66,18 @@ static void load_state_info(i32 entity_id, JsonObject* object)
 {
     JsonValue* value;
     JsonArray* array;
+    JsonType type;
     const char* string;
     i32 int_val;
+    i32 bidirectional;
+    
+    bidirectional = 0;
+    value = json_get_value(object, "bidirectional");
+    if (value != NULL)  {
+        type = json_get_type(value);
+        if (type == JTYPE_TRUE)
+            bidirectional = 1;
+    }
 
     value = json_get_value(object, "states");
     log_assert(value, "Could not get states value");
@@ -100,21 +112,97 @@ static void load_state_info(i32 entity_id, JsonObject* object)
 
         load_state_textures(&state_ptr[i], object, "left", LEFT);
         load_state_textures(&state_ptr[i], object, "right", RIGHT);
-        load_state_textures(&state_ptr[i], object, "up", UP);
-        load_state_textures(&state_ptr[i], object, "down", DOWN);
+        if (!bidirectional) {
+            load_state_textures(&state_ptr[i], object, "up", UP);
+            load_state_textures(&state_ptr[i], object, "down", DOWN);
+        }
     }
+
     entity_context.infos[entity_id].num_states = num_states;
     entity_context.infos[entity_id].states = state_ptr;
+    entity_context.infos[entity_id].bidirectional = bidirectional;
 }
 
-#define LOAD_ENTITY_FUNCTION(type, object, name, location) \
-    val_string = json_get_value(object, name); \
-    log_assert(val_string, "Could not get function string %s from object", name); \
-    log_assert(json_get_type(val_string) == JTYPE_STRING, "Function string is not the right type");\
-    string = json_get_string(val_string); \
-    log_assert(string, "Could not get string"); \
-    location = (type)GetProcAddress(global_context.lib, string); \
-    log_assert(location, "Could not find function %s in library", name);
+static void default_init_function(GlobalApi*) {}
+static void default_cleanup_function(GlobalApi*) {}
+static void default_update_function(GlobalApi*, Entity*, f32) {}
+static void default_create_function(GlobalApi*, Entity*) {}
+static void default_destroy_function(GlobalApi*, Entity*) {}
+
+static void load_init_function(JsonObject* object, i32 entity_id)
+{
+    JsonValue* val_string = json_get_value(object, "init");
+    const char* name = entity_context.infos[entity_id].name;
+    if (val_string == NULL) {
+        entity_context.infos[entity_id].init = default_init_function;
+        return;
+    }
+    log_assert(json_get_type(val_string) == JTYPE_STRING, "Init function for %s is not a string", name);
+    const char* function_name = json_get_string(val_string);
+    log_assert(function_name, "Failed to get init function name for %s from json value", name);
+    entity_context.infos[entity_id].init = state_load_function(function_name);
+    log_assert(entity_context.infos[entity_id].init, "Failed to find function %s for entity %s in library", function_name, name);
+}
+
+static void load_cleanup_function(JsonObject* object, i32 entity_id)
+{
+    JsonValue* val_string = json_get_value(object, "cleanup");
+    const char* name = entity_context.infos[entity_id].name;
+    if (val_string == NULL) {
+        entity_context.infos[entity_id].cleanup = default_cleanup_function;
+        return;
+    }
+    log_assert(json_get_type(val_string) == JTYPE_STRING, "Cleanup function for %s is not a string", name);
+    const char* function_name = json_get_string(val_string);
+    log_assert(function_name, "Failed to get cleanup function name for %s from json value", name);
+    entity_context.infos[entity_id].cleanup = state_load_function(function_name);
+    log_assert(entity_context.infos[entity_id].cleanup, "Failed to find function %s for entity %s in library", function_name, name);
+}
+
+static void load_create_function(JsonObject* object, i32 entity_id)
+{
+    JsonValue* val_string = json_get_value(object, "create");
+    const char* name = entity_context.infos[entity_id].name;
+    if (val_string == NULL) {
+        entity_context.infos[entity_id].create = default_create_function;
+        return;
+    }
+    log_assert(json_get_type(val_string) == JTYPE_STRING, "Create function for %s is not a string", name);
+    const char* function_name = json_get_string(val_string);
+    log_assert(function_name, "Failed to get create function name for %s from json value", name);
+    entity_context.infos[entity_id].create = state_load_function(function_name);
+    log_assert(entity_context.infos[entity_id].create, "Failed to find function %s for entity %s in library", function_name, name);
+}
+
+static void load_destroy_function(JsonObject* object, i32 entity_id)
+{
+    JsonValue* val_string = json_get_value(object, "destroy");
+    const char* name = entity_context.infos[entity_id].name;
+    if (val_string == NULL) {
+        entity_context.infos[entity_id].destroy = default_destroy_function;
+        return;
+    }
+    log_assert(json_get_type(val_string) == JTYPE_STRING, "Destroy function for %s is not a string", name);
+    const char* function_name = json_get_string(val_string);
+    log_assert(function_name, "Failed to get destroy function name for %s from json value", name);
+    entity_context.infos[entity_id].destroy = state_load_function(function_name);
+    log_assert(entity_context.infos[entity_id].destroy, "Failed to find function %s for entity %s in library", function_name, name);
+}
+
+static void load_update_function(JsonObject* object, i32 entity_id)
+{
+    JsonValue* val_string = json_get_value(object, "update");
+    const char* name = entity_context.infos[entity_id].name;
+    if (val_string == NULL) {
+        entity_context.infos[entity_id].update = default_update_function;
+        return;
+    }
+    log_assert(json_get_type(val_string) == JTYPE_STRING, "Update function for %s is not a string", name);
+    const char* function_name = json_get_string(val_string);
+    log_assert(function_name, "Failed to get update function name for %s from json value", name);
+    entity_context.infos[entity_id].update = state_load_function(function_name);
+    log_assert(entity_context.infos[entity_id].update, "Failed to find function %s for entity %s in library", function_name, name);
+}
 
 static void load_entity_info(void)
 {
@@ -124,7 +212,6 @@ static void load_entity_info(void)
     log_assert(it, "Could not create iterator for config file");
     JsonMember* member;
     JsonValue* val_object;
-    JsonValue* val_string;
     JsonObject* object;
     const char* string;
     entity_context.num_entities = json_object_length(json);
@@ -144,12 +231,11 @@ static void load_entity_info(void)
         object = json_get_object(val_object);
         log_assert(object, "Could not get object from value");
 
-        LOAD_ENTITY_FUNCTION(InitFuncPtr, object, "init", entity_context.infos[i].init);
-        LOAD_ENTITY_FUNCTION(CleanupFuncPtr, object, "cleanup", entity_context.infos[i].cleanup); 
-        LOAD_ENTITY_FUNCTION(CreateFuncPtr, object, "create", entity_context.infos[i].create);
-        LOAD_ENTITY_FUNCTION(DestroyFuncPtr, object, "destroy", entity_context.infos[i].destroy);
-        LOAD_ENTITY_FUNCTION(UpdateFuncPtr, object, "update", entity_context.infos[i].update);
-
+        load_init_function(object, i);
+        load_cleanup_function(object, i);
+        load_create_function(object, i);
+        load_destroy_function(object, i);
+        load_update_function(object, i);
         load_state_info(i, object);
 
         json_iterator_increment(it);
@@ -190,6 +276,7 @@ void entity_init(void)
 {
     log_write(INFO, "Initializing entities...");
     game_context.entities = list_create();
+    game_context.bosses = list_create();
     load_entity_info();
     log_write(INFO, "Initialized entities");
 }
@@ -217,6 +304,7 @@ Entity* entity_create(vec3 position, i32 type)
     entity->haste = 0;
     entity->speed = 7.0f;
     entity->size = 1.0f;
+    entity->hitbox_radius = 0.5f;
     entity->health = 1;
     entity->flags = 0;
     entity->state = 0;
@@ -232,7 +320,7 @@ static void handle_lava(Entity* entity, f32 dt)
 {
     if (entity_get_flag(entity, ENTITY_FLAG_IN_LAVA)) {
         entity->tile_timer += dt;
-        entity->position.y = -0.2;
+        entity->position.y = -0.05;
         if (entity->tile_timer > 0.5) {
             entity->tile_timer -= 0.5;
             //entity->health -= 1;
@@ -256,6 +344,11 @@ void entity_update(Entity* entity, f32 dt)
     entity_context.infos[entity->type].update(&global_api, entity, dt);
 }
 
+void entity_make_boss(Entity* entity)
+{
+    list_append(game_context.bosses, entity);
+}
+
 void entity_set_flag(Entity* entity, EntityFlagEnum flag, u32 val)
 {
     entity->flags = (entity->flags & ~(1<<flag)) | (val<<flag);
@@ -275,18 +368,48 @@ void entity_set_state(Entity* entity, i32 state)
     }
 }
 
+static i32 get_direction_4(f32 rad)
+{
+    rad = fmod(rad, 2*PI);
+    if (rad < 0) rad += 2*PI;
+    if (rad > 7 * PI / 4 + 0.01 || rad < PI / 4 - 0.01)
+        return UP;
+    if (rad < 3 * PI / 4 + 0.01)
+        return LEFT;
+    if (rad < 5 * PI / 4 - 0.01)
+        return DOWN;
+    return RIGHT;
+}
+
+static i32 get_direction_2(f32 rad)
+{
+    rad = fmod(rad, 2*PI);
+    rad -= PI / 2;
+    if (rad < 0) rad += 2*PI;
+    return (rad < PI) ? LEFT : RIGHT;
+}
+
+
 i32 entity_get_direction(Entity* entity)
 {
     f32 entity_rad = vec2_radians(entity->facing);
     f32 camera_rad = game_context.camera.yaw;
-    return get_direction(entity_rad - camera_rad);
+    f32 rad = get_direction_4(entity_rad - camera_rad);
+    if (entity_context.infos[entity->type].bidirectional)
+        return get_direction_2(rad);
+    return get_direction_4(rad);
 }
 
 i32 entity_get_texture(Entity* entity)
 {
     EntityInfo info = entity_context.infos[entity->type];
     EntityState state = info.states[entity->state];
-    i32 dir = get_direction(vec2_radians(entity->facing) - camera_get_yaw());
+    f32 rad = vec2_radians(entity->facing) - camera_get_yaw();
+    i32 dir;
+    if (entity_context.infos[entity->type].bidirectional)
+        dir = get_direction_2(rad);
+    else
+        dir = get_direction_4(rad);
     i32 num_frames = state.num_frames;
     return state.textures[num_frames * dir + entity->frame];
 }
@@ -305,6 +428,8 @@ void entity_cleanup(void)
             entity_destroy(list_get(game_context.entities, i));
         list_destroy(game_context.entities);
     }
+    if (game_context.bosses != NULL)
+        list_destroy(game_context.bosses);
     for (i32 i = 0; i < entity_context.num_entities; i++) {
         entity_context.infos[i].cleanup(&global_api);
         st_free(entity_context.infos[i].name);

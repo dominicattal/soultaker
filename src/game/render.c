@@ -173,12 +173,12 @@ static void update_projectile_vertex_data(void)
     game_context.data_swap.projectile_length = 0;
     vec2 pivot, stretch;
     f32 u, v, w, h;
-    i32 location;
-    i32 tex = texture_get_id("bullet");
-    texture_info(tex, &location, &u, &v, &w, &h, &pivot, &stretch);
+    i32 location, tex;
     #define V game_context.data_swap.projectile_buffer[game_context.data_swap.projectile_length++]
     for (i32 i = 0; i < game_context.projectiles->length; i++) {
         Projectile* projectile = list_get(game_context.projectiles, i);
+        tex = projectile->tex;
+        texture_info(tex, &location, &u, &v, &w, &h, &pivot, &stretch);
         bool rotate_tex = projectile_get_flag(projectile, PROJECTILE_FLAG_TEX_ROTATION);
         V = projectile->position.x;
         V = projectile->position.y;

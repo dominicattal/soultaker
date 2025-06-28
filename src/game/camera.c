@@ -18,8 +18,8 @@
 
 #define MIN_ZOOM 1
 #define MAX_ZOOM 15
-#define MIN_PITCH 0
-#define MAX_PITCH PI / 2
+#define MIN_PITCH 0.3
+#define MAX_PITCH 1.3
 
 extern GameContext game_context;
 

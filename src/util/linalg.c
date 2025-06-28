@@ -71,19 +71,6 @@ void vec2_print(vec2 vec)
     printf("%.5f, %.5f\n", vec.x, vec.y);
 }
 
-i32 get_direction(f32 rad)
-{
-    rad = fmod(rad, 2*PI);
-    if (rad < 0) rad += 2*PI;
-    if (rad > 7 * PI / 4 || rad < PI / 4)
-        return UP;
-    if (rad < 3 * PI / 4)
-        return LEFT;
-    if (rad < 5 * PI / 4)
-        return DOWN;
-    return RIGHT;
-}
-
 vec3 vec3_create(f32 x, f32 y, f32 z)
 {
     return (vec3) { x, y, z };

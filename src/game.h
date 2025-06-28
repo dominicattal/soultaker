@@ -7,6 +7,8 @@ i32  game_preset_map_id(const char* name);
 void game_event_create_preset_load(i32 id);
 void game_event_create_camera_rotate(vec2 mag);
 
+f32 game_get_boss_health(void);
+
 void game_init(void);
 void game_cleanup(void);
 void game_process_input(f32 dt);
@@ -23,7 +25,6 @@ f32 game_dt(void);
 
 vec3 game_get_player_position(void);
 vec3 game_get_player_direction(void);
-vec2 game_get_player_facing(void);
 
 vec3 camera_get_position(void);
 vec3 camera_get_facing(void);

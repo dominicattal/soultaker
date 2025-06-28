@@ -43,7 +43,7 @@ void game_preset_init(void)
         log_assert(json_get_type(val_string) == JTYPE_STRING, "Value must be a string");
         string = json_get_string(val_string);
         log_assert(string, "Could not get string from member");
-        preset_context.presets[i].load = (PresetLoadFuncPtr)GetProcAddress(global_context.lib, string);
+        preset_context.presets[i].load = state_load_function(string);
         log_assert(preset_context.presets[i].load, "Could not find function %s in library", string);
 
         json_iterator_increment(it);

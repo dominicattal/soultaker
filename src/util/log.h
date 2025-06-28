@@ -9,7 +9,7 @@ typedef enum {
     WARNING,
     INFO,
     DEBUG,
-    MEMCTRL
+    MEMORY
 } LogLevel;
 
 void log_init(char* exe_path);

@@ -1,6 +1,7 @@
 #include "../internal.h"
 #include "../../game.h"
 #include "../../state.h"
+#include <math.h>
 #include <string.h>
 
 typedef struct {
@@ -22,7 +23,6 @@ static void update_info(GUIComp* comp, f32 dt)
         data->timer = 0.5;
         vec3 position = game_get_player_position();
         vec3 direction = game_get_player_direction();
-        vec2 facing = game_get_player_facing();
         f32 pitch = camera_get_pitch();
         f32 zoom = camera_get_zoom();
         f32 yaw = camera_get_yaw();
@@ -36,11 +36,9 @@ static void update_info(GUIComp* comp, f32 dt)
         strncpy(string, buf, 100);
         sprintf(buf, "direction: (%.3f %.3f %.3f)\n", direction.x, direction.y, direction.z);
         strncat(string, buf, 100);
-        sprintf(buf, "facing: (%.3f %.3f)\n", facing.x, facing.y);
-        strncat(string, buf, 100);
         sprintf(buf, "pitch: %-7.3f yaw: %-7.3f zoom: %-7.3f\n", pitch, yaw, zoom);
         strncat(string, buf, 100);
-        sprintf(buf, "Main: %-6.3f GUI: %-6.3f Game: %-6.3f\n", global_context.dt * 1000, gui_dt() * 1000, game_dt() * 1000);
+        sprintf(buf, "Main: %-6.3f GUI: %-6.3f Game: %-6.3f\n", state_dt() * 1000, gui_dt() * 1000, game_dt() * 1000);
         strncat(string, buf, 100);
         string[499] = '\n';
         gui_comp_set_text(comp, 400, string);
@@ -69,6 +67,14 @@ static void keyfunc(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods)
     }
 }
 
+static void update_healthbar(GUIComp* comp, f32 dt)
+{
+    char buf[100];
+    f32 health = game_get_boss_health();
+    sprintf(buf, "%d", (int)round(health));
+    gui_comp_set_text(comp, 100, buf);
+}
+
 void load_preset_debug(GUIComp* root)
 {
     GUIComp* info = gui_comp_create(0, 0, 400, 90);
@@ -79,7 +85,7 @@ void load_preset_debug(GUIComp* root)
     info->update_func = update_info;
     info->data = create_comp_data(); 
 
-    GUIComp* textbox = gui_comp_create(0, 50, 400, 70);
+    GUIComp* textbox = gui_comp_create(0, 50, 400, 50);
     gui_comp_set_color(textbox, 255, 255, 255, 100);
     gui_comp_set_is_text(textbox, true);
     gui_comp_set_valign(textbox, ALIGN_BOTTOM);
@@ -88,6 +94,14 @@ void load_preset_debug(GUIComp* root)
     textbox->key_func = keyfunc;
     gui_comp_set_clickable(textbox, true);
 
+    GUIComp* healthbar = gui_comp_create(0, 200, 200, 50);
+    gui_comp_set_color(healthbar, 255, 255, 255, 100);
+    gui_comp_set_is_text(healthbar, true);
+    gui_comp_set_font_size(healthbar, 16);
+    gui_comp_set_font(healthbar, FONT_MONOSPACE);
+    healthbar->update_func = update_healthbar;
+
     gui_comp_attach(root, info);
     gui_comp_attach(root, textbox);
+    gui_comp_attach(root, healthbar);
 }

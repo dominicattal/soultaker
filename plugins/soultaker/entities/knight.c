@@ -7,13 +7,11 @@ typedef struct {
     f32 state_timer;
 } Data;
 
-__declspec(dllexport)
-void entity_knight_init(GlobalApi* api)
+st_export void entity_knight_init(GlobalApi* api)
 {
 }
 
-__declspec(dllexport)
-void entity_knight_update(GlobalApi* api, Entity* entity, f32 dt)
+st_export void entity_knight_update(GlobalApi* api, Entity* entity, f32 dt)
 {
     f32 frame_length;
     switch (entity->state) {
@@ -30,19 +28,16 @@ void entity_knight_update(GlobalApi* api, Entity* entity, f32 dt)
     }
 }
 
-__declspec(dllexport)
-void entity_knight_create(GlobalApi* api, Entity* entity)
+st_export void entity_knight_create(GlobalApi* api, Entity* entity)
 {
     entity->data = api->st_malloc(sizeof(Data));
 }
 
-__declspec(dllexport)
-void entity_knight_destroy(GlobalApi* api, Entity* entity)
+st_export void entity_knight_destroy(GlobalApi* api, Entity* entity)
 {
     api->st_free(entity->data);
 }
 
-__declspec(dllexport)
-void entity_knight_cleanup(GlobalApi* api)
+st_export void entity_knight_cleanup(GlobalApi* api)
 {
 }
