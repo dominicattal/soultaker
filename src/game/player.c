@@ -82,6 +82,7 @@ void weapon_shoot(Player* player, vec3 direction, vec3 target)
     proj->speed = 10;
     proj->lifetime = 1;
     proj->rotation = atan(direction.z / direction.x) + (direction.x > 0 ? PI : 0);
+    proj->tex = texture_get_id("bullet");
     projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, 1);
 }
 

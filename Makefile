@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -MMD -Wall -Wextra -Werror -Wfatal-errors -Wno-cast-function-type -Wno-unused-parameter -Wno-stringop-overflow -fopenmp -pthread
+CFLAGS = -MMD -Wall -Wextra -Werror -Wfatal-errors -Wno-cast-function-type -Wno-unused-parameter -Wno-stringop-overflow -Wno-use-after-free -fopenmp -pthread
 CFLAGS_DEV = -g3 -D DEBUG_BUILD
 CFLAGS_RELEASE = -O3 -D RELEASE_BUILD
 LINKER_FLAGS = -lglfw3dll -lm -lOpenAL32 -lsndfile
@@ -57,7 +57,7 @@ release-src: $(OBJS_REL)
 release-dll: $(PLUGIN_OBJS_REL)
 	@mkdir -p $(DIR_BIN)/release
 	@mkdir -p $(DIR_BIN)/release/plugins
-	@$(CC) -shared $(CFLAGS) $(CFLAGS_RELEASE) $(LIBS) $(INCLUDES) $(OBJS_REL) $(LINKER_FLAGS) -o $(DIR_BIN)/release/plugins/$(DLL_NAME).dll
+	@$(CC) -shared $(CFLAGS) $(CFLAGS_RELEASE) $(LIBS) $(INCLUDES) $(PLUGIN_OBJS_REL) $(LINKER_FLAGS) -o $(DIR_BIN)/release/plugins/$(DLL_NAME).dll
 
 $(DIR_OBJ)/release/%.o: %.c
 	@mkdir -p $(shell dirname $@)

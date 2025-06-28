@@ -18,7 +18,7 @@ static const char* severity_string(LogLevel severity)
         case WARNING: return "\033[33mWARNING\033[0m";
         case INFO: return "\033[32mINFO\033[0m";
         case DEBUG: return "\033[34mDEBUG\033[0m";
-        case MEMCTRL: return "\033[38;2;128;68;255mMEMORY\033[0m";
+        case MEMORY: return "\033[38;2;128;68;255mMEMORY\033[0m";
         default: break;
     }
     return "";
@@ -55,6 +55,7 @@ static void get_timestamp(int* Y, int* M, int* D, int* h, int* m, int* s)
 #ifdef RELEASE_BUILD
 static FILE* create_log_file(const char* log_dir)
 {
+    return stderr;
     int n = strlen(log_dir);
     char log_path[n+50];
     char basename[50];
@@ -109,9 +110,9 @@ void _log_write(LogLevel severity, const char* message, const char* filename, in
     vfprintf(stderr, message, args);
     va_end(args);
     fprintf(stderr, "\n\n");
+    fflush(stderr);
     if (severity == FATAL)
         exit(1);
-    fflush(stderr);
     pthread_mutex_unlock(&mutex);
 }
 #else
@@ -129,6 +130,8 @@ void _log_write(LogLevel severity, const char* message, ...)
     va_end(args);
     fprintf(stream, "\n");
     fflush(stream);
+    if (severity == FATAL)
+        exit(1);
     pthread_mutex_unlock(&mutex);
 }
 #endif

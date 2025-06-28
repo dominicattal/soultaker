@@ -14,12 +14,15 @@
     #define BUILD_INFO "RELEASE"
 #endif
 
-GlobalContext global_context;
+struct {
+    HMODULE lib;
+    f32 dt;
+} state_context;
 
 void state_init(void)
 {
-    global_context.lib = LoadLibrary("plugins/soultaker.dll");
-    log_assert(global_context.lib, "Could not load library");
+    state_context.lib = LoadLibrary("plugins/soultaker.dll");
+    log_assert(state_context.lib, "Could not load library");
 
     window_init();
     renderer_init();
@@ -30,14 +33,16 @@ void state_init(void)
 
 void state_loop(void)
 {
-    f64 start;
+    f64 start, end;
+    start = get_time();
     while (!window_closed())
     {
-        start = get_time();
         window_update();
-        game_process_input(global_context.dt);
+        game_process_input(state_context.dt);
         renderer_render();
-        global_context.dt = get_time() - start;
+        end = get_time();
+        state_context.dt = end - start;
+        start = end;
     }
 }
 
@@ -49,8 +54,20 @@ void state_cleanup(void)
     gui_cleanup();
     renderer_cleanup();
     window_cleanup();
+#ifdef DEBUG_BUILD
     log_write(INFO, "Current heap size: %lld", get_heap_size());
+#endif
     log_cleanup();
 
-    FreeLibrary(global_context.lib);
+    FreeLibrary(state_context.lib);
+}
+
+f32 state_dt(void)
+{
+    return state_context.dt;
+}
+
+void* state_load_function(const char* name)
+{
+    return GetProcAddress(state_context.lib, name);
 }

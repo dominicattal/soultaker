@@ -20,6 +20,7 @@ typedef struct {
     vec2 facing;
     f32 speed;
     f32 size;
+    f32 hitbox_radius;
     f32 health;
     f32 haste;
     f32 state_timer;
@@ -31,7 +32,10 @@ typedef struct {
     void* data;
 } Entity;
 
-typedef struct {
+typedef struct Projectile Projectile;
+typedef void (*ProjectileUpdateFuncPtr)(Projectile*, f32);
+
+typedef struct Projectile {
     vec3 position;
     vec3 direction;
     f32 rotation;
@@ -39,6 +43,8 @@ typedef struct {
     f32 size;
     f32 lifetime;
     u32 flags;
+    i32 tex;
+    ProjectileUpdateFuncPtr update;
 } Projectile;
 
 typedef void (*TileCollisionFuncPtr)(Entity* entity);
@@ -128,6 +134,7 @@ typedef struct {
     GameData data_swap;
     Player player;
     List* entities;
+    List* bosses;
     List* tiles;
     List* walls;
     List* projectiles;
@@ -138,6 +145,7 @@ typedef struct {
     Camera camera;
     bool kill_thread;
     bool halt_input;
+    bool paused;
     pthread_t thread_id;
     pthread_mutex_t data_mutex;
     f32 time;
@@ -170,11 +178,11 @@ void entity_clear(void);
 i32 entity_map_id(const char* handle);
 i32 entity_map_state_id(Entity* entity, const char* handle);
 Entity* entity_create(vec3 position, i32 type);
+void entity_make_boss(Entity* entity);
 void entity_update(Entity* entity, f32 dt);
 void entity_set_flag(Entity* entity, EntityFlagEnum flag, u32 val);
 bool entity_get_flag(Entity* entity, EntityFlagEnum flag);
 void entity_set_state(Entity* entity, i32 state);
-i32 entity_get_direction(Entity* entity);
 i32 entity_get_texture(Entity* entity);
 void entity_destroy(Entity* entity);
 void entity_cleanup(void);

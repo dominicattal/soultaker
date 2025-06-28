@@ -42,8 +42,118 @@ static void create_bars(GlobalApi* api, i32 side_tex, i32 top_tex, vec2 position
     wall->size.y = 0.0;
 }
 
-__declspec(dllexport)
-void game_preset_load_shaitan(GlobalApi* api)
+st_export void shaitan_the_advisor_init(GlobalApi* api)
+{
+}
+
+st_export void shaitan_the_advisor_cleanup(GlobalApi* api)
+{
+}
+
+typedef enum {
+    GROWING,
+    ATTACK_1,
+    ATTACK_2
+} ShaitanStates;
+
+void firestorm(Projectile* proj, f32 dt)
+{
+    proj->rotation += 10 * dt;
+}
+
+static void attack_1(GlobalApi* api, Entity* entity)
+{
+    Projectile* proj;
+    i32 tex_id = api->texture_get_id("shaitan_firestorm");
+    vec2 direction;
+    i32 dir = rand() % 2;
+    for (i32 i = 0; i < 5; i++) {
+        proj = api->projectile_create(entity->position);
+        proj->speed = 4.0f;
+        proj->size = 0.75f;
+        proj->lifetime = 2.0f;
+        proj->tex = tex_id;
+        direction = api->vec2_rotate(api->vec2_create(dir, 1-dir), PI / 6 * (2-i));
+        proj->direction = api->vec3_create(direction.x, 0.0f, direction.y);
+        proj->update = firestorm;
+
+        proj = api->projectile_create(entity->position);
+        proj->speed = 4.0f;
+        proj->size = 0.75f;
+        proj->lifetime = 2.0f;
+        proj->tex = tex_id;
+        direction = api->vec2_rotate(api->vec2_create(-dir, -(1-dir)), PI / 6 * (2-i));
+        proj->direction = api->vec3_create(direction.x, 0.0f, direction.y);
+        proj->update = firestorm;
+    }
+}
+
+st_export void shaitan_the_advisor_update(GlobalApi* api, Entity* entity, f32 dt)
+{
+    switch (entity->state) {
+        case GROWING:
+            if (entity->size >= 3.0f) {
+                entity->state = ATTACK_1;
+                entity->state_timer = 0.0f;
+                break;
+            }
+            if (entity->state_timer > 0.2f) {
+                entity->state_timer -= 0.2f;
+                entity->size += 0.25;
+            }
+            break;
+        case ATTACK_1:
+            if (entity->health <= 90) {
+                entity->state = ATTACK_2;
+                entity->state_timer = 0;
+                break;
+            }
+            entity->frame = entity->state_timer > 0.4f;
+            if (entity->state_timer > 0.5f) {
+                attack_1(api, entity);
+                entity->state_timer -= 0.5f;
+            }
+            break;
+        case ATTACK_2:
+            break;
+        default:
+            break;
+    }
+}
+
+st_export void shaitan_the_advisor_create(GlobalApi* api, Entity* entity)
+{
+    entity->size = 0.0f;
+    entity->hitbox_radius = 0.5f;
+    entity->health = 100;
+    api->entity_make_boss(entity);
+}
+
+st_export void shaitan_the_advisor_destroy(GlobalApi* api, Entity* entity)
+{
+}
+
+st_export void hand_of_shaitan_init(GlobalApi* api)
+{
+}
+
+st_export void hand_of_shaitan_cleanup(GlobalApi* api)
+{
+}
+
+st_export void hand_of_shaitan_update(GlobalApi* api, Entity* entity, f32 dt)
+{
+}
+
+st_export void hand_of_shaitan_create(GlobalApi* api, Entity* entity)
+{
+}
+
+st_export void hand_of_shaitan_destroy(GlobalApi* api, Entity* entity)
+{
+}
+
+st_export void game_preset_load_shaitan(GlobalApi* api)
 {
     api->game_set_player_position(api->vec3_create(20, 0, 20));
     Map* map = api->map_load("assets/maps/shaitan.png");
@@ -68,4 +178,7 @@ void game_preset_load_shaitan(GlobalApi* api)
     create_bars(api, side_tex, top_tex, api->vec2_create(20, 27));
     create_bars(api, side_tex, top_tex, api->vec2_create(24, 26));
     create_bars(api, side_tex, top_tex, api->vec2_create(28, 24));
+
+    i32 sta_id = api->entity_map_id("shaitan_the_advisor");
+    api->entity_create(api->vec3_create(15.5, 0, 16.5), sta_id);
 }

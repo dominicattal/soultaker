@@ -4,15 +4,11 @@
 #include "util.h"
 #include <windows.h>
 
-typedef struct StateContext {
-    HMODULE lib;
-    f32 dt;
-} GlobalContext;
-
-extern GlobalContext global_context;
-
 void state_init(void);
 void state_loop(void);
 void state_cleanup(void);
+f32  state_dt(void);
+
+void* state_load_function(const char* name);
 
 #endif

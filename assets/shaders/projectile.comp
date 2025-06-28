@@ -25,7 +25,7 @@ layout (std430, binding = 0) readonly buffer Input {
     // vec3 position
     // float size
     // float rotation
-    // vec4 tex info
+    // vec4 tex_info
     // float location
     float data_in[];
 };

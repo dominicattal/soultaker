@@ -15,15 +15,20 @@ void projectile_clear(void)
         projectile_destroy(list_remove(game_context.projectiles, 0));
 }
 
+static void do_nothing(Projectile*, f32) {}
+
 Projectile* projectile_create(vec3 position)
 {
     Projectile* proj = st_malloc(sizeof(Projectile));
     proj->position = position;
+    proj->position.y = 0.5f;
     proj->direction = vec3_create(0, 0, 0);
+    proj->rotation = 0;
     proj->speed = 1;
     proj->size = 0.5;
     proj->lifetime = 1;
     proj->flags = 0;
+    proj->update = do_nothing;
     list_append(game_context.projectiles, proj);
     return proj;
 }
@@ -32,6 +37,7 @@ void projectile_update(Projectile* proj, f32 dt)
 {
     proj->position = vec3_add(proj->position, vec3_scale(proj->direction, proj->speed * dt));
     proj->lifetime -= dt;
+    proj->update(proj, dt);
 }
 
 void projectile_set_flag(Projectile* proj, ProjectileFlagEnum flag, u32 val)
