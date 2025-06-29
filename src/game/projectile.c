@@ -23,6 +23,7 @@ Projectile* projectile_create(vec3 position)
     proj->position = position;
     proj->position.y = 0.5f;
     proj->direction = vec3_create(0, 0, 0);
+    proj->facing = 0;
     proj->rotation = 0;
     proj->speed = 1;
     proj->size = 0.5;

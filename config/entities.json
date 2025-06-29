@@ -1,7 +1,5 @@
 {
     "knight": {
-        "init": "entity_knight_init",
-        "cleanup": "entity_knight_cleanup",
         "update": "entity_knight_update",
         "create": "entity_knight_create",
         "destroy": "entity_knight_destroy",
@@ -68,8 +66,6 @@
         ]
     },
     "enemy": {
-        "init": "entity_enemy_init",
-        "cleanup": "entity_enemy_cleanup",
         "update": "entity_enemy_update",
         "create": "entity_enemy_create",
         "destroy": "entity_enemy_destroy",
@@ -94,8 +90,6 @@
         ]
     },
     "shaitan_the_advisor": {
-        "init": "shaitan_the_advisor_init",
-        "cleanup": "shaitan_the_advisor_cleanup",
         "update": "shaitan_the_advisor_update",
         "create": "shaitan_the_advisor_create",
         "destroy": "shaitan_the_advisor_destroy",
@@ -158,7 +152,6 @@
         ]
     },
     "hand_of_shaitan": {
-        "cleanup": "hand_of_shaitan_cleanup",
         "update": "hand_of_shaitan_update",
         "create": "hand_of_shaitan_create",
         "destroy": "hand_of_shaitan_destroy",

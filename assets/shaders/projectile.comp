@@ -24,6 +24,7 @@ uniform int N;
 layout (std430, binding = 0) readonly buffer Input {
     // vec3 position
     // float size
+    // float facing
     // float rotation
     // vec4 tex_info
     // float location
@@ -40,26 +41,27 @@ layout (std430, binding = 1) writeonly buffer Output {
 void main() {
     if (gl_GlobalInvocationID.x >= N)
         return;
-    uint idx = 10 * gl_GlobalInvocationID.x;
+    uint idx = 11 * gl_GlobalInvocationID.x;
     vec4 position;
     position = vec4(data_in[idx], 0.0f, data_in[idx+2], 1.0f);
     position = proj * view * position;
     position.y += data_in[idx+1] / zoom;
 
-    float ar, size, rotation, u1, v1, u2, v2, location;
+    float ar, size, facing, rotation, u1, v1, u2, v2, location;
     ar = window.aspect_ratio;
     size = data_in[idx+3];
-    rotation = data_in[idx+4];
-    u1 = data_in[idx+5];
-    v1 = data_in[idx+6];
-    u2 = data_in[idx+5] + data_in[idx+7];
-    v2 = data_in[idx+6] + data_in[idx+8];
-    location = data_in[idx+9];
+    facing = data_in[idx+4];
+    rotation = data_in[idx+5];
+    u1 = data_in[idx+6];
+    v1 = data_in[idx+7];
+    u2 = data_in[idx+6] + data_in[idx+8];
+    v2 = data_in[idx+7] + data_in[idx+9];
+    location = data_in[idx+10];
 
     vec2 offset;
     float drot, theta;
-    drot = -rotation+yaw-PI;
-    drot = atan(tan(drot) / cos(PI / 2 + pitch)) + (cos(drot) > 0 ? 0 : PI) + (size < 0 ? 0 : PI / 4);
+    drot = -facing+yaw;
+    drot = rotation + atan(tan(drot) / cos(PI / 2 + pitch)) + (cos(drot) > 0 ? 0 : PI) + (size < 0 ? 0 : PI / 4);
 
     size = abs(size);
 

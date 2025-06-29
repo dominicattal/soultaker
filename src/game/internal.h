@@ -38,6 +38,7 @@ typedef void (*ProjectileUpdateFuncPtr)(Projectile*, f32);
 typedef struct Projectile {
     vec3 position;
     vec3 direction;
+    f32 facing;
     f32 rotation;
     f32 speed;
     f32 size;

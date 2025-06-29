@@ -42,18 +42,20 @@ static void create_bars(GlobalApi* api, i32 side_tex, i32 top_tex, vec2 position
     wall->size.y = 0.0;
 }
 
-st_export void shaitan_the_advisor_init(GlobalApi* api)
-{
-}
+typedef struct {
+    Entity* daddy;
+} HandData;
 
-st_export void shaitan_the_advisor_cleanup(GlobalApi* api)
-{
-}
+typedef struct {
+    Entity* hand1;
+    Entity* hand2;
+} AdvisorData;
 
 typedef enum {
     GROWING,
     ATTACK_1,
-    ATTACK_2
+    ATTACK_2,
+    ATTACK_3
 } ShaitanStates;
 
 void firestorm(Projectile* proj, f32 dt)
@@ -88,6 +90,39 @@ static void attack_1(GlobalApi* api, Entity* entity)
     }
 }
 
+st_export void hand_of_shaitan_update(GlobalApi* api, Entity* entity, f32 dt)
+{
+}
+
+st_export void hand_of_shaitan_create(GlobalApi* api, Entity* entity)
+{
+    HandData* data = api->st_malloc(sizeof(HandData));
+    entity->data = data;
+    entity->size = 2;
+    entity->health = 2;
+}
+
+st_export void hand_of_shaitan_destroy(GlobalApi* api, Entity* entity)
+{
+    api->st_free(entity->data);
+}
+
+static void spawn_hands(GlobalApi* api, Entity* advisor)
+{
+    Entity* hand;
+    AdvisorData* advisor_data = advisor->data;
+    HandData* data;
+    i32 id = api->entity_map_id("hand_of_shaitan");
+    hand = api->entity_create(api->vec3_create(23, 0, 16.5), id);
+    data = hand->data;
+    data->daddy = advisor;
+    advisor_data->hand1 = hand;
+    hand = api->entity_create(api->vec3_create(8, 0, 16.5), id);
+    data = hand->data;
+    data->daddy = advisor;
+    advisor_data->hand2 = hand;
+}
+
 st_export void shaitan_the_advisor_update(GlobalApi* api, Entity* entity, f32 dt)
 {
     switch (entity->state) {
@@ -105,6 +140,7 @@ st_export void shaitan_the_advisor_update(GlobalApi* api, Entity* entity, f32 dt
         case ATTACK_1:
             if (entity->health <= 90) {
                 entity->state = ATTACK_2;
+                spawn_hands(api, entity);
                 entity->state_timer = 0;
                 break;
             }
@@ -116,6 +152,8 @@ st_export void shaitan_the_advisor_update(GlobalApi* api, Entity* entity, f32 dt
             break;
         case ATTACK_2:
             break;
+        case ATTACK_3:
+            break;
         default:
             break;
     }
@@ -123,34 +161,20 @@ st_export void shaitan_the_advisor_update(GlobalApi* api, Entity* entity, f32 dt
 
 st_export void shaitan_the_advisor_create(GlobalApi* api, Entity* entity)
 {
-    entity->size = 0.0f;
+    AdvisorData* data = api->st_malloc(sizeof(AdvisorData));
+    data->hand1 = NULL;
+    data->hand2 = NULL;
+    entity->data = data;
+    entity->size = 3.0f;
     entity->hitbox_radius = 0.5f;
-    entity->health = 100;
+    entity->health = 91;
+    entity->state = ATTACK_1;
     api->entity_make_boss(entity);
 }
 
 st_export void shaitan_the_advisor_destroy(GlobalApi* api, Entity* entity)
 {
-}
-
-st_export void hand_of_shaitan_init(GlobalApi* api)
-{
-}
-
-st_export void hand_of_shaitan_cleanup(GlobalApi* api)
-{
-}
-
-st_export void hand_of_shaitan_update(GlobalApi* api, Entity* entity, f32 dt)
-{
-}
-
-st_export void hand_of_shaitan_create(GlobalApi* api, Entity* entity)
-{
-}
-
-st_export void hand_of_shaitan_destroy(GlobalApi* api, Entity* entity)
-{
+    api->st_free(entity->data);
 }
 
 st_export void game_preset_load_shaitan(GlobalApi* api)
