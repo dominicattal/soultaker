@@ -174,8 +174,6 @@ void game_update_objects(void)
     while (i < game_context.entities->length) {
         Entity* entity = list_get(game_context.entities, i);
         entity_update(entity, game_context.dt);
-        i++;
-        continue;
         if (entity->health <= 0)
             entity_destroy(list_remove(game_context.entities, i));
         else

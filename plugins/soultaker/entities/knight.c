@@ -30,6 +30,7 @@ st_export void entity_knight_update(GlobalApi* api, Entity* entity, f32 dt)
 
 st_export void entity_knight_create(GlobalApi* api, Entity* entity)
 {
+    entity->health = 1000000;
     entity->data = api->st_malloc(sizeof(Data));
 }
 

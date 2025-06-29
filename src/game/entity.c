@@ -7,8 +7,6 @@
 
 extern GameContext game_context;
 
-typedef void (*InitFuncPtr)(GlobalApi*);
-typedef void (*CleanupFuncPtr)(GlobalApi*);
 typedef void (*CreateFuncPtr)(GlobalApi*, Entity*);
 typedef void (*DestroyFuncPtr)(GlobalApi*, Entity*);
 typedef void (*UpdateFuncPtr)(GlobalApi*, Entity*, f32);
@@ -22,8 +20,6 @@ typedef struct {
 
 typedef struct {
     char* name;
-    InitFuncPtr init;
-    CleanupFuncPtr cleanup;
     CreateFuncPtr create;
     DestroyFuncPtr destroy;
     UpdateFuncPtr update;
@@ -123,41 +119,9 @@ static void load_state_info(i32 entity_id, JsonObject* object)
     entity_context.infos[entity_id].bidirectional = bidirectional;
 }
 
-static void default_init_function(GlobalApi*) {}
-static void default_cleanup_function(GlobalApi*) {}
 static void default_update_function(GlobalApi*, Entity*, f32) {}
 static void default_create_function(GlobalApi*, Entity*) {}
 static void default_destroy_function(GlobalApi*, Entity*) {}
-
-static void load_init_function(JsonObject* object, i32 entity_id)
-{
-    JsonValue* val_string = json_get_value(object, "init");
-    const char* name = entity_context.infos[entity_id].name;
-    if (val_string == NULL) {
-        entity_context.infos[entity_id].init = default_init_function;
-        return;
-    }
-    log_assert(json_get_type(val_string) == JTYPE_STRING, "Init function for %s is not a string", name);
-    const char* function_name = json_get_string(val_string);
-    log_assert(function_name, "Failed to get init function name for %s from json value", name);
-    entity_context.infos[entity_id].init = state_load_function(function_name);
-    log_assert(entity_context.infos[entity_id].init, "Failed to find function %s for entity %s in library", function_name, name);
-}
-
-static void load_cleanup_function(JsonObject* object, i32 entity_id)
-{
-    JsonValue* val_string = json_get_value(object, "cleanup");
-    const char* name = entity_context.infos[entity_id].name;
-    if (val_string == NULL) {
-        entity_context.infos[entity_id].cleanup = default_cleanup_function;
-        return;
-    }
-    log_assert(json_get_type(val_string) == JTYPE_STRING, "Cleanup function for %s is not a string", name);
-    const char* function_name = json_get_string(val_string);
-    log_assert(function_name, "Failed to get cleanup function name for %s from json value", name);
-    entity_context.infos[entity_id].cleanup = state_load_function(function_name);
-    log_assert(entity_context.infos[entity_id].cleanup, "Failed to find function %s for entity %s in library", function_name, name);
-}
 
 static void load_create_function(JsonObject* object, i32 entity_id)
 {
@@ -231,8 +195,6 @@ static void load_entity_info(void)
         object = json_get_object(val_object);
         log_assert(object, "Could not get object from value");
 
-        load_init_function(object, i);
-        load_cleanup_function(object, i);
         load_create_function(object, i);
         load_destroy_function(object, i);
         load_update_function(object, i);
@@ -240,9 +202,6 @@ static void load_entity_info(void)
 
         json_iterator_increment(it);
     }
-
-    for (i32 i = 0; i < entity_context.num_entities; i++)
-        entity_context.infos[i].init(&global_api);
 
     json_iterator_destroy(it);
     json_object_destroy(json);
@@ -431,7 +390,6 @@ void entity_cleanup(void)
     if (game_context.bosses != NULL)
         list_destroy(game_context.bosses);
     for (i32 i = 0; i < entity_context.num_entities; i++) {
-        entity_context.infos[i].cleanup(&global_api);
         st_free(entity_context.infos[i].name);
         for (i32 j = 0; j < entity_context.infos[i].num_states; j++) {
             st_free(entity_context.infos[i].states[j].name);

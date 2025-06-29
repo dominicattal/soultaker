@@ -11,7 +11,7 @@
 #define PARTICLE_VERTEX_LENGTH_OUT   7
 #define PARJICLE_VERTEX_LENGTH_IN    8
 #define PARJICLE_VERTEX_LENGTH_OUT   7
-#define PROJECTILE_VERTEX_LENGTH_IN  10
+#define PROJECTILE_VERTEX_LENGTH_IN  11
 #define PROJECTILE_VERTEX_LENGTH_OUT 7
 
 extern GameContext game_context;
@@ -185,6 +185,7 @@ static void update_projectile_vertex_data(void)
         V = projectile->position.z;
         // encode texture rotation as negative num
         V = projectile->size * (rotate_tex ? 1 : -1);
+        V = projectile->facing;
         V = projectile->rotation;
         V = u;
         V = v;
