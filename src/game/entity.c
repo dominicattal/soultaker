@@ -362,7 +362,9 @@ i32 entity_get_direction(Entity* entity)
 i32 entity_get_texture(Entity* entity)
 {
     EntityInfo info = entity_context.infos[entity->type];
+    log_assert(entity->state < info.num_states, "Invalid state");
     EntityState state = info.states[entity->state];
+    log_assert(entity->frame < state.num_frames, "Invalid frame");
     f32 rad = vec2_radians(entity->facing) - camera_get_yaw();
     i32 dir;
     if (entity_context.infos[entity->type].bidirectional)

@@ -49,6 +49,7 @@ typedef struct {
 typedef struct {
     Entity* hand1;
     Entity* hand2;
+    f32 timer1;
 } AdvisorData;
 
 typedef enum {
@@ -61,33 +62,6 @@ typedef enum {
 void firestorm(Projectile* proj, f32 dt)
 {
     proj->rotation += 10 * dt;
-}
-
-static void attack_1(GlobalApi* api, Entity* entity)
-{
-    Projectile* proj;
-    i32 tex_id = api->texture_get_id("shaitan_firestorm");
-    vec2 direction;
-    i32 dir = rand() % 2;
-    for (i32 i = 0; i < 5; i++) {
-        proj = api->projectile_create(entity->position);
-        proj->speed = 4.0f;
-        proj->size = 0.75f;
-        proj->lifetime = 2.0f;
-        proj->tex = tex_id;
-        direction = api->vec2_rotate(api->vec2_create(dir, 1-dir), PI / 6 * (2-i));
-        proj->direction = api->vec3_create(direction.x, 0.0f, direction.y);
-        proj->update = firestorm;
-
-        proj = api->projectile_create(entity->position);
-        proj->speed = 4.0f;
-        proj->size = 0.75f;
-        proj->lifetime = 2.0f;
-        proj->tex = tex_id;
-        direction = api->vec2_rotate(api->vec2_create(-dir, -(1-dir)), PI / 6 * (2-i));
-        proj->direction = api->vec3_create(direction.x, 0.0f, direction.y);
-        proj->update = firestorm;
-    }
 }
 
 st_export void hand_of_shaitan_update(GlobalApi* api, Entity* entity, f32 dt)
@@ -104,7 +78,41 @@ st_export void hand_of_shaitan_create(GlobalApi* api, Entity* entity)
 
 st_export void hand_of_shaitan_destroy(GlobalApi* api, Entity* entity)
 {
+    HandData* data = entity->data;
+    Entity* daddy = data->daddy;
+    AdvisorData* daddys_data = daddy->data;
+    if (entity == daddys_data->hand1)
+        daddys_data->hand1 = NULL;
+    else if (entity == daddys_data->hand2)
+        daddys_data->hand2 = NULL;
     api->st_free(entity->data);
+}
+
+static void attack_1(GlobalApi* api, Entity* entity)
+{
+    Projectile* proj;
+    i32 tex_id = api->texture_get_id("shaitan_firestorm");
+    vec2 direction;
+    i32 dir = rand() % 2;
+    for (i32 i = 0; i < 5; i++) {
+        proj = api->projectile_create(entity->position);
+        proj->speed = 4.5f;
+        proj->size = 0.75f;
+        proj->lifetime = 2.0f;
+        proj->tex = tex_id;
+        direction = api->vec2_rotate(api->vec2_create(dir, 1-dir), PI / 6 * (2-i));
+        proj->direction = api->vec3_create(direction.x, 0.0f, direction.y);
+        proj->update = firestorm;
+
+        proj = api->projectile_create(entity->position);
+        proj->speed = 4.5f;
+        proj->size = 0.75f;
+        proj->lifetime = 7.3f;
+        proj->tex = tex_id;
+        direction = api->vec2_rotate(api->vec2_create(-dir, -(1-dir)), PI / 6 * (2-i));
+        proj->direction = api->vec3_create(direction.x, 0.0f, direction.y);
+        proj->update = firestorm;
+    }
 }
 
 static void spawn_hands(GlobalApi* api, Entity* advisor)
@@ -123,8 +131,41 @@ static void spawn_hands(GlobalApi* api, Entity* advisor)
     advisor_data->hand2 = hand;
 }
 
+static void attack_2_firestorm(GlobalApi* api, Entity* entity)
+{
+    Projectile* proj;
+    vec3 position = api->game_get_nearest_player_position();
+    vec3 direction = api->vec3_sub(position, entity->position);
+    i32 tex_id = api->texture_get_id("shaitan_firestorm");
+    proj = api->projectile_create(entity->position);
+    proj->speed = 4.5f;
+    proj->size = 0.75f;
+    proj->lifetime = 2.0f;
+    proj->tex = tex_id;
+    proj->direction = api->vec3_normalize(direction);
+    proj->update = firestorm;
+}
+
+static void attack_2_fireball(GlobalApi* api, Entity* entity)
+{
+    Projectile* proj;
+    vec2 direction;
+    i32 tex_id = api->texture_get_id("shaitan_fireball");
+    for (i32 i = 0; i < 12; i++) {
+        proj = api->projectile_create(entity->position);
+        proj->speed = 4.0f;
+        proj->size = 0.6f;
+        proj->lifetime = 6.0f;
+        proj->tex = tex_id;
+        direction = api->vec2_direction(PI / 6 * i);
+        proj->direction = api->vec3_create(direction.x, 0, direction.y);
+        proj->facing = PI / 6 * i;
+    }
+}
+
 st_export void shaitan_the_advisor_update(GlobalApi* api, Entity* entity, f32 dt)
 {
+    AdvisorData* data = entity->data;
     switch (entity->state) {
         case GROWING:
             if (entity->size >= 3.0f) {
@@ -141,7 +182,10 @@ st_export void shaitan_the_advisor_update(GlobalApi* api, Entity* entity, f32 dt
             if (entity->health <= 90) {
                 entity->state = ATTACK_2;
                 spawn_hands(api, entity);
+                api->entity_set_flag(entity, ENTITY_FLAG_INVULNERABLE, 1);
                 entity->state_timer = 0;
+                entity->frame = 0;
+                data->timer1 = 0;
                 break;
             }
             entity->frame = entity->state_timer > 0.4f;
@@ -151,6 +195,21 @@ st_export void shaitan_the_advisor_update(GlobalApi* api, Entity* entity, f32 dt
             }
             break;
         case ATTACK_2:
+            if (data->hand1 == NULL && data->hand2 == NULL) {
+                entity->state_timer = 0;
+                entity->state = ATTACK_3;
+                api->entity_set_flag(entity, ENTITY_FLAG_INVULNERABLE, 1);
+                break;
+            }
+            data->timer1 += dt;
+            if (entity->state_timer > 0.5f) {
+                attack_2_firestorm(api, entity);
+                entity->state_timer -= 0.5f;
+            }
+            if (data->timer1 > 2.1f) {
+                attack_2_fireball(api, entity);
+                data->timer1 -= 2.1f;
+            }
             break;
         case ATTACK_3:
             break;

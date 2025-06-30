@@ -14,6 +14,8 @@
     #define BUILD_INFO "RELEASE"
 #endif
 
+#define NUM_THREADS 3
+
 struct {
     HMODULE lib;
     f32 dt;
@@ -50,12 +52,12 @@ void state_cleanup(void)
 {
     log_unlock();
     game_cleanup();
-    audio_cleanup();
     gui_cleanup();
+    audio_cleanup();
     renderer_cleanup();
     window_cleanup();
 #ifdef DEBUG_BUILD
-    log_write(INFO, "Current heap size: %lld", get_heap_size());
+    print_heap_info();
 #endif
     log_cleanup();
 

@@ -112,7 +112,7 @@ void _log_write(LogLevel severity, const char* message, const char* filename, in
     fprintf(stderr, "\n\n");
     fflush(stderr);
     if (severity == FATAL)
-        exit(1);
+        abort();
     pthread_mutex_unlock(&mutex);
 }
 #else
@@ -131,7 +131,7 @@ void _log_write(LogLevel severity, const char* message, ...)
     fprintf(stream, "\n");
     fflush(stream);
     if (severity == FATAL)
-        exit(1);
+        abort();
     pthread_mutex_unlock(&mutex);
 }
 #endif
