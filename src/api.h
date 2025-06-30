@@ -15,6 +15,7 @@ typedef struct {
     Entity* (*entity_create)(vec3, i32);
     void (*entity_make_boss)(Entity* entity);
     i32 (*entity_map_id)(const char*);
+    void (*entity_set_flag)(Entity*, EntityFlagEnum, u32);
 
     // Wall
     Wall* (*wall_create)(vec2, f32);
@@ -37,9 +38,11 @@ typedef struct {
 
     // Util
     vec3 (*vec3_create)(f32, f32, f32);
+    vec3 (*vec3_normalize)(vec3);
+    vec3 (*vec3_sub)(vec3, vec3);
     vec2 (*vec2_create)(f32, f32);
     vec2 (*vec2_rotate)(vec2, f32);
-    vec3 (*vec3_normalize)(vec3);
+    vec2 (*vec2_direction)(f32);
 
 #ifdef DEBUG_BUILD
     void* (*_st_malloc)(size_t, const char*, int);

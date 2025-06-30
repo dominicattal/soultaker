@@ -171,7 +171,8 @@ void game_preset_cleanup(void);
 typedef enum {
     ENTITY_FLAG_FRIENDLY,
     ENTITY_FLAG_UPDATE_FACING,
-    ENTITY_FLAG_IN_LAVA
+    ENTITY_FLAG_IN_LAVA,
+    ENTITY_FLAG_INVULNERABLE
 } EntityFlagEnum;
 
 void entity_init(void);

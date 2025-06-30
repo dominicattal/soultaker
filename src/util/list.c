@@ -21,7 +21,6 @@ void list_append(List* list, void* item)
             list->buffer = st_malloc(list->capacity * sizeof(void*));
         else
             list->buffer = st_realloc(list->buffer, list->capacity * sizeof(void*));
-        assert(list->buffer != NULL);
     }
     list->buffer[list->length++] = item;
 }

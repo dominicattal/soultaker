@@ -34,6 +34,7 @@ static void gui_update_comps(f32 dt)
 static void* gui_loop(void* vargp)
 {
     f64 start, end;
+    start = get_time();
     log_write(INFO, "Entering gui loop");
     gui_context.dt = 0;
     gui_comp_init();

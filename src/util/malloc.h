@@ -9,6 +9,7 @@ void* _st_realloc(void* ptr, size_t size, const char* file, int line);
 void* _st_calloc(int cnt, size_t size, const char* file, int line);
 void  _st_free(void* ptr, const char* file, int line);
 size_t get_heap_size(void);
+void   print_heap_info(void);
 
 #ifdef DEBUG_BUILD
     #define st_malloc(size) _st_malloc(size, __FILE__, __LINE__)

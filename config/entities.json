@@ -47,20 +47,20 @@
                 "id": 2,
                 "frames": 2,
                 "left": [
-                    "knight_shooting_left_2",
-                    "knight_shooting_left_1"
+                    "knight_shooting_left_1",
+                    "knight_shooting_left_2"
                 ],
                 "right": [
-                    "knight_shooting_right_2",
-                    "knight_shooting_right_1"
+                    "knight_shooting_right_1",
+                    "knight_shooting_right_2"
                 ],
                 "up": [
-                    "knight_shooting_up_2",
-                    "knight_shooting_up_1"
+                    "knight_shooting_up_1",
+                    "knight_shooting_up_2"
                 ],
                 "down": [
-                    "knight_shooting_down_2",
-                    "knight_shooting_down_1"
+                    "knight_shooting_down_1",
+                    "knight_shooting_down_2"
                 ]
             }
         ]
