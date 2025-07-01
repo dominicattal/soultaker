@@ -120,7 +120,7 @@ static void spawn_hands(GlobalApi* api, Entity* advisor)
     Entity* hand;
     AdvisorData* advisor_data = advisor->data;
     HandData* data;
-    i32 id = api->entity_map_id("hand_of_shaitan");
+    i32 id = api->entity_get_id("hand_of_shaitan");
     hand = api->entity_create(api->vec3_create(23, 0, 16.5), id);
     data = hand->data;
     data->daddy = advisor;
@@ -262,6 +262,6 @@ st_export void game_preset_load_shaitan(GlobalApi* api)
     create_bars(api, side_tex, top_tex, api->vec2_create(24, 26));
     create_bars(api, side_tex, top_tex, api->vec2_create(28, 24));
 
-    i32 sta_id = api->entity_map_id("shaitan_the_advisor");
+    i32 sta_id = api->entity_get_id("shaitan_the_advisor");
     api->entity_create(api->vec3_create(15.5, 0, 16.5), sta_id);
 }

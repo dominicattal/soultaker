@@ -1,4 +1,4 @@
-#include"internal.h"
+#include "internal.h"
 #include "../renderer.h"
 
 GameContext game_context;
@@ -20,9 +20,6 @@ void* game_loop(void* vargp)
                 game_event_queue_flush();
                 game_update_vertex_data();
             }
-            pthread_mutex_lock(&game_context.getter_mutex);
-            game_context.values.dt = game_context.dt;
-            pthread_mutex_unlock(&game_context.getter_mutex);
         }
         end = get_time();
     }
@@ -113,11 +110,7 @@ void game_cleanup(void)
 
 f32 game_get_dt(void)
 {
-    f32 dt;
-    pthread_mutex_lock(&game_context.getter_mutex);
-    dt = game_context.values.dt;
-    pthread_mutex_unlock(&game_context.getter_mutex);
-    return dt;
+    return game_context.dt;
 }
 
 f32 game_get_boss_health(void)

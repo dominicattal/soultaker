@@ -6,7 +6,9 @@
 typedef enum {
     GAME_EVENT_NONE,
     GAME_EVENT_PRESET_LOAD,
-    GAME_EVENT_CAMERA_MOVE
+    GAME_EVENT_CAMERA_MOVE,
+    GAME_EVENT_CAMERA_ROTATE,
+    GAME_EVENT_CAMERA_TILT
 } GameEventEnum;
 
 // to avoid needlessly complicated structs and
@@ -51,8 +53,10 @@ static bool event_queue_empty(GameEventQueue* queue)
 
 static void event_enqueue(GameEventQueue* queue, GameEvent event)
 {
-    if (event_queue_full(queue)) 
+    if (event_queue_full(queue)) {
+        log_write(WARNING, "Event queue at %p is full, dropping event %d", queue, event.type);
         return;
+    }
     queue->buffer[queue->tail] = event;
     queue->tail = (queue->tail + 1) % (GAME_EVENT_QUEUE_CAPACITY+1);
 }
@@ -86,15 +90,23 @@ static GameEventQueue* get_event_queue(void)
 
 static void execute_event(GameEvent event)
 {
+    IntFloat32 u, u1, u2;
     switch (event.type) {
         case GAME_EVENT_PRESET_LOAD:
             game_preset_load((i32)event.data1);
             break;
         case GAME_EVENT_CAMERA_MOVE:
-            IntFloat32 u1, u2;
             u2._int = event.data1 & ((1LL<<32)-1);
             u1._int = (event.data1>>32) & ((1LL<<32)-1);
             camera_move(vec2_create(u1._flt, u2._flt), game_context.dt);
+            break;
+        case GAME_EVENT_CAMERA_ROTATE:
+            u._int = event.data1 & ((1LL<<32)-1);
+            camera_rotate(u._flt, game_context.dt);
+            break;
+        case GAME_EVENT_CAMERA_TILT:
+            u._int = event.data1 & ((1LL<<32)-1);
+            camera_tilt(u._flt, game_context.dt);
             break;
         default:
             break;
@@ -122,7 +134,7 @@ void game_event_create_preset_load(i32 preset_id)
     event_enqueue(queue, event);
 }
 
-void game_event_create_camera_rotate(vec2 mag)
+void game_event_create_camera_move(vec2 mag)
 {
     IntFloat32 u1, u2;
     u1._flt = mag.x;
@@ -130,6 +142,30 @@ void game_event_create_camera_rotate(vec2 mag)
     GameEvent event = (GameEvent) {
         .type = GAME_EVENT_CAMERA_MOVE,
         .data1 = ((u64)u1._int << 32) | u2._int
+    };
+    GameEventQueue* queue = get_event_queue();
+    event_enqueue(queue, event);
+}
+
+void game_event_create_camera_rotate(f32 mag)
+{
+    IntFloat32 u;
+    u._flt = mag;
+    GameEvent event = (GameEvent) {
+        .type = GAME_EVENT_CAMERA_ROTATE,
+        .data1 = u._int
+    };
+    GameEventQueue* queue = get_event_queue();
+    event_enqueue(queue, event);
+}
+
+void game_event_create_camera_tilt(f32 mag)
+{
+    IntFloat32 u;
+    u._flt = mag;
+    GameEvent event = (GameEvent) {
+        .type = GAME_EVENT_CAMERA_TILT,
+        .data1 = u._int
     };
     GameEventQueue* queue = get_event_queue();
     event_enqueue(queue, event);

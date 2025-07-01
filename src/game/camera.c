@@ -9,7 +9,8 @@
 #define DEFAULT_PITCH       PI / 6
 #define DEFAULT_FOV         PI / 4
 #define DEFAULT_ZOOM        7
-#define DEFAULT_ROTSPEED    3.5
+#define DEFAULT_ROTSPEED    10
+#define DEFAULT_TILTSPEED   10
 #define DEFAULT_MOVESPEED   3.5
 #define DEFAULT_POSITION    vec3_create(0, 5, 0)
 #define Y_AXIS              vec3_create(0, 1, 0)
@@ -77,15 +78,8 @@ void camera_init(void)
     game_context.camera.fov = DEFAULT_FOV;
     game_context.camera.move_speed = DEFAULT_MOVESPEED;
     game_context.camera.rotate_speed = DEFAULT_ROTSPEED;
+    game_context.camera.tilt_speed = DEFAULT_TILTSPEED;
     game_context.camera.follow = true;
-    update_orientation_vectors();
-    lock_onto_target();
-    update_view_matrix();
-    update_proj_matrix();
-}
-
-void camera_reset(void)
-{
     update_orientation_vectors();
     lock_onto_target();
     update_view_matrix();
@@ -134,7 +128,7 @@ void camera_rotate(f32 mag, f32 dt)
 
 void camera_tilt(f32 mag, f32 dt)
 {
-    game_context.camera.pitch += mag * dt * game_context.camera.rotate_speed;
+    game_context.camera.pitch += mag * dt * game_context.camera.tilt_speed;
     if (game_context.camera.pitch > MAX_PITCH - EPSILON)
         game_context.camera.pitch = MAX_PITCH - EPSILON;
     else if (game_context.camera.pitch < MIN_PITCH + EPSILON)

@@ -2,7 +2,7 @@
 
 st_export void game_preset_load_test(GlobalApi* api)
 {
-    api->entity_create(api->vec3_create(5,0,5), api->entity_map_id("enemy"));
+    api->entity_create(api->vec3_create(5,0,5), api->entity_get_id("enemy"));
     i32 tile_tex = api->texture_get_id("tile_2");
     for (i32 i = -10; i <= 10; i++) {
         for (i32 j = -10; j <= 10; j++) {

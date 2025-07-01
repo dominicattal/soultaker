@@ -14,8 +14,8 @@ typedef struct {
     // Entity
     Entity* (*entity_create)(vec3, i32);
     void (*entity_make_boss)(Entity* entity);
-    i32 (*entity_map_id)(const char*);
-    void (*entity_set_flag)(Entity*, EntityFlagEnum, u32);
+    i32 (*entity_get_id)(const char*);
+    void (*entity_set_flag)(Entity*, EntityFlagEnum, bool);
 
     // Wall
     Wall* (*wall_create)(vec2, f32);

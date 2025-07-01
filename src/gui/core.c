@@ -50,8 +50,8 @@ static void* gui_loop(void* vargp)
         }
         end = get_time();
     }
-    gui_comp_cleanup();
     log_write(INFO, "Exiting gui loop");
+    gui_comp_cleanup();
     return NULL;
 }
 
