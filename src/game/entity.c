@@ -306,6 +306,19 @@ void entity_update(Entity* entity, f32 dt)
 void entity_make_boss(Entity* entity)
 {
     list_append(game_context.bosses, entity);
+    entity_set_flag(entity, ENTITY_FLAG_BOSS, 1);
+    pthread_mutex_lock(&game_context.getter_mutex);
+    game_context.values.num_bosses = 1;
+    game_context.values.boss_health = entity->health;
+    pthread_mutex_unlock(&game_context.getter_mutex);
+}
+
+void entity_boss_update(Entity* entity)
+{
+    pthread_mutex_lock(&game_context.getter_mutex);
+    game_context.values.num_bosses = 1;
+    game_context.values.boss_health = entity->health;
+    pthread_mutex_unlock(&game_context.getter_mutex);
 }
 
 void entity_set_flag(Entity* entity, EntityFlagEnum flag, u32 val)

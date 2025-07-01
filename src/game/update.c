@@ -73,6 +73,8 @@ static void collide_entity_projectile(Entity* entity, Projectile* projectile)
     bool is_entity_invulnerable = entity_get_flag(entity, ENTITY_FLAG_INVULNERABLE);
     bool is_entity_friendly = entity_get_flag(entity, ENTITY_FLAG_FRIENDLY);
     bool is_projectile_friendly = projectile_get_flag(projectile, PROJECTILE_FLAG_FRIENDLY);
+    bool is_entity_boss = entity_get_flag(entity, ENTITY_FLAG_BOSS);
+
     if (is_entity_friendly == is_projectile_friendly)
         return;
 
@@ -93,6 +95,8 @@ static void collide_entity_projectile(Entity* entity, Projectile* projectile)
         return;
 
     entity->health -= 1;
+    if (is_entity_boss)
+        entity_boss_update(entity);
 }
 
 static void collide_projectile_wall(Projectile* projectile, Wall* wall)

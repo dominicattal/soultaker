@@ -6,12 +6,13 @@ GameContext game_context;
 void* game_loop(void* vargp)
 {
     f64 start, end;
-    start = get_time();
+    end = start = get_time();
     game_context.dt = 0;
     log_write(INFO, "Entering game loop");
     while (!game_context.kill_thread)
     {
-        if (game_context.dt > 0.0001) {
+        if (end - start > 0.0001) {
+            game_context.dt = end - start;
             start = get_time();
             if (!game_context.paused) {
                 game_context.time += game_context.dt;
@@ -19,9 +20,11 @@ void* game_loop(void* vargp)
                 game_event_queue_flush();
                 game_update_vertex_data();
             }
+            pthread_mutex_lock(&game_context.getter_mutex);
+            game_context.values.dt = game_context.dt;
+            pthread_mutex_unlock(&game_context.getter_mutex);
         }
         end = get_time();
-        game_context.dt = end - start;
     }
     log_write(INFO, "Exiting game loop");
     return NULL;
@@ -54,6 +57,7 @@ void game_init(void)
     game_context.data_swap.update_parstacle_buffer = true;
     game_context.data_swap.update_obstacle_buffer = true;
     pthread_mutex_init(&game_context.data_mutex, NULL);
+    pthread_mutex_init(&game_context.getter_mutex, NULL);
     pthread_create(&game_context.thread_id, NULL, game_loop, NULL);
     log_write(INFO, "Initialized game");
 }
@@ -75,6 +79,7 @@ void game_cleanup(void)
     game_context.halt_input = false;
     pthread_join(game_context.thread_id, NULL);
     pthread_mutex_destroy(&game_context.data_mutex);
+    pthread_mutex_destroy(&game_context.getter_mutex);
     game_render_cleanup();
     camera_cleanup();
     entity_cleanup();
@@ -106,9 +111,13 @@ void game_cleanup(void)
     log_write(INFO, "Cleaned up game");
 }
 
-f32 game_dt(void)
+f32 game_get_dt(void)
 {
-    return game_context.dt;
+    f32 dt;
+    pthread_mutex_lock(&game_context.getter_mutex);
+    dt = game_context.values.dt;
+    pthread_mutex_unlock(&game_context.getter_mutex);
+    return dt;
 }
 
 f32 game_get_boss_health(void)
