@@ -130,7 +130,16 @@ typedef struct {
     GLfloat* parjicle_buffer;
 } GameData;
 
+// contains copy of values for thread-safety
+// in getters
 typedef struct {
+    f32 dt;
+    f32 boss_health;
+    i32 num_bosses;
+} GetterValues;
+
+typedef struct {
+    GetterValues values;
     GameData data;
     GameData data_swap;
     Player player;
@@ -149,6 +158,7 @@ typedef struct {
     bool paused;
     pthread_t thread_id;
     pthread_mutex_t data_mutex;
+    pthread_mutex_t getter_mutex;
     f32 time;
     f32 dt;
 } GameContext;
@@ -172,7 +182,8 @@ typedef enum {
     ENTITY_FLAG_FRIENDLY,
     ENTITY_FLAG_UPDATE_FACING,
     ENTITY_FLAG_IN_LAVA,
-    ENTITY_FLAG_INVULNERABLE
+    ENTITY_FLAG_INVULNERABLE,
+    ENTITY_FLAG_BOSS
 } EntityFlagEnum;
 
 void entity_init(void);
@@ -181,6 +192,7 @@ i32 entity_map_id(const char* handle);
 i32 entity_map_state_id(Entity* entity, const char* handle);
 Entity* entity_create(vec3 position, i32 type);
 void entity_make_boss(Entity* entity);
+void entity_boss_update(Entity* entity);
 void entity_update(Entity* entity, f32 dt);
 void entity_set_flag(Entity* entity, EntityFlagEnum flag, u32 val);
 bool entity_get_flag(Entity* entity, EntityFlagEnum flag);

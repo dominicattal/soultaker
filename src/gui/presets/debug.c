@@ -38,7 +38,7 @@ static void update_info(GUIComp* comp, f32 dt)
         strncat(string, buf, 100);
         sprintf(buf, "pitch: %-7.3f yaw: %-7.3f zoom: %-7.3f\n", pitch, yaw, zoom);
         strncat(string, buf, 100);
-        sprintf(buf, "Main: %-6.3f GUI: %-6.3f Game: %-6.3f\n", state_dt() * 1000, gui_dt() * 1000, game_dt() * 1000);
+        sprintf(buf, "Main: %-6.3f GUI: %-6.3f Game: %-6.3f\n", state_dt() * 1000, gui_dt() * 1000, game_get_dt() * 1000);
         strncat(string, buf, 100);
         string[499] = '\n';
         gui_comp_set_text(comp, 400, string);

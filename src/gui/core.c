@@ -34,21 +34,21 @@ static void gui_update_comps(f32 dt)
 static void* gui_loop(void* vargp)
 {
     f64 start, end;
-    start = get_time();
+    end = start = get_time();
     log_write(INFO, "Entering gui loop");
     gui_context.dt = 0;
     gui_comp_init();
     gui_preset_load(GUI_PRESET_DEBUG);
     while (!gui_context.kill_thread)
     {
-        if (gui_context.dt > 0.0001) {
+        if (end - start > 0.0001) {
+            gui_context.dt = end - start;
             start = get_time();
             gui_update_comps(gui_context.dt);
             gui_update_vertex_data();
             gui_event_queue_flush(&gui_context.event_queue);
         }
         end = get_time();
-        gui_context.dt = end - start;
     }
     gui_comp_cleanup();
     log_write(INFO, "Exiting gui loop");
