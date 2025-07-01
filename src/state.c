@@ -14,8 +14,6 @@
     #define BUILD_INFO "RELEASE"
 #endif
 
-#define NUM_THREADS 3
-
 struct {
     HMODULE lib;
     f32 dt;

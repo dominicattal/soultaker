@@ -41,7 +41,7 @@ void projectile_update(Projectile* proj, f32 dt)
     proj->update(proj, dt);
 }
 
-void projectile_set_flag(Projectile* proj, ProjectileFlagEnum flag, u32 val)
+void projectile_set_flag(Projectile* proj, ProjectileFlagEnum flag, bool val)
 {
     proj->flags = (proj->flags & ~(1<<flag)) | (val<<flag);
 }

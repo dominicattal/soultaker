@@ -36,7 +36,7 @@ void player_reset(void)
 {
     if (game_context.player.entity != NULL)
         log_write(WARNING, "Did not free player entity before resetting");
-    i32 knight_id = entity_map_id("knight");
+    i32 knight_id = entity_get_id("knight");
     game_context.player.entity = entity_create(vec3_create(0, 0, 0), knight_id);
     game_context.player.entity->direction = vec3_create(0, 0, 0);
     game_context.player.entity->size = 1.0;
@@ -50,25 +50,30 @@ vec3 game_get_nearest_player_position(void)
     return game_context.player.entity->position;
 }
 
-void player_set_state(Player* player, i32 state)
-{
-    entity_set_state(player->entity, state);
-}
-
 void player_update(Player* player, f32 dt)
 {
     if (player->entity == NULL) return;
     player->shot_timer -= dt;
     player_shoot(player);
     if (player->shot_timer > 0) {
-        player_set_state(player, 2);
+        if (player->entity->state == 2)
+            return;
+        player->entity->state = 2;
+        player->entity->frame = 0;
         entity_set_flag(player->entity, ENTITY_FLAG_UPDATE_FACING, 0);
     } else {
         entity_set_flag(player->entity, ENTITY_FLAG_UPDATE_FACING, 1);
-        if (vec3_mag(player->entity->direction) > 0)
-            player_set_state(player, 1);
-        else
-            player_set_state(player, 0);
+        if (vec3_mag(player->entity->direction) > 0) {
+            if (player->entity->state == 1)
+                return;
+            player->entity->state = 1;
+            player->entity->frame = 0;
+        } else {
+            if (player->entity->state == 0)
+                return;
+            player->entity->state = 0;
+            player->entity->frame = 0;
+        }
     }
 }
 

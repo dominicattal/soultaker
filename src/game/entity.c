@@ -207,7 +207,7 @@ static void load_entity_info(void)
     json_object_destroy(json);
 }
 
-i32 entity_map_id(const char* name)
+i32 entity_get_id(const char* name)
 {
     int l, r, m, a;
     l = 0;
@@ -222,11 +222,11 @@ i32 entity_map_id(const char* name)
         else
             return m;
     }
-    log_write(FATAL, "Could not map id %s", name);
+    log_write(FATAL, "Could not get id for %s", name);
     return -1;
 }
 
-i32 entity_map_state_id(Entity* entity, const char* name)
+i32 entity_get_state_id(Entity* entity, const char* name)
 {
     return 0;
 }
@@ -249,14 +249,14 @@ void entity_clear(void)
     game_context.player.entity = NULL;
 }
 
-Entity* entity_create(vec3 position, i32 type)
+Entity* entity_create(vec3 position, i32 id)
 {
     Entity* entity = st_malloc(sizeof(Entity));
     entity->position = position;
     entity->prev_position = position;
     entity->direction = vec3_create(0, 0, 0);
     entity->facing = vec2_create(1, 0);
-    entity->type = type;
+    entity->id = id;
     entity->state_timer = 0;
     entity->tile_timer = 0;
 
@@ -270,7 +270,7 @@ Entity* entity_create(vec3 position, i32 type)
     entity->frame = 0;
     entity_set_flag(entity, ENTITY_FLAG_UPDATE_FACING, 1);
 
-    entity_context.infos[type].create(&global_api, entity);
+    entity_context.infos[id].create(&global_api, entity);
     list_append(game_context.entities, entity);
     return entity;
 }
@@ -300,7 +300,7 @@ void entity_update(Entity* entity, f32 dt)
     if (entity_get_flag(entity, ENTITY_FLAG_UPDATE_FACING) && vec3_mag(entity->direction) > 0)
         entity->facing = vec2_create(entity->direction.x, entity->direction.z);
 
-    entity_context.infos[entity->type].update(&global_api, entity, dt);
+    entity_context.infos[entity->id].update(&global_api, entity, dt);
 }
 
 void entity_make_boss(Entity* entity)
@@ -321,7 +321,7 @@ void entity_boss_update(Entity* entity)
     pthread_mutex_unlock(&game_context.getter_mutex);
 }
 
-void entity_set_flag(Entity* entity, EntityFlagEnum flag, u32 val)
+void entity_set_flag(Entity* entity, EntityFlagEnum flag, bool val)
 {
     entity->flags = (entity->flags & ~(1<<flag)) | (val<<flag);
 }
@@ -329,15 +329,6 @@ void entity_set_flag(Entity* entity, EntityFlagEnum flag, u32 val)
 bool entity_get_flag(Entity* entity, EntityFlagEnum flag)
 {
     return (entity->flags >> flag) & 1;
-}
-
-void entity_set_state(Entity* entity, i32 state)
-{
-    if (state != entity->state) {
-        entity->state = state;
-        entity->state_timer = 0;
-        entity->frame = 0;
-    }
 }
 
 static i32 get_direction_4(f32 rad)
@@ -367,20 +358,20 @@ i32 entity_get_direction(Entity* entity)
     f32 entity_rad = vec2_radians(entity->facing);
     f32 camera_rad = game_context.camera.yaw;
     f32 rad = get_direction_4(entity_rad - camera_rad);
-    if (entity_context.infos[entity->type].bidirectional)
+    if (entity_context.infos[entity->id].bidirectional)
         return get_direction_2(rad);
     return get_direction_4(rad);
 }
 
 i32 entity_get_texture(Entity* entity)
 {
-    EntityInfo info = entity_context.infos[entity->type];
+    EntityInfo info = entity_context.infos[entity->id];
     log_assert(entity->state < info.num_states, "Invalid state");
     EntityState state = info.states[entity->state];
     log_assert(entity->frame < state.num_frames, "Invalid frame");
     f32 rad = vec2_radians(entity->facing) - camera_get_yaw();
     i32 dir;
-    if (entity_context.infos[entity->type].bidirectional)
+    if (entity_context.infos[entity->id].bidirectional)
         dir = get_direction_2(rad);
     else
         dir = get_direction_4(rad);
@@ -390,7 +381,7 @@ i32 entity_get_texture(Entity* entity)
 
 void entity_destroy(Entity* entity)
 {
-    entity_context.infos[entity->type].destroy(&global_api, entity);
+    entity_context.infos[entity->id].destroy(&global_api, entity);
     st_free(entity);
 }
 

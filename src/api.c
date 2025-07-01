@@ -11,7 +11,7 @@ GlobalApi global_api = {
     // Entity
     REGISTER(entity_create),
     REGISTER(entity_make_boss),
-    REGISTER(entity_map_id),
+    REGISTER(entity_get_id),
     REGISTER(entity_set_flag),
 
     // Wall
