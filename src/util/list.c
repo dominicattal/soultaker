@@ -40,6 +40,14 @@ void* list_remove(List* list, i32 idx)
     return data;
 }
 
+i32 list_search(List* list, void* item)
+{
+    for (i32 i = 0; i < list->length; i++)
+        if (list->buffer[i] == item)
+            return i;
+    return -1;
+}
+
 void* list_pop(List* list, i32 idx)
 {
     void* data = list->buffer[idx];

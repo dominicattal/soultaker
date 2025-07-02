@@ -306,6 +306,8 @@ void entity_update(Entity* entity, f32 dt)
 void entity_make_boss(Entity* entity)
 {
     list_append(game_context.bosses, entity);
+    log_write(DEBUG, "%d", game_context.bosses->length);
+    log_assert(!entity_get_flag(entity, ENTITY_FLAG_BOSS), "Entity is already boss");
     entity_set_flag(entity, ENTITY_FLAG_BOSS, 1);
     pthread_mutex_lock(&game_context.getter_mutex);
     game_context.values.num_bosses = 1;
@@ -318,6 +320,18 @@ void entity_boss_update(Entity* entity)
     pthread_mutex_lock(&game_context.getter_mutex);
     game_context.values.num_bosses = 1;
     game_context.values.boss_health = entity->health;
+    pthread_mutex_unlock(&game_context.getter_mutex);
+}
+
+void entity_unmake_boss(Entity* entity)
+{
+    i32 idx = list_search(game_context.bosses, entity);
+    log_assert(idx != -1, "Entity %p was not found in boss list", entity);
+    list_remove(game_context.bosses, idx);
+    entity_set_flag(entity, ENTITY_FLAG_BOSS, 0);
+    pthread_mutex_lock(&game_context.getter_mutex);
+    game_context.values.num_bosses = 0;
+    game_context.values.boss_health = 0;
     pthread_mutex_unlock(&game_context.getter_mutex);
 }
 
@@ -382,6 +396,8 @@ i32 entity_get_texture(Entity* entity)
 void entity_destroy(Entity* entity)
 {
     entity_context.infos[entity->id].destroy(&global_api, entity);
+    if (entity_get_flag(entity, ENTITY_FLAG_BOSS))
+        entity_unmake_boss(entity); 
     st_free(entity);
 }
 

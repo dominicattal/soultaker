@@ -99,13 +99,13 @@ static void execute_event(Event event)
             game_preset_load(arg1._int);
             break;
         case GAME_EVENT_CAMERA_MOVE:
-            camera_move(vec2_create(arg1._flt, arg2._flt), game_get_dt());
+            camera_move(vec2_create(arg1._flt, arg2._flt));
             break;
         case GAME_EVENT_CAMERA_ROTATE:
-            camera_rotate(arg1._flt, game_get_dt());
+            camera_rotate(arg1._flt);
             break;
         case GAME_EVENT_CAMERA_TILT:
-            camera_tilt(arg1._flt, game_get_dt());
+            camera_tilt(arg1._flt);
             break;
 
         // Gui 

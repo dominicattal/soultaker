@@ -148,6 +148,23 @@
                 "down": [
                     "shaitan_the_advisor_open"
                 ]
+            },
+            {
+                "name": "attack_3",
+                "id": 3,
+                "frames": 1,
+                "left": [
+                    "shaitan_the_advisor_open"
+                ],
+                "right": [
+                    "shaitan_the_advisor_open"
+                ],
+                "up": [
+                    "shaitan_the_advisor_open"
+                ],
+                "down": [
+                    "shaitan_the_advisor_open"
+                ]
             }
         ]
     },
