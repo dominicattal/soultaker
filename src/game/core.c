@@ -1,10 +1,13 @@
 #include "internal.h"
 #include "../renderer.h"
+#include "../event.h"
 
 GameContext game_context;
 
 void* game_loop(void* vargp)
 {
+    thread_link("Game");
+
     f64 start, end;
     end = start = get_time();
     game_context.dt = 0;
@@ -17,7 +20,7 @@ void* game_loop(void* vargp)
             if (!game_context.paused) {
                 game_context.time += game_context.dt;
                 game_update();
-                game_event_queue_flush();
+                event_queue_flush();
                 game_update_vertex_data();
             }
         }

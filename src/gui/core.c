@@ -1,5 +1,6 @@
 #include "internal.h"
 #include "../renderer.h"
+#include "../event.h"
 
 GUIContext gui_context;
 
@@ -33,6 +34,8 @@ static void gui_update_comps(f32 dt)
 
 static void* gui_loop(void* vargp)
 {
+    thread_link("GUI");
+
     f64 start, end;
     end = start = get_time();
     log_write(INFO, "Entering gui loop");
@@ -46,7 +49,7 @@ static void* gui_loop(void* vargp)
             start = get_time();
             gui_update_comps(gui_context.dt);
             gui_update_vertex_data();
-            gui_event_queue_flush(&gui_context.event_queue);
+            event_queue_flush();
         }
         end = get_time();
     }
@@ -55,7 +58,7 @@ static void* gui_loop(void* vargp)
     return NULL;
 }
 
-f32 gui_dt(void)
+f32 gui_get_dt(void)
 {
     return gui_context.dt;
 }
@@ -69,7 +72,6 @@ void gui_init(void)
 {
     log_write(INFO, "Initializing GUI...");
     gui_render_init();
-    gui_event_queue_init(&gui_context.event_queue);
     pthread_mutex_init(&gui_context.data_mutex, NULL);
     pthread_create(&gui_context.thread_id, NULL, gui_loop, NULL);
     log_write(INFO, "Iniitalized GUI");
@@ -82,7 +84,6 @@ void gui_cleanup(void)
     pthread_join(gui_context.thread_id, NULL);
     pthread_mutex_destroy(&gui_context.data_mutex);
     gui_render_cleanup();
-    gui_event_queue_cleanup(&gui_context.event_queue);
     log_write(INFO, "Cleaned up GUI");
 }
 

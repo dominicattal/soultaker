@@ -1,7 +1,7 @@
 #include "internal.h"
 
 #define GAME_EVENT_QUEUE_CAPACITY 16
-#define NUM_QUEUES 8
+#define NUM_QUEUES 4
 
 typedef enum {
     GAME_EVENT_NONE,
