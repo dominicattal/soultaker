@@ -51,10 +51,11 @@ void camera_update(void);
 void camera_framebuffer_size_callback(void);
 void camera_zoom(i32 mag);
 
-// These functions are called on the game thread
-void camera_move(vec2 mag, f32 dt);
-void camera_rotate(f32 mag, f32 dt);
-void camera_tilt(f32 mag, f32 dt);
+// Alter camera by magnitude specified. These values
+// are taken as-is.
+void camera_move(vec2 mag);
+void camera_rotate(f32 mag);
+void camera_tilt(f32 mag);
 
 //**************************************************************************
 // Map definitions
@@ -148,6 +149,9 @@ void entity_make_boss(Entity* entity);
 
 // Updates the values for thread-safe getters in game_context
 void entity_boss_update(Entity* entity);
+
+// Removes entity from boss lis
+void entity_unmake_boss(Entity* entity);
 
 // Assigns default entity for the player
 void player_reset(void);
