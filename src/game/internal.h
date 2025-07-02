@@ -401,10 +401,13 @@ typedef struct {
 // thread can access
 extern GameContext game_context;
 
-void game_event_queue_flush(void);
+// setup and cleanup opengl buffers. this is
+// done on the main thread on program creation
+// and termination
+void game_render_init(void);
+void game_render_cleanup(void);
 
 vec3 game_get_nearest_player_position(void);
-
 void game_set_player_position(vec3 position);
 
 // update all game objects (entities, projectiles, etc)

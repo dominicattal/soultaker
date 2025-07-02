@@ -1,4 +1,5 @@
 #include "log.h"
+#include "thread.h"
 #include <time.h>
 #include <libgen.h>
 #include <sys/stat.h>
@@ -98,14 +99,13 @@ void _log_write(LogLevel severity, const char* message, const char* filename, in
     if ((int)severity > level)
         return;
     int Y, M, D, h, m, s;
-    int thread_id = pthread_self();
     va_list args;
     pthread_mutex_lock(&mutex);
     get_timestamp(&Y, &M, &D, &h, &m, &s);
-    fprintf(stderr, "\033[35;2;70;140;70m%4d-%02d-%02d %02d:%02d:%02d %s \033[36m%d \033[96m%s:%d\033[0m\n- ", 
+    fprintf(stderr, "\033[35;2;70;140;70m%4d-%02d-%02d %02d:%02d:%02d %s \033[36m%s \033[96m%s:%d\033[0m\n- ", 
             Y, M, D, h, m, s, 
             severity_string(severity), 
-            thread_id, filename, line);
+            thread_get_self_name(), filename, line);
     va_start(args, line);
     vfprintf(stderr, message, args);
     va_end(args);

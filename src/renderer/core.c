@@ -1,4 +1,3 @@
-#include "internal.h"
 #include "../gui.h"
 #include "../game.h"
 

@@ -7,6 +7,7 @@
 #include "util/list.h"
 #include "util/log.h"
 #include "util/malloc.h"
+#include "util/thread.h"
 #include <pthread.h>
 #include <stdlib.h>
 #include <glad.h>

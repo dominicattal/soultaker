@@ -21,6 +21,8 @@ struct {
 
 void state_init(void)
 {
+    thread_link("Main");
+
     state_context.lib = LoadLibrary("plugins/soultaker.dll");
     log_assert(state_context.lib, "Could not load library");
 
@@ -62,7 +64,7 @@ void state_cleanup(void)
     FreeLibrary(state_context.lib);
 }
 
-f32 state_dt(void)
+f32 state_get_dt(void)
 {
     return state_context.dt;
 }

@@ -3,6 +3,7 @@
 
 #include "internal.h"
 #include "../game.h"
+#include "../event.h"
 #include <ctype.h>
 
 #define ERROR       -1
@@ -74,7 +75,7 @@ static i32 new_state(i32 state, char* command, i32 left, i32 right)
                 error_message = "Invalid preset name";
                 return ERROR;
             }
-            game_event_create_preset_load(id);
+            event_create_game_preset_load(id);
             return PRESETFIN;
     }
     return 0;
