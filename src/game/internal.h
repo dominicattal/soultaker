@@ -85,24 +85,12 @@ void game_preset_load(i32 id);
 void game_preset_cleanup(void);
 
 //**************************************************************************
-// Weapon
+// Entity, Player, Boss definitions
 //**************************************************************************
 
 typedef struct Weapon {
     i32 id;
 } Weapon;
-
-// Initalize and cleanup weapon info
-// Loads weapon data from config/weapons.json
-void weapon_init(void);
-void weapon_cleanup(void);
-
-char* weapon_get_name(Weapon weapon);
-char* weapon_get_tooltip(Weapon weapon);
-
-//**************************************************************************
-// Entity, Player, Boss definitions
-//**************************************************************************
 
 typedef struct Entity {
     vec3 position;
@@ -125,6 +113,7 @@ typedef struct Entity {
 
 typedef struct Player {
     Weapon weapon;
+    Weapon swap_out;
     Entity* entity;
     f32 shot_timer;
     bool shooting;
@@ -178,6 +167,16 @@ void player_update(Player* player, f32 dt);
 
 // Shoot
 void player_shoot(Player* player);
+
+void player_swap_weapons(void);
+
+// Initalize and cleanup weapon info
+// Loads weapon data from config/weapons.json
+void weapon_init(void);
+void weapon_cleanup(void);
+
+i32 weapon_get_id(const char* name);
+void weapon_shoot(Player* player, vec3 direction, vec3 target);
 
 //**************************************************************************
 // Tile definitions

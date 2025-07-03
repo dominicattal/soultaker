@@ -1,12 +1,14 @@
 #include "internal.h"
 #include "../window.h"
+#include "../game.h"
 #include <assert.h>
 #include <string.h>
 
 void gui_comp_init(void)
 { 
     gui_context.root = gui_comp_create(0, 0, window_resolution_x(), window_resolution_y());
-    gui_context.typing_comp = NULL;
+    for (i32 i = 0; i < NUM_GUI_EVENT_COMPS; i++)
+        gui_context.event_comps[i] = NULL;
     gui_comp_set_color(gui_context.root, 0, 0, 0, 0);
     gui_comp_set_valign(gui_context.root, ALIGN_BOTTOM);
 }
@@ -29,8 +31,8 @@ GUIComp* gui_comp_create(i16 x, i16 y, i16 w, i16 h)
 void gui_comp_attach(GUIComp* parent, GUIComp* child)
 {
     i32 num_children;
+    log_assert(!gui_comp_is_text(parent), "Tried to attach child to text comp");
     gui_comp_get_num_children(parent, &num_children);
-    assert(num_children < MAX_NUM_CHILDREN);
     if (parent->children == NULL)
         parent->children = st_malloc(sizeof(GUIComp*));
     else
@@ -62,9 +64,10 @@ void gui_comp_detach(GUIComp* parent, GUIComp* child)
 
 void gui_comp_destroy(GUIComp* comp)
 {
-    if (gui_context.typing_comp == comp)
-        gui_context.typing_comp = NULL;
-    for (int i = 0; i < gui_comp_num_children(comp); i++)
+    for (i32 i = 0; i < NUM_GUI_EVENT_COMPS; i++)
+        if (gui_context.event_comps[i] == comp)
+            gui_context.event_comps[i] = NULL;
+    for (i32 i = 0; i < gui_comp_num_children(comp); i++)
         gui_comp_destroy(comp->children[i]);
     st_free(comp->children);
     st_free(comp->data);
@@ -164,8 +167,6 @@ void gui_comp_click(GUIComp* comp, i32 button, i32 action, i32 mods)
 
 void gui_comp_key(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods)
 {
-    if (gui_context.typing_comp != NULL) {
-    }
     if (comp->key_func == NULL)
         return;
     ((GUIKeyFPtr)(comp->key_func))(comp, key, scancode, action, mods);
@@ -176,6 +177,22 @@ void gui_comp_update(GUIComp* comp, f32 dt)
    if (comp->update_func == NULL)
        return;
    ((GUIUpdateFPtr)(comp->update_func))(comp, dt);
+}
+
+void gui_update_weapon_info(i32 weapon_id)
+{
+    GUIComp* comp = gui_get_event_comp(GUI_COMP_WEAPON_INFO);
+    if (comp == NULL)
+        return;
+
+    const char* name = weapon_get_name(weapon_id);
+    const char* tooltip = weapon_get_tooltip(weapon_id);
+    i32 tex_id = weapon_get_tex_id(weapon_id);
+
+    char string[1000];
+    sprintf(string, "Name: %s\nTooltip: %s", name, tooltip);
+    gui_comp_set_text(comp, strlen(string), string);
+    gui_comp_set_tex(comp, tex_id);
 }
 
 void gui_comp_add_data(GUIComp* comp, void* data)

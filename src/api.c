@@ -29,6 +29,7 @@ GlobalApi global_api = {
 
     // Projectile
     REGISTER(projectile_create),
+    REGISTER(projectile_set_flag),
 
     // Misc
     REGISTER(texture_get_id),
@@ -40,6 +41,7 @@ GlobalApi global_api = {
     REGISTER(vec2_create),
     REGISTER(vec2_rotate),
     REGISTER(vec2_direction),
+    REGISTER(vec2_radians),
     REGISTER(_log_write),
 
 #ifdef DEBUG_BUILD

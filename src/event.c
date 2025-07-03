@@ -2,7 +2,7 @@
 #include "game/internal.h"
 #include "gui/internal.h"
 
-#define EVENT_QUEUE_CAPACITY 16
+#define EVENT_QUEUE_CAPACITY 32
 
 typedef enum {
     EVENT_NONE,
@@ -12,6 +12,7 @@ typedef enum {
     GAME_EVENT_CAMERA_MOVE,
     GAME_EVENT_CAMERA_ROTATE,
     GAME_EVENT_CAMERA_TILT,
+    GAME_EVENT_SWAP_WEAPONS,
 
     // Gui Events
     GUI_EVENT_FRAMEBUFFER_SIZE_CALLBACK,
@@ -19,7 +20,7 @@ typedef enum {
     GUI_EVENT_MOUSE_BUTTON_CALLBACK,
     GUI_EVENT_KEY_CALLBACK,
     GUI_EVENT_CHAR_CALLBACK,
-
+    GUI_EVENT_UPDATE_WEAPON_INFO,
 } EventEnum;
 
 typedef union {
@@ -107,6 +108,9 @@ static void execute_event(Event event)
         case GAME_EVENT_CAMERA_TILT:
             camera_tilt(arg1._flt);
             break;
+        case GAME_EVENT_SWAP_WEAPONS:
+            player_swap_weapons();
+            break;
 
         // Gui 
         case GUI_EVENT_CURSOR_POS_CALLBACK:
@@ -123,6 +127,9 @@ static void execute_event(Event event)
             break;
         case GUI_EVENT_CHAR_CALLBACK:
             gui_char_callback(arg1._int);
+            break;
+        case GUI_EVENT_UPDATE_WEAPON_INFO:
+            gui_update_weapon_info(arg1._int);
             break;
     }
 }
@@ -184,6 +191,15 @@ void event_create_game_camera_tilt(f32 mag)
     event_enqueue(queue, event);
 }
 
+void event_create_game_swap_weapons(void)
+{
+    Event event = (Event) {
+        .type = GAME_EVENT_SWAP_WEAPONS
+    };
+    EventQueue* queue = get_event_queue("Game");
+    event_enqueue(queue, event);
+}
+
 //**************************************************************************
 // Gui events
 //**************************************************************************
@@ -240,6 +256,16 @@ void event_create_gui_char_callback(i32 codepoint)
     Event event = (Event) {
         .type = GUI_EVENT_CHAR_CALLBACK,
         .arg1._int = codepoint
+    };
+    EventQueue* queue = get_event_queue("GUI");
+    event_enqueue(queue, event);
+}
+
+void event_create_gui_update_weapon_info(i32 weapon_id)
+{
+    Event event = (Event) {
+        .type = GUI_EVENT_UPDATE_WEAPON_INFO,
+        .arg1._int = weapon_id
     };
     EventQueue* queue = get_event_queue("GUI");
     event_enqueue(queue, event);

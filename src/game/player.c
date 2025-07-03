@@ -1,5 +1,6 @@
 #include "internal.h"
 #include "../window.h"
+#include "../event.h"
 #include <math.h>
 
 extern GameContext game_context;
@@ -41,6 +42,9 @@ void player_reset(void)
     game_context.player.entity->direction = vec3_create(0, 0, 0);
     game_context.player.entity->size = 1.0;
     entity_set_flag(game_context.player.entity, ENTITY_FLAG_FRIENDLY, 1);
+    game_context.player.weapon.id = weapon_get_id("pointer");
+    game_context.player.swap_out.id = weapon_get_id("null_pointer");
+    event_create_gui_update_weapon_info(game_context.player.weapon.id);
 }
 
 vec3 game_get_nearest_player_position(void)
@@ -77,18 +81,12 @@ void player_update(Player* player, f32 dt)
     }
 }
 
-void weapon_shoot(Player* player, vec3 direction, vec3 target)
+void player_swap_weapons(void)
 {
-    vec3 pos = player->entity->position;
-    pos.y = 0.5;
-    Projectile* proj = projectile_create(pos);
-    proj->direction = direction;
-    proj->size = 0.5;
-    proj->speed = 10;
-    proj->lifetime = 1;
-    proj->facing = vec2_radians(vec2_create(direction.x, direction.z));
-    proj->tex = texture_get_id("bullet");
-    projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, 1);
+    i32 tmp = game_context.player.weapon.id;
+    game_context.player.weapon.id = game_context.player.swap_out.id;
+    game_context.player.swap_out.id = tmp;
+    event_create_gui_update_weapon_info(game_context.player.weapon.id);
 }
 
 void player_shoot(Player* player)

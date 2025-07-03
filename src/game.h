@@ -15,6 +15,10 @@ void game_render(void);
 void game_halt_input(void);
 void game_resume_input(void);
 
+char* weapon_get_name(i32 id);
+char* weapon_get_tooltip(i32 id);
+i32 weapon_get_tex_id(i32 id);
+
 void game_key_callback(i32 key, i32 scancode, i32 action, i32 mods);
 void game_mouse_button_callback(i32 button, i32 action, i32 mods);
 void game_framebuffer_size_callback(void);

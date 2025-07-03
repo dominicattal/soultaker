@@ -209,7 +209,7 @@ static void load_entity_info(void)
 
 i32 entity_get_id(const char* name)
 {
-    int l, r, m, a;
+    i32 l, r, m, a;
     l = 0;
     r = entity_context.num_entities-1;
     while (l <= r) {

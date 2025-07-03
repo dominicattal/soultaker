@@ -32,6 +32,7 @@ typedef struct {
 
     // Projectile
     Projectile* (*projectile_create)(vec3);
+    void (*projectile_set_flag)(Projectile*, ProjectileFlagEnum, bool);
 
     // Misc
     i32 (*texture_get_id)(const char*);
@@ -43,6 +44,7 @@ typedef struct {
     vec2 (*vec2_create)(f32, f32);
     vec2 (*vec2_rotate)(vec2, f32);
     vec2 (*vec2_direction)(f32);
+    f32 (*vec2_radians)(vec2);
 
 #ifdef DEBUG_BUILD
     void* (*_st_malloc)(size_t, const char*, int);
