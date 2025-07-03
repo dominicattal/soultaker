@@ -31,11 +31,17 @@ typedef struct GUIData {
     GLfloat* buffer;
 } GUIData;
 
+typedef enum {
+    GUI_COMP_TYPING,
+    GUI_COMP_WEAPON_INFO,
+    NUM_GUI_EVENT_COMPS
+} GUIEventCompEnum;
+
 typedef struct GUIContext {
     GUIData data;
     GUIData data_swap;
     GUIComp* root;
-    GUIComp* typing_comp;
+    GUIComp* event_comps[NUM_GUI_EVENT_COMPS];
     bool kill_thread;
     pthread_t thread_id;
     pthread_mutex_t data_mutex;
@@ -43,6 +49,12 @@ typedef struct GUIContext {
 } GUIContext;
 
 extern GUIContext gui_context;
+
+GUIComp* gui_get_event_comp(GUIEventCompEnum type);
+void gui_set_event_comp(GUIEventCompEnum type, GUIComp* comp);
+bool gui_event_comp_equal(GUIEventCompEnum type, GUIComp* comp);
+
+void gui_update_weapon_info(i32 weapon_id);
 
 void gui_framebuffer_size_callback(i32 width, i32 height);
 bool gui_cursor_pos_callback(f64 xpos, f64 ypos);

@@ -58,15 +58,15 @@ static bool gui_key_callback_helper(GUIComp* comp, i32 key, i32 scancode, i32 ac
 static void process_typing_input(i32 key, i32 scancode, i32 action, i32 mods)
 {
     if (key == GLFW_KEY_BACKSPACE && action != GLFW_RELEASE) {
-        gui_comp_delete_char(gui_context.typing_comp, -1);
+        gui_comp_delete_char(gui_get_event_comp(GUI_COMP_TYPING), -1);
     }
-    gui_comp_key(gui_context.typing_comp, key, scancode, action, mods);
+    gui_comp_key(gui_get_event_comp(GUI_COMP_TYPING), key, scancode, action, mods);
 }
 
 bool gui_key_callback(i32 key, i32 scancode, i32 action, i32 mods)
 {
     bool comp_found = true;
-    if (gui_context.typing_comp == NULL)
+    if (gui_get_event_comp(GUI_COMP_TYPING) == NULL)
         comp_found = gui_key_callback_helper(gui_context.root, key, scancode, action, mods);
     else
         process_typing_input(key, scancode, action, mods);
@@ -115,8 +115,8 @@ bool gui_mouse_button_callback(i32 button, i32 action, i32 mods)
 bool gui_char_callback(u32 codepoint)
 {
     bool comp_found = false;
-    if (gui_context.typing_comp != NULL)
-        gui_comp_insert_char(gui_context.typing_comp, codepoint, -1);
+    if (gui_get_event_comp(GUI_COMP_TYPING) != NULL)
+        gui_comp_insert_char(gui_get_event_comp(GUI_COMP_TYPING), codepoint, -1);
     return comp_found;
 }
 

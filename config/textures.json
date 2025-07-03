@@ -8,6 +8,9 @@
     "rock": "assets/textures/rock.png",
     "bush": "assets/textures/bush.png",
     "bullet": "assets/textures/bullet.png",
+    "pointer_weapon": "assets/textures/pointer.png",
+    "null_weapon": "assets/textures/null.png",
+    "null_ptr": "assets/textures/null_ptr.png",
     "knight": {
         "spritesheet": true,
         "path": "assets/textures/knight_spritesheet.png",

@@ -63,9 +63,19 @@ f32 gui_get_dt(void)
     return gui_context.dt;
 }
 
-void gui_set_typing_comp(GUIComp* comp)
+GUIComp* gui_get_event_comp(GUIEventCompEnum type)
 {
-    gui_context.typing_comp = comp;
+    return gui_context.event_comps[type];
+}
+
+void gui_set_event_comp(GUIEventCompEnum type, GUIComp* comp)
+{
+    gui_context.event_comps[type] = comp;
+}
+
+bool gui_event_comp_equal(GUIEventCompEnum type, GUIComp* comp)
+{
+    return gui_context.event_comps[type] == comp;
 }
 
 void gui_init(void)
