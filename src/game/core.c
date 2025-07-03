@@ -12,6 +12,7 @@ void* game_loop(void* vargp)
     end = start = get_time();
     game_context.dt = 0;
     log_write(INFO, "Entering game loop");
+    game_context.time = 0;
     while (!game_context.kill_thread)
     {
         if (end - start > 0.0001) {

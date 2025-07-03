@@ -120,7 +120,7 @@ static void update_game_time(void)
 {
     pthread_mutex_lock(&game_context.data_mutex);
     glBindBuffer(GL_UNIFORM_BUFFER, game_time_ubo);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(GLfloat), &game_context.time);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(GLdouble), &game_context.time);
     pthread_mutex_unlock(&game_context.data_mutex);
 }
     
@@ -447,7 +447,7 @@ void game_render_init(void)
 
     glGenBuffers(1, &game_time_ubo);
     glBindBuffer(GL_UNIFORM_BUFFER, game_time_ubo);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(GLfloat), NULL, GL_DYNAMIC_DRAW);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(GLdouble), NULL, GL_DYNAMIC_DRAW);
     glBindBufferBase(GL_UNIFORM_BUFFER, UBO_INDEX_GAME_TIME, game_time_ubo);
 
     glGenVertexArrays(1, &tile_buffers.vao);
