@@ -178,6 +178,9 @@ static void update_projectile_vertex_data(void)
     for (i32 i = 0; i < game_context.projectiles->length; i++) {
         Projectile* projectile = list_get(game_context.projectiles, i);
         tex = projectile->tex;
+        static int buf[100];
+        buf[tex] = 0;
+        (void)buf;
         texture_info(tex, &location, &u, &v, &w, &h, &pivot, &stretch);
         bool rotate_tex = projectile_get_flag(projectile, PROJECTILE_FLAG_TEX_ROTATION);
         V = projectile->position.x;

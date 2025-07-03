@@ -15,7 +15,8 @@ void projectile_clear(void)
         projectile_destroy(list_remove(game_context.projectiles, 0));
 }
 
-static void do_nothing(Projectile*, f32) {}
+static void default_update_function(Projectile*, f32) {}
+static void default_destroy_function(Projectile*) {}
 
 Projectile* projectile_create(vec3 position)
 {
@@ -29,7 +30,8 @@ Projectile* projectile_create(vec3 position)
     proj->size = 0.5;
     proj->lifetime = 1;
     proj->flags = 0;
-    proj->update = do_nothing;
+    proj->update = default_update_function;
+    proj->destroy = default_destroy_function;
     list_append(game_context.projectiles, proj);
     return proj;
 }

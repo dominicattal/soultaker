@@ -27,20 +27,16 @@ static void update_info(GUIComp* comp, f32 dt)
         f32 zoom = camera_get_zoom();
         f32 yaw = camera_get_yaw();
         char string[500];
-        char buf[100];
-        for (i32 i = 0; i < 300; i++)
-            string[i] = '\0';
-        for (i32 i = 0; i < 100; i++)
-            buf[i] = '\0';
-        sprintf(buf, "position: (%.3f %.3f %.3f)\n", position.x, position.y, position.z);
-        strncpy(string, buf, 100);
-        sprintf(buf, "direction: (%.3f %.3f %.3f)\n", direction.x, direction.y, direction.z);
-        strncat(string, buf, 100);
-        sprintf(buf, "pitch: %-7.3f yaw: %-7.3f zoom: %-7.3f\n", pitch, yaw, zoom);
-        strncat(string, buf, 100);
-        sprintf(buf, "Main: %-6.3f GUI: %-6.3f Game: %-6.3f\n", state_get_dt() * 1000, gui_get_dt() * 1000, game_get_dt() * 1000);
-        strncat(string, buf, 100);
-        string[499] = '\n';
+        sprintf(string, 
+                "position: (%.3f %.3f %.3f)\n"
+                "direction: (%.3f %.3f %.3f)\n"
+                "pitch: %-7.3f yaw: %-7.3f zoom: %-7.3f\n"
+                "Main: %-6.3f GUI: %-6.3f Game: %-6.3f\n",
+                position.x, position.y, position.z,
+                direction.x, direction.y, direction.z,
+                pitch, yaw, zoom, state_get_dt() * 1000, 
+                gui_get_dt() * 1000, game_get_dt() * 1000);
+        string[499] = '\0';
         gui_comp_set_text(comp, 400, string);
     }
 }
@@ -101,7 +97,16 @@ void load_preset_debug(GUIComp* root)
     gui_comp_set_font(healthbar, FONT_MONOSPACE);
     healthbar->update_func = update_healthbar;
 
+    GUIComp* weapon_info = gui_comp_create(0, 0, 200, 200);
+    gui_comp_set_align(weapon_info, ALIGN_RIGHT, ALIGN_TOP);
+    gui_comp_set_color(weapon_info, 255, 255, 255, 100);
+    gui_comp_set_is_text(weapon_info, true);
+    gui_comp_set_font_size(weapon_info, 16);
+    gui_comp_set_font(weapon_info, FONT_MONOSPACE);
+    gui_comp_set_text(weapon_info, 1, "A");
+
     gui_comp_attach(root, info);
     gui_comp_attach(root, textbox);
     gui_comp_attach(root, healthbar);
+    gui_comp_attach(root, weapon_info);
 }

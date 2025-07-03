@@ -36,6 +36,7 @@ void game_init(void)
     game_preset_init();
     tile_init();
     wall_init();
+    weapon_init();
     entity_init();
     projectile_init();
     parstacle_init();
@@ -82,6 +83,7 @@ void game_cleanup(void)
     pthread_mutex_destroy(&game_context.getter_mutex);
     game_render_cleanup();
     camera_cleanup();
+    weapon_cleanup();
     entity_cleanup();
     projectile_cleanup();
     tile_cleanup();
@@ -118,10 +120,9 @@ f32 game_get_dt(void)
 
 f32 game_get_boss_health(void)
 {
-    if (game_context.bosses == NULL)
-        return 0;
-    if (game_context.bosses->length == 0)
-        return 0;
-    Entity* entity = list_get(game_context.bosses, 0);
-    return entity->health;
+    f32 health;
+    pthread_mutex_lock(&game_context.getter_mutex);
+    health = game_context.values.boss_health; 
+    pthread_mutex_unlock(&game_context.getter_mutex);
+    return health;
 }
