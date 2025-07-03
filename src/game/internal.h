@@ -413,7 +413,7 @@ typedef struct {
     pthread_t thread_id;
     pthread_mutex_t data_mutex;
     pthread_mutex_t getter_mutex;
-    f32 time;
+    f64 time;
     f32 dt;
 } GameContext;
 
