@@ -238,7 +238,7 @@ void event_create_gui_key_callback(i32 key, i32 scancode, i32 action, i32 mods)
 void event_create_gui_char_callback(i32 codepoint)
 {
     Event event = (Event) {
-        .type = GUI_EVENT_CURSOR_POS_CALLBACK,
+        .type = GUI_EVENT_CHAR_CALLBACK,
         .arg1._int = codepoint
     };
     EventQueue* queue = get_event_queue("GUI");

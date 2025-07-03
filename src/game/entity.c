@@ -306,7 +306,6 @@ void entity_update(Entity* entity, f32 dt)
 void entity_make_boss(Entity* entity)
 {
     list_append(game_context.bosses, entity);
-    log_write(DEBUG, "%d", game_context.bosses->length);
     log_assert(!entity_get_flag(entity, ENTITY_FLAG_BOSS), "Entity is already boss");
     entity_set_flag(entity, ENTITY_FLAG_BOSS, 1);
     pthread_mutex_lock(&game_context.getter_mutex);

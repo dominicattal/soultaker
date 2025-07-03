@@ -28,10 +28,11 @@ st_export void entity_enemy_update(GlobalApi* api, Entity* entity, f32 dt)
         direction = api->vec2_create(dx, dz);
         Projectile* proj = api->projectile_create(entity->position);
         proj->position.y = 0.5;
-        proj->rotation = atan(dz / dx) + (dx > 0 ? PI : 0);
+        proj->rotation = atan(dz / dx) + (dx > 0 ? 0 : PI);
         entity->facing = direction;
         proj->direction = api->vec3_normalize(api->vec3_create(dx, 0.0, dz));
         proj->speed = 10;
+        proj->tex = api->texture_get_id("bullet");
         data->shot_timer = 0.5;
     }
 }

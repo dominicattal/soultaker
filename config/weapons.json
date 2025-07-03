@@ -1,0 +1,6 @@
+{
+    "pointer": {
+        "tooltip": "Points toward the enemy unless they weren't allocated",
+        "attack": "weapon_pointer_attack"
+    }
+}

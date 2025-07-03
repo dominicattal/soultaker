@@ -10,7 +10,9 @@
 //**************************************************************************
 
 typedef struct Camera Camera;
+typedef struct Weapon Weapon;
 typedef struct Entity Entity;
+typedef struct Player Player;
 typedef struct Projectile Projectile;
 typedef struct Tile Tile;
 typedef struct Wall Wall;
@@ -18,12 +20,10 @@ typedef struct Parstacle Parstacle;
 typedef struct Obstacle Obstacle;
 typedef struct Particle Particle;
 typedef struct Parjicle Parjicle;
-typedef struct Player Player;
 typedef struct Map Map;
 
 //**************************************************************************
 // Camera definitions
-// TODO: create events for rotating and tilting
 //**************************************************************************
 
 typedef struct Camera {
@@ -85,6 +85,22 @@ void game_preset_load(i32 id);
 void game_preset_cleanup(void);
 
 //**************************************************************************
+// Weapon
+//**************************************************************************
+
+typedef struct Weapon {
+    i32 id;
+} Weapon;
+
+// Initalize and cleanup weapon info
+// Loads weapon data from config/weapons.json
+void weapon_init(void);
+void weapon_cleanup(void);
+
+char* weapon_get_name(Weapon weapon);
+char* weapon_get_tooltip(Weapon weapon);
+
+//**************************************************************************
 // Entity, Player, Boss definitions
 //**************************************************************************
 
@@ -108,6 +124,7 @@ typedef struct Entity {
 } Entity;
 
 typedef struct Player {
+    Weapon weapon;
     Entity* entity;
     f32 shot_timer;
     bool shooting;
