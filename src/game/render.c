@@ -743,8 +743,17 @@ void game_render(void)
     update_game_time();
     camera_update();
     glEnable(GL_DEPTH_TEST);
-    render_tiles();
+
+    glStencilFunc(GL_ALWAYS, 1, 0x01);
+    glStencilMask(0x01);
     render_walls();
+
+    glStencilFunc(GL_NOTEQUAL, 1, 0x01);
+    glStencilMask(0x00);
+    render_tiles();
+
+    glStencilFunc(GL_ALWAYS, 0, 0x00);
+    glStencilMask(0x01);
     render_obstacles();
     render_parstacles();
     render_entities();

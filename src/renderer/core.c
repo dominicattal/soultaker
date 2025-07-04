@@ -65,8 +65,10 @@ void renderer_init(void)
     log_write(INFO, "Initializing renderer...");
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(message_callback, 0);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_STENCIL_TEST);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
     glEnable(GL_CULL_FACE);
     shader_init();
     texture_init();
@@ -76,7 +78,7 @@ void renderer_init(void)
 void renderer_render(void)
 {
     //glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     glClearColor(0.4f, 0.4f, 0.4f, 1.0f);
 
     game_render();
