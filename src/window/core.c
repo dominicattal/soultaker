@@ -33,7 +33,7 @@ void window_init(void)
     window_context.cursor.hidden = false;
     gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
     glViewport(0, 0, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT);
-    glfwSwapInterval(0);
+    glfwSwapInterval(1);
     
     log_write(INFO, "Created window");
 

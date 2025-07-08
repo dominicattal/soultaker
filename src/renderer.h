@@ -26,8 +26,7 @@ typedef enum {
 } ShaderProgramEnum;
 
 typedef enum {
-    TEX_SCREEN,
-    TEX_SHADOWS,
+    TEX_GAME_SCENE,
     NUM_TEXTURES
 } TextureEnum;
 
