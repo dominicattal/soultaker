@@ -45,7 +45,7 @@ static void collide_entity_tile(Entity* entity, Tile* tile)
     tx = tile->position.x;
     tz = tile->position.y;
     sx = sz = 1.0f;
-    if (!(ex > tx && ex < tx + sx && ez > tz && ez < tz + sz))
+    if (!(ex >= tx && ex < tx + sx && ez >= tz && ez < tz + sz))
         return;
     tile->collide(entity);
 }

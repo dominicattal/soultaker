@@ -401,6 +401,9 @@ extern GameContext game_context;
 void game_render_init(void);
 void game_render_cleanup(void);
 
+// change game's fbo when window is resized
+void game_render_framebuffer_size_callback(void);
+
 vec3 game_get_nearest_player_position(void);
 void game_set_player_position(vec3 position);
 

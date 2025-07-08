@@ -279,7 +279,7 @@ static void handle_lava(Entity* entity, f32 dt)
 {
     if (entity_get_flag(entity, ENTITY_FLAG_IN_LAVA)) {
         entity->tile_timer += dt;
-        entity->position.y = -0.05;
+        entity->position.y = -0.2;
         if (entity->tile_timer > 0.5) {
             entity->tile_timer -= 0.5;
             //entity->health -= 1;

@@ -6,6 +6,7 @@ extern GameContext game_context;
 void game_framebuffer_size_callback(void)
 {
     camera_framebuffer_size_callback();
+    game_render_framebuffer_size_callback();
 }
 
 void game_key_callback(i32 key, i32 scancode, i32 action, i32 mods)

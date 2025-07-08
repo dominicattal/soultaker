@@ -11,9 +11,11 @@ layout (std140) uniform Camera {
     float yaw;
 };
 
+out float height;
 out vec2 ShadowCoords;
 
 void main() {
     gl_Position = proj * view * vec4(aPosition, 1.0f);
+    height = aPosition.y;
     ShadowCoords = aShadowCoords;
 }

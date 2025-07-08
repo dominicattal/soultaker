@@ -40,8 +40,9 @@ void main() {
         return;
     uint idx = 13 * gl_GlobalInvocationID.x;
     vec4 position;
-    position = vec4(data_in[idx], data_in[idx+1], data_in[idx+2], 1.0f);
+    position = vec4(data_in[idx], 0.0f, data_in[idx+2], 1.0f);
     position = proj * view * position;
+    position.y += data_in[idx+1] / zoom;
 
     float u1, v1, u2, v2, location;
     vec2 pivot, stretch, offset, size;
