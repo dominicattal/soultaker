@@ -1,9 +1,9 @@
 #include "extra.h"
 #include "malloc.h"
 #include <Windows.h>
-#include <sys/time.h>
 #include <stdlib.h>
 #include <string.h>
+#include <glfw.h>
 
 void sleep(i32 msec)
 {
@@ -12,9 +12,7 @@ void sleep(i32 msec)
 
 f64 get_time(void)
 {
-    struct timeval time;
-    gettimeofday(&time, NULL);
-    return time.tv_sec + time.tv_usec*1e-6;
+    return glfwGetTime();
 }
 
 char* copy_string(const char* string)

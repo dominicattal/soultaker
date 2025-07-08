@@ -476,11 +476,10 @@ static void initialize_rects(i32* tex_unit_location)
 
     const char* textures_path = "config/textures.json";
     JsonObject* json = json_read(textures_path);
-    if (json == NULL)
-        log_write(FATAL, "Failed to read texture json file %s", textures_path);
+    log_assert(json, "Failed to read texture json file %s", textures_path);
 
     JsonIterator* it = json_iterator_create(json);
-    assert(it != NULL);
+    log_assert(it != NULL, "Failed to create json iterator for file %s", textures_path);
 
     
     JsonMember* member;
@@ -542,7 +541,7 @@ i32 texture_get_id(const char* name)
         else
             return m;
     }
-    log_write(WARNING, "Failed to get id for %s\n", name);
+    log_write(FATAL, "Failed to get id for %s\n", name);
     return -1;
 }
 
@@ -582,24 +581,20 @@ static void create_static_textures(i32* tex_unit_location)
 
 void texture_init(void)
 {
-    log_write(INFO, "Loading textures...");
     i32 tex_unit_location;
     tex_unit_location = 0;
     create_static_textures(&tex_unit_location);
     create_font_textures(&tex_unit_location);
     initialize_rects(&tex_unit_location);
-    log_write(INFO, "Loaded textures");
 }
 
 void texture_cleanup(void)
 {
-    log_write(INFO, "Cleaning up textures...");
     for (i32 i = 0; i < texture_context.num_textures; i++)
         st_free(texture_context.textures[i].name);
     st_free(texture_context.textures);
     for (i32 i = 0; i < NUM_TEXTURE_UNITS; i++)
         if (texture_context.texture_units[i] != 0)
             glDeleteTextures(1, &texture_context.texture_units[i]);
-    log_write(INFO, "Cleaned up textures");
 }
 

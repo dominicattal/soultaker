@@ -38,7 +38,6 @@ static void* gui_loop(void* vargp)
 
     f64 start, end;
     end = start = get_time();
-    log_write(INFO, "Entering gui loop");
     gui_context.dt = 0;
     gui_comp_init();
     gui_preset_load(GUI_PRESET_DEBUG);
@@ -53,7 +52,6 @@ static void* gui_loop(void* vargp)
         }
         end = get_time();
     }
-    log_write(INFO, "Exiting gui loop");
     gui_comp_cleanup();
     return NULL;
 }
@@ -80,20 +78,16 @@ bool gui_event_comp_equal(GUIEventCompEnum type, GUIComp* comp)
 
 void gui_init(void)
 {
-    log_write(INFO, "Initializing GUI...");
     gui_render_init();
     pthread_mutex_init(&gui_context.data_mutex, NULL);
     pthread_create(&gui_context.thread_id, NULL, gui_loop, NULL);
-    log_write(INFO, "Iniitalized GUI");
 }
 
 void gui_cleanup(void)
 {
-    log_write(INFO, "Cleaning up GUI...");
     gui_context.kill_thread = true;
     pthread_join(gui_context.thread_id, NULL);
     pthread_mutex_destroy(&gui_context.data_mutex);
     gui_render_cleanup();
-    log_write(INFO, "Cleaned up GUI");
 }
 

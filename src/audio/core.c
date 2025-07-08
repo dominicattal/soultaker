@@ -60,7 +60,6 @@ static void load_sounds(void)
 }
 
 void audio_init(void) {
-    log_write(INFO, "Initializing audio...");
     audio_context.device = alcOpenDevice(NULL);
     if (!audio_context.device)
         log_write(FATAL, "Failed to open OpenAL device");
@@ -76,19 +75,15 @@ void audio_init(void) {
     checkError("Failed to generate buffers.");
 
     load_sounds();
-
-    log_write(INFO, "Initialized audio");
 }
 
 void audio_cleanup(void)
 {
-    log_write(INFO, "Cleaning up audio...");
     alDeleteBuffers(NUM_SOUNDS, audio_context.buffers);
     checkError("Failed to delete buffers.");
 
     alcMakeContextCurrent(NULL);
     alcDestroyContext(audio_context.context);
     alcCloseDevice(audio_context.device);
-    log_write(INFO, "Cleaned up audio");
 }
 

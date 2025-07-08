@@ -233,11 +233,9 @@ i32 entity_get_state_id(Entity* entity, const char* name)
 
 void entity_init(void)
 {
-    log_write(INFO, "Initializing entities...");
     game_context.entities = list_create();
     game_context.bosses = list_create();
     load_entity_info();
-    log_write(INFO, "Initialized entities");
 }
 
 void entity_clear(void)
@@ -402,7 +400,6 @@ void entity_destroy(Entity* entity)
 
 void entity_cleanup(void)
 {
-    log_write(INFO, "Deleting entities...");
     if (game_context.entities != NULL) {
         for (i32 i = 0; i < game_context.entities->length; i++)
             entity_destroy(list_get(game_context.entities, i));
@@ -419,5 +416,4 @@ void entity_cleanup(void)
         st_free(entity_context.infos[i].states);
     }
     st_free(entity_context.infos);
-    log_write(INFO, "Deleted entities");
 }

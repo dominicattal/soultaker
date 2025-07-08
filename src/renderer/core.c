@@ -62,7 +62,6 @@ static void GLAPIENTRY message_callback(GLenum source, GLenum type, GLuint id, G
 
 void renderer_init(void)
 {
-    log_write(INFO, "Initializing renderer...");
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(message_callback, 0);
     glEnable(GL_BLEND);
@@ -71,7 +70,6 @@ void renderer_init(void)
     glEnable(GL_CULL_FACE);
     shader_init();
     texture_init();
-    log_write(INFO, "Renderer initialized");
 }
 
 void renderer_render(void)
@@ -86,9 +84,7 @@ void renderer_render(void)
 
 void renderer_cleanup(void)
 {
-    log_write(INFO, "Cleaning up renderer...");
     shader_cleanup();
     texture_cleanup();
-    log_write(INFO, "Cleaned up renderer");
 }
 

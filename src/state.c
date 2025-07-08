@@ -23,6 +23,7 @@ void state_init(void)
 {
     thread_link("Main");
 
+
     state_context.lib = LoadLibrary("plugins/soultaker.dll");
     log_assert(state_context.lib, "Could not load library");
 
