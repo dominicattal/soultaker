@@ -44,7 +44,6 @@ static u32 compile(GLenum type, const char *path)
     glCompileShader(shader);
     glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 
-    // error callback should handle this
     if (!success)
     {
         glGetShaderInfoLog(shader, 512, NULL, info_log);
@@ -60,7 +59,6 @@ static void link(ShaderProgramEnum id)
     glLinkProgram(shader_context.programs[id]);
     glGetProgramiv(shader_context.programs[id], GL_LINK_STATUS, &success);
 
-    // error callback should handle this
     if (!success)
     {
         glGetProgramInfoLog(shader_context.programs[id], 512, NULL, info_log);
@@ -81,6 +79,20 @@ static void detach(ShaderProgramEnum id, u32 shader)
 static void delete(u32 shader)
 {
     glDeleteShader(shader);
+}
+
+static void compile_shader_program_screen(void)
+{
+    u32 vert, frag;
+    vert = compile(GL_VERTEX_SHADER, "assets/shaders/screen.vert");
+    frag = compile(GL_FRAGMENT_SHADER, "assets/shaders/screen.frag");
+    attach(SHADER_PROGRAM_SCREEN, vert);
+    attach(SHADER_PROGRAM_SCREEN, frag);
+    link(SHADER_PROGRAM_SCREEN);
+    detach(SHADER_PROGRAM_SCREEN, vert);
+    detach(SHADER_PROGRAM_SCREEN, frag);
+    delete(vert);
+    delete(frag);
 }
 
 static void compile_shader_program_tile(void)
@@ -289,9 +301,37 @@ static void compile_shader_program_parjicle_comp(void)
     shader_bind_uniform_block(SHADER_PROGRAM_PARJICLE_COMP, UBO_INDEX_WINDOW, "Window");
 }
 
+static void compile_shader_program_shadow(void)
+{
+    u32 vert, frag;
+    vert = compile(GL_VERTEX_SHADER, "assets/shaders/shadow.vert");
+    frag = compile(GL_FRAGMENT_SHADER, "assets/shaders/shadow.frag");
+    attach(SHADER_PROGRAM_SHADOW, vert);
+    attach(SHADER_PROGRAM_SHADOW, frag);
+    link(SHADER_PROGRAM_SHADOW);
+    detach(SHADER_PROGRAM_SHADOW, vert);
+    detach(SHADER_PROGRAM_SHADOW, frag);
+    delete(vert);
+    delete(frag);
+    shader_bind_uniform_block(SHADER_PROGRAM_SHADOW, UBO_INDEX_MATRICES, "Camera");
+}
+
+static void compile_shader_program_shadow_comp(void)
+{
+    u32 comp;
+    comp = compile(GL_COMPUTE_SHADER, "assets/shaders/shadow.comp");
+    attach(SHADER_PROGRAM_SHADOW_COMP, comp);
+    link(SHADER_PROGRAM_SHADOW_COMP);
+    detach(SHADER_PROGRAM_SHADOW_COMP, comp);
+    delete(comp);
+}
+
 void shader_program_compile(ShaderProgramEnum program)
 {
     switch (program) {
+        case SHADER_PROGRAM_SCREEN:
+            compile_shader_program_screen();
+            break;
         case SHADER_PROGRAM_TILE:
             compile_shader_program_tile();
             break;
@@ -331,6 +371,12 @@ void shader_program_compile(ShaderProgramEnum program)
         case SHADER_PROGRAM_PARJICLE_COMP:
             compile_shader_program_parjicle_comp();
             break;
+        case SHADER_PROGRAM_SHADOW:
+            compile_shader_program_shadow();
+            break;
+        case SHADER_PROGRAM_SHADOW_COMP:
+            compile_shader_program_shadow_comp();
+            break;
         default:
             log_write(INFO, "Unrecognized program %x\n", program);
             break;
@@ -343,6 +389,7 @@ void shader_init(void)
     for (i32 i = 0; i < NUM_SHADER_PROGRAMS; i++)
         shader_context.programs[i] = glCreateProgram();
     
+    shader_program_compile(SHADER_PROGRAM_SCREEN);
     shader_program_compile(SHADER_PROGRAM_TILE);
     shader_program_compile(SHADER_PROGRAM_WALL);
     shader_program_compile(SHADER_PROGRAM_GUI);
@@ -358,6 +405,8 @@ void shader_init(void)
     shader_program_compile(SHADER_PROGRAM_PROJECTILE_COMP);
     shader_program_compile(SHADER_PROGRAM_PARJICLE);
     shader_program_compile(SHADER_PROGRAM_PARJICLE_COMP);
+    shader_program_compile(SHADER_PROGRAM_SHADOW);
+    shader_program_compile(SHADER_PROGRAM_SHADOW_COMP);
     log_write(INFO, "Compiled shaders");
 }
 
