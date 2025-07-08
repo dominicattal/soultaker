@@ -41,6 +41,9 @@ typedef struct {
 typedef struct {
     Font fonts[NUM_FONTS];
     Texture* textures;
+    struct {
+        GLuint unit, name;
+    } static_textures[NUM_TEXTURES];
     i32 num_textures;
     u32 texture_units[NUM_TEXTURE_UNITS];
 } TextureContext;
@@ -315,7 +318,7 @@ static i32 get_num_textures(JsonObject* json)
                 res += json_object_length(val_object);
             }
         } else
-            assert(0);
+            exit(1);
 
         json_iterator_increment(it);
     }
@@ -554,11 +557,35 @@ void texture_info(i32 id, i32* location, f32* u, f32* v, f32* w, f32* h, vec2* p
     *stretch = texture_context.textures[id].stretch;
 }
 
+GLuint texture_get_unit(TextureEnum tex)
+{
+    return texture_context.static_textures[tex].unit;
+}
+
+GLuint texture_get_name(TextureEnum tex)
+{
+    return texture_context.static_textures[tex].name;
+}
+
+static void create_static_textures(i32* tex_unit_location)
+{
+    if (*tex_unit_location + NUM_TEXTURES >= NUM_TEXTURE_UNITS)
+        log_write(FATAL, "Out of texture units");
+    for (i32 i = 0; i < NUM_TEXTURES; i++) {
+        glGenTextures(1, &texture_context.static_textures[i].name);
+        texture_context.static_textures[i].unit = *tex_unit_location;
+        texture_context.texture_units[*tex_unit_location] = texture_context.static_textures[i].name;
+        glActiveTexture(GL_TEXTURE0 + (*tex_unit_location)++);
+        glBindTexture(GL_TEXTURE_2D, texture_context.static_textures[i].name);
+    }
+}
+
 void texture_init(void)
 {
     log_write(INFO, "Loading textures...");
     i32 tex_unit_location;
     tex_unit_location = 0;
+    create_static_textures(&tex_unit_location);
     create_font_textures(&tex_unit_location);
     initialize_rects(&tex_unit_location);
     log_write(INFO, "Loaded textures");

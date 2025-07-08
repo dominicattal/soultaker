@@ -1,0 +1,64 @@
+#version 460
+
+layout (local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
+
+uniform int N;
+
+layout (std430, binding = 0) readonly buffer Input {
+    // vec3 position
+    // float size
+    float data_in[];
+};
+
+layout (std430, binding = 1) writeonly buffer Output {
+    // vec3 position
+    // vec2 shadow_coords
+    float data_out[];
+};
+
+void main() {
+    if (gl_GlobalInvocationID.x >= N)
+        return;
+    uint idx = 4 * gl_GlobalInvocationID.x;
+    vec4 position;
+    position = vec4(data_in[idx], 0.0f, data_in[idx+2], 1.0f);
+    float size = data_in[idx+3];
+
+    idx = 6 * 5 * gl_GlobalInvocationID.x;
+    // Vertex 1
+    data_out[idx++] = position.x - size / 2;
+    data_out[idx++] = position.y;
+    data_out[idx++] = position.z - size / 2;
+    data_out[idx++] = 0.0f;
+    data_out[idx++] = 0.0f;
+    // Vertex 2
+    data_out[idx++] = position.x + size / 2;
+    data_out[idx++] = position.y;
+    data_out[idx++] = position.z - size / 2;
+    data_out[idx++] = 1.0f;
+    data_out[idx++] = 0.0f;
+    // Vertex 3
+    data_out[idx++] = position.x - size / 2;
+    data_out[idx++] = position.y;
+    data_out[idx++] = position.z + size / 2;
+    data_out[idx++] = 0.0f;
+    data_out[idx++] = 1.0f;
+    // Vertex 4
+    data_out[idx++] = position.x - size / 2;
+    data_out[idx++] = position.y;
+    data_out[idx++] = position.z + size / 2;
+    data_out[idx++] = 0.0f;
+    data_out[idx++] = 1.0f;
+    // Vertex 5
+    data_out[idx++] = position.x + size / 2;
+    data_out[idx++] = position.y;
+    data_out[idx++] = position.z - size / 2;
+    data_out[idx++] = 1.0f;
+    data_out[idx++] = 0.0f;
+    // Vertex 6
+    data_out[idx++] = position.x + size / 2;
+    data_out[idx++] = position.y ;
+    data_out[idx++] = position.z + size / 2;
+    data_out[idx++] = 1.0f;
+    data_out[idx++] = 1.0f;
+}

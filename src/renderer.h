@@ -6,6 +6,7 @@
 #define NUM_TEXTURE_UNITS 16
 
 typedef enum {
+    SHADER_PROGRAM_SCREEN,
     SHADER_PROGRAM_GUI,
     SHADER_PROGRAM_TILE,
     SHADER_PROGRAM_WALL,
@@ -19,8 +20,16 @@ typedef enum {
     SHADER_PROGRAM_PARTICLE_COMP,
     SHADER_PROGRAM_PARJICLE,
     SHADER_PROGRAM_PARJICLE_COMP,
+    SHADER_PROGRAM_SHADOW,
+    SHADER_PROGRAM_SHADOW_COMP,
     NUM_SHADER_PROGRAMS
 } ShaderProgramEnum;
+
+typedef enum {
+    TEX_SCREEN,
+    TEX_SHADOWS,
+    NUM_TEXTURES
+} TextureEnum;
 
 typedef enum {
     FONT_MONOSPACE,
@@ -57,6 +66,8 @@ void shader_cleanup(void);
 
 void texture_init(void);
 i32 texture_get_id(const char* handle);
+GLuint texture_get_unit(TextureEnum tex);
+GLuint texture_get_name(TextureEnum tex);
 void texture_info(i32 id, i32* location, f32* u, f32* v, f32* w, f32* h, vec2* pivot, vec2* stretch);
 void texture_cleanup(void);
 

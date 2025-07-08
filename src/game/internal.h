@@ -362,29 +362,6 @@ void parjicle_cleanup(void);
 // Game Context
 //**************************************************************************
 
-typedef struct {
-    i32 tile_length, tile_capacity;
-    GLfloat* tile_buffer;
-    bool update_tile_buffer;
-    i32 wall_length, wall_capacity;
-    GLfloat* wall_buffer;
-    bool update_wall_buffer;
-    i32 parstacle_length, parstacle_capacity;
-    GLfloat* parstacle_buffer;
-    bool update_parstacle_buffer;
-    i32 obstacle_length, obstacle_capacity;
-    GLfloat* obstacle_buffer;
-    bool update_obstacle_buffer;
-    i32 entity_length, entity_capacity;
-    GLfloat* entity_buffer;
-    i32 projectile_length, projectile_capacity;
-    GLfloat* projectile_buffer;
-    i32 particle_length, particle_capacity;
-    GLfloat* particle_buffer;
-    i32 parjicle_length, parjicle_capacity;
-    GLfloat* parjicle_buffer;
-} GameData;
-
 // contains copy of values for thread-safety
 // in getters
 typedef struct {
@@ -394,8 +371,6 @@ typedef struct {
 
 typedef struct {
     GetterValues values;
-    GameData data;
-    GameData data_swap;
     Player player;
     List* entities;
     List* bosses;
@@ -411,7 +386,6 @@ typedef struct {
     bool halt_input;
     bool paused;
     pthread_t thread_id;
-    pthread_mutex_t data_mutex;
     pthread_mutex_t getter_mutex;
     f64 time;
     f32 dt;
@@ -430,12 +404,15 @@ void game_render_cleanup(void);
 vec3 game_get_nearest_player_position(void);
 void game_set_player_position(vec3 position);
 
-// update all game objects (entities, projectiles, etc)
+// update game objects (entities, projectiles, etc)
 void game_update(void);
 
-// update vertex data for rendering. the data is loaded
-// into game_context.data_swap on the game thread and swapped with
-// game_context.data for use on the render thread
+// flag static objects for update
+void game_render_update_obstacles(void);
+void game_render_update_parstacles(void);
+void game_render_update_tiles(void);
+void game_render_update_walls(void);
+
 void game_update_vertex_data(void);
 
 #endif

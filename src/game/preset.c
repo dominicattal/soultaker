@@ -83,14 +83,10 @@ void game_preset_load(i32 id)
     particle_clear();
     parjicle_clear();
     player_reset();
-    game_context.data.update_tile_buffer = true;
-    game_context.data.update_wall_buffer = true;
-    game_context.data.update_parstacle_buffer = true;
-    game_context.data.update_obstacle_buffer = true;
-    game_context.data_swap.update_tile_buffer = true;
-    game_context.data_swap.update_wall_buffer = true;
-    game_context.data_swap.update_parstacle_buffer = true;
-    game_context.data_swap.update_obstacle_buffer = true;
+    game_render_update_obstacles();
+    game_render_update_parstacles();
+    game_render_update_tiles();
+    game_render_update_walls();
     preset_context.presets[id].load(&global_api);
 }
 
