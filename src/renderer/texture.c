@@ -322,6 +322,8 @@ static i32 get_num_textures(JsonObject* json)
 
         json_iterator_increment(it);
     }
+
+    json_iterator_destroy(it);
     return res;
 }
 
@@ -439,6 +441,7 @@ static void parse_spritesheet(JsonValue* value, stbrp_rect* rects, i32 width, i3
         parse_texture(member, rects, width, height, image_idx, num_rects);
         json_iterator_increment(it);
     }
+    json_iterator_destroy(it);
 }
 
 static const char* get_image_path(JsonValue* value, i32* is_spritesheet)
