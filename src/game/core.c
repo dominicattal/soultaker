@@ -11,7 +11,6 @@ void* game_loop(void* vargp)
     f64 start, end;
     end = start = get_time();
     game_context.dt = 0;
-    log_write(INFO, "Entering game loop");
     game_context.time = 0;
     while (!game_context.kill_thread)
     {
@@ -27,13 +26,11 @@ void* game_loop(void* vargp)
         }
         end = get_time();
     }
-    log_write(INFO, "Exiting game loop");
     return NULL;
 }
 
 void game_init(void)
 {
-    log_write(INFO, "Initializing game...");
     game_preset_init();
     tile_init();
     wall_init();
@@ -52,7 +49,6 @@ void game_init(void)
 
     pthread_mutex_init(&game_context.getter_mutex, NULL);
     pthread_create(&game_context.thread_id, NULL, game_loop, NULL);
-    log_write(INFO, "Initialized game");
 }
 
 void game_halt_input(void)
@@ -67,7 +63,6 @@ void game_resume_input(void)
 
 void game_cleanup(void)
 {
-    log_write(INFO, "Cleaning up game...");
     game_context.kill_thread = true;
     game_context.halt_input = false;
     pthread_join(game_context.thread_id, NULL);
@@ -85,7 +80,6 @@ void game_cleanup(void)
     parjicle_cleanup();
     game_preset_cleanup();
 
-    log_write(INFO, "Cleaned up game");
 }
 
 f32 game_get_dt(void)

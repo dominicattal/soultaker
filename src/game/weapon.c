@@ -70,9 +70,7 @@ static void load_weapon_info(void)
 
 void weapon_init(void)
 {
-    log_write(INFO, "Initializing weapons...");
     load_weapon_info();
-    log_write(INFO, "Initalized weapons");
 }
 
 void weapon_cleanup(void)

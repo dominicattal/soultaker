@@ -5,9 +5,7 @@ extern GameContext game_context;
 
 void tile_init(void)
 {
-    log_write(INFO, "Initializing tiles...");
     game_context.tiles = list_create();
-    log_write(INFO, "Initialized tiles");
 }
 
 void tile_clear(void)
@@ -55,12 +53,10 @@ void tile_destroy(Tile* tile)
 
 void tile_cleanup(void)
 {
-    log_write(INFO, "Cleaning up tiles...");
     if (game_context.tiles == NULL)
         return;
     for (i32 i = 0; i < game_context.tiles->length; i++)
         tile_destroy(list_get(game_context.tiles, i));
     list_destroy(game_context.tiles);
-    log_write(INFO, "Cleaned up tiles");
 }
 

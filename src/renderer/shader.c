@@ -385,7 +385,6 @@ void shader_program_compile(ShaderProgramEnum program)
 
 void shader_init(void)
 {
-    log_write(INFO, "Compiling shaders...");
     for (i32 i = 0; i < NUM_SHADER_PROGRAMS; i++)
         shader_context.programs[i] = glCreateProgram();
     
@@ -407,7 +406,6 @@ void shader_init(void)
     shader_program_compile(SHADER_PROGRAM_PARJICLE_COMP);
     shader_program_compile(SHADER_PROGRAM_SHADOW);
     shader_program_compile(SHADER_PROGRAM_SHADOW_COMP);
-    log_write(INFO, "Compiled shaders");
 }
 
 void shader_use(ShaderProgramEnum id)
@@ -417,11 +415,9 @@ void shader_use(ShaderProgramEnum id)
 
 void shader_cleanup(void)
 {
-    log_write(INFO, "Deleting shaders...");
     for (i32 i = 0; i < NUM_SHADER_PROGRAMS; i++)
         if (shader_context.programs[i] != 0)
             glDeleteProgram(shader_context.programs[i]);
-    log_write(INFO, "Deleted shaders");
 }
 
 GLuint shader_get_uniform_location(ShaderProgramEnum program, const char* identifier)

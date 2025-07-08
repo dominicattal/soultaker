@@ -5,9 +5,7 @@ extern GameContext game_context;
 
 void wall_init(void)
 {
-    log_write(INFO, "Initializing walls...");
     game_context.walls = list_create();
-    log_write(INFO, "Initialized walls");
 }
 
 void wall_clear(void)
@@ -37,12 +35,10 @@ void wall_destroy(Wall* wall)
 
 void wall_cleanup(void)
 {
-    log_write(INFO, "Cleaning up walls...");
     if (game_context.walls == NULL)
         return;
     for (i32 i = 0; i < game_context.walls->length; i++)
         wall_destroy(list_get(game_context.walls, i));
     list_destroy(game_context.walls);
-    log_write(INFO, "Cleaned up walls");
 }
 

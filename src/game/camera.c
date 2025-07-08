@@ -150,10 +150,7 @@ void camera_zoom(i32 mag)
 
 void camera_cleanup(void)
 {
-    log_write(INFO, "Deleting camera buffers...");
-    if (game_context.camera.matrices_ubo != 0)
-        glDeleteBuffers(1, &game_context.camera.matrices_ubo);
-    log_write(INFO, "Deleted camera buffers");
+    glDeleteBuffers(1, &game_context.camera.matrices_ubo);
 }
 
 void camera_framebuffer_size_callback(void)

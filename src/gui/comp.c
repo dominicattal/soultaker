@@ -15,9 +15,7 @@ void gui_comp_init(void)
 
 void gui_comp_cleanup(void)
 {
-    log_write(INFO, "Cleaning up gui components...");
     gui_comp_destroy(gui_context.root);
-    log_write(INFO, "Cleaned up gui components");
 }
 
 GUIComp* gui_comp_create(i16 x, i16 y, i16 w, i16 h)

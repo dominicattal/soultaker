@@ -8,7 +8,6 @@ WindowContext window_context;
 
 void window_init(void)
 {
-    log_write(INFO, "Creating window...");
     glfwSetErrorCallback(window_error_callback);
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -35,13 +34,10 @@ void window_init(void)
     glViewport(0, 0, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT);
     glfwSwapInterval(1);
     
-    log_write(INFO, "Created window");
-
     window_context.dt = 0;
 
     GLfloat aspect_ratio = (GLfloat)window_context.width / window_context.height;
 
-    log_write(INFO, "Creating window buffers...");
     glGenBuffers(1, &window_context.ubo);
     glBindBuffer(GL_UNIFORM_BUFFER, window_context.ubo);
     glBindBufferBase(GL_UNIFORM_BUFFER, UBO_INDEX_WINDOW, window_context.ubo);
@@ -49,7 +45,6 @@ void window_init(void)
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(GLint), &window_context.width);
     glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLint), sizeof(GLint), &window_context.height);
     glBufferSubData(GL_UNIFORM_BUFFER, 2 * sizeof(GLint), sizeof(GLfloat), &aspect_ratio);
-    log_write(INFO, "Created window buffers");
 }
 
 void window_update(void)
@@ -70,11 +65,9 @@ bool window_closed(void)
 
 void window_cleanup(void)
 {
-    log_write(INFO, "Terminating GLFW...");
     if (window_context.ubo != 0)
         glDeleteBuffers(1, &window_context.ubo);
     glfwTerminate();
-    log_write(INFO, "Terminated GLFW");
 }
 
 bool window_get_key(i32 key)

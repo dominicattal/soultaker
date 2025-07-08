@@ -258,7 +258,6 @@ void gui_update_vertex_data(void)
 
 void gui_render_init(void)
 {
-    log_write(INFO, "Initializing GUI buffers...");
     glGenVertexArrays(1, &s_vao);
     glGenBuffers(1, &s_vbo);
     glGenBuffers(1, &s_instance_vbo);
@@ -288,7 +287,6 @@ void gui_render_init(void)
     glEnableVertexAttribArray(2);
     glEnableVertexAttribArray(3);
     glEnableVertexAttribArray(4);
-    log_write(INFO, "Initialized GUI buffers");
 }
 
 void gui_render(void)
@@ -310,7 +308,6 @@ void gui_render(void)
 
 void gui_render_cleanup(void)
 {
-    log_write(INFO, "Deleting GUI buffers...");
     if (s_vao != 0)
         glDeleteVertexArrays(1, &s_vao);
     if (s_vbo != 0)
@@ -319,6 +316,5 @@ void gui_render_cleanup(void)
         glDeleteBuffers(1, &s_instance_vbo);
     st_free(gui_context.data.buffer);
     st_free(gui_context.data_swap.buffer);
-    log_write(INFO, "Deleted GUI buffers");
 }
 
