@@ -1,4 +1,5 @@
 #include "json.h"
+#include "../../../src/util/malloc.h"
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,9 +8,9 @@
 // https://www.json.org/json-en.html
 
 #define print_error(line_num, message)
-#define json_malloc(size)       malloc(size)
-#define json_realloc(ptr, size) realloc(ptr, size)
-#define json_free(ptr)          free(ptr)
+#define json_malloc(size)       st_malloc(size)
+#define json_realloc(ptr, size) st_realloc(ptr, size)
+#define json_free(ptr)          st_free(ptr)
 
 typedef struct JsonMember {
     char* key;
@@ -577,11 +578,13 @@ static JsonValue* parse_value_number(FILE* file, int* line_num)
         return NULL;
     }
 
-    const char* string = get_string_in_range(file, line_num, start_pos, end_pos);
+    char* string = get_string_in_range(file, line_num, start_pos, end_pos);
     if (string == NULL)
         return NULL;
 
     double num = atof(string);
+
+    json_free(string);
 
     JsonValue* value = json_malloc(sizeof(JsonValue));
     if (value == NULL) {

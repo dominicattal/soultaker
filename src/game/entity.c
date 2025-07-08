@@ -235,6 +235,7 @@ void entity_init(void)
 {
     game_context.entities = list_create();
     game_context.bosses = list_create();
+
     load_entity_info();
 }
 
