@@ -193,15 +193,6 @@ void gui_update_weapon_info(i32 weapon_id)
     gui_comp_set_tex(comp, tex_id);
 }
 
-void gui_comp_add_data(GUIComp* comp, void* data)
-{
-}
-
-void* gui_comp_remove_data(GUIComp* comp)
-{
-    return NULL;
-}
-
 // ---------------------------------------------------------------------------
 // info1            | info2 (text)      | info2 (ele)         | info3 (text)
 // 48 - x, y, w, h  | 2  - text_halign  | 8 - num_children    | 21 - length

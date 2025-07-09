@@ -15,7 +15,7 @@ static void create_unit(GlobalApi* api, u32 color, vec2 position)
             tile->tex = api->texture_get_id("shaitan_lava");
             tile->collide = api->tile_lava_collision;
             api->tile_set_flag(tile, TILE_FLAG_ANIMATE_VERTICAL_POS, 1);
-            api->tile_set_flag(tile, TILE_FLAG_ANIMATE_HORIZONTAL_POS, 1);
+            api->tile_set_flag(tile, TILE_FLAG_ANIMATE_HORIZONTAL_NEG, 1);
             break;
         case FLOOR_1:
             tile = api->tile_create(position);
@@ -213,7 +213,6 @@ st_export void shaitan_the_advisor_attack_1(GlobalApi* api, Entity* entity, f32 
         data->timer1 = 0;
         return;
     }
-    entity->frame = entity->state_timer > 0.4f;
     if (entity->state_timer > 0.5f) {
         attack_1(api, entity);
         entity->state_timer -= 0.5f;

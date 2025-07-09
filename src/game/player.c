@@ -49,6 +49,7 @@ void player_reset(void)
     game_context.player.state_idle = entity_get_state_id(entity, "idle");
     game_context.player.state_walking = entity_get_state_id(entity, "walking");
     game_context.player.state_shooting = entity_get_state_id(entity, "shooting");
+    //game_context.player.entity->frame_speed = 2;
 }
 
 vec3 game_get_nearest_player_position(void)
@@ -69,6 +70,7 @@ void player_update(Player* player, f32 dt)
             return;
         entity->state = player->state_shooting;
         entity->frame = 0;
+        entity->frame_timer = 0;
         entity_set_flag(entity, ENTITY_FLAG_UPDATE_FACING, 0);
     } else {
         entity_set_flag(entity, ENTITY_FLAG_UPDATE_FACING, 1);
@@ -77,11 +79,13 @@ void player_update(Player* player, f32 dt)
                 return;
             entity->state = player->state_walking;
             entity->frame = 0;
+            entity->frame_timer = 0;
         } else {
             if (entity->state == player->state_idle)
                 return;
             entity->state = player->state_idle;
             entity->frame = 0;
+            entity->frame_timer = 0;
         }
     }
 }

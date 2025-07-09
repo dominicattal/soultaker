@@ -93,6 +93,7 @@ typedef struct Weapon {
 } Weapon;
 
 typedef struct Entity {
+    void* data;
     vec3 position;
     vec3 prev_position;
     vec3 direction;
@@ -104,11 +105,12 @@ typedef struct Entity {
     f32 haste;
     f32 state_timer;
     f32 tile_timer;
+    f32 frame_timer;
+    f32 frame_speed;
     u32 flags;
     i32 id;
     i32 state;
     i32 frame;
-    void* data;
 } Entity;
 
 typedef struct Player {
