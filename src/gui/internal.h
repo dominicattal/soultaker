@@ -95,8 +95,6 @@ void gui_comp_set_text(GUIComp* comp, i32 length, const char* text);
 void gui_comp_insert_char(GUIComp* comp, const char character, i32 idx);
 void gui_comp_delete_char(GUIComp* comp, i32 idx);
 void gui_comp_update(GUIComp* comp, f32 dt);
-void gui_comp_add_data(GUIComp* comp, void* data);
-void* gui_comp_remove_data(GUIComp* comp);
 
 void gui_comp_set_bbox(GUIComp* comp, i32 x, i32 y, i32 w, i32 h);
 void gui_comp_set_position(GUIComp* comp, i32 x, i32 y);

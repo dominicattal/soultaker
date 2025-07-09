@@ -10,8 +10,6 @@ typedef enum {
     // Game Events
     GAME_EVENT_PRESET_LOAD,
     GAME_EVENT_CAMERA_MOVE,
-    GAME_EVENT_CAMERA_ROTATE,
-    GAME_EVENT_CAMERA_TILT,
     GAME_EVENT_SWAP_WEAPONS,
 
     // Gui Events
@@ -102,12 +100,6 @@ static void execute_event(Event event)
         case GAME_EVENT_CAMERA_MOVE:
             camera_move(vec2_create(arg1._flt, arg2._flt));
             break;
-        case GAME_EVENT_CAMERA_ROTATE:
-            camera_rotate(arg1._flt);
-            break;
-        case GAME_EVENT_CAMERA_TILT:
-            camera_tilt(arg1._flt);
-            break;
         case GAME_EVENT_SWAP_WEAPONS:
             player_swap_weapons();
             break;
@@ -166,26 +158,6 @@ void event_create_game_camera_move(vec2 mag)
         .type = GAME_EVENT_CAMERA_MOVE,
         .arg1._flt = mag.x,
         .arg2._flt = mag.y
-    };
-    EventQueue* queue = get_event_queue("Game");
-    event_enqueue(queue, event);
-}
-
-void event_create_game_camera_rotate(f32 mag)
-{
-    Event event = (Event) {
-        .type = GAME_EVENT_CAMERA_ROTATE,
-        .arg1._flt = mag
-    };
-    EventQueue* queue = get_event_queue("Game");
-    event_enqueue(queue, event);
-}
-
-void event_create_game_camera_tilt(f32 mag)
-{
-    Event event = (Event) {
-        .type = GAME_EVENT_CAMERA_TILT,
-        .arg1._flt = mag
     };
     EventQueue* queue = get_event_queue("Game");
     event_enqueue(queue, event);

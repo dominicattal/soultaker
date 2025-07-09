@@ -15,6 +15,7 @@ typedef struct {
     char* name;
     UpdateFuncPtr update;
     i32 num_frames;
+    f32* frame_lengths;
     i32* frames;
 } EntityState;
 
@@ -81,6 +82,31 @@ static UpdateFuncPtr load_update_function(JsonObject* object, i32 entity_id)
     return fptr;
 }
 
+static void load_state_frame_lengths(EntityState* state, JsonObject* object)
+{
+    JsonValue* value;
+    JsonArray* array;
+    i32 int_val, i;
+    f32 flt_val;
+    value = json_get_value(object, "timers");
+    if (value == NULL) {
+        for (i = 0; i < state->num_frames; i++)
+            state->frame_lengths[i] = 0.5;
+        return;
+    }
+    log_assert(json_get_type(value) == JTYPE_ARRAY, "Timers are not in an array");
+    array = json_get_array(value);
+    int_val  = json_array_length(array);
+    log_assert(int_val == state->num_frames, "Number of frames does not match number of frame timers");
+    for (i = 0; i < state->num_frames; i++) {
+        value = json_array_get(array, i);
+        log_assert(value, "Could not get float value");
+        log_assert(json_get_type(value) == JTYPE_FLOAT, "Not a float");
+        flt_val = json_get_float(value);
+        state->frame_lengths[i] = flt_val;
+    }
+}
+
 static void load_state_frames(EntityState* state, JsonObject* object, const char* dir_str, i32 dir_int)
 {
     JsonValue* value;
@@ -90,14 +116,14 @@ static void load_state_frames(EntityState* state, JsonObject* object, const char
     i32 num_frames = state->num_frames;
     value = json_get_value(object, dir_str);
     log_assert(value, "Could not get value for direction %s for state %s", dir_str, state->name);
-    log_assert(value, "Textures for direction %s of state %s is not an array", dir_str, state->name);
+    log_assert(json_get_type(value) == JTYPE_ARRAY, "Textures for direction %s of state %s is not an array", dir_str, state->name);
     array = json_get_array(value);
     int_val = json_array_length(array);
     log_assert(int_val == num_frames, "Number of frames for state %s direction %s does not match the number of frames specified (%d)", state->name, dir_str, num_frames);
-    for (i32 j = 0; j < int_val; j++) {
+    for (i32 j = 0; j < num_frames; j++) {
         value = json_array_get(array, j);
         log_assert(value, "Could not get value at index %d in array for state %s direction %s", j, state->name, dir_str);
-        log_assert(value, "Value at index %d in array for state %s direction %s is not a string", j, state->name, dir_str);
+        log_assert(json_get_type(value) == JTYPE_STRING, "Value at index %d in array for state %s direction %s is not a string", j, state->name, dir_str);
         string = json_get_string(value);
         log_assert(string, "Could not get string at index %d in array for state %s direction %s", j, state->name, dir_str);
         state->frames[num_frames * dir_int + j] = texture_get_id(string);
@@ -148,8 +174,10 @@ static void load_state_info(i32 entity_id, JsonObject* object)
         state_ptr[i].name = copy_string(name);
         state_ptr[i].num_frames = num_frames;
         state_ptr[i].frames = st_malloc(4 * num_frames * sizeof(i32));
+        state_ptr[i].frame_lengths = st_malloc(num_frames * sizeof(f32));
         state_ptr[i].update = load_update_function(object, i);
 
+        load_state_frame_lengths(&state_ptr[i], object);
         load_state_frames(&state_ptr[i], object, "left", LEFT);
         load_state_frames(&state_ptr[i], object, "right", RIGHT);
         if (!bidirectional) {
@@ -270,7 +298,9 @@ Entity* entity_create(vec3 position, i32 id)
     entity->facing = vec2_create(1, 0);
     entity->id = id;
     entity->state_timer = 0;
+    entity->frame_timer = 0;
     entity->tile_timer = 0;
+    entity->frame_speed = 1;
 
     entity->haste = 0;
     entity->speed = 7.0f;
@@ -305,9 +335,17 @@ static void handle_lava(Entity* entity, f32 dt)
 
 void entity_update(Entity* entity, f32 dt)
 {
+    EntityState state = entity_context.infos[entity->id].states[entity->state];
+    f32 frame_length = state.frame_lengths[entity->frame];
+    i32 num_frames = state.num_frames;
     entity->prev_position = entity->position;
     entity->position = vec3_add(entity->position, vec3_scale(entity->direction, entity->speed * dt));
     entity->state_timer += dt;
+    entity->frame_timer += entity->frame_speed * dt;
+    if (entity->frame_timer > frame_length) {
+        entity->frame_timer -= frame_length;
+        entity->frame = (entity->frame + 1) % num_frames;
+    }
     handle_lava(entity, dt);
     if (entity_get_flag(entity, ENTITY_FLAG_UPDATE_FACING) && vec3_mag(entity->direction) > 0)
         entity->facing = vec2_create(entity->direction.x, entity->direction.z);
@@ -427,6 +465,7 @@ void entity_cleanup(void)
         for (i32 j = 0; j < entity_context.infos[i].num_states; j++) {
             st_free(entity_context.infos[i].states[j].name);
             st_free(entity_context.infos[i].states[j].frames);
+            st_free(entity_context.infos[i].states[j].frame_lengths);
         }
         st_free(entity_context.infos[i].states);
     }
