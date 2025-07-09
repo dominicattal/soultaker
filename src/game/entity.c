@@ -13,9 +13,9 @@ typedef void (*UpdateFuncPtr)(GlobalApi*, Entity*, f32);
 
 typedef struct {
     char* name;
-    i32 id;
+    UpdateFuncPtr update;
     i32 num_frames;
-    i32* textures;
+    i32* frames;
 } EntityState;
 
 typedef struct {
@@ -35,7 +35,53 @@ typedef struct {
 
 static EntityContext entity_context;
 
-static void load_state_textures(EntityState* state, JsonObject* object, const char* dir_str, i32 dir_int)
+static void default_update_function(GlobalApi*, Entity*, f32) {}
+static void default_create_function(GlobalApi*, Entity*) {}
+static void default_destroy_function(GlobalApi*, Entity*) {}
+
+static CreateFuncPtr load_create_function(JsonObject* object, i32 entity_id)
+{
+    JsonValue* val_string = json_get_value(object, "create");
+    const char* name = entity_context.infos[entity_id].name;
+    if (val_string == NULL)
+        return default_create_function;
+    log_assert(json_get_type(val_string) == JTYPE_STRING, "Create function for %s is not a string", name);
+    const char* function_name = json_get_string(val_string);
+    log_assert(function_name, "Failed to get create function name for %s from json value", name);
+    CreateFuncPtr fptr = state_load_function(function_name);
+    log_assert(fptr, "Failed to find function %s for entity %s in library", function_name, name);
+    return fptr;
+}
+
+static DestroyFuncPtr load_destroy_function(JsonObject* object, i32 entity_id)
+{
+    JsonValue* val_string = json_get_value(object, "destroy");
+    const char* name = entity_context.infos[entity_id].name;
+    if (val_string == NULL)
+        return default_destroy_function;
+    log_assert(json_get_type(val_string) == JTYPE_STRING, "Destroy function for %s is not a string", name);
+    const char* function_name = json_get_string(val_string);
+    log_assert(function_name, "Failed to get destroy function name for %s from json value", name);
+    DestroyFuncPtr fptr = state_load_function(function_name);
+    log_assert(fptr, "Failed to find function %s for entity %s in library", function_name, name);
+    return fptr;
+}
+
+static UpdateFuncPtr load_update_function(JsonObject* object, i32 entity_id)
+{
+    JsonValue* val_string = json_get_value(object, "update");
+    const char* name = entity_context.infos[entity_id].name;
+    if (val_string == NULL)
+        return default_update_function;
+    log_assert(json_get_type(val_string) == JTYPE_STRING, "Update function for %s is not a string", name);
+    const char* function_name = json_get_string(val_string);
+    log_assert(function_name, "Failed to get update function name for %s from json value", name);
+    UpdateFuncPtr fptr = state_load_function(function_name);
+    log_assert(fptr, "Failed to find function %s for entity %s in library", function_name, name);
+    return fptr;
+}
+
+static void load_state_frames(EntityState* state, JsonObject* object, const char* dir_str, i32 dir_int)
 {
     JsonValue* value;
     JsonArray* array;
@@ -54,17 +100,19 @@ static void load_state_textures(EntityState* state, JsonObject* object, const ch
         log_assert(value, "Value at index %d in array for state %s direction %s is not a string", j, state->name, dir_str);
         string = json_get_string(value);
         log_assert(string, "Could not get string at index %d in array for state %s direction %s", j, state->name, dir_str);
-        state->textures[num_frames * dir_int + j] = texture_get_id(string);
+        state->frames[num_frames * dir_int + j] = texture_get_id(string);
     }
 }
 
 static void load_state_info(i32 entity_id, JsonObject* object)
 {
     JsonValue* value;
-    JsonArray* array;
+    JsonObject* obj_states;
+    JsonIterator* it;
+    JsonMember* member;
     JsonType type;
-    const char* string;
-    i32 int_val;
+    const char* name;
+    i32 num_frames;
     i32 bidirectional;
     
     bidirectional = 0;
@@ -77,95 +125,46 @@ static void load_state_info(i32 entity_id, JsonObject* object)
 
     value = json_get_value(object, "states");
     log_assert(value, "Could not get states value");
-    log_assert(json_get_type(value) == JTYPE_ARRAY, "States array not found");
-    array = json_get_array(value);
-    log_assert(array, "Could not get states array");
-    i32 num_states = json_array_length(array);
+    log_assert(json_get_type(value) == JTYPE_OBJECT, "States object not found");
+    obj_states = json_get_object(value);
+    log_assert(obj_states, "Could not get states object");
+    it = json_iterator_create(obj_states);
+    i32 num_states = json_object_length(obj_states);
     EntityState* state_ptr = st_malloc(num_states * sizeof(EntityState));
     for (i32 i = 0; i < num_states; i++) {
-        value = json_array_get(array, i);
-        log_assert(value, "Could not get value from array");
+        member = json_iterator_get(it);
+        name = json_member_key(member);
+        value = json_member_value(member);
+        log_assert(value, "Could not get value from member");
         log_assert(json_get_type(value) == JTYPE_OBJECT, "Value is not the right type");
         object = json_get_object(value);
         log_assert(object, "Could not get object from value in array");
-        value = json_get_value(object, "name");
-        log_assert(value, "Could not get the name of the state");
-        log_assert(json_get_type(value) == JTYPE_STRING, "State name is not a string");
-        string = json_get_string(value);
-        state_ptr[i].name = copy_string(string);
-        value = json_get_value(object, "id");
-        log_assert(value, "Could not get the id of state %s", string);
-        log_assert(json_get_type(value) == JTYPE_INT, "Id of state %s is not an int", string);
-        int_val = json_get_int(value);
-        log_assert(int_val == i, "Id of state %s does not match its position in array", string);
-        state_ptr[i].id = int_val;
-        value = json_get_value(object, "frames");
-        log_assert(value, "Could not get the number of frames for state %s", string);
-        log_assert(json_get_type(value) == JTYPE_INT, "Number of frames for state %s is is not a int", string);
-        int_val = json_get_int(value);
-        state_ptr[i].num_frames = int_val;
-        state_ptr[i].textures = st_malloc(4 * int_val * sizeof(i32));
 
-        load_state_textures(&state_ptr[i], object, "left", LEFT);
-        load_state_textures(&state_ptr[i], object, "right", RIGHT);
+        value = json_get_value(object, "frames");
+        log_assert(value, "Could not get the number of frames for state %s", name);
+        log_assert(json_get_type(value) == JTYPE_INT, "Number of frames for state %s is is not a int", name);
+        num_frames = json_get_int(value);
+
+        state_ptr[i].name = copy_string(name);
+        state_ptr[i].num_frames = num_frames;
+        state_ptr[i].frames = st_malloc(4 * num_frames * sizeof(i32));
+        state_ptr[i].update = load_update_function(object, i);
+
+        load_state_frames(&state_ptr[i], object, "left", LEFT);
+        load_state_frames(&state_ptr[i], object, "right", RIGHT);
         if (!bidirectional) {
-            load_state_textures(&state_ptr[i], object, "up", UP);
-            load_state_textures(&state_ptr[i], object, "down", DOWN);
+            load_state_frames(&state_ptr[i], object, "up", UP);
+            load_state_frames(&state_ptr[i], object, "down", DOWN);
         }
+
+        json_iterator_increment(it);
     }
+
+    json_iterator_destroy(it);
 
     entity_context.infos[entity_id].num_states = num_states;
     entity_context.infos[entity_id].states = state_ptr;
     entity_context.infos[entity_id].bidirectional = bidirectional;
-}
-
-static void default_update_function(GlobalApi*, Entity*, f32) {}
-static void default_create_function(GlobalApi*, Entity*) {}
-static void default_destroy_function(GlobalApi*, Entity*) {}
-
-static void load_create_function(JsonObject* object, i32 entity_id)
-{
-    JsonValue* val_string = json_get_value(object, "create");
-    const char* name = entity_context.infos[entity_id].name;
-    if (val_string == NULL) {
-        entity_context.infos[entity_id].create = default_create_function;
-        return;
-    }
-    log_assert(json_get_type(val_string) == JTYPE_STRING, "Create function for %s is not a string", name);
-    const char* function_name = json_get_string(val_string);
-    log_assert(function_name, "Failed to get create function name for %s from json value", name);
-    entity_context.infos[entity_id].create = state_load_function(function_name);
-    log_assert(entity_context.infos[entity_id].create, "Failed to find function %s for entity %s in library", function_name, name);
-}
-
-static void load_destroy_function(JsonObject* object, i32 entity_id)
-{
-    JsonValue* val_string = json_get_value(object, "destroy");
-    const char* name = entity_context.infos[entity_id].name;
-    if (val_string == NULL) {
-        entity_context.infos[entity_id].destroy = default_destroy_function;
-        return;
-    }
-    log_assert(json_get_type(val_string) == JTYPE_STRING, "Destroy function for %s is not a string", name);
-    const char* function_name = json_get_string(val_string);
-    log_assert(function_name, "Failed to get destroy function name for %s from json value", name);
-    entity_context.infos[entity_id].destroy = state_load_function(function_name);
-    log_assert(entity_context.infos[entity_id].destroy, "Failed to find function %s for entity %s in library", function_name, name);
-}
-
-static void load_update_function(JsonObject* object, i32 entity_id)
-{
-    JsonValue* val_string = json_get_value(object, "update");
-    const char* name = entity_context.infos[entity_id].name;
-    if (val_string == NULL) {
-        entity_context.infos[entity_id].update = default_update_function;
-        return;
-    }
-    log_assert(json_get_type(val_string) == JTYPE_STRING, "Update function for %s is not a string", name);
-    const char* function_name = json_get_string(val_string);
-    log_assert(function_name, "Failed to get update function name for %s from json value", name);
-    entity_context.infos[entity_id].update = state_load_function(function_name);
-    log_assert(entity_context.infos[entity_id].update, "Failed to find function %s for entity %s in library", function_name, name);
 }
 
 static void load_entity_info(void)
@@ -195,9 +194,9 @@ static void load_entity_info(void)
         object = json_get_object(val_object);
         log_assert(object, "Could not get object from value");
 
-        load_create_function(object, i);
-        load_destroy_function(object, i);
-        load_update_function(object, i);
+        entity_context.infos[i].create = load_create_function(object, i);
+        entity_context.infos[i].destroy = load_destroy_function(object, i);
+        entity_context.infos[i].update = load_update_function(object, i);
         load_state_info(i, object);
 
         json_iterator_increment(it);
@@ -228,7 +227,21 @@ i32 entity_get_id(const char* name)
 
 i32 entity_get_state_id(Entity* entity, const char* name)
 {
-    return 0;
+    i32 l, r, m, a;
+    l = 0;
+    r = entity_context.infos[entity->id].num_states-1;
+    while (l <= r) {
+        m = l + (r - l) / 2;
+        a = strcmp(name, entity_context.infos[entity->id].states[m].name);
+        if (a > 0)
+            l = m + 1;
+        else if (a < 0)
+            r = m - 1;
+        else
+            return m;
+    }
+    log_write(FATAL, "Could not get state id for %s", name);
+    return -1;
 }
 
 void entity_init(void)
@@ -300,6 +313,7 @@ void entity_update(Entity* entity, f32 dt)
         entity->facing = vec2_create(entity->direction.x, entity->direction.z);
 
     entity_context.infos[entity->id].update(&global_api, entity, dt);
+    entity_context.infos[entity->id].states[entity->state].update(&global_api, entity, dt);
 }
 
 void entity_make_boss(Entity* entity)
@@ -388,7 +402,7 @@ i32 entity_get_texture(Entity* entity)
     else
         dir = get_direction_4(rad);
     i32 num_frames = state.num_frames;
-    return state.textures[num_frames * dir + entity->frame];
+    return state.frames[num_frames * dir + entity->frame];
 }
 
 void entity_destroy(Entity* entity)
@@ -412,7 +426,7 @@ void entity_cleanup(void)
         st_free(entity_context.infos[i].name);
         for (i32 j = 0; j < entity_context.infos[i].num_states; j++) {
             st_free(entity_context.infos[i].states[j].name);
-            st_free(entity_context.infos[i].states[j].textures);
+            st_free(entity_context.infos[i].states[j].frames);
         }
         st_free(entity_context.infos[i].states);
     }

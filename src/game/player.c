@@ -38,13 +38,17 @@ void player_reset(void)
     if (game_context.player.entity != NULL)
         log_write(WARNING, "Did not free player entity before resetting");
     i32 knight_id = entity_get_id("knight");
-    game_context.player.entity = entity_create(vec3_create(0, 0, 0), knight_id);
+    Entity* entity = entity_create(vec3_create(0, 0, 0), knight_id);
+    game_context.player.entity = entity;
     game_context.player.entity->direction = vec3_create(0, 0, 0);
     game_context.player.entity->size = 1.0;
     entity_set_flag(game_context.player.entity, ENTITY_FLAG_FRIENDLY, 1);
     game_context.player.weapon.id = weapon_get_id("pointer");
     game_context.player.swap_out.id = weapon_get_id("null_pointer");
     event_create_gui_update_weapon_info(game_context.player.weapon.id);
+    game_context.player.state_idle = entity_get_state_id(entity, "idle");
+    game_context.player.state_walking = entity_get_state_id(entity, "walking");
+    game_context.player.state_shooting = entity_get_state_id(entity, "shooting");
 }
 
 vec3 game_get_nearest_player_position(void)
@@ -56,27 +60,28 @@ vec3 game_get_nearest_player_position(void)
 
 void player_update(Player* player, f32 dt)
 {
-    if (player->entity == NULL) return;
+    Entity* entity = player->entity;
+    if (entity == NULL) return;
     player->shot_timer -= dt;
     player_shoot(player);
     if (player->shot_timer > 0) {
-        if (player->entity->state == 2)
+        if (entity->state == player->state_shooting)
             return;
-        player->entity->state = 2;
-        player->entity->frame = 0;
-        entity_set_flag(player->entity, ENTITY_FLAG_UPDATE_FACING, 0);
+        entity->state = player->state_shooting;
+        entity->frame = 0;
+        entity_set_flag(entity, ENTITY_FLAG_UPDATE_FACING, 0);
     } else {
-        entity_set_flag(player->entity, ENTITY_FLAG_UPDATE_FACING, 1);
-        if (vec3_mag(player->entity->direction) > 0) {
-            if (player->entity->state == 1)
+        entity_set_flag(entity, ENTITY_FLAG_UPDATE_FACING, 1);
+        if (vec3_mag(entity->direction) > 0) {
+            if (entity->state == player->state_walking)
                 return;
-            player->entity->state = 1;
-            player->entity->frame = 0;
+            entity->state = player->state_walking;
+            entity->frame = 0;
         } else {
-            if (player->entity->state == 0)
+            if (entity->state == player->state_idle)
                 return;
-            player->entity->state = 0;
-            player->entity->frame = 0;
+            entity->state = player->state_idle;
+            entity->frame = 0;
         }
     }
 }

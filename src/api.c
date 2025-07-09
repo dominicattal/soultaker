@@ -12,6 +12,7 @@ GlobalApi global_api = {
     REGISTER(entity_create),
     REGISTER(entity_make_boss),
     REGISTER(entity_get_id),
+    REGISTER(entity_get_state_id),
     REGISTER(entity_set_flag),
 
     // Wall
@@ -42,6 +43,8 @@ GlobalApi global_api = {
     REGISTER(vec2_rotate),
     REGISTER(vec2_direction),
     REGISTER(vec2_radians),
+    REGISTER(vec2_sub),
+    REGISTER(vec2_normalize),
     REGISTER(_log_write),
 
 #ifdef DEBUG_BUILD

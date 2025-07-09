@@ -44,6 +44,8 @@ static void create_bars(GlobalApi* api, i32 side_tex, i32 top_tex, vec2 position
 
 typedef struct {
     Entity* daddy;
+    i32 rotate_direction;
+    f32 timer;
 } HandData;
 
 typedef struct {
@@ -59,6 +61,11 @@ typedef enum {
     ATTACK_3
 } ShaitanStates;
 
+typedef enum {
+    FIREBALL,
+    FIRESTORM
+} ShaitanHandStates;
+
 void firestorm(Projectile* proj, f32 dt)
 {
     proj->rotation += 10 * dt;
@@ -66,6 +73,21 @@ void firestorm(Projectile* proj, f32 dt)
 
 st_export void hand_of_shaitan_update(GlobalApi* api, Entity* entity, f32 dt)
 {
+    HandData* data = entity->data;
+    Entity* daddy = data->daddy;
+    // instaneous velocity of a point in the motion of a circle 
+    // is the orthogonal of its vector to the origin
+    vec2 hand_pos = api->vec2_create(entity->position.x, entity->position.z);
+    vec2 daddy_pos = api->vec2_create(daddy->position.x, daddy->position.z);
+    vec2 direction = api->vec2_normalize(api->vec2_sub(daddy_pos, hand_pos));
+    direction.x *= 2 * data->rotate_direction - 1;
+    direction.y *= 2 * data->rotate_direction - 1;
+    entity->direction = api->vec3_create(direction.y, 0.0f, -direction.x);
+    data->timer += dt;
+    if (data->timer > 2.2f) {
+        data->rotate_direction = 1 - data->rotate_direction;
+        data->timer -= 2.2f;
+    }
 }
 
 st_export void hand_of_shaitan_create(GlobalApi* api, Entity* entity)
@@ -74,6 +96,7 @@ st_export void hand_of_shaitan_create(GlobalApi* api, Entity* entity)
     entity->data = data;
     entity->size = 2;
     entity->health = 2;
+    entity->speed = 5;
 }
 
 st_export void hand_of_shaitan_destroy(GlobalApi* api, Entity* entity)
@@ -125,10 +148,12 @@ static void spawn_hands(GlobalApi* api, Entity* advisor)
     data = hand->data;
     data->daddy = advisor;
     advisor_data->hand1 = hand;
+    data->rotate_direction = 0;
     hand = api->entity_create(api->vec3_create(8, 0, 16.5), id);
     data = hand->data;
     data->daddy = advisor;
     advisor_data->hand2 = hand;
+    data->rotate_direction = 1;
 }
 
 static void attack_2_firestorm(GlobalApi* api, Entity* entity)
@@ -163,59 +188,65 @@ static void attack_2_fireball(GlobalApi* api, Entity* entity)
     }
 }
 
-st_export void shaitan_the_advisor_update(GlobalApi* api, Entity* entity, f32 dt)
+st_export void shaitan_the_advisor_grow(GlobalApi* api, Entity* entity, f32 dt)
+{
+    if (entity->size >= 3.0f) {
+        entity->state = api->entity_get_state_id(entity, "attack_1");
+        entity->state_timer = 0.0f;
+        return;
+    }
+    if (entity->state_timer > 0.2f) {
+        entity->state_timer -= 0.2f;
+        entity->size += 0.25;
+    }
+}
+
+st_export void shaitan_the_advisor_attack_1(GlobalApi* api, Entity* entity, f32 dt)
 {
     AdvisorData* data = entity->data;
-    switch (entity->state) {
-        case GROWING:
-            if (entity->size >= 3.0f) {
-                entity->state = ATTACK_1;
-                entity->state_timer = 0.0f;
-                break;
-            }
-            if (entity->state_timer > 0.2f) {
-                entity->state_timer -= 0.2f;
-                entity->size += 0.25;
-            }
-            break;
-        case ATTACK_1:
-            if (entity->health <= 90) {
-                entity->state = ATTACK_2;
-                spawn_hands(api, entity);
-                api->entity_set_flag(entity, ENTITY_FLAG_INVULNERABLE, 1);
-                entity->state_timer = 0;
-                entity->frame = 0;
-                data->timer1 = 0;
-                break;
-            }
-            entity->frame = entity->state_timer > 0.4f;
-            if (entity->state_timer > 0.5f) {
-                attack_1(api, entity);
-                entity->state_timer -= 0.5f;
-            }
-            break;
-        case ATTACK_2:
-            if (data->hand1 == NULL && data->hand2 == NULL) {
-                entity->state_timer = 0;
-                entity->state = ATTACK_3;
-                api->entity_set_flag(entity, ENTITY_FLAG_INVULNERABLE, 1);
-                break;
-            }
-            data->timer1 += dt;
-            if (entity->state_timer > 0.5f) {
-                attack_2_firestorm(api, entity);
-                entity->state_timer -= 0.5f;
-            }
-            if (data->timer1 > 2.1f) {
-                attack_2_fireball(api, entity);
-                data->timer1 -= 2.1f;
-            }
-            break;
-        case ATTACK_3:
-            break;
-        default:
-            break;
+    if (entity->health <= 90) {
+        entity->state = api->entity_get_state_id(entity, "attack_2");
+        spawn_hands(api, entity);
+        api->entity_set_flag(entity, ENTITY_FLAG_INVULNERABLE, 1);
+        entity->state_timer = 0;
+        entity->frame = 0;
+        data->timer1 = 0;
+        return;
     }
+    entity->frame = entity->state_timer > 0.4f;
+    if (entity->state_timer > 0.5f) {
+        attack_1(api, entity);
+        entity->state_timer -= 0.5f;
+    }
+}
+
+st_export void shaitan_the_advisor_attack_2(GlobalApi* api, Entity* entity, f32 dt)
+{
+    AdvisorData* data = entity->data;
+    if (data->hand1 == NULL && data->hand2 == NULL) {
+        entity->state_timer = 0;
+        entity->state = api->entity_get_state_id(entity, "attack_3");
+        api->entity_set_flag(entity, ENTITY_FLAG_INVULNERABLE, 1);
+        return;
+    }
+    entity->frame = entity->state_timer > 0.4f;
+    data->timer1 += dt;
+    if (entity->state_timer > 0.5f) {
+        attack_2_firestorm(api, entity);
+        entity->state_timer -= 0.5f;
+    }
+    if (data->timer1 > 2.1f) {
+        attack_2_fireball(api, entity);
+        data->timer1 -= 2.1f;
+    }
+}
+
+st_export void shaitan_the_advisor_attack_3(GlobalApi* api, Entity* entity, f32 dt)
+{
+}
+
+st_export void shaitan_the_advisor_update(GlobalApi* api, Entity* entity, f32 dt)
+{
 }
 
 st_export void shaitan_the_advisor_create(GlobalApi* api, Entity* entity)
@@ -224,10 +255,10 @@ st_export void shaitan_the_advisor_create(GlobalApi* api, Entity* entity)
     data->hand1 = NULL;
     data->hand2 = NULL;
     entity->data = data;
-    entity->size = 3.0f;
+    entity->size = 0.0f;
     entity->hitbox_radius = 0.5f;
     entity->health = 91;
-    entity->state = ATTACK_1;
+    entity->state = api->entity_get_state_id(entity, "grow");
     api->entity_make_boss(entity);
 }
 

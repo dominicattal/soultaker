@@ -117,6 +117,10 @@ typedef struct Player {
     Entity* entity;
     f32 shot_timer;
     bool shooting;
+    // store special states
+    i32 state_idle;
+    i32 state_walking;
+    i32 state_shooting;
 } Player;
 
 typedef enum {
