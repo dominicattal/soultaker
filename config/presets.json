@@ -1,4 +1,3 @@
 {
-    "test": "game_preset_load_test",
     "shaitan": "game_preset_load_shaitan"
 }
