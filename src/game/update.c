@@ -7,7 +7,7 @@ static void collide_entity_wall(Entity* entity, Wall* wall)
 {
     f32 ex, ez, er, dx, dz, wx, wz, sx, sz;
     ex = entity->position.x;
-    ez = entity->position.z;
+    ez = entity->position.y;
     er = entity->size / 2;
     wx = wall->position.x;
     wz = wall->position.y;
@@ -17,23 +17,19 @@ static void collide_entity_wall(Entity* entity, Wall* wall)
        && ez + er > wz && ez - er < wz + sz))
         return;
     ex = entity->prev_position.x;
-    ez = entity->prev_position.z;
+    ez = entity->prev_position.y;
     dx = entity->position.x - entity->prev_position.x;
-    dz = entity->position.z - entity->prev_position.z;
+    dz = entity->position.y - entity->prev_position.y;
     if (ez + er > wz && ez - er < wz + sz) {
         if (dx > 0)
             entity->position.x = wx - er;
         else if (dx < 0)
             entity->position.x = wx + sx + er;
-        else
-            log_write(DEBUG, "dx = 0");
     } else if (ex + er > wx && ex - er < wx + sx) {
         if (dz > 0)
-            entity->position.z = wz - er;
+            entity->position.y = wz - er;
         else if (dz < 0)
-            entity->position.z = wz + sz + er;
-        else
-            log_write(DEBUG, "dz = 0");
+            entity->position.y = wz + sz + er;
     }
 }
 
@@ -41,7 +37,7 @@ static void collide_entity_tile(Entity* entity, Tile* tile)
 {
     f32 ex, ez, tx, tz, sx, sz;
     ex = entity->position.x;
-    ez = entity->position.z;
+    ez = entity->position.y;
     tx = tile->position.x;
     tz = tile->position.y;
     sx = sz = 1.0f;
@@ -55,7 +51,7 @@ static void collide_entity_obstacle(Entity* entity, Obstacle* obstacle)
     f32 ex, ez, er, ox, oz, or;
     vec2 dir;
     ex = entity->position.x;
-    ez = entity->position.z;
+    ez = entity->position.y;
     er = entity->size / 2;
     ox = obstacle->position.x;
     oz = obstacle->position.y;
@@ -65,7 +61,7 @@ static void collide_entity_obstacle(Entity* entity, Obstacle* obstacle)
         return;
     dir = vec2_scale(vec2_normalize(dir), er + or);
     entity->position.x = ox + dir.x;
-    entity->position.z = oz + dir.y;
+    entity->position.y = oz + dir.y;
 }
 
 static void collide_entity_projectile(Entity* entity, Projectile* projectile)
@@ -81,10 +77,10 @@ static void collide_entity_projectile(Entity* entity, Projectile* projectile)
     f32 ex, ez, er, px, pz, pr;
     vec2 offset;
     ex = entity->position.x;
-    ez = entity->position.z;
+    ez = entity->position.y;
     er = entity->hitbox_radius;
     px = projectile->position.x;
-    pz = projectile->position.z;
+    pz = projectile->position.y;
     pr = projectile->size / 2;
     offset = vec2_create(ex - px, ez - pz);
     if (vec2_mag(offset) >= er + pr)
@@ -103,7 +99,7 @@ static void collide_projectile_wall(Projectile* projectile, Wall* wall)
 {
     f32 px, pz, pr, wx, wz, sx, sz;
     px = projectile->position.x;
-    pz = projectile->position.z;
+    pz = projectile->position.y;
     pr = projectile->size / 2;
     wx = wall->position.x;
     wz = wall->position.y;
@@ -120,7 +116,7 @@ static void collide_projectile_obstacle(Projectile* projectile, Obstacle* obstac
     f32 px, pz, pr, ox, oz, or;
     vec2 dir;
     px = projectile->position.x;
-    pz = projectile->position.z;
+    pz = projectile->position.y;
     pr = projectile->size / 2;
     ox = obstacle->position.x;
     oz = obstacle->position.y;

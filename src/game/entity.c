@@ -295,12 +295,13 @@ void entity_clear(void)
     game_context.player.entity = NULL;
 }
 
-Entity* entity_create(vec3 position, i32 id)
+Entity* entity_create(vec2 position, i32 id)
 {
     Entity* entity = st_malloc(sizeof(Entity));
     entity->position = position;
     entity->prev_position = position;
-    entity->direction = vec3_create(0, 0, 0);
+    entity->direction = vec2_create(0, 0);
+    entity->elevation = 0;
     entity->facing = vec2_create(1, 0);
     entity->id = id;
     entity->state_timer = 0;
@@ -327,14 +328,14 @@ static void handle_lava(Entity* entity, f32 dt)
 {
     if (entity_get_flag(entity, ENTITY_FLAG_IN_LAVA)) {
         entity->tile_timer += dt;
-        entity->position.y = -0.2;
+        entity->elevation = -0.2;
         if (entity->tile_timer > 0.5) {
             entity->tile_timer -= 0.5;
             //entity->health -= 1;
         }
         entity_set_flag(entity, ENTITY_FLAG_IN_LAVA, 0);
     } else {
-        entity->position.y = 0;
+        entity->elevation = 0;
         entity->tile_timer = 0;
     }
 }
@@ -345,7 +346,7 @@ void entity_update(Entity* entity, f32 dt)
     f32 frame_length = state.frame_lengths[entity->frame];
     i32 num_frames = state.num_frames;
     entity->prev_position = entity->position;
-    entity->position = vec3_add(entity->position, vec3_scale(entity->direction, entity->speed * dt));
+    entity->position = vec2_add(entity->position, vec2_scale(entity->direction, entity->speed * dt));
     entity->state_timer += dt;
     entity->frame_timer += entity->frame_speed * dt;
     if (entity->frame_timer > frame_length) {
@@ -353,8 +354,8 @@ void entity_update(Entity* entity, f32 dt)
         entity->frame = (entity->frame + 1) % num_frames;
     }
     handle_lava(entity, dt);
-    if (entity_get_flag(entity, ENTITY_FLAG_UPDATE_FACING) && vec3_mag(entity->direction) > 0)
-        entity->facing = vec2_create(entity->direction.x, entity->direction.z);
+    if (entity_get_flag(entity, ENTITY_FLAG_UPDATE_FACING) && vec2_mag(entity->direction) > 0)
+        entity->facing = entity->direction;
 
     entity_context.infos[entity->id].update(&global_api, entity, dt);
     entity_context.infos[entity->id].states[entity->state].update(&global_api, entity, dt);

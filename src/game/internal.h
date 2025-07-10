@@ -95,10 +95,11 @@ typedef struct Weapon {
 
 typedef struct Entity {
     void* data;
-    vec3 position;
-    vec3 prev_position;
-    vec3 direction;
+    vec2 position;
+    vec2 prev_position;
+    vec2 direction;
     vec2 facing;
+    f32 elevation;
     f32 speed;
     f32 size;
     f32 hitbox_radius;
@@ -157,7 +158,7 @@ void entity_set_state(Entity* entity, const char* name);
 // Each entitiy has a create, update, and delete
 // function that are called when passed as arguments
 // in these functions
-Entity* entity_create(vec3 position, i32 id);
+Entity* entity_create(vec2 position, i32 id);
 void entity_update(Entity* entity, f32 dt);
 void entity_destroy(Entity* entity);
 
@@ -187,7 +188,7 @@ void weapon_init(void);
 void weapon_cleanup(void);
 
 i32 weapon_get_id(const char* name);
-void weapon_shoot(Player* player, vec3 direction, vec3 target);
+void weapon_shoot(Player* player, vec2 direction, vec2 target);
 
 //**************************************************************************
 // Tile definitions
@@ -247,8 +248,9 @@ typedef void (*ProjectileUpdateFuncPtr)(Projectile*, f32);
 typedef void (*ProjectileDestroyFuncPtr)(Projectile*);
 
 typedef struct Projectile {
-    vec3 position;
-    vec3 direction;
+    vec2 position;
+    vec2 direction;
+    f32 elevation;
     f32 facing;
     f32 rotation;
     f32 speed;
@@ -276,7 +278,7 @@ void projectile_clear(void);
 // not have a create function. They do not have ids mapped to a 
 // function ptr (like entities) because it is not necessary to 
 // know projectile information + it would be a headache.
-Projectile* projectile_create(vec3 position);
+Projectile* projectile_create(vec2 position);
 void projectile_update(Projectile* projectile, f32 dt);
 void projectile_destroy(Projectile* projectile);
 
@@ -415,8 +417,8 @@ void game_render_cleanup(void);
 // change game's fbo when window is resized
 void game_render_framebuffer_size_callback(void);
 
-vec3 game_get_nearest_player_position(void);
-void game_set_player_position(vec3 position);
+vec2 game_get_nearest_player_position(void);
+void game_set_player_position(vec2 position);
 
 // update game objects (entities, projectiles, etc)
 void game_update(void);

@@ -170,8 +170,8 @@ static void update_entity_vertex_data(void)
         entity = list_get(game_context.entities, i);
         texture_info(entity_get_texture(entity), &location, &u, &v, &w, &h, &pivot, &stretch);
         vb->buffer[j++] = entity->position.x;
+        vb->buffer[j++] = entity->elevation;
         vb->buffer[j++] = entity->position.y;
-        vb->buffer[j++] = entity->position.z;
         vb->buffer[j++] = entity->size;
         vb->buffer[j++] = u;
         vb->buffer[j++] = v;
@@ -184,8 +184,8 @@ static void update_entity_vertex_data(void)
         vb->buffer[j++] = stretch.y;
 
         shadow_vb->buffer[k++] = entity->position.x;
+        shadow_vb->buffer[k++] = entity->elevation;
         shadow_vb->buffer[k++] = entity->position.y;
-        shadow_vb->buffer[k++] = entity->position.z;
         shadow_vb->buffer[k++] = entity->size;
     }
 
@@ -213,8 +213,8 @@ static void update_projectile_vertex_data(void)
         texture_info(tex, &location, &u, &v, &w, &h, &pivot, &stretch);
         rotate_tex = projectile_get_flag(projectile, PROJECTILE_FLAG_TEX_ROTATION);
         vb->buffer[j++] = projectile->position.x;
+        vb->buffer[j++] = projectile->elevation;
         vb->buffer[j++] = projectile->position.y;
-        vb->buffer[j++] = projectile->position.z;
         // encode texture rotation as negative num
         vb->buffer[j++] = projectile->size * (rotate_tex ? 1 : -1);
         vb->buffer[j++] = projectile->facing;

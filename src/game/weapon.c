@@ -4,7 +4,7 @@
 #include "../api.h"
 #include "../state.h"
 
-typedef void (*WeaponShootFuncPtr)(GlobalApi*, Player*, vec3, vec3);
+typedef void (*WeaponShootFuncPtr)(GlobalApi*, Player*, vec2, vec2);
 
 typedef struct {
     char* name;
@@ -101,7 +101,7 @@ i32 weapon_get_id(const char* name)
     return -1;
 }
 
-void weapon_shoot(Player* player, vec3 direction, vec3 target)
+void weapon_shoot(Player* player, vec2 direction, vec2 target)
 {
     i32 id = player->weapon.id;
     weapon_context.infos[id].shoot(&global_api, player, direction, target);
