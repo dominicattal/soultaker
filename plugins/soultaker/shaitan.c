@@ -71,15 +71,14 @@ void firebullet(Projectile* proj, f32 dt)
 st_export void hand_of_shaitan_update(GlobalApi* api, Entity* entity, f32 dt)
 {
     HandData* data = entity->data;
-    Entity* daddy = data->daddy;
     // instaneous velocity of a point in the motion of a circle 
     // is the orthogonal of its vector to the origin
-    vec2 hand_pos = api->vec2_create(entity->position.x, entity->position.z);
-    vec2 daddy_pos = api->vec2_create(daddy->position.x, daddy->position.z);
+    vec2 hand_pos = entity->position;
+    vec2 daddy_pos = data->daddy->position;
     vec2 direction = api->vec2_normalize(api->vec2_sub(daddy_pos, hand_pos));
     direction.x *= 2 * data->rotate_direction - 1;
     direction.y *= 2 * data->rotate_direction - 1;
-    entity->direction = api->vec3_create(direction.y, 0.0f, -direction.x);
+    entity->direction = api->vec2_create(direction.y, -direction.x);
     data->rotate_timer += dt;
     data->target_rad += (2 * data->rotate_direction - 1) * 1.25 * dt;
     if (data->rotate_timer > 1.7f) {
@@ -102,7 +101,7 @@ st_export void shaitan_hand_attack_1(GlobalApi* api, Entity* entity, f32 dt)
 {
     HandData* data = entity->data;
     Projectile* proj;
-    vec2 dir2;
+    vec2 direction;
     data->shoot_timer += dt;
     data->state_timer += dt;
     if (data->state_timer > 5) {
@@ -113,8 +112,8 @@ st_export void shaitan_hand_attack_1(GlobalApi* api, Entity* entity, f32 dt)
     if (data->shoot_timer > 0.2) {
         proj = api->projectile_create(entity->position);
         proj->update = firebullet;
-        dir2 = api->vec2_direction(data->target_rad-PI/3);
-        proj->direction = api->vec3_create(dir2.x, 0.0, dir2.y);
+        direction = api->vec2_direction(data->target_rad-PI/3);
+        proj->direction = direction;
         proj->speed = 5;
         proj->size = 0.75;
         proj->facing = data->target_rad;
@@ -122,8 +121,8 @@ st_export void shaitan_hand_attack_1(GlobalApi* api, Entity* entity, f32 dt)
 
         proj = api->projectile_create(entity->position);
         proj->update = firebullet;
-        dir2 = api->vec2_direction(data->target_rad+PI/3);
-        proj->direction = api->vec3_create(dir2.x, 0.0, dir2.y);
+        direction = api->vec2_direction(data->target_rad+PI/3);
+        proj->direction = direction;
         proj->speed = 5;
         proj->size = 0.75;
         proj->facing = data->target_rad;
@@ -166,18 +165,20 @@ static void spawn_hands(GlobalApi* api, Entity* advisor)
     AdvisorData* advisor_data = advisor->data;
     HandData* data;
     i32 id = api->entity_get_id("hand_of_shaitan");
-    hand = api->entity_create(api->vec3_create(23, 0, 16.5), id);
+    hand = api->entity_create(api->vec2_create(23, 16.5), id);
     data = hand->data;
     data->daddy = advisor;
     advisor_data->hand1 = hand;
     data->rotate_direction = 0;
     data->target_rad = 0;
-    hand = api->entity_create(api->vec3_create(8, 0, 16.5), id);
+    hand = api->entity_create(api->vec2_create(8, 16.5), id);
     data = hand->data;
     data->daddy = advisor;
     advisor_data->hand2 = hand;
     data->rotate_direction = 1;
     data->target_rad = PI;
+    hand->position.x  = 8;
+    hand->position.y = 16.5;
 }
 
 st_export void shaitan_the_advisor_grow(GlobalApi* api, Entity* entity, f32 dt)
@@ -206,7 +207,7 @@ static void shaitan_attack_1_firestorm(GlobalApi* api, Entity* entity)
         proj->lifetime = 2.0f;
         proj->tex = tex_id;
         direction = api->vec2_rotate(api->vec2_create(dir, 1-dir), PI / 6 * (2-i));
-        proj->direction = api->vec3_create(direction.x, 0.0f, direction.y);
+        proj->direction = direction;
         proj->update = firestorm;
 
         proj = api->projectile_create(entity->position);
@@ -215,7 +216,7 @@ static void shaitan_attack_1_firestorm(GlobalApi* api, Entity* entity)
         proj->lifetime = 7.3f;
         proj->tex = tex_id;
         direction = api->vec2_rotate(api->vec2_create(-dir, -(1-dir)), PI / 6 * (2-i));
-        proj->direction = api->vec3_create(direction.x, 0.0f, direction.y);
+        proj->direction = direction;
         proj->update = firestorm;
     }
 }
@@ -241,15 +242,15 @@ st_export void shaitan_the_advisor_attack_1(GlobalApi* api, Entity* entity, f32 
 static void shaitan_attack_2_firestorm(GlobalApi* api, Entity* entity)
 {
     Projectile* proj;
-    vec3 position = api->game_get_nearest_player_position();
-    vec3 direction = api->vec3_sub(position, entity->position);
+    vec2 position = api->game_get_nearest_player_position();
+    vec2 direction = api->vec2_sub(position, entity->position);
     i32 tex_id = api->texture_get_id("shaitan_firestorm");
     proj = api->projectile_create(entity->position);
     proj->speed = 4.5f;
     proj->size = 0.75f;
     proj->lifetime = 2.0f;
     proj->tex = tex_id;
-    proj->direction = api->vec3_normalize(direction);
+    proj->direction = api->vec2_normalize(direction);
     proj->update = firestorm;
 }
 
@@ -265,7 +266,7 @@ static void shaitan_attack_2_fireball(GlobalApi* api, Entity* entity)
         proj->lifetime = 6.0f;
         proj->tex = tex_id;
         direction = api->vec2_direction(PI / 6 * i);
-        proj->direction = api->vec3_create(direction.x, 0, direction.y);
+        proj->direction = direction;
         proj->facing = PI / 6 * i;
     }
 }
@@ -319,7 +320,7 @@ st_export void shaitan_the_advisor_destroy(GlobalApi* api, Entity* entity)
 
 st_export void game_preset_load_shaitan(GlobalApi* api)
 {
-    api->game_set_player_position(api->vec3_create(20, 0, 20));
+    api->game_set_player_position(api->vec2_create(20, 20));
     Map* map = api->map_load("assets/maps/shaitan.png");
     vec2 position;
     for (i32 i = 0; i < map->length; i++) {
@@ -344,5 +345,5 @@ st_export void game_preset_load_shaitan(GlobalApi* api)
     create_bars(api, side_tex, top_tex, api->vec2_create(28, 24));
 
     i32 sta_id = api->entity_get_id("shaitan_the_advisor");
-    api->entity_create(api->vec3_create(15.5, 0, 16.5), sta_id);
+    api->entity_create(api->vec2_create(15.5, 16.5), sta_id);
 }

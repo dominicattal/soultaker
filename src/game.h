@@ -23,9 +23,6 @@ void game_key_callback(i32 key, i32 scancode, i32 action, i32 mods);
 void game_mouse_button_callback(i32 button, i32 action, i32 mods);
 void game_framebuffer_size_callback(void);
 
-vec3 game_get_player_position(void);
-vec3 game_get_player_direction(void);
-
 vec3 camera_get_position(void);
 vec3 camera_get_facing(void);
 f32  camera_get_pitch(void);

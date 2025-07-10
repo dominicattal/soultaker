@@ -18,12 +18,12 @@ void projectile_clear(void)
 static void default_update_function(Projectile*, f32) {}
 static void default_destroy_function(Projectile*) {}
 
-Projectile* projectile_create(vec3 position)
+Projectile* projectile_create(vec2 position)
 {
     Projectile* proj = st_malloc(sizeof(Projectile));
     proj->position = position;
-    proj->position.y = 0.5f;
-    proj->direction = vec3_create(0, 0, 0);
+    proj->direction = vec2_create(0, 0);
+    proj->elevation = 0.5;
     proj->facing = 0;
     proj->rotation = 0;
     proj->speed = 1;
@@ -38,7 +38,7 @@ Projectile* projectile_create(vec3 position)
 
 void projectile_update(Projectile* proj, f32 dt)
 {
-    proj->position = vec3_add(proj->position, vec3_scale(proj->direction, proj->speed * dt));
+    proj->position = vec2_add(proj->position, vec2_scale(proj->direction, proj->speed * dt));
     proj->lifetime -= dt;
     proj->update(proj, dt);
 }

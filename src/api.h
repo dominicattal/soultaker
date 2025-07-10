@@ -8,11 +8,11 @@
 
 typedef struct {
     // Game
-    vec3 (*game_get_nearest_player_position)(void);
-    void (*game_set_player_position)(vec3);
+    vec2 (*game_get_nearest_player_position)(void);
+    void (*game_set_player_position)(vec2);
 
     // Entity
-    Entity* (*entity_create)(vec3, i32);
+    Entity* (*entity_create)(vec2, i32);
     void (*entity_make_boss)(Entity* entity);
     i32 (*entity_get_id)(const char*);
     i32 (*entity_get_state_id)(Entity*, const char*);
@@ -33,7 +33,7 @@ typedef struct {
     void (*map_free)(Map* map);
 
     // Projectile
-    Projectile* (*projectile_create)(vec3);
+    Projectile* (*projectile_create)(vec2);
     void (*projectile_set_flag)(Projectile*, ProjectileFlagEnum, bool);
 
     // Misc

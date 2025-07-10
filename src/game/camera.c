@@ -60,8 +60,9 @@ static void lock_onto_target(void)
         return;
     if (game_context.player.entity == NULL)
         return;
-    vec3 position = game_context.player.entity->position;
-    position.y = 0.0;
+    vec3 position;
+    vec2 pos2 = game_context.player.entity->position;
+    position = vec3_create(pos2.x, 0.0f, pos2.y);
     game_context.camera.position = vec3_sub(position, vec3_scale(game_context.camera.facing, DISTANCE_FROM_PLAYER));
 }
 
@@ -109,7 +110,7 @@ void camera_move(vec2 mag)
     direction = vec2_normalize(direction);
     vec3 dir3 = vec3_create(direction.x, 0, direction.y);
     if (game_context.camera.follow)
-        game_context.player.entity->direction = dir3;
+        game_context.player.entity->direction = direction;
     else
         game_context.camera.position = vec3_add(game_context.camera.position, dir3);
 }
