@@ -147,8 +147,20 @@
         "destroy": "hand_of_shaitan_destroy",
         "bidirectional": true,
         "states": {
-            "attack": {
+            "idle": {
+                "frames": 1,
+                "update": "shaitan_hand_idle",
+                "left": [
+                    "shaitan_hand_open_left"
+                ],
+                "right": [
+                    "shaitan_hand_open_right"
+                ]
+            },
+            "attack_1": {
                 "frames": 2,
+                "timers": [ 0.1, 0.1 ],
+                "update": "shaitan_hand_attack_1",
                 "left": [
                     "shaitan_hand_closed_left_1",
                     "shaitan_hand_closed_left_2"

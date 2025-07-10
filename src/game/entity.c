@@ -272,6 +272,12 @@ i32 entity_get_state_id(Entity* entity, const char* name)
     return -1;
 }
 
+void entity_set_state(Entity* entity, const char* name)
+{
+    entity->frame = 0;
+    entity->state = entity_get_state_id(entity, name);
+}
+
 void entity_init(void)
 {
     game_context.entities = list_create();

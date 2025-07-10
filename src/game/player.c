@@ -49,7 +49,7 @@ void player_reset(void)
     game_context.player.state_idle = entity_get_state_id(entity, "idle");
     game_context.player.state_walking = entity_get_state_id(entity, "walking");
     game_context.player.state_shooting = entity_get_state_id(entity, "shooting");
-    //game_context.player.entity->frame_speed = 2;
+    game_context.player.entity->frame_speed = 2;
 }
 
 vec3 game_get_nearest_player_position(void)
