@@ -16,6 +16,7 @@ typedef struct Player Player;
 typedef struct Projectile Projectile;
 typedef struct Tile Tile;
 typedef struct Wall Wall;
+typedef struct Barrier Barrier;
 typedef struct Parstacle Parstacle;
 typedef struct Obstacle Obstacle;
 typedef struct Particle Particle;
@@ -147,6 +148,10 @@ bool entity_get_flag(Entity* entity, EntityFlagEnum flag);
 i32 entity_get_id(const char* name);
 i32 entity_get_state_id(Entity* entity, const char* name);
 i32 entity_get_texture(Entity* entity);
+
+// sets entity state and sets frame to 0. always use this
+// rather than setting state directly.
+void entity_set_state(Entity* entity, const char* name);
 
 // Create, update, and destroy individual entities
 // Each entitiy has a create, update, and delete
