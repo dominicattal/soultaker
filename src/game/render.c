@@ -17,12 +17,6 @@
 #define SHADOW_VERTEX_LENGTH_IN      4
 #define SHADOW_VERTEX_LENGTH_OUT     5
 
-typedef struct {
-    i32 length, capacity;
-    GLfloat* buffer;
-    bool update;
-} VertexBuffer;
-
 typedef enum {
     VAO_TILE,
     VAO_PROJECTILE,
@@ -38,46 +32,41 @@ typedef enum {
 } GameVAOEnum;
 
 typedef enum {
-    VBO_TILE,
+    VBO_ENTITY,
+    VBO_ENTITY_SHADOW,
     VBO_PROJECTILE,
+    VBO_PROJECTILE_SHADOW,
+    VBO_TILE,
     VBO_QUAD,
     VBO_WALL,
     VBO_OBSTACLE,
     VBO_PARSTACLE,
     VBO_PARJICLE,
     VBO_PARTICLE,
-    VBO_ENTITY,
-    VBO_SHADOW,
     VBO_COMP_IN,
     VBO_COMP_OUT,
     NUM_VBOS
 } GameVBOEnum;
 
 typedef struct {
-    VertexBuffer tile;
-    VertexBuffer wall;
-    VertexBuffer parstacle;
-    VertexBuffer obstacle;
-    VertexBuffer entity;
-    VertexBuffer projectile;
-    VertexBuffer particle;
-    VertexBuffer parjicle;
-    VertexBuffer shadow;
-    bool update_tile_buffer;
-    bool update_wall_buffer;
-    bool update_parstacle_buffer;
-    bool update_obstacle_buffer;
+    i32 length, capacity;
+    GLfloat* buffer;
+    bool update;
+} VertexBuffer;
+
+typedef struct {
+    VertexBuffer buffers[NUM_VBOS];
 } RenderData;
 
 typedef struct {
     RenderData* data;
     RenderData* data_swap;
-    pthread_mutex_t mutex;
     GLuint fbo, rbo;
     GLuint game_time_ubo;
     GLuint vaos[NUM_VAOS];
     GLuint vbos[NUM_VBOS];
     i32 vbo_capacities[NUM_VBOS];
+    pthread_mutex_t mutex;
 } RenderContext;
 
 static RenderContext render_context;
@@ -92,6 +81,16 @@ typedef struct {
     GLuint output_buffer;
     i32* output_buffer_capacity_ptr;
 } ComputeShaderParams;
+
+static VertexBuffer* get_vertex_buffer(GameVBOEnum type)
+{
+    return &render_context.data->buffers[type];
+}
+
+static VertexBuffer* get_vertex_buffer_swap(GameVBOEnum type)
+{
+    return &render_context.data_swap->buffers[type];
+}
 
 static void resize_vertex_buffer(VertexBuffer* vb, i32 capacity)
 {
@@ -155,17 +154,16 @@ static void update_entity_vertex_data(void)
     vec2 pivot, stretch;
     f32 u, v, w, h;
     i32 location;
-    i32 i, j, k;
+    i32 i, j;
     Entity* entity;
 
-    vb = &render_context.data_swap->entity;
-    shadow_vb = &render_context.data_swap->shadow;
+    vb = get_vertex_buffer_swap(VBO_ENTITY);
+    shadow_vb = get_vertex_buffer_swap(VBO_ENTITY_SHADOW);
     resize_vertex_buffer(vb,
             ENTITY_VERTEX_LENGTH_IN * game_context.entities->capacity);
     resize_vertex_buffer(shadow_vb,
             SHADOW_VERTEX_LENGTH_IN * game_context.entities->capacity);
 
-    k = 0;
     for (i = j = 0; i < game_context.entities->length; i++) {
         entity = list_get(game_context.entities, i);
         texture_info(entity_get_texture(entity), &location, &u, &v, &w, &h, &pivot, &stretch);
@@ -183,14 +181,18 @@ static void update_entity_vertex_data(void)
         vb->buffer[j++] = stretch.x;
         vb->buffer[j++] = stretch.y;
 
-        shadow_vb->buffer[k++] = entity->position.x;
-        shadow_vb->buffer[k++] = entity->elevation;
-        shadow_vb->buffer[k++] = entity->position.y;
-        shadow_vb->buffer[k++] = entity->size;
+    }
+    vb->length = j;
+    
+    for (i = j = 0; i < game_context.entities->length; i++) {
+        entity = list_get(game_context.entities, i);
+        shadow_vb->buffer[j++] = entity->position.x;
+        shadow_vb->buffer[j++] = entity->elevation;
+        shadow_vb->buffer[j++] = entity->position.y;
+        shadow_vb->buffer[j++] = entity->size;
     }
 
-    render_context.data_swap->entity.length = j;
-    render_context.data_swap->shadow.length = k;
+    shadow_vb->length = j;
 }
 
 static void update_projectile_vertex_data(void)
@@ -203,7 +205,7 @@ static void update_projectile_vertex_data(void)
     Projectile* projectile;
     bool rotate_tex;
 
-    vb = &render_context.data_swap->projectile;
+    vb = get_vertex_buffer_swap(VBO_PROJECTILE);
     resize_vertex_buffer(vb, 
             PROJECTILE_VERTEX_LENGTH_IN * game_context.projectiles->capacity);
 
@@ -226,7 +228,7 @@ static void update_projectile_vertex_data(void)
         vb->buffer[j++] = location; 
     }
 
-    render_context.data_swap->projectile.length = j;
+    vb->length = j;
 }
 
 static void update_tile_vertex_data(void)
@@ -240,7 +242,7 @@ static void update_tile_vertex_data(void)
     bool animate_horizontal_neg, animate_vertical_neg;
     Tile* tile;
 
-    vb = &render_context.data_swap->tile;
+    vb = get_vertex_buffer_swap(VBO_TILE);
     resize_vertex_buffer(vb,
         TILE_VERTEX_LENGTH * game_context.tiles->capacity);
 
@@ -262,7 +264,7 @@ static void update_tile_vertex_data(void)
             + (animate_vertical_pos<<2) + (animate_vertical_neg<<3);
     }
 
-    render_context.data_swap->tile.length = j;
+    vb->length = j;
 }
 
 static void update_wall_vertex_data(void)
@@ -275,7 +277,7 @@ static void update_wall_vertex_data(void)
     i32 i, j, k;
     Wall* wall;
 
-    vb = &render_context.data_swap->wall;
+    vb = get_vertex_buffer_swap(VBO_WALL);
     resize_vertex_buffer(vb,
             WALL_VERTEX_LENGTH * game_context.walls->capacity);
 
@@ -323,7 +325,7 @@ static void update_wall_vertex_data(void)
         }
     }
 
-    render_context.data_swap->wall.length = j;
+    vb->length = j;
 }
 
 static void update_parstacle_vertex_data(void)
@@ -335,7 +337,7 @@ static void update_parstacle_vertex_data(void)
     i32 i, j;
     Parstacle* parstacle;
 
-    vb = &render_context.data_swap->parstacle;
+    vb = get_vertex_buffer(VBO_PARSTACLE);
     resize_vertex_buffer(vb,
             OBSTACLE_VERTEX_LENGTH_IN * game_context.parstacles->capacity);
 
@@ -354,7 +356,7 @@ static void update_parstacle_vertex_data(void)
         vb->buffer[j++] = location;
     }
 
-    render_context.data_swap->parstacle.length = j;
+    vb->length = j;
 }
 
 static void update_obstacle_vertex_data(void)
@@ -366,7 +368,7 @@ static void update_obstacle_vertex_data(void)
     i32 location;
     i32 i, j;
 
-    vb = &render_context.data_swap->obstacle;
+    vb = get_vertex_buffer(VBO_OBSTACLE);
     resize_vertex_buffer(vb,
             OBSTACLE_VERTEX_LENGTH_IN * game_context.obstacles->capacity);
 
@@ -385,7 +387,7 @@ static void update_obstacle_vertex_data(void)
         vb->buffer[j++] = location;
     }
 
-    render_context.data_swap->obstacle.length = j;
+    vb->length = j;
 }
 
 static void update_particle_vertex_data(void)
@@ -394,7 +396,7 @@ static void update_particle_vertex_data(void)
     Particle* particle;
     i32 i, j;
 
-    vb = &render_context.data_swap->particle;
+    vb = get_vertex_buffer_swap(VBO_PARTICLE);
     resize_vertex_buffer(vb,
             PARTICLE_VERTEX_LENGTH_IN * game_context.particles->capacity);
    
@@ -409,7 +411,7 @@ static void update_particle_vertex_data(void)
         vb->buffer[j++] = particle->size;
     }
     
-    render_context.data_swap->particle.length = j;
+    vb->length = j;
 }
 
 static void update_parjicle_vertex_data(void)
@@ -419,7 +421,7 @@ static void update_parjicle_vertex_data(void)
     bool rotate_tex;
     i32 i, j;
 
-    vb = &render_context.data_swap->parjicle;
+    vb = get_vertex_buffer_swap(VBO_PARJICLE);
     resize_vertex_buffer(vb,
             PARJICLE_VERTEX_LENGTH_IN * game_context.parjicles->capacity);
    
@@ -436,31 +438,54 @@ static void update_parjicle_vertex_data(void)
         vb->buffer[j++] = parjicle->rotation;
     }
     
-    render_context.data_swap->parjicle.length = j;
+    vb->length = j;
+}
+
+static void update_vertex_buffer_data(VertexBuffer* vb, void (*func)(void))
+{
+    if (vb->update) {
+        func();
+        vb->update = false;
+    }
 }
 
 void game_update_vertex_data(void)
 {
-    update_entity_vertex_data();
-    update_projectile_vertex_data();
-    update_particle_vertex_data();
-    update_parjicle_vertex_data();
-    if (render_context.data_swap->update_tile_buffer) {
-        update_tile_vertex_data();
-        render_context.data_swap->update_tile_buffer = false;
-    }
-    if (render_context.data_swap->update_wall_buffer) {
-        update_wall_vertex_data();
-        render_context.data_swap->update_wall_buffer = false;
-    }
-    if (render_context.data_swap->update_parstacle_buffer) {
-        update_parstacle_vertex_data();
-        render_context.data_swap->update_parstacle_buffer = false;
-    }
-    if (render_context.data_swap->update_obstacle_buffer) {
-        update_obstacle_vertex_data();
-        render_context.data_swap->update_obstacle_buffer = false;
-    }
+    VertexBuffer* vb;
+    vb = get_vertex_buffer_swap(VBO_ENTITY);
+    vb->update = true;
+    vb = get_vertex_buffer_swap(VBO_PROJECTILE);
+    vb->update = true;
+    vb = get_vertex_buffer_swap(VBO_PARTICLE);
+    vb->update = true;
+    vb = get_vertex_buffer_swap(VBO_PARJICLE);
+    vb->update = true;
+
+    update_vertex_buffer_data(
+            get_vertex_buffer_swap(VBO_ENTITY),
+            update_entity_vertex_data);
+    update_vertex_buffer_data(
+            get_vertex_buffer_swap(VBO_PROJECTILE),
+            update_projectile_vertex_data);
+    update_vertex_buffer_data(
+            get_vertex_buffer_swap(VBO_PARTICLE),
+            update_particle_vertex_data);
+    update_vertex_buffer_data(
+            get_vertex_buffer_swap(VBO_PARJICLE),
+            update_parjicle_vertex_data);
+    update_vertex_buffer_data(
+            get_vertex_buffer_swap(VBO_TILE),
+            update_tile_vertex_data);
+    update_vertex_buffer_data(
+            get_vertex_buffer_swap(VBO_WALL),
+            update_wall_vertex_data);
+    update_vertex_buffer_data(
+            get_vertex_buffer_swap(VBO_PARSTACLE),
+            update_parstacle_vertex_data);
+    update_vertex_buffer_data(
+            get_vertex_buffer_swap(VBO_OBSTACLE),
+            update_obstacle_vertex_data);
+
     pthread_mutex_lock(&render_context.mutex);
     RenderData* tmp = render_context.data;
     render_context.data = render_context.data_swap;
@@ -470,34 +495,43 @@ void game_update_vertex_data(void)
 
 static void render_tiles(void)
 {
+    VertexBuffer* vb;
+    vb = get_vertex_buffer(VBO_TILE);
+
     shader_use(SHADER_PROGRAM_TILE);
     glBindVertexArray(render_context.vaos[VAO_TILE]);
     glBindBuffer(GL_ARRAY_BUFFER, render_context.vbos[VAO_TILE]);
     pthread_mutex_lock(&render_context.mutex);
-    i32 tile_length = render_context.data->tile.length;
+    i32 tile_length = vb->length;
     i32 num_tiles = tile_length / TILE_VERTEX_LENGTH;
-    glBufferData(GL_ARRAY_BUFFER, tile_length * sizeof(GLfloat), render_context.data->tile.buffer, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, tile_length * sizeof(GLfloat), vb->buffer, GL_STATIC_DRAW);
     pthread_mutex_unlock(&render_context.mutex);
     glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, num_tiles);
 }
 
 static void render_walls(void)
 {
+    VertexBuffer* vb;
+    vb = get_vertex_buffer(VBO_WALL);
+
     shader_use(SHADER_PROGRAM_WALL);
     glBindVertexArray(render_context.vaos[VAO_WALL]);
     glBindBuffer(GL_ARRAY_BUFFER, render_context.vbos[VAO_WALL]);
     pthread_mutex_lock(&render_context.mutex);
-    i32 wall_length = render_context.data->wall.length;
+    i32 wall_length = vb->length;
     i32 num_walls = wall_length / 6;
-    glBufferData(GL_ARRAY_BUFFER, wall_length * sizeof(GLfloat), render_context.data->wall.buffer, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, wall_length * sizeof(GLfloat), vb->buffer, GL_STATIC_DRAW);
     pthread_mutex_unlock(&render_context.mutex);
     glDrawArrays(GL_TRIANGLES, 0, 6 * num_walls);
 }
 
 static void render_entities(void)
 {
+    VertexBuffer* vb;
+    vb = get_vertex_buffer(VBO_ENTITY);
+
     i32 entity_length_in, entity_length_out, num_entities;
-    entity_length_in = render_context.data->entity.length;
+    entity_length_in = vb->length;
     num_entities = entity_length_in / ENTITY_VERTEX_LENGTH_IN;
     entity_length_out = 6 * ENTITY_VERTEX_LENGTH_OUT * num_entities;
 
@@ -506,7 +540,7 @@ static void render_entities(void)
         .num_objects = num_entities,
         .object_length_in = entity_length_in,
         .object_length_out = entity_length_out,
-        .object_buffer = render_context.data->entity.buffer,
+        .object_buffer = vb->buffer,
         .output_buffer = render_context.vbos[VAO_ENTITY],
         .output_buffer_capacity_ptr = &render_context.vbo_capacities[VAO_ENTITY]
     };
@@ -520,8 +554,11 @@ static void render_entities(void)
 
 static void render_obstacles(void)
 {
+    VertexBuffer* vb;
+    vb = get_vertex_buffer(VBO_OBSTACLE);
+
     i32 obstacle_length_in, obstacle_length_out, num_obstacles;
-    obstacle_length_in = render_context.data->obstacle.length;
+    obstacle_length_in = vb->length;
     num_obstacles = obstacle_length_in / OBSTACLE_VERTEX_LENGTH_IN;
     obstacle_length_out = 6 * OBSTACLE_VERTEX_LENGTH_OUT * num_obstacles;
 
@@ -530,7 +567,7 @@ static void render_obstacles(void)
         .num_objects = num_obstacles,
         .object_length_in = obstacle_length_in,
         .object_length_out = obstacle_length_out,
-        .object_buffer = render_context.data->obstacle.buffer,
+        .object_buffer = vb->buffer,
         .output_buffer = render_context.vbos[VAO_OBSTACLE],
         .output_buffer_capacity_ptr = &render_context.vbo_capacities[VAO_OBSTACLE]
     };
@@ -544,8 +581,11 @@ static void render_obstacles(void)
 
 static void render_parstacles(void)
 {
+    VertexBuffer* vb;
+    vb = get_vertex_buffer(VBO_PARSTACLE);
+
     i32 parstacle_length_in, parstacle_length_out, num_parstacles;
-    parstacle_length_in = render_context.data->parstacle.length;
+    parstacle_length_in = vb->length;
     num_parstacles = parstacle_length_in / OBSTACLE_VERTEX_LENGTH_IN;
     parstacle_length_out = 6 * OBSTACLE_VERTEX_LENGTH_OUT * num_parstacles;
 
@@ -554,7 +594,7 @@ static void render_parstacles(void)
         .num_objects = num_parstacles,
         .object_length_in = parstacle_length_in,
         .object_length_out = parstacle_length_out,
-        .object_buffer = render_context.data->parstacle.buffer,
+        .object_buffer = vb->buffer,
         .output_buffer = render_context.vbos[VAO_PARSTACLE],
         .output_buffer_capacity_ptr = &render_context.vbo_capacities[VAO_PARSTACLE]
     };
@@ -568,8 +608,11 @@ static void render_parstacles(void)
 
 static void render_particles(void)
 {
+    VertexBuffer* vb;
+    vb = get_vertex_buffer(VBO_PARTICLE);
+
     i32 particle_length_in, particle_length_out, num_particles;
-    particle_length_in = render_context.data->particle.length;
+    particle_length_in = vb->length;
     num_particles = particle_length_in / PARTICLE_VERTEX_LENGTH_IN;
     particle_length_out = 6 * PARTICLE_VERTEX_LENGTH_OUT * num_particles;
 
@@ -578,7 +621,7 @@ static void render_particles(void)
         .num_objects = num_particles,
         .object_length_in = particle_length_in,
         .object_length_out = particle_length_out,
-        .object_buffer = render_context.data->particle.buffer,
+        .object_buffer = vb->buffer,
         .output_buffer = render_context.vbos[VAO_PARTICLE],
         .output_buffer_capacity_ptr = &render_context.vbo_capacities[VAO_PARTICLE]
     };
@@ -592,8 +635,11 @@ static void render_particles(void)
 
 static void render_parjicles(void)
 {
+    VertexBuffer* vb;
+    vb = get_vertex_buffer(VBO_PARJICLE);
+
     i32 parjicle_length_in, parjicle_length_out, num_parjicles;
-    parjicle_length_in = render_context.data->parjicle.length;
+    parjicle_length_in = vb->length;
     num_parjicles = parjicle_length_in / PARJICLE_VERTEX_LENGTH_IN;
     parjicle_length_out = 6 * PARJICLE_VERTEX_LENGTH_OUT * num_parjicles;
 
@@ -602,7 +648,7 @@ static void render_parjicles(void)
         .num_objects = num_parjicles,
         .object_length_in = parjicle_length_in,
         .object_length_out = parjicle_length_out,
-        .object_buffer = render_context.data->parjicle.buffer,
+        .object_buffer = vb->buffer,
         .output_buffer = render_context.vbos[VAO_PARJICLE],
         .output_buffer_capacity_ptr = &render_context.vbo_capacities[VAO_PARJICLE]
     };
@@ -616,8 +662,11 @@ static void render_parjicles(void)
 
 static void render_projectiles(void)
 {
+    VertexBuffer* vb;
+    vb = get_vertex_buffer(VBO_PROJECTILE);
+
     i32 projectile_length_in, projectile_length_out, num_projectiles;
-    projectile_length_in = render_context.data->projectile.length;
+    projectile_length_in = vb->length;
     num_projectiles = projectile_length_in / PROJECTILE_VERTEX_LENGTH_IN;
     projectile_length_out = 6 * PROJECTILE_VERTEX_LENGTH_OUT * num_projectiles;
 
@@ -626,7 +675,7 @@ static void render_projectiles(void)
         .num_objects = num_projectiles,
         .object_length_in = projectile_length_in,
         .object_length_out = projectile_length_out,
-        .object_buffer = render_context.data->projectile.buffer,
+        .object_buffer = vb->buffer,
         .output_buffer = render_context.vbos[VAO_PROJECTILE],
         .output_buffer_capacity_ptr = &render_context.vbo_capacities[VAO_PROJECTILE]
     };
@@ -640,10 +689,12 @@ static void render_projectiles(void)
 
 static void render_shadows(void)
 {
+    VertexBuffer* vb;
     ComputeShaderParams params;
 
     i32 shadow_length_in, shadow_length_out, num_shadows;
-    shadow_length_in = render_context.data->shadow.length;
+    vb = get_vertex_buffer(VBO_ENTITY_SHADOW);
+    shadow_length_in = vb->length;
     num_shadows = shadow_length_in / SHADOW_VERTEX_LENGTH_IN;
     shadow_length_out = 6 * SHADOW_VERTEX_LENGTH_OUT * num_shadows;
 
@@ -652,7 +703,7 @@ static void render_shadows(void)
         .num_objects = num_shadows,
         .object_length_in = shadow_length_in,
         .object_length_out = shadow_length_out,
-        .object_buffer = render_context.data->shadow.buffer,
+        .object_buffer = vb->buffer,
         .output_buffer = render_context.vbos[VAO_SHADOW],
         .output_buffer_capacity_ptr = &render_context.vbo_capacities[VAO_SHADOW]
     };
@@ -669,15 +720,6 @@ void game_render_init(void)
     pthread_mutex_init(&render_context.mutex, NULL);
     render_context.data = st_calloc(1, sizeof(RenderData));
     render_context.data_swap = st_calloc(1, sizeof(RenderData));
-
-    render_context.data->update_tile_buffer = true;
-    render_context.data->update_wall_buffer = true;
-    render_context.data->update_parstacle_buffer = true;
-    render_context.data->update_obstacle_buffer = true;
-    render_context.data_swap->update_tile_buffer = true;
-    render_context.data_swap->update_wall_buffer = true;
-    render_context.data_swap->update_parstacle_buffer = true;
-    render_context.data_swap->update_obstacle_buffer = true;
 
     glGenBuffers(1, &render_context.game_time_ubo);
     glBindBuffer(GL_UNIFORM_BUFFER, render_context.game_time_ubo);
@@ -875,26 +917,38 @@ void game_render_framebuffer_size_callback(void)
 
 void game_render_update_obstacles(void)
 {
-    render_context.data->update_obstacle_buffer = true;
-    render_context.data_swap->update_obstacle_buffer = true;
+    VertexBuffer* vb;
+    vb = get_vertex_buffer(VBO_WALL);
+    vb->update = true;
+    vb = get_vertex_buffer_swap(VBO_WALL);
+    vb->update = true;
 }
 
 void game_render_update_parstacles(void)
 {
-    render_context.data->update_parstacle_buffer = true;
-    render_context.data_swap->update_parstacle_buffer = true;
+    VertexBuffer* vb;
+    vb = get_vertex_buffer(VBO_PARSTACLE);
+    vb->update = true;
+    vb = get_vertex_buffer_swap(VBO_PARSTACLE);
+    vb->update = true;
 }
 
 void game_render_update_tiles(void)
 {
-    render_context.data->update_tile_buffer = true;
-    render_context.data_swap->update_tile_buffer = true;
+    VertexBuffer* vb;
+    vb = get_vertex_buffer(VBO_TILE);
+    vb->update = true;
+    vb = get_vertex_buffer_swap(VBO_TILE);
+    vb->update = true;
 }
 
 void game_render_update_walls(void)
 {
-    render_context.data->update_wall_buffer = true;
-    render_context.data_swap->update_wall_buffer = true;
+    VertexBuffer* vb;
+    vb = get_vertex_buffer(VBO_WALL);
+    vb->update = true;
+    vb = get_vertex_buffer_swap(VBO_WALL);
+    vb->update = true;
 }
 
 void game_render_cleanup(void)
@@ -906,25 +960,11 @@ void game_render_cleanup(void)
     glDeleteFramebuffers(1, &render_context.fbo);
     glDeleteRenderbuffers(1, &render_context.rbo);
 
-    st_free(render_context.data->projectile.buffer);
-    st_free(render_context.data->entity.buffer);
-    st_free(render_context.data->tile.buffer);
-    st_free(render_context.data->wall.buffer);
-    st_free(render_context.data->parstacle.buffer);
-    st_free(render_context.data->obstacle.buffer);
-    st_free(render_context.data->particle.buffer);
-    st_free(render_context.data->parjicle.buffer);
-    st_free(render_context.data->shadow.buffer);
+    for (i32 i = 0; i < NUM_VBOS; i++) {
+        st_free(render_context.data->buffers[i].buffer);
+        st_free(render_context.data_swap->buffers[i].buffer);
+    }
     st_free(render_context.data);
-    st_free(render_context.data_swap->projectile.buffer);
-    st_free(render_context.data_swap->entity.buffer);
-    st_free(render_context.data_swap->tile.buffer);
-    st_free(render_context.data_swap->wall.buffer);
-    st_free(render_context.data_swap->parstacle.buffer);
-    st_free(render_context.data_swap->obstacle.buffer);
-    st_free(render_context.data_swap->particle.buffer);
-    st_free(render_context.data_swap->parjicle.buffer);
-    st_free(render_context.data_swap->shadow.buffer);
     st_free(render_context.data_swap);
 }
 

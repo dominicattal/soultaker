@@ -309,11 +309,11 @@ Entity* entity_create(vec2 position, i32 id)
     entity->tile_timer = 0;
     entity->frame_speed = 1;
 
-    entity->haste = 0;
-    entity->speed = 7.0f;
+    entity->stats.health = 1;
+    entity->stats.haste = 0;
+    entity->stats.speed = 7.0f;
     entity->size = 1.0f;
     entity->hitbox_radius = 0.5f;
-    entity->health = 1;
     entity->flags = 0;
     entity->state = 0;
     entity->frame = 0;
@@ -331,7 +331,7 @@ static void handle_lava(Entity* entity, f32 dt)
         entity->elevation = -0.2;
         if (entity->tile_timer > 0.5) {
             entity->tile_timer -= 0.5;
-            //entity->health -= 1;
+            //entity->stats.health -= 1;
         }
         entity_set_flag(entity, ENTITY_FLAG_IN_LAVA, 0);
     } else {
@@ -346,7 +346,7 @@ void entity_update(Entity* entity, f32 dt)
     f32 frame_length = state.frame_lengths[entity->frame];
     i32 num_frames = state.num_frames;
     entity->prev_position = entity->position;
-    entity->position = vec2_add(entity->position, vec2_scale(entity->direction, entity->speed * dt));
+    entity->position = vec2_add(entity->position, vec2_scale(entity->direction, entity->stats.speed * dt));
     entity->state_timer += dt;
     entity->frame_timer += entity->frame_speed * dt;
     if (entity->frame_timer > frame_length) {
@@ -366,9 +366,11 @@ void entity_make_boss(Entity* entity)
     list_append(game_context.bosses, entity);
     log_assert(!entity_get_flag(entity, ENTITY_FLAG_BOSS), "Entity is already boss");
     entity_set_flag(entity, ENTITY_FLAG_BOSS, 1);
+    entity_boss_update(entity);
     pthread_mutex_lock(&game_context.getter_mutex);
     game_context.values.num_bosses = 1;
-    game_context.values.boss_health = entity->health;
+    game_context.values.boss_health = entity->stats.health;
+    game_context.values.boss_max_health = entity->stats.max_health;
     pthread_mutex_unlock(&game_context.getter_mutex);
 }
 
@@ -376,7 +378,8 @@ void entity_boss_update(Entity* entity)
 {
     pthread_mutex_lock(&game_context.getter_mutex);
     game_context.values.num_bosses = 1;
-    game_context.values.boss_health = entity->health;
+    game_context.values.boss_health = entity->stats.health;
+    game_context.values.boss_max_health = entity->stats.max_health;
     pthread_mutex_unlock(&game_context.getter_mutex);
 }
 
@@ -389,6 +392,7 @@ void entity_unmake_boss(Entity* entity)
     pthread_mutex_lock(&game_context.getter_mutex);
     game_context.values.num_bosses = 0;
     game_context.values.boss_health = 0;
+    game_context.values.boss_max_health = 0;
     pthread_mutex_unlock(&game_context.getter_mutex);
 }
 

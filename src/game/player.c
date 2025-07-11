@@ -133,3 +133,46 @@ void player_shoot(Player* player)
     weapon_shoot(player, direction, target);
     player->entity->facing = direction;
 }
+
+// not thread safe
+f32 player_health(void)
+{
+    Entity* entity = game_context.player.entity;
+    if (entity == NULL) return 0;
+    return entity->stats.health;
+}
+
+f32 player_mana(void)
+{
+    Entity* entity = game_context.player.entity;
+    if (entity == NULL) return 0;
+    return entity->stats.mana;
+}
+
+f32 player_souls(void)
+{
+    Entity* entity = game_context.player.entity;
+    if (entity == NULL) return 0;
+    return entity->stats.souls;
+}
+
+f32 player_max_health(void)
+{
+    Entity* entity = game_context.player.entity;
+    if (entity == NULL) return 0;
+    return entity->stats.max_health;
+}
+
+f32 player_max_mana(void)
+{
+    Entity* entity = game_context.player.entity;
+    if (entity == NULL) return 0;
+    return entity->stats.max_mana;
+}
+
+f32 player_max_souls(void)
+{
+    Entity* entity = game_context.player.entity;
+    if (entity == NULL) return 0;
+    return entity->stats.max_souls;
+}

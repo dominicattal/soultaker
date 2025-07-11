@@ -2,12 +2,34 @@
 #define GUI_INTERNAL_H
 
 #include "../gui.h"
-#include <semaphore.h>
+#include "../renderer.h"
+
+#define MAX_NUM_CHILDREN  255
+
+#define ALIGN_LEFT          0
+#define ALIGN_CENTER        1
+#define ALIGN_RIGHT         2
+#define ALIGN_JUSTIFY       3
+#define ALIGN_TOP           0
+#define ALIGN_BOTTOM        2
+#define ALIGN_CENTER_POS    1
+#define ALIGN_CENTER_NEG    3
+
+#define HOVER_OFF       0
+#define HOVER_ON        1
+
+typedef enum {
+    GUI_PRESET_TEST,
+    GUI_PRESET_MAIN_MENU,
+    GUI_PRESET_DEBUG,
+    NUM_GUI_PRESETS
+} GUIPreset;
 
 typedef void (*GUIHoverFPtr)(GUIComp* comp, bool status); 
 typedef void (*GUIClickFPtr)(GUIComp* comp, i32 button, i32 action, i32 mods);
 typedef void (*GUIKeyFPtr)(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods);
 typedef void (*GUIUpdateFPtr)(GUIComp* comp, f32 dt);
+typedef struct GUIComp GUIComp;
 
 typedef struct GUIComp {
     u64 info1;
@@ -73,10 +95,6 @@ void gui_render_cleanup(void);
 
 void align_comp_position_x(i32* position_x, u8 halign, i32 size_x, i32 x, i32 w);
 void align_comp_position_y(i32* position_y, u8 valign, i32 size_y, i32 y, i32 h);
-
-void load_preset_test(GUIComp* root);
-void load_preset_main_menu(GUIComp* root);
-void load_preset_debug(GUIComp* root);
 
 void gui_comp_hover(GUIComp* comp, bool status);
 void gui_comp_click(GUIComp* comp, i32 button, i32 action, i32 mods);
@@ -168,7 +186,7 @@ bool gui_comp_is_hovered(GUIComp* comp);
 bool gui_comp_is_clickable(GUIComp* comp);
 bool gui_comp_is_visible(GUIComp* comp);
 i32  gui_comp_text_length(GUIComp* comp);
-char* gui_comp_text(GUIComp* comp);
 i32  gui_comp_text_pos(GUIComp* comp);
+char* gui_comp_text(GUIComp* comp);
 
 #endif
