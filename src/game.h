@@ -19,6 +19,13 @@ char* weapon_get_name(i32 id);
 char* weapon_get_tooltip(i32 id);
 i32 weapon_get_tex_id(i32 id);
 
+f32 player_health(void);
+f32 player_mana(void);
+f32 player_souls(void);
+f32 player_max_health(void);
+f32 player_max_mana(void);
+f32 player_max_souls(void);
+
 void game_key_callback(i32 key, i32 scancode, i32 action, i32 mods);
 void game_mouse_button_callback(i32 button, i32 action, i32 mods);
 void game_framebuffer_size_callback(void);

@@ -93,18 +93,24 @@ typedef struct Weapon {
     i32 id;
 } Weapon;
 
+typedef struct {
+    f32 health, max_health;
+    f32 mana, max_mana;
+    f32 souls, max_souls;
+    f32 speed;
+    f32 haste;
+} Stats;
+
 typedef struct Entity {
+    Stats stats;
     void* data;
     vec2 position;
     vec2 prev_position;
     vec2 direction;
     vec2 facing;
     f32 elevation;
-    f32 speed;
     f32 size;
     f32 hitbox_radius;
-    f32 health;
-    f32 haste;
     f32 state_timer;
     f32 tile_timer;
     f32 frame_timer;
@@ -179,7 +185,6 @@ void player_update(Player* player, f32 dt);
 
 // Shoot
 void player_shoot(Player* player);
-
 void player_swap_weapons(void);
 
 // Initalize and cleanup weapon info
@@ -378,7 +383,9 @@ void parjicle_cleanup(void);
 // contains copy of values for thread-safety
 // in getters
 typedef struct {
+    Stats player_stats;
     f32 boss_health;
+    f32 boss_max_health;
     i32 num_bosses;
 } GetterValues;
 

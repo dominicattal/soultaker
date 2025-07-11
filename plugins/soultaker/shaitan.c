@@ -132,6 +132,41 @@ st_export void shaitan_hand_attack_1(GlobalApi* api, Entity* entity, f32 dt)
     }
 }
 
+st_export void shaitan_hand_attack_2(GlobalApi* api, Entity* entity, f32 dt)
+{
+    HandData* data = entity->data;
+    Projectile* proj;
+    vec2 direction;
+    data->shoot_timer += dt;
+    data->state_timer += dt;
+    if (data->state_timer > 5) {
+        data->state_timer = 0;
+        api->entity_set_state(entity, "idle");
+        return;
+    }
+    if (data->shoot_timer > 0.2) {
+        proj = api->projectile_create(entity->position);
+        proj->update = firebullet;
+        direction = api->vec2_direction(data->target_rad-PI/3);
+        proj->direction = direction;
+        proj->speed = 5;
+        proj->size = 0.75;
+        proj->facing = data->target_rad;
+        proj->tex = api->texture_get_id("shaitan_firebullet");
+
+        proj = api->projectile_create(entity->position);
+        proj->update = firebullet;
+        direction = api->vec2_direction(data->target_rad+PI/3);
+        proj->direction = direction;
+        proj->speed = 5;
+        proj->size = 0.75;
+        proj->facing = data->target_rad;
+        proj->tex = api->texture_get_id("shaitan_firebullet");
+
+        data->shoot_timer -= 0.2;
+    }
+}
+
 st_export void hand_of_shaitan_create(GlobalApi* api, Entity* entity)
 {
     HandData* data = api->st_malloc(sizeof(HandData));
@@ -142,8 +177,9 @@ st_export void hand_of_shaitan_create(GlobalApi* api, Entity* entity)
     data->state_timer = 0;
     entity->data = data;
     entity->size = 2;
-    entity->health = 2;
-    entity->speed = 5;
+    entity->stats.health = 2;
+    entity->stats.max_health = 2;
+    entity->stats.speed = 5;
     entity->state = api->entity_get_state_id(entity, "attack_1");
 }
 
@@ -170,13 +206,13 @@ static void spawn_hands(GlobalApi* api, Entity* advisor)
     data->daddy = advisor;
     advisor_data->hand1 = hand;
     data->rotate_direction = 0;
-    data->target_rad = 0;
+    data->target_rad = 0.2;
     hand = api->entity_create(api->vec2_create(8, 16.5), id);
     data = hand->data;
     data->daddy = advisor;
     advisor_data->hand2 = hand;
     data->rotate_direction = 1;
-    data->target_rad = PI;
+    data->target_rad = PI-0.2;
     hand->position.x  = 8;
     hand->position.y = 16.5;
 }
@@ -184,8 +220,8 @@ static void spawn_hands(GlobalApi* api, Entity* advisor)
 st_export void shaitan_the_advisor_grow(GlobalApi* api, Entity* entity, f32 dt)
 {
     if (entity->size >= 3.0f) {
-        entity->state = api->entity_get_state_id(entity, "attack_1");
         entity->state_timer = 0.0f;
+        api->entity_set_state(entity, "attack_1");
         return;
     }
     if (entity->state_timer > 0.2f) {
@@ -224,8 +260,8 @@ static void shaitan_attack_1_firestorm(GlobalApi* api, Entity* entity)
 st_export void shaitan_the_advisor_attack_1(GlobalApi* api, Entity* entity, f32 dt)
 {
     AdvisorData* data = entity->data;
-    if (entity->health <= 90) {
-        entity->state = api->entity_get_state_id(entity, "attack_2");
+    if (entity->stats.health <= 90) {
+        api->entity_set_state(entity, "attack_2");
         spawn_hands(api, entity);
         api->entity_set_flag(entity, ENTITY_FLAG_INVULNERABLE, 1);
         entity->state_timer = 0;
@@ -276,7 +312,7 @@ st_export void shaitan_the_advisor_attack_2(GlobalApi* api, Entity* entity, f32 
     AdvisorData* data = entity->data;
     if (data->hand1 == NULL && data->hand2 == NULL) {
         entity->state_timer = 0;
-        entity->state = api->entity_get_state_id(entity, "attack_3");
+        api->entity_set_state(entity, "attack_3");
         api->entity_set_flag(entity, ENTITY_FLAG_INVULNERABLE, 1);
         return;
     }
@@ -308,7 +344,8 @@ st_export void shaitan_the_advisor_create(GlobalApi* api, Entity* entity)
     entity->data = data;
     entity->size = 3.0f;
     entity->hitbox_radius = 0.5f;
-    entity->health = 90;
+    entity->stats.health = 90;
+    entity->stats.max_health = 100;
     entity->state = api->entity_get_state_id(entity, "attack_1");
     api->entity_make_boss(entity);
 }

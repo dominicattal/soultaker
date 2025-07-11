@@ -1,3 +1,4 @@
+#include "../renderer.h"
 #include "../gui.h"
 #include "../game.h"
 

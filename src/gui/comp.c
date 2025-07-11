@@ -183,13 +183,7 @@ void gui_update_weapon_info(i32 weapon_id)
     if (comp == NULL)
         return;
 
-    const char* name = weapon_get_name(weapon_id);
-    const char* tooltip = weapon_get_tooltip(weapon_id);
     i32 tex_id = weapon_get_tex_id(weapon_id);
-
-    char string[1000];
-    sprintf(string, "Name: %s\nTooltip: %s", name, tooltip);
-    gui_comp_set_text(comp, strlen(string), string);
     gui_comp_set_tex(comp, tex_id);
 }
 
