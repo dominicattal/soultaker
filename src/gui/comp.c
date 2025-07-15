@@ -23,6 +23,8 @@ GUIComp* gui_comp_create(i16 x, i16 y, i16 w, i16 h)
     GUIComp* comp = st_calloc(1, sizeof(GUIComp));
     gui_comp_set_bbox(comp, x, y, w, h);
     gui_comp_set_tex(comp, texture_get_id("color"));
+    gui_comp_set_font_size(comp, 16);
+    gui_comp_set_font(comp, FONT_MONOSPACE);
     return comp;
 } 
 
@@ -182,6 +184,22 @@ void gui_update_weapon_info(i32 weapon_id)
 
     i32 tex_id = weapon_get_tex_id(weapon_id);
     gui_comp_set_tex(comp, tex_id);
+}
+
+void align_comp_position_x(i32* position_x, u8 halign, i32 size_x, i32 x, i32 w)
+{
+    if      (halign == ALIGN_LEFT)       *position_x += x;
+    else if (halign == ALIGN_CENTER_POS) *position_x += (size_x - w) / 2 + x;
+    else if (halign == ALIGN_CENTER_NEG) *position_x += (size_x - w) / 2 - x;
+    else if (halign == ALIGN_RIGHT)      *position_x += size_x - w - x;
+}
+
+void align_comp_position_y(i32* position_y, u8 valign, i32 size_y, i32 y, i32 h)
+{
+    if      (valign == ALIGN_TOP)        *position_y += size_y - h - y;
+    else if (valign == ALIGN_CENTER_POS) *position_y += (size_y - h) / 2 + y;
+    else if (valign == ALIGN_CENTER_NEG) *position_y += (size_y - h) / 2 - y;
+    else if (valign == ALIGN_BOTTOM)     *position_y += y;
 }
 
 // ---------------------------------------------------------------------------

@@ -1,0 +1,10 @@
+fullscreen
+resolution
+target frames
+vsync
+
+master volume
+music
+sfx
+
+controls

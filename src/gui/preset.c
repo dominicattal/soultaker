@@ -1,6 +1,7 @@
 #include "internal.h"
 #include "../game.h"
 #include "../state.h"
+#include "../window.h"
 #include <math.h>
 #include <string.h>
 
@@ -197,6 +198,144 @@ static void load_preset_debug(GUIComp* root)
 
 // **************************************************
 
+static void menu_onclick(GUIComp* comp, i32 button, i32 action, i32 mods)
+{
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+        gui_preset_load(GUI_PRESET_MAIN_MENU);
+}
+
+typedef struct {
+    GUIComp* right_arrow;
+    GUIComp* left_arrow;
+    i32 current_mode;
+} VideoSettingsData;
+
+static const char* video_modes[] = {
+    "Windowed",
+    "Borderless Fullscreen",
+    "Fullscreen"
+};
+
+static void video_mode_right_arrow_click(GUIComp* comp, i32 button, i32 action, i32 mods)
+{
+    const char* mode;
+    VideoSettingsData* data = comp->parent->data;
+    i32 num_modes = sizeof(video_modes) / sizeof(const char*);
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+        if (data->current_mode+1 < num_modes) {
+            mode = video_modes[++data->current_mode];
+            gui_comp_set_text(comp->parent, strlen(mode), mode);
+        }
+    }
+}
+
+static void video_mode_left_arrow_click(GUIComp* comp, i32 button, i32 action, i32 mods)
+{
+    const char* mode;
+    VideoSettingsData* data = comp->parent->data;
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+        if (data->current_mode-1 >= 0) {
+            mode = video_modes[--data->current_mode];
+            gui_comp_set_text(comp->parent, strlen(mode), mode);
+        }
+    }
+}
+
+static void load_video_settings(GUIComp* root)
+{
+    GUIComp* video_mode = gui_comp_create(20, 20, 460, 30);
+    const char* video_mode_text = "Windowed";
+    gui_comp_set_color(video_mode, 0, 255, 0, 255);
+    gui_comp_set_text_align(video_mode, ALIGN_CENTER, ALIGN_CENTER);
+    gui_comp_set_text(video_mode, strlen(video_mode_text), video_mode_text);
+    gui_comp_attach(root, video_mode);
+    VideoSettingsData* data = st_malloc(sizeof(VideoSettingsData));
+    data->current_mode = 0;
+    video_mode->data = data;
+
+    GUIComp* right_arrow = gui_comp_create(20, 0, 25, 25);
+    right_arrow->click = video_mode_right_arrow_click;
+    gui_comp_set_clickable(right_arrow, true);
+    gui_comp_set_align(right_arrow, ALIGN_RIGHT, ALIGN_CENTER);
+    gui_comp_set_color(right_arrow, 0, 0, 255, 255);
+    gui_comp_attach(video_mode, right_arrow);
+    data->right_arrow = right_arrow;
+
+    GUIComp* left_arrow = gui_comp_create(20, 0, 25, 25);
+    left_arrow->click = video_mode_left_arrow_click;
+    gui_comp_set_clickable(left_arrow, true);
+    gui_comp_set_align(left_arrow, ALIGN_LEFT, ALIGN_CENTER);
+    gui_comp_set_color(left_arrow, 0, 0, 255, 255);
+    gui_comp_attach(video_mode, left_arrow);
+    data->left_arrow = left_arrow;
+}
+
+static void load_preset_options(GUIComp* root)
+{
+    GUIComp* menu = gui_comp_create(45, 50, 100, 30);
+    menu->click = menu_onclick;
+    const char* menu_text = "Main Menu";
+    gui_comp_set_clickable(menu, true);
+    gui_comp_set_color(menu, 255, 255, 255, 255);
+    gui_comp_set_text_align(menu, ALIGN_CENTER, ALIGN_CENTER);
+    gui_comp_set_text(menu, strlen(menu_text), menu_text);
+    gui_comp_attach(root, menu);
+
+    GUIComp* settings = gui_comp_create(45, 110, 500, 500);
+    gui_comp_set_color(settings, 120, 120, 120, 255);
+    load_video_settings(settings);
+    gui_comp_attach(root, settings);
+}
+
+// **************************************************
+
+static void exit_onclick(GUIComp* comp, i32 button, i32 action, i32 mods)
+{
+    window_close();
+}
+
+static void play_onclick(GUIComp* comp, i32 button, i32 action, i32 mods)
+{
+}
+
+static void options_onclick(GUIComp* comp, i32 button, i32 action, i32 mods)
+{
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+        gui_preset_load(GUI_PRESET_OPTIONS);
+}
+
+static void load_preset_main_menu(GUIComp* root)
+{
+    GUIComp* play = gui_comp_create(45, 50, 100, 30);
+    play->click = play_onclick;
+    const char* play_text = "Play";
+    gui_comp_set_clickable(play, true);
+    gui_comp_set_color(play, 255, 255, 255, 255);
+    gui_comp_set_text_align(play, ALIGN_CENTER, ALIGN_CENTER);
+    gui_comp_set_text(play, strlen(play_text), play_text);
+    gui_comp_attach(root, play);
+
+    GUIComp* options = gui_comp_create(45, 110, 100, 30);
+    options->click = options_onclick;
+    const char* options_text = "Options";
+    gui_comp_set_clickable(options, true);
+    gui_comp_set_color(options, 255, 255, 255, 255);
+    gui_comp_set_text_align(options, ALIGN_CENTER, ALIGN_CENTER);
+    gui_comp_set_text(options, strlen(options_text), options_text);
+    gui_comp_attach(root, options);
+    
+    GUIComp* exit = gui_comp_create(45, 170, 100, 30);
+    exit->click = exit_onclick;
+    const char* exit_text = "Exit";
+    gui_comp_set_clickable(exit, true);
+    gui_comp_set_color(exit, 255, 255, 255, 255);
+    gui_comp_set_text_align(exit, ALIGN_CENTER, ALIGN_CENTER);
+    gui_comp_set_text(exit, strlen(exit_text), exit_text);
+    gui_comp_attach(root, exit);
+}
+
+// **************************************************
+
 extern GUIContext gui_context;
 
 void gui_preset_load(GUIPreset preset)
@@ -204,7 +343,14 @@ void gui_preset_load(GUIPreset preset)
     gui_comp_destroy_children(gui_context.root);
     switch (preset) {
         case GUI_PRESET_DEBUG:
-            load_preset_debug(gui_context.root); break;
+            load_preset_debug(gui_context.root); 
+            break;
+        case GUI_PRESET_MAIN_MENU:
+            load_preset_main_menu(gui_context.root);
+            break;
+        case GUI_PRESET_OPTIONS:
+            load_preset_options(gui_context.root);
+            break;
         default:
             break;
     }
