@@ -98,16 +98,16 @@ typedef struct {
     f32 mana, max_mana;
     f32 souls, max_souls;
     f32 speed;
-    f32 haste;
 } Stats;
 
 typedef struct Entity {
-    Stats stats;
     void* data;
     vec2 position;
     vec2 prev_position;
     vec2 direction;
     vec2 facing;
+    f32 health, max_health;
+    f32 speed;
     f32 elevation;
     f32 size;
     f32 hitbox_radius;
@@ -122,6 +122,7 @@ typedef struct Entity {
 } Entity;
 
 typedef struct Player {
+    Stats stats;
     Weapon weapon;
     Weapon swap_out;
     Entity* entity;
@@ -168,22 +169,13 @@ Entity* entity_create(vec2 position, i32 id);
 void entity_update(Entity* entity, f32 dt);
 void entity_destroy(Entity* entity);
 
-// Adds the entity to the boss list
 void entity_make_boss(Entity* entity);
-
-// Updates the values for thread-safe getters in game_context
 void entity_boss_update(Entity* entity);
-
-// Removes entity from boss lis
 void entity_unmake_boss(Entity* entity);
 
 // Assigns default entity for the player
 void player_reset(void);
-
-// Updates for player specifically, mainly for state changes
 void player_update(Player* player, f32 dt);
-
-// Shoot
 void player_shoot(Player* player);
 void player_swap_weapons(void);
 

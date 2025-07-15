@@ -90,7 +90,7 @@ static void collide_entity_projectile(Entity* entity, Projectile* projectile)
     if (is_entity_invulnerable)
         return;
 
-    entity->stats.health -= 1;
+    entity->health -= 1;
     if (is_entity_boss)
         entity_boss_update(entity);
 }
@@ -169,7 +169,7 @@ void game_update_objects(void)
     i = 0;
     while (i < game_context.bosses->length) {
         Entity* entity = list_get(game_context.bosses, i);
-        if (entity->stats.health <= 0)
+        if (entity->health <= 0)
             list_remove(game_context.bosses, i);
         else
             i++;
@@ -178,7 +178,7 @@ void game_update_objects(void)
     while (i < game_context.entities->length) {
         Entity* entity = list_get(game_context.entities, i);
         entity_update(entity, game_context.dt);
-        if (entity->stats.health <= 0)
+        if (entity->health <= 0)
             entity_destroy(list_remove(game_context.entities, i));
         else
             i++;

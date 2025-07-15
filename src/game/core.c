@@ -89,9 +89,10 @@ f32 game_get_dt(void)
 
 f32 game_get_boss_health(void)
 {
-    f32 health;
-    pthread_mutex_lock(&game_context.getter_mutex);
-    health = game_context.values.boss_health; 
-    pthread_mutex_unlock(&game_context.getter_mutex);
-    return health;
+    return game_context.values.boss_health;
+}
+
+f32 game_get_boss_max_health(void)
+{
+    return game_context.values.boss_max_health;
 }

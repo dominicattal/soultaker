@@ -29,7 +29,6 @@ GUIComp* gui_comp_create(i16 x, i16 y, i16 w, i16 h)
 void gui_comp_attach(GUIComp* parent, GUIComp* child)
 {
     i32 num_children;
-    log_assert(!gui_comp_is_text(parent), "Tried to attach child to text comp");
     gui_comp_get_num_children(parent, &num_children);
     if (parent->children == NULL)
         parent->children = st_malloc(sizeof(GUIComp*));
@@ -68,6 +67,7 @@ void gui_comp_destroy(GUIComp* comp)
     for (i32 i = 0; i < gui_comp_num_children(comp); i++)
         gui_comp_destroy(comp->children[i]);
     st_free(comp->children);
+    st_free(comp->text);
     st_free(comp->data);
     st_free(comp);
 }
@@ -89,7 +89,6 @@ void gui_comp_detach_and_destroy(GUIComp* parent, GUIComp* child)
 void gui_comp_set_text(GUIComp* comp, i32 length, const char* text)
 {
     log_assert(text != NULL, "Tried to assign NULL text to component");
-    log_assert(gui_comp_is_text(comp), "Try to assign text to non-text component: %s", text);
     gui_comp_set_text_length(comp, length);
     st_free(comp->text);
     if (length == 0) {
@@ -105,7 +104,6 @@ void gui_comp_set_text(GUIComp* comp, i32 length, const char* text)
 
 void gui_comp_insert_char(GUIComp* comp, const char c, i32 idx)
 {
-    log_assert(gui_comp_is_text(comp), "Tried inserting char into non-text comp");
     log_assert(idx >= -1, "Invalid index for string insertion %d", idx);
     u32 length = (comp->text == NULL) ? 0 : gui_comp_text_length(comp);
     char* new_text = st_malloc((length + 2) * sizeof(char));
@@ -125,7 +123,6 @@ void gui_comp_insert_char(GUIComp* comp, const char c, i32 idx)
 
 void gui_comp_delete_char(GUIComp* comp, i32 idx)
 {
-    log_assert(gui_comp_is_text(comp), "Tried deleting char from non-text comp");
     log_assert(idx >= -1, "Invalid index for string deletion %d", idx);
     if (comp->text == NULL) return;
     u32 length = gui_comp_text_length(comp);
@@ -151,30 +148,30 @@ void gui_comp_delete_char(GUIComp* comp, i32 idx)
 void gui_comp_hover(GUIComp* comp, bool status)
 {
     gui_comp_set_hovered(comp, status);
-    if (comp->hover_func == NULL)
+    if (comp->hover == NULL)
         return;
-    ((GUIHoverFPtr)(comp->hover_func))(comp, status);
+    ((GUIHoverFPtr)(comp->hover))(comp, status);
 }
 
 void gui_comp_click(GUIComp* comp, i32 button, i32 action, i32 mods)
 {
-    if (comp->click_func == NULL)
+    if (comp->click == NULL)
         return;
-    ((GUIClickFPtr)(comp->click_func))(comp, button, action, mods);
+    ((GUIClickFPtr)(comp->click))(comp, button, action, mods);
 }
 
 void gui_comp_key(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods)
 {
-    if (comp->key_func == NULL)
+    if (comp->key == NULL)
         return;
-    ((GUIKeyFPtr)(comp->key_func))(comp, key, scancode, action, mods);
+    ((GUIKeyFPtr)(comp->key))(comp, key, scancode, action, mods);
 }
 
 void gui_comp_update(GUIComp* comp, f32 dt)
 {
-   if (comp->update_func == NULL)
+   if (comp->update == NULL)
        return;
-   ((GUIUpdateFPtr)(comp->update_func))(comp, dt);
+   ((GUIUpdateFPtr)(comp->update))(comp, dt);
 }
 
 void gui_update_weapon_info(i32 weapon_id)
@@ -188,19 +185,19 @@ void gui_update_weapon_info(i32 weapon_id)
 }
 
 // ---------------------------------------------------------------------------
-// info1            | info2 (text)      | info2 (ele)         | info3 (text)
-// 48 - x, y, w, h  | 2  - text_halign  | 8 - num_children    | 21 - length
-// 16 - tex         | 2  - text_valign  | 1 - update_children | 21 - cursor_pos
-// info2            | 10 - font_size    |                     |
-// 32 - rgba        | 4  - font         |                     |
-//  1 - is_text     |                   |                     |
-//  1 - hoverable   |                   |                     |
-//  1 - hovered     |                   |                     |
-//  1 - clickable   |                   |                     |
-//  1 - visible     |                   |                     |
-//  1 - relative    |                   |                     |
-//  2 - halign      |                   |                     |
-//  2 - valign      |                   |                     |
+// info1            | info2                | info3
+// 48 - x, y, w, h  | 2  - text_halign     | 21 - length
+// 16 - tex         | 2  - text_valign     | 21 - cursor_pos
+// info2            | 10 - font_size       | 8  - num_children   
+// 32 - rgba        | 4  - font            | 1  - update_children
+//  1 - is_text     |                      |
+//  1 - hoverable   |                      |
+//  1 - hovered     |                      |
+//  1 - clickable   |                      |
+//  1 - visible     |                      |
+//  1 - relative    |                      |
+//  2 - halign      |                      |
+//  2 - valign      |                      |
 // ---------------------------------------------------------------------------
 
 // info1
@@ -240,14 +237,6 @@ void gui_update_weapon_info(i32 weapon_id)
 #define HA_BITS     2
 #define VA_SHIFT    40
 #define VA_BITS     2
-
-// non text comp
-#define NC_SHIFT    42
-#define NC_BITS     8
-#define UC_SHIFT    50
-#define UC_BITS     1
-
-// text comp
 #define THA_SHIFT   42
 #define THA_BITS    2
 #define TVA_SHIFT   44
@@ -257,12 +246,14 @@ void gui_update_weapon_info(i32 weapon_id)
 #define FT_SHIFT    56
 #define FT_BITS     4
 
-// info 3
-// text comp
+// info3
 #define TL_SHIFT    0
 #define TL_BITS     21
 #define TP_SHIFT    21
 #define TP_BITS     21
+#define NC_SHIFT    42
+#define NC_BITS     8
+
 
 #define SMASK(BITS)         ((1<<BITS)-1)
 #define GMASK(BITS, SHIFT)  ~((u64)SMASK(BITS)<<SHIFT)
@@ -344,7 +335,7 @@ void gui_comp_set_valign(GUIComp* comp, u8 va) {
     comp->info2 = (comp->info2 & GMASK(VA_BITS, VA_SHIFT)) | ((u64)(va & SMASK(VA_BITS)) << VA_SHIFT);
 }
 void gui_comp_set_num_children(GUIComp* comp, i32 nc) {
-    comp->info2 = (comp->info2 & GMASK(NC_BITS, NC_SHIFT)) | ((u64)(nc & SMASK(NC_BITS)) << NC_SHIFT);
+    comp->info3 = (comp->info3 & GMASK(NC_BITS, NC_SHIFT)) | ((u64)(nc & SMASK(NC_BITS)) << NC_SHIFT);
 }
 void gui_comp_set_text_align(GUIComp* comp, u8 tha, u8 tva) {
     gui_comp_set_text_halign(comp, tha);
@@ -363,8 +354,6 @@ void gui_comp_set_font_size(GUIComp* comp, i32 fs) {
     comp->info2 = (comp->info2 & GMASK(FS_BITS, FS_SHIFT)) | ((u64)(fs & SMASK(FS_BITS)) << FS_SHIFT);
 }
 void gui_comp_set_text_length(GUIComp* comp, i32 tl) {
-    log_assert(gui_comp_is_text(comp), "Tried to set text length of non-text component");
-    log_assert(tl >= 0, "Tried to make string at %p with negative size", comp);
     comp->info3 = (comp->info3 & GMASK(TL_BITS, TL_SHIFT)) | ((u64)(tl & SMASK(TL_BITS)) << TL_SHIFT);
 }
 void gui_comp_set_text_pos(GUIComp* comp, i32 tp) {
@@ -461,7 +450,7 @@ void gui_comp_get_valign(GUIComp* comp, u8* va) {
     *va = (comp->info2 >> VA_SHIFT) & SMASK(VA_BITS);
 }
 void gui_comp_get_num_children(GUIComp* comp, i32* nc) {
-    *nc = (comp->info2 >> NC_SHIFT) & SMASK(NC_BITS);
+    *nc = (comp->info3 >> NC_SHIFT) & SMASK(NC_BITS);
 }
 void gui_comp_get_text_align(GUIComp* comp, u8* tha, u8* tva) {
     gui_comp_get_text_halign(comp, tha);
@@ -488,9 +477,7 @@ void gui_comp_get_text_pos(GUIComp* comp, i32* tp) {
 
 // getters 2
 i32 gui_comp_num_children(GUIComp* comp) {
-    if (gui_comp_is_text(comp))
-        return 0;
-    return (comp->info2 >> NC_SHIFT) & SMASK(NC_BITS);
+    return (comp->info3 >> NC_SHIFT) & SMASK(NC_BITS);
 }
 i32  gui_comp_tex(GUIComp* comp){
     return (comp->info1 >> TX_SHIFT) & SMASK(TX_BITS);

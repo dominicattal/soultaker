@@ -177,9 +177,9 @@ st_export void hand_of_shaitan_create(GlobalApi* api, Entity* entity)
     data->state_timer = 0;
     entity->data = data;
     entity->size = 2;
-    entity->stats.health = 2;
-    entity->stats.max_health = 2;
-    entity->stats.speed = 5;
+    entity->health = 2;
+    entity->max_health = 2;
+    entity->speed = 5;
     entity->state = api->entity_get_state_id(entity, "attack_1");
 }
 
@@ -260,7 +260,7 @@ static void shaitan_attack_1_firestorm(GlobalApi* api, Entity* entity)
 st_export void shaitan_the_advisor_attack_1(GlobalApi* api, Entity* entity, f32 dt)
 {
     AdvisorData* data = entity->data;
-    if (entity->stats.health <= 90) {
+    if (entity->health <= 90) {
         api->entity_set_state(entity, "attack_2");
         spawn_hands(api, entity);
         api->entity_set_flag(entity, ENTITY_FLAG_INVULNERABLE, 1);
@@ -344,8 +344,8 @@ st_export void shaitan_the_advisor_create(GlobalApi* api, Entity* entity)
     entity->data = data;
     entity->size = 3.0f;
     entity->hitbox_radius = 0.5f;
-    entity->stats.health = 90;
-    entity->stats.max_health = 100;
+    entity->health = 90;
+    entity->max_health = 100;
     entity->state = api->entity_get_state_id(entity, "attack_1");
     api->entity_make_boss(entity);
 }
