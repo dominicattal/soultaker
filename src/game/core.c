@@ -42,10 +42,9 @@ void game_init(void)
     particle_init();
     parjicle_init();
     camera_init();
-    player_reset();
     game_render_init();
 
-    game_preset_load(game_preset_map_id("shaitan"));
+    //game_preset_load(game_preset_map_id("shaitan"));
 
     pthread_mutex_init(&game_context.getter_mutex, NULL);
     pthread_create(&game_context.thread_id, NULL, game_loop, NULL);

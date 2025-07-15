@@ -4,22 +4,6 @@
 
 GUIContext gui_context;
 
-void align_comp_position_x(i32* position_x, u8 halign, i32 size_x, i32 x, i32 w)
-{
-    if      (halign == ALIGN_LEFT)       *position_x += x;
-    else if (halign == ALIGN_CENTER_POS) *position_x += (size_x - w) / 2 + x;
-    else if (halign == ALIGN_CENTER_NEG) *position_x += (size_x - w) / 2 - x;
-    else if (halign == ALIGN_RIGHT)      *position_x += size_x - w - x;
-}
-
-void align_comp_position_y(i32* position_y, u8 valign, i32 size_y, i32 y, i32 h)
-{
-    if      (valign == ALIGN_TOP)        *position_y += size_y - h - y;
-    else if (valign == ALIGN_CENTER_POS) *position_y += (size_y - h) / 2 + y;
-    else if (valign == ALIGN_CENTER_NEG) *position_y += (size_y - h) / 2 - y;
-    else if (valign == ALIGN_BOTTOM)     *position_y += y;
-}
-
 static void gui_update_comps_helper(GUIComp* comp, f32 dt)
 {
     gui_comp_update(comp, dt);
@@ -40,7 +24,7 @@ static void* gui_loop(void* vargp)
     end = start = get_time();
     gui_context.dt = 0;
     gui_comp_init();
-    gui_preset_load(GUI_PRESET_DEBUG);
+    gui_preset_load(GUI_PRESET_MAIN_MENU);
     while (!gui_context.kill_thread)
     {
         if (end - start > 0.0001) {
