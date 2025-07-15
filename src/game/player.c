@@ -59,7 +59,7 @@ vec2 game_get_nearest_player_position(void)
     return game_context.player.entity->position;
 }
 
-void player_update(Player* player, f32 dt)
+static void update_player_state(Player* player, f32 dt)
 {
     Entity* entity = player->entity;
     if (entity == NULL) return;
@@ -88,6 +88,29 @@ void player_update(Player* player, f32 dt)
             entity->frame_timer = 0;
         }
     }
+}
+
+static void update_player_stats(Player* player)
+{
+    Entity* entity = player->entity;
+    if (entity == NULL) {
+        player->stats.health = 0;
+        player->stats.mana = 0;
+        player->stats.souls = 0;
+        return;
+    }
+    player->stats.health = entity->health;
+    player->stats.max_health = entity->max_health;
+    player->stats.mana = 50;
+    player->stats.max_mana = 100;
+    player->stats.souls = 50;
+    player->stats.max_souls = 100;
+}
+
+void player_update(Player* player, f32 dt)
+{
+    update_player_state(player, dt);
+    update_player_stats(player);
 }
 
 void player_swap_weapons(void)
@@ -134,45 +157,32 @@ void player_shoot(Player* player)
     player->entity->facing = direction;
 }
 
-// not thread safe
 f32 player_health(void)
 {
-    Entity* entity = game_context.player.entity;
-    if (entity == NULL) return 0;
-    return entity->stats.health;
+    return game_context.player.stats.health;
 }
 
 f32 player_mana(void)
 {
-    Entity* entity = game_context.player.entity;
-    if (entity == NULL) return 0;
-    return entity->stats.mana;
+    return game_context.player.stats.mana;
 }
 
 f32 player_souls(void)
 {
-    Entity* entity = game_context.player.entity;
-    if (entity == NULL) return 0;
-    return entity->stats.souls;
+    return game_context.player.stats.souls;
 }
 
 f32 player_max_health(void)
 {
-    Entity* entity = game_context.player.entity;
-    if (entity == NULL) return 0;
-    return entity->stats.max_health;
+    return game_context.player.stats.max_health;
 }
 
 f32 player_max_mana(void)
 {
-    Entity* entity = game_context.player.entity;
-    if (entity == NULL) return 0;
-    return entity->stats.max_mana;
+    return game_context.player.stats.max_mana;
 }
 
 f32 player_max_souls(void)
 {
-    Entity* entity = game_context.player.entity;
-    if (entity == NULL) return 0;
-    return entity->stats.max_souls;
+    return game_context.player.stats.max_souls;
 }

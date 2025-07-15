@@ -7,6 +7,7 @@ i32 game_preset_map_id(const char* name);
 
 f32 game_get_dt(void);
 f32 game_get_boss_health(void);
+f32 game_get_boss_max_health(void);
 
 void game_init(void);
 void game_cleanup(void);

@@ -221,9 +221,7 @@ static void push_comp_data(GUIComp* comp, i32 x, i32 y, i32 w, i32 h)
     quad.location = loc;
 
     push_quad_data(&quad);
-
-    if (gui_comp_is_text(comp))
-        push_text_data(comp, x, y, w, h);
+    push_text_data(comp, x, y, w, h);
 }
 
 static void gui_update_vertex_data_helper(GUIComp* comp, i32 position_x, i32 position_y, i32 size_x, i32 size_y)

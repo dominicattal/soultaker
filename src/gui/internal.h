@@ -25,26 +25,24 @@ typedef enum {
     NUM_GUI_PRESETS
 } GUIPreset;
 
+typedef struct GUIComp GUIComp;
 typedef void (*GUIHoverFPtr)(GUIComp* comp, bool status); 
 typedef void (*GUIClickFPtr)(GUIComp* comp, i32 button, i32 action, i32 mods);
 typedef void (*GUIKeyFPtr)(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods);
 typedef void (*GUIUpdateFPtr)(GUIComp* comp, f32 dt);
-typedef struct GUIComp GUIComp;
 
 typedef struct GUIComp {
     u64 info1;
     u64 info2;
     u64 info3;
-    GUIUpdateFPtr update_func;
-    GUIHoverFPtr hover_func;
-    GUIClickFPtr click_func;
-    GUIKeyFPtr key_func;
+    GUIUpdateFPtr update;
+    GUIHoverFPtr hover;
+    GUIClickFPtr click;
+    GUIKeyFPtr key;
     void* data;
     GUIComp* parent;
-    union {
-        GUIComp** children;
-        char* text;
-    };
+    GUIComp** children;
+    char* text;
 } GUIComp;
 
 typedef struct GUIData {
@@ -127,7 +125,6 @@ void gui_comp_set_r(GUIComp* comp, u8 r);
 void gui_comp_set_g(GUIComp* comp, u8 g);
 void gui_comp_set_b(GUIComp* comp, u8 b);
 void gui_comp_set_a(GUIComp* comp, u8 a);
-void gui_comp_set_is_text(GUIComp* comp, bool it);
 void gui_comp_set_hoverable(GUIComp* comp, bool hv);
 void gui_comp_set_hovered(GUIComp* comp, bool hd);
 void gui_comp_set_clickable(GUIComp* comp, bool cl);
@@ -160,7 +157,6 @@ void gui_comp_get_r(GUIComp* comp, u8* r);
 void gui_comp_get_g(GUIComp* comp, u8* g);
 void gui_comp_get_b(GUIComp* comp, u8* b);
 void gui_comp_get_a(GUIComp* comp, u8* a);
-void gui_comp_get_is_text(GUIComp* comp, bool* it);
 void gui_comp_get_hoverable(GUIComp* comp, bool* hv);
 void gui_comp_get_hovered(GUIComp* comp, bool* hd);
 void gui_comp_get_clickable(GUIComp* comp, bool* cl);
@@ -180,7 +176,6 @@ void gui_comp_get_text_pos(GUIComp* comp, i32* tp);
 
 i32  gui_comp_num_children(GUIComp* comp);
 i32  gui_comp_tex(GUIComp* comp);
-bool gui_comp_is_text(GUIComp* comp);
 bool gui_comp_is_hoverable(GUIComp* comp);
 bool gui_comp_is_hovered(GUIComp* comp);
 bool gui_comp_is_clickable(GUIComp* comp);
