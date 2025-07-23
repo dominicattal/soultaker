@@ -1,3 +1,4 @@
 {
-    "shaitan": "game_preset_load_shaitan"
+    "shaitan": "game_preset_load_shaitan",
+    "lobby": "game_preset_load_lobby"
 }

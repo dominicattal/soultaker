@@ -79,7 +79,7 @@ void renderer_render(void)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     glClearColor(0.4f, 0.4f, 0.4f, 1.0f);
 
-    //game_render();
+    game_render();
     gui_render();
 }
 

@@ -10,11 +10,14 @@ f32 game_get_boss_health(void);
 f32 game_get_boss_max_health(void);
 
 void game_init(void);
+void game_halt_loop(void);
+void game_resume_loop(void);
 void game_cleanup(void);
 void game_process_input(f32 dt);
 void game_render(void);
 void game_halt_input(void);
 void game_resume_input(void);
+void game_load_starting_area(void);
 
 char* weapon_get_name(i32 id);
 char* weapon_get_tooltip(i32 id);

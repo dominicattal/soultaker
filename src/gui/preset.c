@@ -156,7 +156,7 @@ static GUIComp* create_boss_health()
     return boss_health;
 }
 
-static void load_preset_debug(GUIComp* root)
+static void load_preset_game(GUIComp* root)
 {
     GUIComp* player_stats = gui_comp_create(20, 20, 400, 50);
     gui_comp_set_color(player_stats, 0, 0, 0, 0);
@@ -270,6 +270,7 @@ static void load_video_settings(GUIComp* root)
     data->left_arrow = left_arrow;
 }
 
+
 static void load_preset_options(GUIComp* root)
 {
     GUIComp* menu = gui_comp_create(45, 50, 100, 30);
@@ -289,6 +290,34 @@ static void load_preset_options(GUIComp* root)
 
 // **************************************************
 
+static void load_save(void)
+{
+    game_load_starting_area();
+    game_resume_loop();
+}
+
+static void save_onclick(GUIComp* comp, i32 button, i32 action, i32 mods)
+{
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+        gui_preset_load(GUI_PRESET_GAME);
+        load_save();
+    }
+}
+
+static void load_preset_saves(GUIComp* root)
+{
+    GUIComp* save = gui_comp_create(45, 50, 100, 30);
+    save->click = save_onclick;
+    const char* save_text = "Save 1";
+    gui_comp_set_clickable(save, true);
+    gui_comp_set_color(save, 255, 255, 255, 255);
+    gui_comp_set_text_align(save, ALIGN_CENTER, ALIGN_CENTER);
+    gui_comp_set_text(save, strlen(save_text), save_text);
+    gui_comp_attach(root, save);
+}
+
+// **************************************************
+
 static void exit_onclick(GUIComp* comp, i32 button, i32 action, i32 mods)
 {
     window_close();
@@ -296,6 +325,8 @@ static void exit_onclick(GUIComp* comp, i32 button, i32 action, i32 mods)
 
 static void play_onclick(GUIComp* comp, i32 button, i32 action, i32 mods)
 {
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+        gui_preset_load(GUI_PRESET_SAVES); 
 }
 
 static void options_onclick(GUIComp* comp, i32 button, i32 action, i32 mods)
@@ -342,14 +373,17 @@ void gui_preset_load(GUIPreset preset)
 {
     gui_comp_destroy_children(gui_context.root);
     switch (preset) {
-        case GUI_PRESET_DEBUG:
-            load_preset_debug(gui_context.root); 
+        case GUI_PRESET_GAME:
+            load_preset_game(gui_context.root); 
             break;
         case GUI_PRESET_MAIN_MENU:
             load_preset_main_menu(gui_context.root);
             break;
         case GUI_PRESET_OPTIONS:
             load_preset_options(gui_context.root);
+            break;
+        case GUI_PRESET_SAVES:
+            load_preset_saves(gui_context.root);
             break;
         default:
             break;

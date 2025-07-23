@@ -14,6 +14,13 @@ void* game_loop(void* vargp)
     game_context.time = 0;
     while (!game_context.kill_thread)
     {
+        if (game_context.halt_game_loop) {
+            sem_wait(&game_context.game_loop_sem);
+            game_context.halt_game_loop = false;
+            end = start = get_time();
+            game_context.dt = 0;
+            game_context.time = 0;
+        }
         if (end - start > 0.0001) {
             game_context.dt = end - start;
             start = get_time();
@@ -29,8 +36,27 @@ void* game_loop(void* vargp)
     return NULL;
 }
 
+void game_halt_loop(void)
+{
+    sem_wait(&game_context.game_loop_sem);
+    game_context.halt_game_loop = true;
+}
+
+void game_resume_loop(void)
+{
+    sem_post(&game_context.game_loop_sem);
+}
+
+void game_load_starting_area(void)
+{
+    game_preset_load(game_preset_map_id("shaitan"));
+}
+
 void game_init(void)
 {
+    pthread_mutex_init(&game_context.getter_mutex, NULL);
+    sem_init(&game_context.game_loop_sem, 0, 1);
+
     game_preset_init();
     tile_init();
     wall_init();
@@ -43,10 +69,7 @@ void game_init(void)
     parjicle_init();
     camera_init();
     game_render_init();
-
-    //game_preset_load(game_preset_map_id("shaitan"));
-
-    pthread_mutex_init(&game_context.getter_mutex, NULL);
+    game_halt_loop();
     pthread_create(&game_context.thread_id, NULL, game_loop, NULL);
 }
 
@@ -64,8 +87,10 @@ void game_cleanup(void)
 {
     game_context.kill_thread = true;
     game_context.halt_input = false;
+    sem_post(&game_context.game_loop_sem);
     pthread_join(game_context.thread_id, NULL);
     pthread_mutex_destroy(&game_context.getter_mutex);
+    sem_destroy(&game_context.game_loop_sem);
     game_render_cleanup();
     camera_cleanup();
     weapon_cleanup();
