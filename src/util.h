@@ -9,6 +9,7 @@
 #include "util/malloc.h"
 #include "util/thread.h"
 #include <pthread.h>
+#include <semaphore.h>
 #include <stdlib.h>
 #include <glad.h>
 #include <glfw.h>

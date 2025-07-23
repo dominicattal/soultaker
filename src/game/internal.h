@@ -394,13 +394,15 @@ typedef struct {
     List* particles;
     List* parjicles;
     Camera camera;
-    bool kill_thread;
-    bool halt_input;
-    bool paused;
     pthread_t thread_id;
     pthread_mutex_t getter_mutex;
+    sem_t game_loop_sem;
     f64 time;
     f32 dt;
+    bool kill_thread;
+    bool halt_input;
+    bool halt_game_loop;
+    bool paused;
 } GameContext;
 
 // global game_context that everything on the game
