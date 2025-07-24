@@ -24,7 +24,7 @@ static void load_tooltip(JsonObject* object, i32 id)
 {
     JsonValue* val_string = json_get_value(object, "tooltip");
     char* string = json_get_string(val_string);
-    weapon_context.infos[id].tooltip = copy_string(string);
+    weapon_context.infos[id].tooltip = string_copy(string);
 }
 
 static void load_texture(JsonObject* object, i32 id)
@@ -55,7 +55,7 @@ static void load_weapon_info(void)
     for (i32 i = 0; i < weapon_context.num_weapons; i++) {
         member = json_iterator_get(it);
         string = json_member_key(member);
-        weapon_context.infos[i].name = copy_string(string);
+        weapon_context.infos[i].name = string_copy(string);
         val_object = json_member_value(member);
         object = json_get_object(val_object);
         load_tooltip(object, i);

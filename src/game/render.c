@@ -61,7 +61,7 @@ typedef struct {
 typedef struct {
     RenderData* data;
     RenderData* data_swap;
-    GLuint fbo, rbo;
+    GLuint fbo, shadow_fbo, rbo;
     GLuint game_time_ubo;
     GLuint vaos[NUM_VAOS];
     GLuint vbos[NUM_VBOS];
@@ -830,7 +830,12 @@ void game_render_init(void)
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
 
-    GLuint loc, unit, name;
+    GLuint unit, name;
+
+    glGenRenderbuffers(1, &render_context.rbo);
+    glBindRenderbuffer(GL_RENDERBUFFER, render_context.rbo);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, window_width(), window_height());
+
     unit = texture_get_unit(TEX_GAME_SCENE);
     name = texture_get_name(TEX_GAME_SCENE);
     glGenFramebuffers(1, &render_context.fbo);
@@ -842,21 +847,29 @@ void game_render_init(void)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, render_context.fbo, 0);
-    glGenRenderbuffers(1, &render_context.rbo);
-    glBindRenderbuffer(GL_RENDERBUFFER, render_context.rbo);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, window_width(), window_height());
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, render_context.rbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
+    unit = texture_get_unit(TEX_GAME_SHADOW_SCENE);
+    name = texture_get_name(TEX_GAME_SHADOW_SCENE);
+    glGenFramebuffers(1, &render_context.shadow_fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, render_context.shadow_fbo);
+    glActiveTexture(GL_TEXTURE0 + unit);
+    glBindTexture(GL_TEXTURE_2D, name);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, window_width(), window_height(),
+            0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, render_context.shadow_fbo, 0);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, render_context.rbo);
 
-    shader_use(SHADER_PROGRAM_SCREEN);
-    loc = shader_get_uniform_location(SHADER_PROGRAM_SCREEN, "screenTex"); 
-    unit = texture_get_unit(TEX_GAME_SCENE);
-    glUniform1i(loc, unit);
-    glBindVertexArray(render_context.vaos[VAO_QUAD]);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void game_render(void)
 {
+    if (game_context.halt_render)
+        return;
+
     update_game_time();
     camera_update();
 
@@ -866,6 +879,7 @@ void game_render(void)
 
     glBindFramebuffer(GL_FRAMEBUFFER, render_context.fbo);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glStencilMask(0x01); // stencil mask affects glClear
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     glStencilFunc(GL_ALWAYS, 1, 0x01);
@@ -885,27 +899,52 @@ void game_render(void)
     render_particles();
     render_parjicles();
 
+    GLuint loc, unit;
+
+    glBindFramebuffer(GL_FRAMEBUFFER, render_context.shadow_fbo);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
     glDisable(GL_DEPTH_TEST);
+    glStencilMask(0x00);
+    shader_use(SHADER_PROGRAM_SCREEN);
+    unit = texture_get_unit(TEX_GAME_SCENE);
+    loc = shader_get_uniform_location(SHADER_PROGRAM_SCREEN, "screenTex"); 
+    glUniform1i(loc, unit);
+    glActiveTexture(GL_TEXTURE0 + unit);
+    glBindVertexArray(render_context.vaos[VAO_QUAD]);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     glStencilFunc(GL_NOTEQUAL, 1, 0x01);
     render_shadows();
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glDisable(GL_DEPTH_TEST);
     glDisable(GL_STENCIL_TEST);
     shader_use(SHADER_PROGRAM_SCREEN);
+    unit = texture_get_unit(TEX_GAME_SHADOW_SCENE);
+    loc = shader_get_uniform_location(SHADER_PROGRAM_SCREEN, "screenTex"); 
+    glUniform1i(loc, unit);
+    glActiveTexture(GL_TEXTURE0 + unit);
     glBindVertexArray(render_context.vaos[VAO_QUAD]);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
 void game_render_framebuffer_size_callback(void)
 {
-    if (render_context.fbo == 0 || render_context.rbo == 0)
+    if (render_context.fbo == 0 
+     || render_context.rbo == 0
+     || render_context.shadow_fbo == 0)
         return;
 
     GLuint unit, name;
     unit = texture_get_unit(TEX_GAME_SCENE);
     name = texture_get_name(TEX_GAME_SCENE);
     glBindFramebuffer(GL_FRAMEBUFFER, render_context.fbo);
+    glActiveTexture(GL_TEXTURE0 + unit);
+    glBindTexture(GL_TEXTURE_2D, name);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, window_width(), window_height(),
+            0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    unit = texture_get_unit(TEX_GAME_SHADOW_SCENE);
+    name = texture_get_name(TEX_GAME_SHADOW_SCENE);
+    glBindFramebuffer(GL_FRAMEBUFFER, render_context.shadow_fbo);
     glActiveTexture(GL_TEXTURE0 + unit);
     glBindTexture(GL_TEXTURE_2D, name);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, window_width(), window_height(),
@@ -958,6 +997,7 @@ void game_render_cleanup(void)
     glDeleteBuffers(NUM_VBOS, &render_context.vbos[0]);
     glDeleteBuffers(1, &render_context.game_time_ubo);
     glDeleteFramebuffers(1, &render_context.fbo);
+    glDeleteFramebuffers(1, &render_context.shadow_fbo);
     glDeleteRenderbuffers(1, &render_context.rbo);
 
     for (i32 i = 0; i < NUM_VBOS; i++) {

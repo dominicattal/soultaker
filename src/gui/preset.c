@@ -2,6 +2,7 @@
 #include "../game.h"
 #include "../state.h"
 #include "../window.h"
+#include "../event.h"
 #include <math.h>
 #include <string.h>
 
@@ -9,14 +10,17 @@
 
 static void keyfunc(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods)
 {
+    char* message;
     if (key == GLFW_KEY_ENTER && action == GLFW_PRESS) {
         if (gui_event_comp_equal(GUI_COMP_TYPING, comp)) {
             game_resume_input();
-            if (comp->text != NULL)
-                gui_parse_command(comp->text);
-            gui_comp_set_text(comp, 0, "");
+            if (comp->text != NULL) {
+                message = gui_command_parse(comp->text);
+                gui_comp_set_text(comp, strlen(message), message);
+                string_free(message);
+            }
             gui_set_event_comp(GUI_COMP_TYPING, NULL);
-            gui_comp_set_color(comp, 255, 255, 255, 0);
+            gui_comp_set_color(comp, 255, 255, 255, 100);
         }
         else {
             game_halt_input();
@@ -179,7 +183,7 @@ static void load_preset_game(GUIComp* root)
     gui_comp_attach(root, boss_stats);
 
     GUIComp* textbox = gui_comp_create(0, 50, 400, 50);
-    gui_comp_set_color(textbox, 255, 255, 255, 0);
+    gui_comp_set_color(textbox, 255, 255, 255, 100);
     gui_comp_set_valign(textbox, ALIGN_BOTTOM);
     gui_comp_set_font_size(textbox, 16);
     gui_comp_set_font(textbox, FONT_MONOSPACE);
@@ -292,8 +296,10 @@ static void load_preset_options(GUIComp* root)
 
 static void load_save(void)
 {
-    game_load_starting_area();
     game_resume_loop();
+    game_resume_render();
+    i32 id = game_preset_get_id("lobby");
+    event_create_game_preset_load(id);
 }
 
 static void save_onclick(GUIComp* comp, i32 button, i32 action, i32 mods)

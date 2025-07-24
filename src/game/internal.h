@@ -126,6 +126,7 @@ typedef struct Player {
     Weapon weapon;
     Weapon swap_out;
     Entity* entity;
+    vec2 position;
     f32 shot_timer;
     bool shooting;
     // store special states
@@ -402,6 +403,7 @@ typedef struct {
     bool kill_thread;
     bool halt_input;
     bool halt_game_loop;
+    bool halt_render;
     bool paused;
 } GameContext;
 
@@ -423,6 +425,9 @@ void game_set_player_position(vec2 position);
 
 // update game objects (entities, projectiles, etc)
 void game_update(void);
+
+// summon entity at player position or (0, 0) if player doesnt exist
+void game_summon(i32 id);
 
 // flag static objects for update
 void game_render_update_obstacles(void);

@@ -71,6 +71,8 @@ void firebullet(Projectile* proj, f32 dt)
 st_export void hand_of_shaitan_update(GlobalApi* api, Entity* entity, f32 dt)
 {
     HandData* data = entity->data;
+    if (data->daddy == NULL)
+        return;
     // instaneous velocity of a point in the motion of a circle 
     // is the orthogonal of its vector to the origin
     vec2 hand_pos = entity->position;
@@ -170,6 +172,7 @@ st_export void shaitan_hand_attack_2(GlobalApi* api, Entity* entity, f32 dt)
 st_export void hand_of_shaitan_create(GlobalApi* api, Entity* entity)
 {
     HandData* data = api->st_malloc(sizeof(HandData));
+    data->daddy = NULL;
     data->rotate_timer = 0;
     data->target_timer = 0;
     data->rotate_direction = 0;
@@ -187,11 +190,14 @@ st_export void hand_of_shaitan_destroy(GlobalApi* api, Entity* entity)
 {
     HandData* data = entity->data;
     Entity* daddy = data->daddy;
+    if (daddy == NULL)
+        goto free;
     AdvisorData* daddys_data = daddy->data;
     if (entity == daddys_data->hand1)
         daddys_data->hand1 = NULL;
     else if (entity == daddys_data->hand2)
         daddys_data->hand2 = NULL;
+free:
     api->st_free(entity->data);
 }
 
@@ -201,20 +207,20 @@ static void spawn_hands(GlobalApi* api, Entity* advisor)
     AdvisorData* advisor_data = advisor->data;
     HandData* data;
     i32 id = api->entity_get_id("hand_of_shaitan");
-    hand = api->entity_create(api->vec2_create(23, 16.5), id);
+    f32 x = advisor->position.x;
+    f32 y = advisor->position.y;
+    hand = api->entity_create(api->vec2_create(x+7.5, y), id);
     data = hand->data;
     data->daddy = advisor;
     advisor_data->hand1 = hand;
     data->rotate_direction = 0;
     data->target_rad = 0.2;
-    hand = api->entity_create(api->vec2_create(8, 16.5), id);
+    hand = api->entity_create(api->vec2_create(x-7.5, y), id);
     data = hand->data;
     data->daddy = advisor;
     advisor_data->hand2 = hand;
     data->rotate_direction = 1;
     data->target_rad = PI-0.2;
-    hand->position.x  = 8;
-    hand->position.y = 16.5;
 }
 
 st_export void shaitan_the_advisor_grow(GlobalApi* api, Entity* entity, f32 dt)
@@ -342,11 +348,11 @@ st_export void shaitan_the_advisor_create(GlobalApi* api, Entity* entity)
     data->hand1 = NULL;
     data->hand2 = NULL;
     entity->data = data;
-    entity->size = 3.0f;
+    entity->size = 0.0f;
     entity->hitbox_radius = 0.5f;
-    entity->health = 90;
+    entity->health = 100;
     entity->max_health = 100;
-    entity->state = api->entity_get_state_id(entity, "attack_1");
+    entity->state = api->entity_get_state_id(entity, "grow");
     api->entity_make_boss(entity);
 }
 
