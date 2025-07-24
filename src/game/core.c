@@ -47,9 +47,24 @@ void game_resume_loop(void)
     sem_post(&game_context.game_loop_sem);
 }
 
-void game_load_starting_area(void)
+void game_halt_input(void)
 {
-    game_preset_load(game_preset_map_id("shaitan"));
+    game_context.halt_input = true;
+}
+
+void game_resume_input(void)
+{
+    game_context.halt_input = false;
+}
+
+void game_halt_render(void)
+{
+    game_context.halt_render = true;
+}
+
+void game_resume_render(void)
+{
+    game_context.halt_render = false;
 }
 
 void game_init(void)
@@ -70,17 +85,8 @@ void game_init(void)
     camera_init();
     game_render_init();
     game_halt_loop();
+    game_halt_render();
     pthread_create(&game_context.thread_id, NULL, game_loop, NULL);
-}
-
-void game_halt_input(void)
-{
-    game_context.halt_input = true;
-}
-
-void game_resume_input(void)
-{
-    game_context.halt_input = false;
 }
 
 void game_cleanup(void)
@@ -119,4 +125,10 @@ f32 game_get_boss_health(void)
 f32 game_get_boss_max_health(void)
 {
     return game_context.values.boss_max_health;
+}
+
+void game_summon(i32 id)
+{
+    vec2 position = player_position();
+    entity_create(position, id);
 }

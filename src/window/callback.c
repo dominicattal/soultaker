@@ -34,8 +34,6 @@ void window_cursor_pos_callback(GLFWwindow* window, f64 xpos, f64 ypos)
 
 void window_key_callback(GLFWwindow* window, i32 key, i32 scancode, i32 action, i32 mods)
 {
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-        window_close();
     event_create_gui_key_callback(key, scancode, action, mods);
     game_key_callback(key, scancode, action, mods);
 }

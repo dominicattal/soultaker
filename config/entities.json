@@ -171,5 +171,16 @@
                 ]
             }
         }
+    },
+    "dummy": {
+        "states": {
+            "idle": {
+                "frames": 1,
+                "left": [ "dummy" ],
+                "right": [ "dummy" ],
+                "up": [ "dummy" ],
+                "down": [ "dummy" ]
+            }
+        }
     }
 }

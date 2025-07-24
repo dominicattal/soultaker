@@ -85,7 +85,9 @@ bool gui_char_callback(u32 codepoint);
 
 void gui_preset_load(GUIPreset preset);
 
-const char* gui_parse_command(char* command);
+// returns response from parsing command
+char* gui_command_parse(char* command);
+
 void gui_set_typing_comp(GUIComp* comp);
 
 void gui_render_init(void);

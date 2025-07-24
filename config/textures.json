@@ -11,6 +11,7 @@
     "pointer_weapon": "assets/textures/pointer.png",
     "null_weapon": "assets/textures/null.png",
     "null_ptr": "assets/textures/null_ptr.png",
+    "dummy": "assets/textures/dummy.png",
     "knight": {
         "spritesheet": true,
         "path": "assets/textures/knight_spritesheet.png",
@@ -45,6 +46,17 @@
                 "stretch_x": 1.375,
                 "stretch_y": 1.0
             }
+        }
+    },
+    "lobby": {
+        "spritesheet": true,
+        "path": "assets/textures/lobby.png",
+        "textures": {
+            "lobby_floor_1": [0, 0, 8, 8],
+            "lobby_floor_2": [9, 0, 8, 8],
+            "lobby_floor_3": [18, 0, 8, 8],
+            "lobby_wall_side": [36, 0, 8, 16],
+            "lobby_wall_top": [27, 0, 8, 8]
         }
     },
     "shaitan": {

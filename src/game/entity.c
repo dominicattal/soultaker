@@ -171,7 +171,7 @@ static void load_state_info(i32 entity_id, JsonObject* object)
         log_assert(json_get_type(value) == JTYPE_INT, "Number of frames for state %s is is not a int", name);
         num_frames = json_get_int(value);
 
-        state_ptr[i].name = copy_string(name);
+        state_ptr[i].name = string_copy(name);
         state_ptr[i].num_frames = num_frames;
         state_ptr[i].frames = st_malloc(4 * num_frames * sizeof(i32));
         state_ptr[i].frame_lengths = st_malloc(num_frames * sizeof(f32));
@@ -213,7 +213,7 @@ static void load_entity_info(void)
 
         string = json_member_key(member);
         log_assert(string, "Could not get key from entity config file");
-        entity_context.infos[i].name = copy_string(string);
+        entity_context.infos[i].name = string_copy(string);
 
         val_object = json_member_value(member);
         log_assert(val_object, "Could not get value from member");
@@ -249,7 +249,7 @@ i32 entity_get_id(const char* name)
         else
             return m;
     }
-    log_write(FATAL, "Could not get id for %s", name);
+    log_write(WARNING, "Could not get id for %s", name);
     return -1;
 }
 

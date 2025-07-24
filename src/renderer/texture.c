@@ -392,7 +392,7 @@ static void parse_texture(JsonMember* member, stbrp_rect* rects, i32 width, i32 
     char* texture_name;
     key = json_member_key(member);
     assert(key);
-    texture_name = copy_string(key);
+    texture_name = string_copy(key);
     value = json_member_value(member);
     assert(value);
     ParseObjectArgs args;

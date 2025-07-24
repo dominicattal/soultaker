@@ -35,8 +35,10 @@ void game_set_player_position(vec2 position)
 
 void player_reset(void)
 {
-    if (game_context.player.entity != NULL)
-        log_write(WARNING, "Did not free player entity before resetting");
+    if (game_context.player.entity != NULL) {
+        log_write(WARNING, "Did not destroy player entity before resetting");
+        entity_destroy(game_context.player.entity);
+    }
     i32 knight_id = entity_get_id("knight");
     Entity* entity = entity_create(vec2_create(0, 0), knight_id);
     game_context.player.entity = entity;
@@ -109,6 +111,9 @@ static void update_player_stats(Player* player)
 
 void player_update(Player* player, f32 dt)
 {
+    if (player->entity != NULL) {
+        player->position = player->entity->position;
+    }
     update_player_state(player, dt);
     update_player_stats(player);
 }
@@ -155,6 +160,11 @@ void player_shoot(Player* player)
     target = vec2_sub(player->entity->position, vec2_scale(direction, -2 * zoom * r * r / ratio));
     weapon_shoot(player, direction, target);
     player->entity->facing = direction;
+}
+
+vec2 player_position(void)
+{
+    return game_context.player.position;
 }
 
 f32 player_health(void)

@@ -27,6 +27,7 @@ typedef enum {
 
 typedef enum {
     TEX_GAME_SCENE,
+    TEX_GAME_SHADOW_SCENE,
     NUM_TEXTURES
 } TextureEnum;
 

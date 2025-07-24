@@ -36,7 +36,7 @@ void game_preset_init(void)
 
         string = json_member_key(member);
         log_assert(string, "Could not get key from preset config file");
-        preset_context.presets[i].name = copy_string(string);
+        preset_context.presets[i].name = string_copy(string);
 
         val_string = json_member_value(member);
         log_assert(val_string, "Could not get value from member");
@@ -53,7 +53,7 @@ void game_preset_init(void)
     json_object_destroy(json);
 }
 
-i32 game_preset_map_id(const char* name)
+i32 game_preset_get_id(const char* name)
 {
     int l, r, m, a;
     l = 0;
