@@ -170,6 +170,10 @@ Entity* entity_create(vec2 position, i32 id);
 void entity_update(Entity* entity, f32 dt);
 void entity_destroy(Entity* entity);
 
+// this will change the damage taken by an entity depending
+// on any modifiers it might have
+void entity_damage(Entity* entity, f32 damage);
+
 void entity_make_boss(Entity* entity);
 void entity_boss_update(Entity* entity);
 void entity_unmake_boss(Entity* entity);

@@ -51,15 +51,6 @@ static void update_player_mana(GUIComp* comp, f32 dt)
     gui_comp_set_w(current_mana, width);
 }
 
-static void update_boss_health(GUIComp* comp, f32 dt)
-{
-    GUIComp* current_health = comp->children[0];
-    f32 health = game_get_boss_health();
-    f32 max_health = game_get_boss_max_health();
-    i32 width = (i32)round(STAT_POINT_WIDTH * health / max_health);
-    gui_comp_set_w(current_health, width);
-}
-
 static void update_player_souls(GUIComp* comp, f32 dt)
 {
     GUIComp* current_souls = comp->children[0];
@@ -135,29 +126,148 @@ static GUIComp* create_player_souls(void)
     return player_souls;
 }
 
+typedef struct {
+    void* boss_ptr;
+    GUIComp* healthbar;
+} BossHealthData;
+
+typedef struct {
+    List* boss_healths;
+} BossHealthManagerData;
+
+void gui_create_boss_healthbar(void* boss_ptr, f32 health, f32 max_health)
+{
+    GUIComp* boss_health_manager = gui_get_event_comp(GUI_COMP_BOSS_HEALTH);
+    if (boss_health_manager == NULL)
+        return;
+
+    BossHealthManagerData* manager_data = boss_health_manager->data;
+    i32 idx = manager_data->boss_healths->length;
+
+    GUIComp* healthbar = gui_comp_create(0, 40 * idx, 100, 30);
+    gui_comp_set_align(healthbar, ALIGN_RIGHT, ALIGN_TOP);
+    gui_comp_set_color(healthbar, 0, 0, 0, 0);
+    gui_comp_attach(boss_health_manager, healthbar);
+
+    f32 health_ratio = health / max_health;
+    GUIComp* comp_health = gui_comp_create(0, 20, round(health_ratio * STAT_POINT_WIDTH), 20);
+    gui_comp_set_align(comp_health, ALIGN_RIGHT, ALIGN_TOP);
+    gui_comp_set_color(comp_health, 0, 255, 0, 255);
+    
+    GUIComp* comp_max_health = gui_comp_create(0, 20, STAT_POINT_WIDTH, 20);
+    gui_comp_set_align(comp_max_health, ALIGN_RIGHT, ALIGN_TOP);
+    gui_comp_set_color(comp_max_health, 255, 0, 0, 255);
+
+    GUIComp* comp_text = gui_comp_create(0, 20, STAT_POINT_WIDTH, 20);
+    gui_comp_set_align(comp_text, ALIGN_RIGHT, ALIGN_TOP);
+    gui_comp_set_color(comp_text, 0, 0, 0, 0);
+    gui_comp_set_text_align(comp_text, ALIGN_CENTER, ALIGN_CENTER);
+    char* text = string_create("%.0f/%.0f", health, max_health);
+    gui_comp_set_text(comp_text, strlen(text), text);
+    string_free(text);
+
+    GUIComp* comp_name = gui_comp_create(0, 0, STAT_POINT_WIDTH, 20);
+    gui_comp_set_align(comp_name, ALIGN_RIGHT, ALIGN_TOP);
+    gui_comp_set_color(comp_name, 255, 255, 255, 255);
+    gui_comp_set_text_align(comp_name, ALIGN_CENTER, ALIGN_CENTER);
+    const char* string = "Shaitan the Advisor";
+    gui_comp_set_text(comp_name, strlen(string), string);
+
+    gui_comp_attach(healthbar, comp_max_health);
+    gui_comp_attach(healthbar, comp_health);
+    gui_comp_attach(healthbar, comp_text);
+    gui_comp_attach(healthbar, comp_name);
+
+    BossHealthData* data = st_malloc(sizeof(BossHealthData));
+    data->boss_ptr = boss_ptr;
+    data->healthbar = healthbar;
+    list_append(manager_data->boss_healths, data);
+}
+
+void gui_update_boss_healthbar(void* boss_ptr, f32 health, f32 max_health)
+{
+    GUIComp* boss_health_manager = gui_get_event_comp(GUI_COMP_BOSS_HEALTH);
+    if (boss_health_manager == NULL)
+        return;
+
+    BossHealthManagerData* manager_data = boss_health_manager->data;
+    BossHealthData* data;
+    i32 idx;
+    List* boss_healths = manager_data->boss_healths;
+    for (idx = 0; idx < boss_healths->length; idx++) {
+        data = list_get(boss_healths, idx);
+        if (data->boss_ptr == boss_ptr)
+            break;
+    }
+
+    // boss healthbar not in list
+    if (idx == boss_healths->length)
+        return;
+
+    GUIComp* healthbar = data->healthbar;
+    GUIComp* comp_health = healthbar->children[1];
+    GUIComp* comp_text = healthbar->children[2];
+
+    char* text = string_create("%.0f/%.0f", health, max_health);
+    gui_comp_set_text(comp_text, strlen(text), text);
+    string_free(text);
+
+    f32 health_ratio = health / max_health;
+    gui_comp_set_w(comp_health, round(health_ratio * STAT_POINT_WIDTH));
+}
+
+void gui_destroy_boss_healthbar(void* boss_ptr)
+{
+    GUIComp* boss_health_manager = gui_get_event_comp(GUI_COMP_BOSS_HEALTH);
+    if (boss_health_manager == NULL)
+        return;
+
+    BossHealthManagerData* manager_data = boss_health_manager->data;
+    BossHealthData* data;
+    i32 idx;
+    List* boss_healths = manager_data->boss_healths;
+    for (idx = 0; idx < boss_healths->length; idx++) {
+        data = list_get(boss_healths, idx);
+        if (data->boss_ptr == boss_ptr)
+            break;
+    }
+
+    // boss healthbar not in list
+    if (idx == boss_healths->length)
+        return;
+
+    gui_comp_detach_and_destroy(boss_health_manager, data->healthbar);
+    st_free(list_remove_in_order(boss_healths, idx));
+}
+
+static void boss_health_manager_destroy(GUIComp* comp)
+{
+    BossHealthManagerData* data = comp->data;
+    while (!list_empty(data->boss_healths))
+        st_free(list_remove(data->boss_healths, 0));
+    list_destroy(data->boss_healths);
+}
+
 static GUIComp* create_boss_health()
 {
-    GUIComp* boss_health = gui_comp_create(0, 0, STAT_POINT_WIDTH, 20);
-    boss_health->update= update_boss_health;
-    gui_comp_set_align(boss_health, ALIGN_RIGHT, ALIGN_TOP);
-    gui_comp_set_color(boss_health, 255, 0, 0, 255);
+    GUIComp* boss_health_manager = gui_comp_create(0, 0, 0, 0);
+    BossHealthManagerData* data = st_malloc(sizeof(BossHealthManagerData));
+    data->boss_healths = list_create();
+    boss_health_manager->destroy = boss_health_manager_destroy;
+    boss_health_manager->data = data;
+    gui_comp_set_color(boss_health_manager, 0, 0, 0, 0);
+    gui_set_event_comp(GUI_COMP_BOSS_HEALTH, boss_health_manager);
+    return boss_health_manager;
+}
 
-    GUIComp* current_health = gui_comp_create(0, 0, STAT_POINT_WIDTH, 20);
-    gui_comp_set_align(current_health, ALIGN_RIGHT, ALIGN_TOP);
-    gui_comp_set_color(current_health, 0, 255, 0, 255);
+void gui_update_weapon_info(i32 weapon_id)
+{
+    GUIComp* comp = gui_get_event_comp(GUI_COMP_WEAPON_INFO);
+    if (comp == NULL)
+        return;
 
-    GUIComp* hp_text = gui_comp_create(0, 0, STAT_POINT_WIDTH, 20);
-    gui_comp_set_align(hp_text, ALIGN_RIGHT, ALIGN_TOP);
-    gui_comp_set_text_align(hp_text, ALIGN_CENTER, ALIGN_CENTER);
-    gui_comp_set_color(hp_text, 0, 0, 0, 0);
-    gui_comp_set_text(hp_text, 2, "HP");
-    gui_comp_set_font_size(hp_text, 16);
-    gui_comp_set_font(hp_text, FONT_MONOSPACE);
-
-    gui_comp_attach(boss_health, current_health);
-    gui_comp_attach(boss_health, hp_text);
-
-    return boss_health;
+    i32 tex_id = weapon_get_tex_id(weapon_id);
+    gui_comp_set_tex(comp, tex_id);
 }
 
 static void load_preset_game(GUIComp* root)
@@ -174,7 +284,7 @@ static void load_preset_game(GUIComp* root)
     gui_comp_attach(player_stats, player_souls);
     gui_comp_attach(root, player_stats);
 
-    GUIComp* boss_stats = gui_comp_create(20, 20, 400, 50);
+    GUIComp* boss_stats = gui_comp_create(20, 20, 0, 0);
     gui_comp_set_align(boss_stats, ALIGN_RIGHT, ALIGN_TOP);
     
     GUIComp* boss_health = create_boss_health();
@@ -298,7 +408,7 @@ static void load_save(void)
 {
     game_resume_loop();
     game_resume_render();
-    i32 id = game_preset_get_id("lobby");
+    i32 id = game_preset_get_id("shaitan");
     event_create_game_preset_load(id);
 }
 
