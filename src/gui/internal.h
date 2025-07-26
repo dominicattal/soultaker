@@ -31,6 +31,7 @@ typedef void (*GUIHoverFPtr)(GUIComp* comp, bool status);
 typedef void (*GUIClickFPtr)(GUIComp* comp, i32 button, i32 action, i32 mods);
 typedef void (*GUIKeyFPtr)(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods);
 typedef void (*GUIUpdateFPtr)(GUIComp* comp, f32 dt);
+typedef void (*GUICompDestroyFPtr)(GUIComp* comp);
 
 typedef struct GUIComp {
     u64 info1;
@@ -40,6 +41,7 @@ typedef struct GUIComp {
     GUIHoverFPtr hover;
     GUIClickFPtr click;
     GUIKeyFPtr key;
+    GUICompDestroyFPtr destroy;
     void* data;
     GUIComp* parent;
     GUIComp** children;
@@ -55,6 +57,7 @@ typedef struct GUIData {
 typedef enum {
     GUI_COMP_TYPING,
     GUI_COMP_WEAPON_INFO,
+    GUI_COMP_BOSS_HEALTH,
     NUM_GUI_EVENT_COMPS
 } GUIEventCompEnum;
 
@@ -75,7 +78,11 @@ GUIComp* gui_get_event_comp(GUIEventCompEnum type);
 void gui_set_event_comp(GUIEventCompEnum type, GUIComp* comp);
 bool gui_event_comp_equal(GUIEventCompEnum type, GUIComp* comp);
 
+// events
 void gui_update_weapon_info(i32 weapon_id);
+void gui_create_boss_healthbar(void* boss_ptr, f32 health, f32 max_health);
+void gui_update_boss_healthbar(void* boss_ptr, f32 health, f32 max_health);
+void gui_destroy_boss_healthbar(void* boss_ptr);
 
 void gui_framebuffer_size_callback(i32 width, i32 height);
 bool gui_cursor_pos_callback(f64 xpos, f64 ypos);
@@ -104,12 +111,29 @@ void gui_comp_update(GUIComp* comp, f32 dt);
 
 void gui_comp_init(void);
 void gui_comp_cleanup(void);
+
+// create a new gui component with default values
 GUIComp* gui_comp_create(i16 x, i16 y, i16 w, i16 h);
+
+// attach a component to another component. the child component's alignment 
+// is done relative to its parent
 void gui_comp_attach(GUIComp* parent, GUIComp* child);
+
+// detach a child from its parent. if the parent does not own the child,
+// then it will do nothing
 void gui_comp_detach(GUIComp* parent, GUIComp* child);
+
+// destroy component and its children. the component will call its destroy function
+// before destroying its children. this is done so components that store its children
+// as data can freely alter them without creating dangling pointers.
 void gui_comp_destroy(GUIComp* comp);
-void gui_comp_destroy_children(GUIComp* comp);
+
+// calls gui_comp_detach then gui_comp_destroy
 void gui_comp_detach_and_destroy(GUIComp* parent, GUIComp* child);
+
+// destroy all of a component's children. 
+void gui_comp_destroy_children(GUIComp* comp);
+
 void gui_comp_set_text(GUIComp* comp, i32 length, const char* text);
 void gui_comp_insert_char(GUIComp* comp, const char character, i32 idx);
 void gui_comp_delete_char(GUIComp* comp, i32 idx);

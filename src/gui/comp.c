@@ -43,6 +43,8 @@ void gui_comp_attach(GUIComp* parent, GUIComp* child)
 
 void gui_comp_detach(GUIComp* parent, GUIComp* child)
 {
+    if (parent != child->parent)
+        log_write(WARNING, "specified component does not match child's parent");
     i32 num_children;
     gui_comp_get_num_children(parent, &num_children);
     for (i32 i = 0; i < num_children; i++) {
@@ -66,6 +68,8 @@ void gui_comp_destroy(GUIComp* comp)
     for (i32 i = 0; i < NUM_GUI_EVENT_COMPS; i++)
         if (gui_context.event_comps[i] == comp)
             gui_context.event_comps[i] = NULL;
+    if (comp->destroy != NULL)
+        comp->destroy(comp);
     for (i32 i = 0; i < gui_comp_num_children(comp); i++)
         gui_comp_destroy(comp->children[i]);
     st_free(comp->children);
@@ -174,16 +178,6 @@ void gui_comp_update(GUIComp* comp, f32 dt)
    if (comp->update == NULL)
        return;
    ((GUIUpdateFPtr)(comp->update))(comp, dt);
-}
-
-void gui_update_weapon_info(i32 weapon_id)
-{
-    GUIComp* comp = gui_get_event_comp(GUI_COMP_WEAPON_INFO);
-    if (comp == NULL)
-        return;
-
-    i32 tex_id = weapon_get_tex_id(weapon_id);
-    gui_comp_set_tex(comp, tex_id);
 }
 
 void align_comp_position_x(i32* position_x, u8 halign, i32 size_x, i32 x, i32 w)

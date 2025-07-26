@@ -1,6 +1,7 @@
 #include "internal.h"
 #include "../state.h"
 #include "../api.h"
+#include "../event.h"
 #include <windows.h>
 #include <json.h>
 #include <math.h>
@@ -360,12 +361,21 @@ void entity_update(Entity* entity, f32 dt)
     entity_context.infos[entity->id].states[entity->state].update(&global_api, entity, dt);
 }
 
+void entity_damage(Entity* entity, f32 damage)
+{
+    entity->health -= damage;
+    if (!entity_get_flag(entity, ENTITY_FLAG_BOSS))
+        return;
+    event_create_gui_update_boss_healthbar(entity, entity->health, entity->max_health);
+}
+
 void entity_make_boss(Entity* entity)
 {
     list_append(game_context.bosses, entity);
     log_assert(!entity_get_flag(entity, ENTITY_FLAG_BOSS), "Entity is already boss");
     entity_set_flag(entity, ENTITY_FLAG_BOSS, 1);
     entity_boss_update(entity);
+    event_create_gui_create_boss_healthbar(entity, entity->health, entity->max_health);
     pthread_mutex_lock(&game_context.getter_mutex);
     game_context.values.num_bosses = 1;
     game_context.values.boss_health = entity->health;
@@ -388,6 +398,7 @@ void entity_unmake_boss(Entity* entity)
     log_assert(idx != -1, "Entity %p was not found in boss list", entity);
     list_remove(game_context.bosses, idx);
     entity_set_flag(entity, ENTITY_FLAG_BOSS, 0);
+    event_create_gui_destroy_boss_healthbar(entity);
     pthread_mutex_lock(&game_context.getter_mutex);
     game_context.values.num_bosses = 0;
     game_context.values.boss_health = 0;

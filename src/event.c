@@ -21,6 +21,10 @@ typedef enum {
     GUI_EVENT_KEY_CALLBACK,
     GUI_EVENT_CHAR_CALLBACK,
     GUI_EVENT_UPDATE_WEAPON_INFO,
+    GUI_EVENT_CREATE_BOSS_HEALTHBAR,
+    GUI_EVENT_DESTROY_BOSS_HEALTHBAR,
+    GUI_EVENT_UPDATE_BOSS_HEALTHBAR
+
 } EventEnum;
 
 typedef union {
@@ -31,6 +35,7 @@ typedef union {
 typedef struct {
     EventEnum type;
     IntFloat32 arg1, arg2, arg3, arg4;
+    void* ptr;
 } Event;
 
 typedef struct {
@@ -87,10 +92,12 @@ static EventQueue* get_event_queue(const char* name)
 static void execute_event(Event event)
 {
     IntFloat32 arg1, arg2, arg3, arg4;
+    void* ptr;
     arg1 = event.arg1;
     arg2 = event.arg2;
     arg3 = event.arg3;
     arg4 = event.arg4;
+    ptr = event.ptr;
     switch (event.type) {
         case EVENT_NONE:
             break;
@@ -130,6 +137,15 @@ static void execute_event(Event event)
             break;
         case GUI_EVENT_UPDATE_WEAPON_INFO:
             gui_update_weapon_info(arg1._int);
+            break;
+        case GUI_EVENT_CREATE_BOSS_HEALTHBAR:
+            gui_create_boss_healthbar(ptr, arg1._flt, arg2._flt);
+            break;
+        case GUI_EVENT_UPDATE_BOSS_HEALTHBAR:
+            gui_update_boss_healthbar(ptr, arg1._flt, arg2._flt);
+            break;
+        case GUI_EVENT_DESTROY_BOSS_HEALTHBAR:
+            gui_destroy_boss_healthbar(ptr);
             break;
     }
 }
@@ -265,6 +281,40 @@ void event_create_gui_update_weapon_info(i32 weapon_id)
     Event event = (Event) {
         .type = GUI_EVENT_UPDATE_WEAPON_INFO,
         .arg1._int = weapon_id
+    };
+    EventQueue* queue = get_event_queue("GUI");
+    event_enqueue(queue, event);
+}
+
+void event_create_gui_create_boss_healthbar(void* boss_ptr, f32 health, f32 max_health)
+{
+    Event event = (Event) {
+        .type = GUI_EVENT_CREATE_BOSS_HEALTHBAR,
+        .arg1._flt = health,
+        .arg2._flt = max_health,
+        .ptr = boss_ptr
+    };
+    EventQueue* queue = get_event_queue("GUI");
+    event_enqueue(queue, event);
+}
+
+void event_create_gui_update_boss_healthbar(void* boss_ptr, f32 health, f32 max_health)
+{
+    Event event = (Event) {
+        .type = GUI_EVENT_UPDATE_BOSS_HEALTHBAR,
+        .arg1._flt = health,
+        .arg2._flt = max_health,
+        .ptr = boss_ptr
+    };
+    EventQueue* queue = get_event_queue("GUI");
+    event_enqueue(queue, event);
+}
+
+void event_create_gui_destroy_boss_healthbar(void* boss_ptr)
+{
+    Event event = (Event) {
+        .type = GUI_EVENT_DESTROY_BOSS_HEALTHBAR,
+        .ptr = boss_ptr
     };
     EventQueue* queue = get_event_queue("GUI");
     event_enqueue(queue, event);

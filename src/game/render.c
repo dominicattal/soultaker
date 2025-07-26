@@ -910,7 +910,6 @@ void game_render(void)
     unit = texture_get_unit(TEX_GAME_SCENE);
     loc = shader_get_uniform_location(SHADER_PROGRAM_SCREEN, "screenTex"); 
     glUniform1i(loc, unit);
-    glActiveTexture(GL_TEXTURE0 + unit);
     glBindVertexArray(render_context.vaos[VAO_QUAD]);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     glStencilFunc(GL_NOTEQUAL, 1, 0x01);
@@ -922,7 +921,6 @@ void game_render(void)
     unit = texture_get_unit(TEX_GAME_SHADOW_SCENE);
     loc = shader_get_uniform_location(SHADER_PROGRAM_SCREEN, "screenTex"); 
     glUniform1i(loc, unit);
-    glActiveTexture(GL_TEXTURE0 + unit);
     glBindVertexArray(render_context.vaos[VAO_QUAD]);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
@@ -934,18 +932,14 @@ void game_render_framebuffer_size_callback(void)
      || render_context.shadow_fbo == 0)
         return;
 
-    GLuint unit, name;
-    unit = texture_get_unit(TEX_GAME_SCENE);
+    GLuint name;
     name = texture_get_name(TEX_GAME_SCENE);
     glBindFramebuffer(GL_FRAMEBUFFER, render_context.fbo);
-    glActiveTexture(GL_TEXTURE0 + unit);
     glBindTexture(GL_TEXTURE_2D, name);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, window_width(), window_height(),
             0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    unit = texture_get_unit(TEX_GAME_SHADOW_SCENE);
     name = texture_get_name(TEX_GAME_SHADOW_SCENE);
     glBindFramebuffer(GL_FRAMEBUFFER, render_context.shadow_fbo);
-    glActiveTexture(GL_TEXTURE0 + unit);
     glBindTexture(GL_TEXTURE_2D, name);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, window_width(), window_height(),
             0, GL_RGB, GL_UNSIGNED_BYTE, NULL);

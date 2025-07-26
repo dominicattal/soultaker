@@ -3,8 +3,6 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#define RESIZE_LENGTH 10
-
 List* list_create(void)
 {
     List* list = st_malloc(sizeof(List));
@@ -16,7 +14,7 @@ List* list_create(void)
 void list_append(List* list, void* item)
 {
     if (list->length >= list->capacity) {
-        list->capacity += RESIZE_LENGTH;
+        list->capacity += LIST_RESIZE_LENGTH;
         if (list->buffer == NULL)
             list->buffer = st_malloc(list->capacity * sizeof(void*));
         else
@@ -25,18 +23,33 @@ void list_append(List* list, void* item)
     list->buffer[list->length++] = item;
 }
 
+static void downsize_list(List* list)
+{
+    if (list->length % LIST_RESIZE_LENGTH != 0)
+        return;
+    list->capacity = list->length;
+    if (list->capacity == 0) {
+        st_free(list->buffer);
+        list->buffer = NULL;
+    } else
+        list->buffer = st_realloc(list->buffer, list->capacity * sizeof(void*));
+}
+
 void* list_remove(List* list, i32 idx)
 {
     void* data = list->buffer[idx];
     list->buffer[idx] = list->buffer[--list->length];
-    if (list->length % RESIZE_LENGTH == 0) {
-        list->capacity = list->length;
-        if (list->capacity == 0) {
-            st_free(list->buffer);
-            list->buffer = NULL;
-        } else
-            list->buffer = st_realloc(list->buffer, list->capacity * sizeof(void*));
-    }
+    downsize_list(list);
+    return data;
+}
+
+void* list_remove_in_order(List* list, i32 idx)
+{
+    void* data = list->buffer[idx];
+    for (i32 i = idx; i < list->length-1; i++)
+        list->buffer[i] = list->buffer[i+1];
+    list->length--;
+    downsize_list(list);
     return data;
 }
 
@@ -46,21 +59,6 @@ i32 list_search(List* list, void* item)
         if (list->buffer[i] == item)
             return i;
     return -1;
-}
-
-void* list_pop(List* list, i32 idx)
-{
-    void* data = list->buffer[idx];
-    list->buffer[idx] = list->buffer[--list->length];
-    if (list->length % RESIZE_LENGTH == 0) {
-        list->capacity = list->length;
-        if (list->capacity == 0) {
-            st_free(list->buffer);
-            list->buffer = NULL;
-        } else
-            list->buffer = st_realloc(list->buffer, list->capacity * sizeof(void*));
-    }
-    return data;
 }
 
 void list_clear(List* list)
