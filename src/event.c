@@ -8,7 +8,7 @@ typedef enum {
     EVENT_NONE,
 
     // Game Events
-    GAME_EVENT_PRESET_LOAD,
+    GAME_EVENT_MAP_LOAD,
     GAME_EVENT_CAMERA_MOVE,
     GAME_EVENT_SWAP_WEAPONS,
     GAME_EVENT_SUMMON,
@@ -103,8 +103,8 @@ static void execute_event(Event event)
             break;
 
         // Game events
-        case GAME_EVENT_PRESET_LOAD:
-            game_preset_load(arg1._int);
+        case GAME_EVENT_MAP_LOAD:
+            map_load(arg1._int);
             break;
         case GAME_EVENT_CAMERA_MOVE:
             camera_move(vec2_create(arg1._flt, arg2._flt));
@@ -166,11 +166,11 @@ void event_queue_flush(void)
 // Game Events
 //**************************************************************************
 
-void event_create_game_preset_load(i32 preset_id)
+void event_create_game_map_load(i32 map_id)
 {
     Event event = (Event) {
-        .type = GAME_EVENT_PRESET_LOAD,
-        .arg1._int = preset_id
+        .type = GAME_EVENT_MAP_LOAD,
+        .arg1._int = map_id
     };
     EventQueue* queue = get_event_queue("Game");
     event_enqueue(queue, event);

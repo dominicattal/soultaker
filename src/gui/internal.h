@@ -22,7 +22,7 @@ typedef enum {
     GUI_PRESET_MAIN_MENU,
     GUI_PRESET_OPTIONS,
     GUI_PRESET_GAME,
-    GUI_PRESET_SAVES,
+    GUI_PRESET_RUNS,
     NUM_GUI_PRESETS
 } GUIPreset;
 
@@ -134,7 +134,17 @@ void gui_comp_detach_and_destroy(GUIComp* parent, GUIComp* child);
 // destroy all of a component's children. 
 void gui_comp_destroy_children(GUIComp* comp);
 
-void gui_comp_set_text(GUIComp* comp, i32 length, const char* text);
+// sets the comp's text and length. text becomes owned by the comp, so
+// it should no longer be altered. text must be on the heap.
+void gui_comp_set_text(GUIComp* comp, i32 length, char* text);
+
+// copies length characters from string text. text does not become owned by
+// the comp, so it should be deallocated properly. text does not have to be on heap.
+void gui_comp_copy_text(GUIComp* comp, i32 length, const char* text);
+
+// removes the comp's current text, freeing it and setting it to NULL
+void gui_comp_remove_text(GUIComp* comp);
+
 void gui_comp_insert_char(GUIComp* comp, const char character, i32 idx);
 void gui_comp_delete_char(GUIComp* comp, i32 idx);
 void gui_comp_update(GUIComp* comp, f32 dt);

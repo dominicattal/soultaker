@@ -26,7 +26,7 @@ GlobalApi global_api = {
     REGISTER(tile_lava_collision),
 
     // Map
-    REGISTER(map_load),
+    REGISTER(map_create),
     REGISTER(map_free),
 
     // Projectile

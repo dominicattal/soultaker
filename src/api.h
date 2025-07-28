@@ -29,7 +29,7 @@ typedef struct {
     void (*tile_lava_collision)(Entity* entity);
 
     // Map
-    Map* (*map_load)(const char* path);
+    Map* (*map_create)(const char* path);
     void (*map_free)(Map* map);
 
     // Projectile

@@ -4,7 +4,7 @@
 #include "util.h"
 
 i32 entity_get_id(const char* name);
-i32 game_preset_get_id(const char* name);
+i32 map_get_id(const char* name);
 
 f32 game_get_dt(void);
 f32 game_get_boss_health(void);

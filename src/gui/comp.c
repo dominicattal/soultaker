@@ -92,11 +92,21 @@ void gui_comp_detach_and_destroy(GUIComp* parent, GUIComp* child)
     gui_comp_destroy(child);
 }
 
-void gui_comp_set_text(GUIComp* comp, i32 length, const char* text)
+void gui_comp_set_text(GUIComp* comp, i32 length, char* text)
 {
-    log_assert(text != NULL, "Tried to assign NULL text to component");
     gui_comp_set_text_length(comp, length);
-    st_free(comp->text);
+    string_free(comp->text);
+    if (length == 0) {
+        comp->text = NULL;
+        return;
+    }
+    comp->text = text;
+}
+
+void gui_comp_copy_text(GUIComp* comp, i32 length, const char* text)
+{
+    gui_comp_set_text_length(comp, length);
+    string_free(comp->text);
     if (length == 0) {
         comp->text = NULL;
         return;
@@ -106,6 +116,13 @@ void gui_comp_set_text(GUIComp* comp, i32 length, const char* text)
     strncpy(new_text, text, length + 1);
     new_text[length] = '\0';
     comp->text = new_text;
+}
+
+void gui_comp_remove_text(GUIComp* comp)
+{
+    gui_comp_set_text_length(comp, 0);
+    string_free(comp->text);
+    comp->text = NULL;
 }
 
 void gui_comp_insert_char(GUIComp* comp, const char c, i32 idx)
