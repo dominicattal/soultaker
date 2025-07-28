@@ -14,7 +14,7 @@
 void event_queue_flush(void);
 
 // Game events
-void event_create_game_preset_load(i32 id);
+void event_create_game_map_load(i32 id);
 void event_create_game_camera_move(vec2 mag);
 void event_create_game_swap_weapons(void);
 void event_create_game_summon(i32 id);

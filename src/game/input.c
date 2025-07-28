@@ -1,7 +1,3 @@
-/* 
- * On opengl context thread
-*/
-
 #include "internal.h"
 #include "../window.h"
 #include "../event.h"
@@ -10,8 +6,6 @@ extern GameContext game_context;
 
 void game_process_input(f32 dt)
 {
-    if (game_context.halt_input)
-        return;
     if (game_context.halt_game_loop)
         return;
 
@@ -19,6 +13,10 @@ void game_process_input(f32 dt)
     f32 rotate_mag = 0;
     f32 tilt_mag = 0; 
     game_context.player.shooting = false;
+
+    if (game_context.halt_input)
+        goto update;
+
     if (window_get_key(GLFW_KEY_W) == GLFW_PRESS)
         move_mag.x += 1;
     if (window_get_key(GLFW_KEY_S) == GLFW_PRESS)
@@ -37,6 +35,8 @@ void game_process_input(f32 dt)
         tilt_mag -= 1;
     if (window_get_mouse_button(GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
         game_context.player.shooting = true;
+
+update:
     event_create_game_camera_move(vec2_scale(vec2_normalize(move_mag), dt));
     camera_rotate(rotate_mag * dt);
     camera_tilt(tilt_mag * dt);

@@ -3,13 +3,17 @@
 
 #include "type.h"
 
-#define STRING_CREATE_MAX_LENGTH 1000
-
 void sleep(i32 msec);
 f64  get_time(void);
-f32  state_dt(void);
+
+// create a copy of string on the heap
 char* string_copy(const char* string);
-char* string_create(const char* format, ...);
+
+// create a string with the format that is 
+// at most n characters long
+char* string_create(const char* format, int n, ...);
+
+// free a string created by string_copy or string_create
 void  string_free(char* string);
 
 #endif

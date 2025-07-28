@@ -72,7 +72,7 @@ void game_init(void)
     pthread_mutex_init(&game_context.getter_mutex, NULL);
     sem_init(&game_context.game_loop_sem, 0, 1);
 
-    game_preset_init();
+    map_init();
     tile_init();
     wall_init();
     weapon_init();
@@ -108,7 +108,7 @@ void game_cleanup(void)
     obstacle_cleanup();
     particle_cleanup();
     parjicle_cleanup();
-    game_preset_cleanup();
+    map_cleanup();
 
 }
 

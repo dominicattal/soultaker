@@ -59,10 +59,7 @@ void camera_rotate(f32 mag);
 void camera_tilt(f32 mag);
 
 //**************************************************************************
-// Map definitions
-// Maps load an image file, which can then be mapped into tiles and walls
-// based on the colors of the pixels. This is cumbersome and will change
-// if I can think of a better way to do it.
+// map
 //**************************************************************************
 
 typedef struct Map {
@@ -71,19 +68,12 @@ typedef struct Map {
 } Map;
 
 // Load rgb values from image path
-Map* map_load(const char* path);
+Map* map_create(const char* path);
 void map_free(Map* map);
 
-//**************************************************************************
-// Preset definitions
-// Presets are the instructions for loading the game objects
-// for a level.
-// TODO: make this thread safe for use with gui
-//**************************************************************************
-
-void game_preset_init(void);
-void game_preset_load(i32 id);
-void game_preset_cleanup(void);
+void map_init(void);
+void map_load(i32 id);
+void map_cleanup(void);
 
 //**************************************************************************
 // Entity, Player, Boss definitions

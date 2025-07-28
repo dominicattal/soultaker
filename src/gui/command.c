@@ -32,6 +32,8 @@ static struct {
 
 } command_context;
 
+#define MAX_STRING_LENGTH 1024
+
 static char* state_string(CommandState state)
 {
     char* message;
@@ -53,18 +55,19 @@ static char* state_string(CommandState state)
             break;
         case CS_PRESETFIN:
             message = string_create("Successfully loaded preset %s", 
-                    command_context.arg_string);
+                    MAX_STRING_LENGTH, command_context.arg_string);
             break;
         case CS_POSITIONFIN:
             vec2 position = player_position();
-            message = string_create("%.2f %.2f", position.x, position.y);
+            message = string_create("%.2f %.2f", 
+                    MAX_STRING_LENGTH, position.x, position.y);
             break;
         case CS_SUMMON:
-            message = string_create("Must provide entity name");
+            message = string_copy("Must provide entity name");
             break;
         case CS_SUMMONFIN:
             message = string_create("Successfully summoned %s", 
-                    command_context.arg_string);
+                    MAX_STRING_LENGTH, command_context.arg_string);
             break;
         case CS_RESPAWNFIN:
             message = string_copy("Respawned");
@@ -137,13 +140,13 @@ static CommandState new_state(CommandState state, char* command, i32 left, i32 r
             c = command[right+1];
             command[right+1] = '\0';
             command_context.arg_string = string_copy(command+left);
-            id = game_preset_get_id(command+left);
+            id = map_get_id(command+left);
             command[right+1] = c;
             if (id == -1) {
                 command_context.error_message = "Invalid preset name";
                 return CS_ERROR;
             }
-            event_create_game_preset_load(id);
+            event_create_game_map_load(id);
             return CS_PRESETFIN;
         default:
             return CS_ERROR;

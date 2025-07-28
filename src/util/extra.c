@@ -27,14 +27,16 @@ char* string_copy(const char* string)
     return copied;
 }
 
-char* string_create(const char* format, ...)
+char* string_create(const char* format, int n, ...)
 {
-    static char string[STRING_CREATE_MAX_LENGTH+1];
+    char* string = st_malloc((n+1) * sizeof(char));
     va_list args;
-    va_start(args, format);
-    vsnprintf(&string[0], STRING_CREATE_MAX_LENGTH, format, args);
+    va_start(args, n);
+    vsnprintf(&string[0], n, format, args);
     va_end(args);
-    return string_copy(string);
+    i32 len = strlen(string);
+    string = st_realloc(string, (len+1) * sizeof(char));
+    return string;
 }
 
 void string_free(char* string)

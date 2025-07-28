@@ -361,10 +361,10 @@ st_export void shaitan_the_advisor_destroy(GlobalApi* api, Entity* entity)
     api->st_free(entity->data);
 }
 
-st_export void game_preset_load_shaitan(GlobalApi* api)
+st_export void game_level_load_shaitan(GlobalApi* api)
 {
     api->game_set_player_position(api->vec2_create(20, 20));
-    Map* map = api->map_load("assets/maps/shaitan.png");
+    Map* map = api->map_create("assets/maps/shaitan.png");
     vec2 position;
     for (i32 i = 0; i < map->length; i++) {
         for (i32 j = 0; j < map->width; j++) {

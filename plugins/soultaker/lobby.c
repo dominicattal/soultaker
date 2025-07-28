@@ -30,10 +30,10 @@ static void create_unit(GlobalApi* api, u32 color, vec2 position)
     }
 }
 
-st_export void game_preset_load_lobby(GlobalApi* api)
+st_export void game_level_load_lobby(GlobalApi* api)
 {
     api->game_set_player_position(api->vec2_create(60, 30));
-    Map* map = api->map_load("assets/maps/lobby.png");
+    Map* map = api->map_create("assets/maps/lobby.png");
     vec2 position;
     for (i32 i = 0; i < map->length; i++) {
         for (i32 j = 0; j < map->width; j++) {
