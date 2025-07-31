@@ -6,6 +6,8 @@
 #include <json.h>
 #include <math.h>
 
+#define DEFAULT_FRAME_LENGTH 0.5
+
 extern GameContext game_context;
 
 typedef void (*CreateFuncPtr)(GlobalApi*, Entity*);
@@ -33,53 +35,79 @@ typedef struct {
 typedef struct {
     EntityInfo* infos;
     i32 num_entities;
+
+    // error handling when loading from config file
+    const char* current_entity_name;
+    const char* current_state_name;
+    const char* current_function_name;
 } EntityContext;
 
 static EntityContext entity_context;
 
-static void default_update_function(GlobalApi*, Entity*, f32) {}
-static void default_create_function(GlobalApi*, Entity*) {}
-static void default_destroy_function(GlobalApi*, Entity*) {}
+typedef enum {
+    ERROR_GENERIC,
+    ERROR_INVALID_TYPE,
+    ERROR_MISSING,
+    ERROR_LOAD_FAILURE,
+    ERROR_INVALID_COUNT,
+    ERROR_CONFIG_FILE
+} EntityError;
 
-static CreateFuncPtr load_create_function(JsonObject* object, i32 entity_id)
+static void _throw_entity_error(EntityError error, i32 line)
 {
-    JsonValue* val_string = json_get_value(object, "create");
-    const char* name = entity_context.infos[entity_id].name;
-    if (val_string == NULL)
-        return default_create_function;
-    log_assert(json_get_type(val_string) == JTYPE_STRING, "Create function for %s is not a string", name);
-    const char* function_name = json_get_string(val_string);
-    log_assert(function_name, "Failed to get create function name for %s from json value", name);
-    CreateFuncPtr fptr = state_load_function(function_name);
-    log_assert(fptr, "Failed to find function %s for entity %s in library", function_name, name);
-    return fptr;
+    const char* name = entity_context.current_entity_name;
+    const char* state = entity_context.current_state_name;
+    const char* func = entity_context.current_function_name;
+    const char* message;
+
+    switch (error) {
+        case ERROR_GENERIC:
+            message = "generic error";
+            break;
+        case ERROR_INVALID_TYPE:
+            message = "invalid type";
+            break;
+        case ERROR_MISSING:
+            message = "missing something";
+            break;
+        case ERROR_LOAD_FAILURE:
+            message = "could not load function";
+            break;
+        case ERROR_INVALID_COUNT:
+            message = "frame count does not match";
+            break;
+        case ERROR_CONFIG_FILE:
+            message = "could not load config file";
+            break;
+    }
+
+    char* error_string = string_create("%s:%d\nentity: %s\nstate: %s\nfunction: %s\n%s", 1024, __FILE__, line, name, state, func, message);
+    log_write(FATAL, error_string);
 }
 
-static DestroyFuncPtr load_destroy_function(JsonObject* object, i32 entity_id)
-{
-    JsonValue* val_string = json_get_value(object, "destroy");
-    const char* name = entity_context.infos[entity_id].name;
-    if (val_string == NULL)
-        return default_destroy_function;
-    log_assert(json_get_type(val_string) == JTYPE_STRING, "Destroy function for %s is not a string", name);
-    const char* function_name = json_get_string(val_string);
-    log_assert(function_name, "Failed to get destroy function name for %s from json value", name);
-    DestroyFuncPtr fptr = state_load_function(function_name);
-    log_assert(fptr, "Failed to find function %s for entity %s in library", function_name, name);
-    return fptr;
-}
+#define throw_entity_error(error) \
+    _throw_entity_error(error, __LINE__)
 
-static UpdateFuncPtr load_update_function(JsonObject* object, i32 entity_id)
+static void* load_function(JsonObject* object, const char* key)
 {
-    JsonValue* val_string = json_get_value(object, "update");
-    const char* name = entity_context.infos[entity_id].name;
+    JsonValue* val_string = json_get_value(object, key);
+
     if (val_string == NULL)
-        return default_update_function;
-    log_assert(json_get_type(val_string) == JTYPE_STRING, "Update function for %s is not a string", name);
+        return NULL;
+    
+    if (json_get_type(val_string) != JTYPE_STRING)
+        throw_entity_error(ERROR_INVALID_TYPE);
+
     const char* function_name = json_get_string(val_string);
-    log_assert(function_name, "Failed to get update function name for %s from json value", name);
-    UpdateFuncPtr fptr = state_load_function(function_name);
-    log_assert(fptr, "Failed to find function %s for entity %s in library", function_name, name);
+    if (function_name == NULL)
+        throw_entity_error(ERROR_MISSING);
+
+    entity_context.current_function_name = function_name;
+    void* fptr = state_load_function(function_name);
+    if (fptr == NULL)
+        throw_entity_error(ERROR_LOAD_FAILURE);
+
+    entity_context.current_function_name = NULL;
     return fptr;
 }
 
@@ -88,23 +116,30 @@ static void load_state_frame_lengths(EntityState* state, JsonObject* object)
     JsonValue* value;
     JsonArray* array;
     i32 int_val, i;
-    f32 flt_val;
+    f32 float_val;
     value = json_get_value(object, "timers");
     if (value == NULL) {
         for (i = 0; i < state->num_frames; i++)
-            state->frame_lengths[i] = 0.5;
+            state->frame_lengths[i] = DEFAULT_FRAME_LENGTH;
         return;
     }
-    log_assert(json_get_type(value) == JTYPE_ARRAY, "Timers are not in an array");
+
+    if (json_get_type(value) != JTYPE_ARRAY)
+        throw_entity_error(ERROR_INVALID_TYPE);
+
     array = json_get_array(value);
     int_val  = json_array_length(array);
-    log_assert(int_val == state->num_frames, "Number of frames does not match number of frame timers");
+    if (int_val != state->num_frames)
+        throw_entity_error(ERROR_INVALID_COUNT);
+
     for (i = 0; i < state->num_frames; i++) {
         value = json_array_get(array, i);
-        log_assert(value, "Could not get float value");
-        log_assert(json_get_type(value) == JTYPE_FLOAT, "Not a float");
-        flt_val = json_get_float(value);
-        state->frame_lengths[i] = flt_val;
+        if (value == NULL)
+            throw_entity_error(ERROR_MISSING);
+        if (json_get_type(value) != JTYPE_FLOAT)
+            throw_entity_error(ERROR_INVALID_TYPE);
+        float_val = json_get_float(value);
+        state->frame_lengths[i] = float_val;
     }
 }
 
@@ -116,17 +151,26 @@ static void load_state_frames(EntityState* state, JsonObject* object, const char
     i32 int_val;
     i32 num_frames = state->num_frames;
     value = json_get_value(object, dir_str);
-    log_assert(value, "Could not get value for direction %s for state %s", dir_str, state->name);
-    log_assert(json_get_type(value) == JTYPE_ARRAY, "Textures for direction %s of state %s is not an array", dir_str, state->name);
+    if (value == NULL)
+        throw_entity_error(ERROR_MISSING);
+    if (json_get_type(value) != JTYPE_ARRAY)
+        throw_entity_error(ERROR_INVALID_TYPE);
+
     array = json_get_array(value);
     int_val = json_array_length(array);
-    log_assert(int_val == num_frames, "Number of frames for state %s direction %s does not match the number of frames specified (%d)", state->name, dir_str, num_frames);
+    if (int_val != num_frames)
+        throw_entity_error(ERROR_INVALID_COUNT);
+
     for (i32 j = 0; j < num_frames; j++) {
         value = json_array_get(array, j);
-        log_assert(value, "Could not get value at index %d in array for state %s direction %s", j, state->name, dir_str);
-        log_assert(json_get_type(value) == JTYPE_STRING, "Value at index %d in array for state %s direction %s is not a string", j, state->name, dir_str);
+        if (value == NULL)
+            throw_entity_error(ERROR_MISSING);
+        if (json_get_type(value) != JTYPE_STRING)
+            throw_entity_error(ERROR_INVALID_TYPE);
+
         string = json_get_string(value);
-        log_assert(string, "Could not get string at index %d in array for state %s direction %s", j, state->name, dir_str);
+        if (string == NULL)
+            throw_entity_error(ERROR_MISSING);
         state->frames[num_frames * dir_int + j] = texture_get_id(string);
     }
 }
@@ -151,32 +195,49 @@ static void load_state_info(i32 entity_id, JsonObject* object)
     }
 
     value = json_get_value(object, "states");
-    log_assert(value, "Could not get states value");
-    log_assert(json_get_type(value) == JTYPE_OBJECT, "States object not found");
+    if (value == NULL)
+        throw_entity_error(ERROR_MISSING);
+    if (json_get_type(value) != JTYPE_OBJECT)
+        throw_entity_error(ERROR_INVALID_TYPE);
+
     obj_states = json_get_object(value);
-    log_assert(obj_states, "Could not get states object");
+    if (obj_states == NULL)
+        throw_entity_error(ERROR_MISSING);
+
     it = json_iterator_create(obj_states);
     i32 num_states = json_object_length(obj_states);
     EntityState* state_ptr = st_malloc(num_states * sizeof(EntityState));
+
     for (i32 i = 0; i < num_states; i++) {
+
         member = json_iterator_get(it);
         name = json_member_key(member);
+
         value = json_member_value(member);
-        log_assert(value, "Could not get value from member");
-        log_assert(json_get_type(value) == JTYPE_OBJECT, "Value is not the right type");
+        if (value == NULL)
+            throw_entity_error(ERROR_MISSING);
+        if (json_get_type(value) != JTYPE_OBJECT)
+            throw_entity_error(ERROR_INVALID_TYPE);
+
         object = json_get_object(value);
-        log_assert(object, "Could not get object from value in array");
+        if (object == NULL)
+            throw_entity_error(ERROR_MISSING);
 
         value = json_get_value(object, "frames");
-        log_assert(value, "Could not get the number of frames for state %s", name);
-        log_assert(json_get_type(value) == JTYPE_INT, "Number of frames for state %s is is not a int", name);
+        if (value == NULL)
+            throw_entity_error(ERROR_MISSING);
+        if (json_get_type(value) != JTYPE_INT)
+            throw_entity_error(ERROR_INVALID_TYPE);
+
         num_frames = json_get_int(value);
+        if (num_frames <= 0)
+            throw_entity_error(ERROR_INVALID_COUNT);
 
         state_ptr[i].name = string_copy(name);
         state_ptr[i].num_frames = num_frames;
         state_ptr[i].frames = st_malloc(4 * num_frames * sizeof(i32));
         state_ptr[i].frame_lengths = st_malloc(num_frames * sizeof(f32));
-        state_ptr[i].update = load_update_function(object, i);
+        state_ptr[i].update = load_function(object, "update");
 
         load_state_frame_lengths(&state_ptr[i], object);
         load_state_frames(&state_ptr[i], object, "left", LEFT);
@@ -199,9 +260,12 @@ static void load_state_info(i32 entity_id, JsonObject* object)
 static void load_entity_info(void)
 {
     JsonObject* json = json_read("config/entities.json");
-    log_assert(json, "Could not read entity config file");
+    if (json == NULL)
+        throw_entity_error(ERROR_CONFIG_FILE);
     JsonIterator* it = json_iterator_create(json);
-    log_assert(it, "Could not create iterator for config file");
+    if (it == NULL)
+        throw_entity_error(ERROR_GENERIC);
+
     JsonMember* member;
     JsonValue* val_object;
     JsonObject* object;
@@ -210,27 +274,35 @@ static void load_entity_info(void)
     entity_context.infos = st_malloc(entity_context.num_entities * sizeof(EntityInfo));
     for (i32 i = 0; i < entity_context.num_entities; i++) {
         member = json_iterator_get(it);
-        log_assert(member, "Could not get member from entity config file");
+        if (member == NULL)
+            throw_entity_error(ERROR_GENERIC);
 
         string = json_member_key(member);
-        log_assert(string, "Could not get key from entity config file");
+        if (string == NULL)
+            throw_entity_error(ERROR_GENERIC);
+
         entity_context.infos[i].name = string_copy(string);
+        entity_context.current_entity_name = string;
 
         val_object = json_member_value(member);
-        log_assert(val_object, "Could not get value from member");
-        log_assert(json_get_type(val_object) == JTYPE_OBJECT, "Unrecognized type encountered while reading entity config file");
+        if (val_object == NULL)
+            throw_entity_error(ERROR_MISSING);
+        if (json_get_type(val_object) != JTYPE_OBJECT)
+            throw_entity_error(ERROR_INVALID_TYPE);
 
         object = json_get_object(val_object);
-        log_assert(object, "Could not get object from value");
+        if (object == NULL)
+            throw_entity_error(ERROR_MISSING);
 
-        entity_context.infos[i].create = load_create_function(object, i);
-        entity_context.infos[i].destroy = load_destroy_function(object, i);
-        entity_context.infos[i].update = load_update_function(object, i);
+        entity_context.infos[i].create = load_function(object, "create");
+        entity_context.infos[i].destroy = load_function(object, "destroy");
+        entity_context.infos[i].update = load_function(object, "update");
         load_state_info(i, object);
 
         json_iterator_increment(it);
     }
 
+    entity_context.current_entity_name = NULL;
     json_iterator_destroy(it);
     json_object_destroy(json);
 }
@@ -319,7 +391,10 @@ Entity* entity_create(vec2 position, i32 id)
     entity->frame = 0;
     entity_set_flag(entity, ENTITY_FLAG_UPDATE_FACING, 1);
 
-    entity_context.infos[id].create(&global_api, entity);
+    CreateFuncPtr create = entity_context.infos[id].create;
+    if (create != NULL)
+        create(&global_api, entity);
+
     list_append(game_context.entities, entity);
     return entity;
 }
@@ -357,8 +432,13 @@ void entity_update(Entity* entity, f32 dt)
     if (entity_get_flag(entity, ENTITY_FLAG_UPDATE_FACING) && vec2_mag(entity->direction) > 0)
         entity->facing = entity->direction;
 
-    entity_context.infos[entity->id].update(&global_api, entity, dt);
-    entity_context.infos[entity->id].states[entity->state].update(&global_api, entity, dt);
+    UpdateFuncPtr update;
+    update = entity_context.infos[entity->id].update;
+    if (update != NULL)
+        update(&global_api, entity, dt);
+    update = entity_context.infos[entity->id].states[entity->state].update;
+    if (update != NULL)
+        update(&global_api, entity, dt);
 }
 
 void entity_damage(Entity* entity, f32 damage)
@@ -466,7 +546,9 @@ i32 entity_get_texture(Entity* entity)
 
 void entity_destroy(Entity* entity)
 {
-    entity_context.infos[entity->id].destroy(&global_api, entity);
+    DestroyFuncPtr destroy = entity_context.infos[entity->id].destroy;
+    if (destroy != NULL)
+        destroy(&global_api, entity);
     if (entity_get_flag(entity, ENTITY_FLAG_BOSS))
         entity_unmake_boss(entity); 
     st_free(entity);
