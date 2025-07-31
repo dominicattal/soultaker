@@ -59,7 +59,7 @@ void camera_rotate(f32 mag);
 void camera_tilt(f32 mag);
 
 //**************************************************************************
-// map
+// Maps. See docs/maps.md for more information
 //**************************************************************************
 
 typedef struct Map {

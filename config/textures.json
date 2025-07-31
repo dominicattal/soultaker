@@ -34,14 +34,14 @@
             "knight_shooting_up_2": [18, 9, 8, 8],
             "knight_shooting_right_2": {
                 "location": [72, 9, 11, 8],
-                "pivot_x": 0.375,
+                "pivot_x": -0.375,
                 "pivot_y": 0.0,
                 "stretch_x": 1.375,
                 "stretch_y": 1.0
             },
             "knight_shooting_left_2":{
                 "location": [72, 0, 11, 8],
-                "pivot_x": -0.375,
+                "pivot_x": 0.375,
                 "pivot_y": 0.0,
                 "stretch_x": 1.375,
                 "stretch_y": 1.0

@@ -53,8 +53,8 @@ void main() {
     u2 = data_in[idx+4] + data_in[idx+6];
     v2 = data_in[idx+5] + data_in[idx+7];
     location = data_in[idx+8];
-    pivot.x = data_in[idx+9];
-    pivot.y = data_in[idx+10];
+    pivot.x = -data_in[idx+9];
+    pivot.y = -data_in[idx+10];
     stretch.x = data_in[idx+11];
     stretch.y = data_in[idx+12];
 
