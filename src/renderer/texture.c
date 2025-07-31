@@ -182,11 +182,9 @@ static void create_font_textures(i32* tex_unit_location)
     glActiveTexture(GL_TEXTURE0 + *tex_unit_location);
     glBindTexture(GL_TEXTURE_2D, texture_context.texture_units[*tex_unit_location]);
 
-    if (1) {
-        char path[512];
-        sprintf(path, "build/packed_font%d.png", *tex_unit_location);
-        stbi_write_png(path, BITMAP_WIDTH, BITMAP_HEIGHT, 1, bitmap, 0);
-    }
+    char path[512];
+    sprintf(path, "build/packed_font%d.png", *tex_unit_location);
+    stbi_write_png(path, BITMAP_WIDTH, BITMAP_HEIGHT, 1, bitmap, 0);
 
     st_free(bitmap);
     (*tex_unit_location)++;
@@ -268,11 +266,9 @@ static void pack_textures(i32* tex_unit_location, unsigned char** image_data, st
         texture_context.textures[rect.id].location = location;
     }
 
-    if (1) {
-        char path[512];
-        sprintf(path, "build/packed_tex%d.png", *tex_unit_location);
-        stbi_write_png(path, BITMAP_WIDTH, BITMAP_HEIGHT, num_channels, bitmap, 0);
-    }
+    char path[512];
+    sprintf(path, "build/packed_tex%d.png", *tex_unit_location);
+    stbi_write_png(path, BITMAP_WIDTH, BITMAP_HEIGHT, num_channels, bitmap, 0);
 
     (*tex_unit_location)++;
     st_free(context);

@@ -56,8 +56,14 @@ typedef enum {
 static void _throw_entity_error(EntityError error, i32 line)
 {
     const char* name = entity_context.current_entity_name;
+    if (name == NULL) 
+        name = "n/a";
     const char* state = entity_context.current_state_name;
+    if (state == NULL)
+        state = "n/a";
     const char* func = entity_context.current_function_name;
+    if (func == NULL)
+        func = "n/a";
     const char* message;
 
     switch (error) {
@@ -213,6 +219,8 @@ static void load_state_info(i32 entity_id, JsonObject* object)
         member = json_iterator_get(it);
         name = json_member_key(member);
 
+        entity_context.current_state_name = name;
+
         value = json_member_value(member);
         if (value == NULL)
             throw_entity_error(ERROR_MISSING);
@@ -249,6 +257,8 @@ static void load_state_info(i32 entity_id, JsonObject* object)
 
         json_iterator_increment(it);
     }
+
+    entity_context.current_state_name = NULL;
 
     json_iterator_destroy(it);
 

@@ -16,35 +16,97 @@ typedef struct {
 typedef struct {
     WeaponInfo* infos;
     i32 num_weapons;
+
+    // error handling
+    const char* current_weapon;
 } WeaponContext;
 
 static WeaponContext weapon_context;
 
+typedef enum {
+    ERROR_GENERIC,
+    ERROR_CONFIG_FILE,
+    ERROR_MISSING,
+    ERROR_INVALID_TYPE
+} WeaponError;
+
+static void _throw_weapon_error(WeaponError error, i32 line)
+{
+    const char* name = weapon_context.current_weapon;
+    if (name == NULL)
+        name = "n/a";
+    const char* message;
+
+    switch (error) {
+        case ERROR_GENERIC:
+            message = "error";
+            break;
+        case ERROR_CONFIG_FILE:
+            message = "could not load weapon config file";
+            break;
+        case ERROR_MISSING:
+            message = "missing field";
+            break;
+        case ERROR_INVALID_TYPE:
+            message = "wrong type";
+            break;
+    }
+
+    log_write(FATAL, "%s:%d\nweapon: %s\n%s", 1024, __FILE__, line, name, message);
+}
+
+#define throw_weapon_error(error) \
+    _throw_weapon_error(error, __LINE__);
+
 static void load_tooltip(JsonObject* object, i32 id)
 {
     JsonValue* val_string = json_get_value(object, "tooltip");
+    if (json_get_type(val_string) != JTYPE_STRING)
+        throw_weapon_error(ERROR_INVALID_TYPE);
+
     char* string = json_get_string(val_string);
+    if (string == NULL)
+        throw_weapon_error(ERROR_MISSING);
+
     weapon_context.infos[id].tooltip = string_copy(string);
 }
 
 static void load_texture(JsonObject* object, i32 id)
 {
     JsonValue* val_string = json_get_value(object, "texture");
+    if (json_get_type(val_string) != JTYPE_STRING)
+        throw_weapon_error(ERROR_INVALID_TYPE);
+
     char* string = json_get_string(val_string);
+    if (string == NULL)
+        throw_weapon_error(ERROR_MISSING);
+
     weapon_context.infos[id].tex_id = texture_get_id(string);
 }
 
 static void load_attack_func(JsonObject* object, i32 id)
 {
     JsonValue* val_string = json_get_value(object, "attack");
+    if (json_get_type(val_string) != JTYPE_STRING)
+        throw_weapon_error(ERROR_INVALID_TYPE);
+
     char* string = json_get_string(val_string);
+    if (string == NULL)
+        throw_weapon_error(ERROR_MISSING);
+
     weapon_context.infos[id].shoot = state_load_function(string);
 }
 
 static void load_weapon_info(void)
 {
     JsonObject* json = json_read("config/weapons.json");
+    if (json == NULL)
+        throw_weapon_error(ERROR_CONFIG_FILE);
+
     JsonIterator* it = json_iterator_create(json);
+    if (it == NULL)
+        throw_weapon_error(ERROR_GENERIC);
+
     JsonMember* member;
     JsonValue* val_object;
     JsonObject* object;
