@@ -15,17 +15,58 @@ typedef struct {
 typedef struct {
     MapInfo* maps;
     i32 num_maps;
+    
+    // error handling
+    const char* current_map;
 } MapContext;
 
 extern GameContext game_context;
 MapContext map_context;
 
+typedef enum {
+    ERROR_MISSING,
+    ERROR_INVALID_TYPE,
+    ERROR_CONFIG_FILE,
+    ERROR_GENERIC
+} MapError;
+
+static void _throw_map_error(MapError error, i32 line)
+{
+    const char* name = map_context.current_map;
+    if (name == NULL)
+        name = "n/a";
+    const char* message;
+
+    switch (error) {
+        case ERROR_MISSING:
+            message = "missing something";
+            break;
+        case ERROR_INVALID_TYPE:
+            message = "wrong type";
+            break;
+        case ERROR_CONFIG_FILE:
+            message = "could not load config file";
+            break;
+        case ERROR_GENERIC:
+            message = "lets fucking go";
+            break;
+    }
+
+    log_write(FATAL, "%s:%d\nmap: %s\n%s", __FILE__, line, name, message);
+}
+
+#define throw_map_error(error) \
+    _throw_map_error(error, __LINE__)
+
 void map_init(void)
 {
     JsonObject* json = json_read("config/maps.json");
-    log_assert(json, "Could not read map config file");
+    if (json == NULL)
+        throw_map_error(ERROR_CONFIG_FILE);
     JsonIterator* it = json_iterator_create(json);
-    log_assert(json, "Could not create iterator for map config file");
+    if (it == NULL)
+        throw_map_error(ERROR_GENERIC);
+
     JsonMember* member;
     JsonValue* val_string;
     const char* string;
@@ -33,23 +74,32 @@ void map_init(void)
     map_context.maps = st_malloc(map_context.num_maps * sizeof(MapInfo));
     for (i32 i = 0; i < map_context.num_maps; i++) {
         member = json_iterator_get(it);
-        log_assert(member, "Could not get member from map config file");
 
         string = json_member_key(member);
-        log_assert(string, "Could not get key from map config file");
+        if (string == NULL)
+            throw_map_error(ERROR_MISSING);
+
         map_context.maps[i].name = string_copy(string);
+        map_context.current_map = string;
 
         val_string = json_member_value(member);
-        log_assert(val_string, "Could not get value from member");
-        log_assert(json_get_type(val_string) == JTYPE_STRING, "Value must be a string");
+        if (val_string == NULL)
+            throw_map_error(ERROR_MISSING);
+        if (json_get_type(val_string) != JTYPE_STRING)
+            throw_map_error(ERROR_INVALID_TYPE);
+
         string = json_get_string(val_string);
-        log_assert(string, "Could not get string from member");
+        if (string == NULL)
+            throw_map_error(ERROR_MISSING);
+
         map_context.maps[i].load = state_load_function(string);
-        log_assert(map_context.maps[i].load, "Could not find function %s in library", string);
+        if (map_context.maps[i].load == NULL)
+            throw_map_error(ERROR_MISSING);
 
         json_iterator_increment(it);
     }
 
+    map_context.current_map = NULL;
     json_iterator_destroy(it);
     json_object_destroy(json);
 }
