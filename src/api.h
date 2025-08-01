@@ -6,7 +6,7 @@
 
 #define st_export __declspec(dllexport)
 
-typedef struct {
+typedef struct GlobalApi {
     // Game
     vec2 (*game_get_nearest_player_position)(void);
     void (*game_set_player_position)(vec2);
@@ -26,7 +26,6 @@ typedef struct {
     Tile* (*tile_create)(vec2);
     void (*tile_set_flag)(Tile*, TileFlagEnum, u32);
     bool (*tile_get_flag)(Tile*, TileFlagEnum);
-    void (*tile_lava_collision)(Entity* entity);
 
     // Projectile
     Projectile* (*projectile_create)(vec2);

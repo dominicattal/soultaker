@@ -9,6 +9,7 @@
 // Forward Declarations
 //**************************************************************************
 
+typedef struct GlobalApi GlobalApi;
 typedef struct Camera Camera;
 typedef struct Weapon Weapon;
 typedef struct Entity Entity;
@@ -176,10 +177,10 @@ void weapon_shoot(Player* player, vec2 direction, vec2 target);
 // Tile definitions
 //**************************************************************************
 
-typedef void (*TileCollisionFuncPtr)(Entity* entity);
+typedef void (*TileCollideFuncPtr)(GlobalApi* api, Entity* entity);
 
 typedef struct Tile {
-    TileCollisionFuncPtr collide;
+    TileCollideFuncPtr collide;
     vec2 position;
     i32 tex;
     u32 flags;

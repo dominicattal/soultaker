@@ -6,7 +6,9 @@
             "lava": {
                 "color": "FFAE00",
                 "type": "tile",
-                "tex": "shaitan_lava"
+                "tex": "shaitan_lava",
+                "collide": "shaitan_lava_collide",
+                "create": "shaitan_lava_create"
             },
             "floor_1": {
                 "color": "774F00",
@@ -17,7 +19,8 @@
                 "color": "303030",
                 "type": "wall",
                 "side_tex": "shaitan_wall_side",
-                "top_tex": "shaitan_wall_top"
+                "top_tex": "shaitan_wall_top",
+                "height": 3
             },
             "hellstone": {
                 "color": "FF8300",
@@ -27,7 +30,7 @@
         },
         "rooms": {
             "spawn": {
-                "spawn_point": [5, 5],
+                "spawn_point": [20, 20],
                 "location": [0, 0, 31, 37],
                 "create": "shaitan_spawn_create",
                 "type": "spawn"
@@ -62,7 +65,7 @@
         "rooms": {
             "spawn": {
                 "spawn_point": [5, 5],
-                "location": [50, 69, 53, 31],
+                "location": [50, 69, 103, 100],
                 "create": "lobby_spawn_create",
                 "type": "spawn"
             }

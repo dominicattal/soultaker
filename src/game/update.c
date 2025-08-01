@@ -1,4 +1,5 @@
 #include "internal.h"
+#include "../api.h"
 #include <omp.h>
 
 extern GameContext game_context;
@@ -35,6 +36,9 @@ static void collide_entity_wall(Entity* entity, Wall* wall)
 
 static void collide_entity_tile(Entity* entity, Tile* tile)
 {
+    if (tile->collide == NULL)
+        return;
+
     f32 ex, ez, tx, tz, sx, sz;
     ex = entity->position.x;
     ez = entity->position.y;
@@ -43,7 +47,7 @@ static void collide_entity_tile(Entity* entity, Tile* tile)
     sx = sz = 1.0f;
     if (!(ex >= tx && ex < tx + sx && ez >= tz && ez < tz + sz))
         return;
-    tile->collide(entity);
+    tile->collide(&global_api, entity);
 }
 
 static void collide_entity_obstacle(Entity* entity, Obstacle* obstacle)
