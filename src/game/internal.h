@@ -21,7 +21,6 @@ typedef struct Parstacle Parstacle;
 typedef struct Obstacle Obstacle;
 typedef struct Particle Particle;
 typedef struct Parjicle Parjicle;
-typedef struct Map Map;
 
 //**************************************************************************
 // Camera definitions
@@ -61,15 +60,6 @@ void camera_tilt(f32 mag);
 //**************************************************************************
 // Maps. See docs/maps.md for more information
 //**************************************************************************
-
-typedef struct Map {
-    i32 width, length;
-    u32* data;
-} Map;
-
-// Load rgb values from image path
-Map* map_create(const char* path);
-void map_free(Map* map);
 
 void map_init(void);
 void map_load(i32 id);

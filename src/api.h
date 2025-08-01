@@ -28,10 +28,6 @@ typedef struct {
     bool (*tile_get_flag)(Tile*, TileFlagEnum);
     void (*tile_lava_collision)(Entity* entity);
 
-    // Map
-    Map* (*map_create)(const char* path);
-    void (*map_free)(Map* map);
-
     // Projectile
     Projectile* (*projectile_create)(vec2);
     void (*projectile_set_flag)(Projectile*, ProjectileFlagEnum, bool);
