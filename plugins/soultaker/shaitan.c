@@ -328,9 +328,19 @@ st_export void shaitan_the_advisor_destroy(GlobalApi* api, Entity* entity)
     api->st_free(entity->data);
 }
 
-st_export void shaitan_spawn_create(GlobalApi* api)
+st_export void shaitan_lava_collide(GlobalApi* api, Entity* entity)
 {
-    return;
+    api->entity_set_flag(entity, ENTITY_FLAG_IN_LAVA, true);
+}
+
+st_export void shaitan_lava_create(GlobalApi* api, Tile* tile)
+{
+    api->tile_set_flag(tile, TILE_FLAG_ANIMATE_VERTICAL_POS, true);
+    api->tile_set_flag(tile, TILE_FLAG_ANIMATE_HORIZONTAL_NEG, true);
+}
+
+st_export void shaitan_spawn_create(GlobalApi* api, i32 origin_x, i32 origin_y)
+{
     i32 side_tex, top_tex;
     side_tex = api->texture_get_id("shaitan_bars_side");
     top_tex = api->texture_get_id("shaitan_bars_top");
@@ -345,5 +355,5 @@ st_export void shaitan_spawn_create(GlobalApi* api)
     create_bars(api, side_tex, top_tex, api->vec2_create(28, 24));
 
     i32 sta_id = api->entity_get_id("shaitan_the_advisor");
-    api->entity_create(api->vec2_create(15.5, 16.5), sta_id);
+    api->entity_create(api->vec2_create(origin_x+15.5, origin_y+16.5), sta_id);
 }

@@ -5,11 +5,17 @@
 #include <windows.h>
 #include <stb_image.h>
 
-typedef void (*MapLoadFuncPtr)(GlobalApi*);
+#define DEFAULT_WALL_HEIGHT 1.5f
+
+typedef void (*RoomCreateFuncPtr)(GlobalApi*, i32, i32);
+typedef void (*TileCreateFuncPtr)(GlobalApi*, Tile*);
 
 typedef struct {
+    TileCreateFuncPtr create;
+    TileCollideFuncPtr collide;
     u32 color;
     u32 top_tex;
+    f32 height;
     union {
         u32 tex;
         u32 side_tex;
@@ -24,12 +30,15 @@ typedef struct {
 
 typedef struct {
     // aabb in map's data
-    i32 x, y, w, h;
+    i32 u1, v1, u2, v2;
+    // relative spawn coordinates if spawn
+    i32 spawn_x, spawn_z;
     const char* type;
+    RoomCreateFuncPtr create;
 } Room;
 
 typedef struct {
-    // color data
+    i32 width, height;
     u32* data;
     Room* rooms;
     i32 num_rooms;
@@ -56,6 +65,7 @@ typedef enum {
     ERROR_INVALID_TYPE,
     ERROR_INVALID_VALUE,
     ERROR_CONFIG_FILE,
+    // errors that im too lazy to implement right now
     ERROR_GENERIC
 } MapError;
 
@@ -80,7 +90,7 @@ static void _throw_map_error(MapError error, i32 line)
             message = "could not load config file";
             break;
         case ERROR_GENERIC:
-            message = "lets fucking go";
+            message = "shit";
             break;
     }
 
@@ -127,22 +137,19 @@ void map_init(void)
     map_context.json = json;
 }
 
-static const char* load_string(JsonObject* object, const char* string)
+static const char* get_string_value(JsonObject* object, const char* string)
 {
-    JsonValue* value;
-
-    value = json_get_value(object, string);
+    JsonValue* value = json_get_value(object, string);
     if (value == NULL)
         throw_map_error(ERROR_MISSING);
     if (json_get_type(value) != JTYPE_STRING)
         throw_map_error(ERROR_INVALID_TYPE);
-
     return json_get_string(value);
 }
 
 static void load_palette_color(JsonObject* object, TileColor* tile)
 {
-    const char* string = load_string(object, "color");
+    const char* string = get_string_value(object, "color");
     if (strlen(string) != 6)
         throw_map_error(ERROR_INVALID_VALUE);
     tile->color = strtol(string, NULL, 16);
@@ -150,7 +157,7 @@ static void load_palette_color(JsonObject* object, TileColor* tile)
 
 static void load_palette_type(JsonObject* object, TileColor* tile)
 {
-    const char* string = load_string(object, "type");
+    const char* string = get_string_value(object, "type");
     if (strcmp(string, "tile") == 0)
         tile->is_wall = false;
     else if (strcmp(string, "wall") == 0)
@@ -164,14 +171,70 @@ static void load_palette_textures(JsonObject* object, TileColor* tile)
 {
     const char* string;
     if (tile->is_wall) {
-        string = load_string(object, "side_tex");
+        string = get_string_value(object, "side_tex");
         tile->side_tex = texture_get_id(string);
-        string = load_string(object, "top_tex");
+        string = get_string_value(object, "top_tex");
         tile->top_tex = texture_get_id(string);
     } else {
-        string = load_string(object, "tex");
+        string = get_string_value(object, "tex");
         tile->tex = texture_get_id(string);
     }
+}
+
+static void load_palette_create(JsonObject* object, TileColor* tile)
+{
+    JsonValue* value;
+    const char* string;
+    tile->create = NULL;
+
+    value = json_get_value(object, "create");
+    if (value == NULL)
+        return;
+    if (json_get_type(value) != JTYPE_STRING)
+        throw_map_error(ERROR_INVALID_TYPE);
+
+    string = json_get_string(value);
+    tile->create = state_load_function(string);
+    if (tile->create == NULL)
+        throw_map_error(ERROR_MISSING);
+}
+
+static void load_palette_collide(JsonObject* object, TileColor* tile)
+{
+    JsonValue* value;
+    const char* string;
+    tile->collide = NULL;
+
+    value = json_get_value(object, "collide");
+    if (value == NULL)
+        return;
+    if (json_get_type(value) != JTYPE_STRING)
+        throw_map_error(ERROR_INVALID_TYPE);
+
+    string = json_get_string(value);
+    tile->collide = state_load_function(string);
+    if (tile->collide == NULL)
+        throw_map_error(ERROR_MISSING);
+}
+
+static void load_palette_height(JsonObject* object, TileColor* tile)
+{
+    JsonValue* value;
+
+    if (!tile->is_wall)
+        return;
+    
+    tile->height = DEFAULT_WALL_HEIGHT;
+    value = json_get_value(object, "height");
+    if (value == NULL)
+        return;
+
+    if (json_get_type(value) == JTYPE_INT)
+        tile->height = (f32)json_get_int(value);
+    else if (json_get_type(value) == JTYPE_FLOAT)
+        tile->height = json_get_float(value);
+    else
+        throw_map_error(ERROR_INVALID_TYPE);
 }
 
 static Palette* palette_create(JsonObject* root)
@@ -182,6 +245,7 @@ static Palette* palette_create(JsonObject* root)
     JsonMember* member;
     Palette* palette;
     TileColor* colors;
+    TileColor* color;
     i32 num_colors;
 
     value = json_get_value(root, "palette");
@@ -197,6 +261,7 @@ static Palette* palette_create(JsonObject* root)
 
     it = json_iterator_create(object);
     for (i32 i = 0; i < num_colors; i++) {
+        color = &colors[i];
         member = json_iterator_get(it);
         
         value = json_member_value(member);
@@ -205,9 +270,12 @@ static Palette* palette_create(JsonObject* root)
 
         object = json_get_object(value);
         
-        load_palette_color(object, &colors[i]);
-        load_palette_type(object, &colors[i]);
-        load_palette_textures(object, &colors[i]);
+        load_palette_color(object, color);
+        load_palette_type(object, color);
+        load_palette_textures(object, color);
+        load_palette_create(object, color);
+        load_palette_collide(object, color);
+        load_palette_height(object, color);
 
         json_iterator_increment(it);
     }
@@ -220,27 +288,43 @@ static Palette* palette_create(JsonObject* root)
     return palette;
 }
 
+static TileColor* palette_get(Palette* palette, u32 color)
+{
+    for (i32 i = 0; i < palette->num_colors; i++)
+        if (palette->colors[i].color == color)
+            return &palette->colors[i];
+    return NULL;
+}
+
 static void palette_destroy(Palette* palette)
 {
     st_free(palette->colors);
     st_free(palette); 
 }
 
-static void load_map_location(JsonObject* object, Room* room)
+static i32 get_int_value(JsonValue* value)
 {
+    if (value == NULL)
+        throw_map_error(ERROR_MISSING);
+    if (json_get_type(value) != JTYPE_INT)
+        throw_map_error(ERROR_INVALID_TYPE);
+    return json_get_int(value);
 }
 
-static Map* map_create(JsonObject* root, const char* path, Palette* palette)
+static Map* map_create(JsonObject* root, const char* path)
 {
     JsonObject* object;
     JsonValue* value;
     JsonIterator* it;
     JsonMember* member;
+    JsonArray* array;
+    i32 array_length;
     Map* map;
     Room* rooms;
+    Room* room;
+    i32 num_rooms;
     Room* spawn_room = NULL;
     i32 x, y, n, i, j, idx;
-    i32 num_rooms;
     u32* map_data;
     unsigned char* raw_data;
 
@@ -261,14 +345,15 @@ static Map* map_create(JsonObject* root, const char* path, Palette* palette)
     map_data = st_malloc(x * y * sizeof(u32));
     for (i = 0; i < y; i++) {
         for (j = 0; j < x; j++) {
-            idx = (y-i-1) * x + j;
-            map_data[i*x+j] = raw_data[3*idx+2] + (raw_data[3*idx+1]<<8) + (raw_data[3*idx]<<16);
+            idx = i * x + j;
+            map_data[idx] = raw_data[3*idx+2] + (raw_data[3*idx+1]<<8) + (raw_data[3*idx]<<16);
         }
     }
     stbi_image_free(raw_data);
 
     it = json_iterator_create(object);
     for (i = 0; i < num_rooms; i++) {
+        room = &rooms[i];
         member = json_iterator_get(it);
 
         value = json_member_value(member);
@@ -277,16 +362,50 @@ static Map* map_create(JsonObject* root, const char* path, Palette* palette)
 
         object = json_get_object(value);
 
-        load_map_location(object, &rooms[i]);
-        rooms[i].type = load_string(object, "type");
-        //load_map_create(object, &rooms[i]);
+        value = json_get_value(object, "location");
+        if (value == NULL)
+            throw_map_error(ERROR_MISSING);
+        if (json_get_type(value) != JTYPE_ARRAY)
+            throw_map_error(ERROR_INVALID_TYPE);
 
-        if (strcmp(rooms[i].type, "spawn") == 0) {
-            if (spawn_room != NULL)
-                throw_map_error(ERROR_GENERIC);
-            spawn_room = &rooms[i];
-        }
+        array = json_get_array(value);
+        array_length = json_array_length(array);
+        if (array_length != 4)
+            throw_map_error(ERROR_GENERIC);
+        
+        room->u1 = get_int_value(json_array_get(array, 0));
+        room->v1 = get_int_value(json_array_get(array, 1));
+        room->u2 = get_int_value(json_array_get(array, 2));
+        room->v2 = get_int_value(json_array_get(array, 3));
 
+        const char* string = get_string_value(object, "create");
+        room->create = state_load_function(string);
+        if (room->create == NULL)
+            throw_map_error(ERROR_GENERIC);
+        
+        room->type = get_string_value(object, "type");
+        if (strcmp(room->type, "spawn") != 0)
+            goto increment;
+
+        if (spawn_room != NULL)
+            throw_map_error(ERROR_GENERIC);
+        spawn_room = room;
+        value = json_get_value(object, "spawn_point");
+        if (value == NULL)
+            throw_map_error(ERROR_MISSING);
+        if (json_get_type(value) != JTYPE_ARRAY)
+            throw_map_error(ERROR_INVALID_TYPE);
+
+        array = json_get_array(value);
+        array_length = json_array_length(array);
+        if (array_length != 2)
+            throw_map_error(ERROR_GENERIC);
+
+        room->spawn_x = get_int_value(json_array_get(array, 0));
+        room->spawn_z = get_int_value(json_array_get(array, 1));
+
+
+increment:
         json_iterator_increment(it);
     }
     json_iterator_destroy(it);
@@ -298,8 +417,18 @@ static Map* map_create(JsonObject* root, const char* path, Palette* palette)
     map->rooms = rooms;
     map->num_rooms = num_rooms;
     map->data = map_data;
+    map->width = x;
+    map->height = y;
 
     return map;
+}
+
+static Room* map_get(Map* map, const char* type)
+{
+    for (i32 i = 0; i < map->num_rooms; i++)
+        if (strcmp(map->rooms[i].type, type) == 0)
+            return &map->rooms[i];
+    return NULL;
 }
 
 static void map_destroy(Map* map)
@@ -309,6 +438,44 @@ static void map_destroy(Map* map)
     st_free(map);
 }
 
+#define WHITE   0x000000
+#define GRAY    0x808080
+#define BLACK   0xFFFFFF
+
+static void load_room(Palette* palette, Map* map, Room* room, i32 origin_x, i32 origin_y)
+{
+    TileColor* tile_color;
+    Tile* tile;
+    Wall* wall;
+    i32 idx;
+    u32 color;
+    vec2 position;
+    for (i32 i = room->v1; i < room->v2; i++) {
+        position.y = origin_y + room->v2 - i - 1;
+        for (i32 j = room->u1; j < room->u2; j++) {
+            position.x = origin_x + j - room->u1;
+            idx = i * map->width + j;
+            color = map->data[idx];
+            if (color == WHITE || color == GRAY || color == BLACK)
+                continue;
+            tile_color = palette_get(palette, color);
+            if (tile_color == NULL)
+                throw_map_error(ERROR_GENERIC);
+            if (tile_color->is_wall) {
+                wall = wall_create(position, tile_color->height);
+                wall->side_tex = tile_color->side_tex;
+                wall->top_tex = tile_color->top_tex;
+            } else {
+                tile = tile_create(position);
+                tile->tex = tile_color->tex;
+                tile->collide = tile_color->collide;
+                if (tile_color->create != NULL)
+                    tile_color->create(&global_api, tile);
+            }
+        }
+    }
+}
+
 static void generate_map(i32 id)
 {
     JsonValue* value;
@@ -316,6 +483,7 @@ static void generate_map(i32 id)
     Palette* palette;
     Map* map;
     const char* path;
+    i32 origin_x = 0, origin_y = 0;
 
     value = json_get_value(map_context.json, map_context.names[id]);
     if (value == NULL)
@@ -332,9 +500,16 @@ static void generate_map(i32 id)
         throw_map_error(ERROR_INVALID_TYPE);
 
     path = json_get_string(value);
-
+    map = map_create(object, path);
     palette = palette_create(object);
-    map = map_create(object, path, palette);
+
+    Room* spawn_room = map_get(map, "spawn");
+    if (spawn_room == NULL)
+        throw_map_error(ERROR_GENERIC);
+
+    load_room(palette, map, spawn_room, origin_x, origin_y);
+    game_set_player_position(vec2_create(origin_x+spawn_room->spawn_x, origin_y+spawn_room->spawn_z));
+    spawn_room->create(&global_api, origin_x, origin_y);
 
     palette_destroy(palette);
     map_destroy(map);

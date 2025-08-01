@@ -23,7 +23,6 @@ GlobalApi global_api = {
     REGISTER(tile_create),
     REGISTER(tile_set_flag),
     REGISTER(tile_get_flag),
-    REGISTER(tile_lava_collision),
 
     // Projectile
     REGISTER(projectile_create),
