@@ -1,4 +1,71 @@
 {
-    "shaitan": "game_level_load_shaitan",
-    "lobby": "game_level_load_lobby"
+    "shaitan": {
+        "path": "assets/maps/shaitan.png",
+        "load": "shaitan_load",
+        "palette": {
+            "lava": {
+                "color": "FFAE00",
+                "type": "tile",
+                "tex": "shaitan_lava"
+            },
+            "floor_1": {
+                "color": "774F00",
+                "type": "tile",
+                "tex": "shaitan_floor_1"
+            },
+            "wall": {
+                "color": "303030",
+                "type": "wall",
+                "side_tex": "shaitan_wall_side",
+                "top_tex": "shaitan_wall_top"
+            },
+            "hellstone": {
+                "color": "FF8300",
+                "type": "tile",
+                "tex": "shaitan_hellstone"
+            }
+        },
+        "rooms": {
+            "spawn": {
+                "spawn_point": [5, 5],
+                "location": [0, 0, 31, 37],
+                "create": "shaitan_spawn_create",
+                "type": "spawn"
+            }
+        }
+    },
+    "lobby": {
+        "path": "assets/maps/lobby.png",
+        "palette": {
+            "floor_1": {
+                "color": "2F3C9E",
+                "type": "tile",
+                "tex": "lobby_floor_1"
+            },
+            "floor_2": {
+                "color": "FF006E",
+                "type": "tile",
+                "tex": "lobby_floor_2"
+            },
+            "floor_3": {
+                "color": "9E3D3D",
+                "type": "tile",
+                "tex": "lobby_floor_3"
+            },
+            "wall": {
+                "color": "44FFA1",
+                "type": "wall",
+                "side_tex": "lobby_wall_side",
+                "top_tex": "lobby_wall_top"
+            }
+        },
+        "rooms": {
+            "spawn": {
+                "spawn_point": [5, 5],
+                "location": [50, 69, 53, 31],
+                "create": "lobby_spawn_create",
+                "type": "spawn"
+            }
+        }
+    }
 }
