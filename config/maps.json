@@ -31,43 +31,84 @@
         "rooms": {
             "spawn": {
                 "spawn_point": [20, 20],
-                "location": [0, 0, 31, 37],
+                "bounding_box": [0, 0, 31, 37],
                 "create": "shaitan_spawn_create",
                 "type": "spawn"
             }
         }
     },
-    "lobby": {
-        "path": "assets/maps/lobby.png",
+    "level_1": {
+        "path": "assets/maps/level_1.png",
         "palette": {
             "floor_1": {
-                "color": "2F3C9E",
+                "color": "FF9E3D",
                 "type": "tile",
-                "tex": "lobby_floor_1"
+                "tex": "level_1_floor_1"
             },
             "floor_2": {
                 "color": "FF006E",
                 "type": "tile",
-                "tex": "lobby_floor_2"
+                "tex": "level_1_floor_2"
             },
             "floor_3": {
                 "color": "9E3D3D",
                 "type": "tile",
-                "tex": "lobby_floor_3"
+                "tex": "level_1_floor_3"
             },
             "wall": {
-                "color": "44FFA1",
+                "color": "FF2833",
                 "type": "wall",
-                "side_tex": "lobby_wall_side",
-                "top_tex": "lobby_wall_top"
+                "side_tex": "level_1_wall_side",
+                "top_tex": "level_1_wall_top"
             }
         },
         "rooms": {
             "spawn": {
+                "bounding_box": [0, 0, 14, 14],
                 "spawn_point": [5, 5],
-                "location": [50, 69, 103, 100],
-                "create": "lobby_spawn_create",
-                "type": "spawn"
+                "create": "level_1_spawn_create",
+                "type": "spawn",
+                "alternates": [
+                    {
+                        "type": "male",
+                        "location": [7, 0],
+                        "bounding_box": [16, 0, 18, 1],
+                        "origin": [1, 0]
+                    },
+                    {
+                        "type": "male",
+                        "location": [0, 7],
+                        "bounding_box": [15, 3, 16, 5],
+                        "origin": [0, 1]
+                    },
+                    {
+                        "type": "male",
+                        "location": [7, 14],
+                        "bounding_box": [16, 1, 18, 2],
+                        "origin": [1, 1]
+                    },
+                    {
+                        "type": "male",
+                        "location": [14, 7],
+                        "bounding_box": [16, 3, 17, 5],
+                        "origin": [1, 1]
+                    }
+                ] 
+            },
+            "enemy_1": {
+                "bounding_box": [19, 0, 33, 14],
+                "create": "level_1_enemy_1_create",
+                "type": "enemy"
+            },
+            "enemy_2": {
+                "bounding_box": [0, 19, 14, 33],
+                "create": "level_1_enemy_2_create",
+                "type": "enemy"
+            },
+            "boss": {
+                "bounding_box": [19, 19, 33, 33],
+                "create": "level_1_boss_create",
+                "type": "boss"
             }
         }
     }

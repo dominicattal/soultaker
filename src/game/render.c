@@ -878,6 +878,7 @@ void game_render(void)
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
     glBindFramebuffer(GL_FRAMEBUFFER, render_context.fbo);
+    renderer_check_framebuffer_status(GL_FRAMEBUFFER, "game");
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glStencilMask(0x01); // stencil mask affects glClear
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -902,6 +903,7 @@ void game_render(void)
     GLuint loc, unit;
 
     glBindFramebuffer(GL_FRAMEBUFFER, render_context.shadow_fbo);
+    renderer_check_framebuffer_status(GL_FRAMEBUFFER, "shadow");
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     glDisable(GL_DEPTH_TEST);

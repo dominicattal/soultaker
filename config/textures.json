@@ -48,15 +48,15 @@
             }
         }
     },
-    "lobby": {
+    "level_1": {
         "spritesheet": true,
-        "path": "assets/textures/lobby.png",
+        "path": "assets/textures/level_1.png",
         "textures": {
-            "lobby_floor_1": [0, 0, 8, 8],
-            "lobby_floor_2": [9, 0, 8, 8],
-            "lobby_floor_3": [18, 0, 8, 8],
-            "lobby_wall_side": [36, 0, 8, 16],
-            "lobby_wall_top": [27, 0, 8, 8]
+            "level_1_floor_1": [0, 0, 8, 8],
+            "level_1_floor_2": [9, 0, 8, 8],
+            "level_1_floor_3": [18, 0, 8, 8],
+            "level_1_wall_side": [36, 0, 8, 16],
+            "level_1_wall_top": [27, 0, 8, 8]
         }
     },
     "shaitan": {

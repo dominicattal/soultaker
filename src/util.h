@@ -8,6 +8,7 @@
 #include "util/log.h"
 #include "util/malloc.h"
 #include "util/thread.h"
+#include "util/quadmask.h"
 #include <pthread.h>
 #include <semaphore.h>
 #include <stdlib.h>

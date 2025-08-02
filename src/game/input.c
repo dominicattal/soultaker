@@ -9,6 +9,7 @@ void game_process_input(f32 dt)
     if (game_context.halt_game_loop)
         return;
 
+    static vec2 prev_move_mag;
     vec2 move_mag = vec2_create(0, 0);
     f32 rotate_mag = 0;
     f32 tilt_mag = 0; 
@@ -37,7 +38,9 @@ void game_process_input(f32 dt)
         game_context.player.shooting = true;
 
 update:
-    event_create_game_camera_move(vec2_scale(vec2_normalize(move_mag), dt));
+    if (vec2_equal(move_mag, prev_move_mag))
+        event_create_game_camera_move(vec2_scale(vec2_normalize(move_mag), dt));
+    prev_move_mag = move_mag;
     camera_rotate(rotate_mag * dt);
     camera_tilt(tilt_mag * dt);
 }

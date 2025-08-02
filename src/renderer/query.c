@@ -61,3 +61,35 @@ void renderer_list_context_flags(void)
     printf("%sGL_CONTEXT_FLAG_ROBUST_ACCESS\n", (mask & GL_CONTEXT_FLAG_ROBUST_ACCESS_BIT) ? "" : "NOT ");
     printf("%sGL_CONTEXT_FLAG_NO_ERROR\n", (mask & GL_CONTEXT_FLAG_NO_ERROR_BIT) ? "" : "NOT ");
 }
+
+void renderer_check_framebuffer_status(GLenum target, const char* name)
+{
+    GLenum status = glCheckFramebufferStatus(target);
+    const char* message = "";
+    if (status == GL_FRAMEBUFFER_COMPLETE)
+        return;
+    switch (status) {
+        case GL_FRAMEBUFFER_UNDEFINED:
+            message = "the specified framebuffer is the default read or draw framebuffer, but the default framebuffer does not exist.";
+            break;
+        case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+            message = "one of the framebuffer attachment points are framebuffer incomplete.";
+            break;
+        case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+            message = "the framebuffer does not have at least one image attached to it.";
+            break;
+        case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER:
+            message = "the value of GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE is GL_NONE for any color attachment point(s) named by GL_DRAW_BUFFERi";
+            break;
+        case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER:
+            message = "GL_READ_BUFFER is not GL_NONE and the value of GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE is GL_NONE for the color attachment point named by GL_READ_BUFFER.";
+            break;
+        case GL_FRAMEBUFFER_UNSUPPORTED:
+            message = "the combination of internal formats of the attached images violates an implementation-dependent set of restrictions.";
+            break;
+        default:
+            message = "unknown";
+            break;
+    }
+    log_write(FATAL, "%s framebuffer error\nGLenum: %04X\n%s", name, status, message);
+}

@@ -57,6 +57,9 @@ void renderer_list_available_versions(void);
 void renderer_list_context_flags(void);
 void renderer_print_context_profile(void);
 
+// checks if framebuffer is complete, prints error and exits if not
+void renderer_check_framebuffer_status(GLenum target, const char* name);
+
 void shader_init(void);
 void shader_compile(ShaderProgramEnum program);
 void shader_use(ShaderProgramEnum program);

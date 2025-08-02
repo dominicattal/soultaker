@@ -189,7 +189,7 @@ void gui_update_boss_healthbar(void* boss_ptr, f32 health, f32 max_health)
         return;
 
     BossHealthManagerData* manager_data = boss_health_manager->data;
-    BossHealthData* data;
+    BossHealthData* data = NULL;
     i32 idx;
     List* boss_healths = manager_data->boss_healths;
     for (idx = 0; idx < boss_healths->length; idx++) {
@@ -220,7 +220,7 @@ void gui_destroy_boss_healthbar(void* boss_ptr)
         return;
 
     BossHealthManagerData* manager_data = boss_health_manager->data;
-    BossHealthData* data;
+    BossHealthData* data = NULL;
     i32 idx;
     List* boss_healths = manager_data->boss_healths;
     for (idx = 0; idx < boss_healths->length; idx++) {
@@ -405,7 +405,7 @@ static void load_save(void)
 {
     game_resume_loop();
     game_resume_render();
-    i32 id = map_get_id("lobby");
+    i32 id = map_get_id("level_1");
     event_create_game_map_load(id);
 }
 
