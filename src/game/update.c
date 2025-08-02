@@ -9,7 +9,7 @@ static void collide_entity_wall(Entity* entity, Wall* wall)
     f32 ex, ez, er, dx, dz, wx, wz, sx, sz;
     ex = entity->position.x;
     ez = entity->position.y;
-    er = entity->size / 2;
+    er = entity->size / 2 - 0.01;
     wx = wall->position.x;
     wz = wall->position.y;
     sx = wall->size.x;
@@ -21,6 +21,9 @@ static void collide_entity_wall(Entity* entity, Wall* wall)
     ez = entity->prev_position.y;
     dx = entity->position.x - entity->prev_position.x;
     dz = entity->position.y - entity->prev_position.y;
+    // this will not work if er is a tight fit and on the z axis
+    // because the first check will prevent the second check, and
+    // having both checks will further bug it. this should be fine otherwise
     if (ez + er > wz && ez - er < wz + sz) {
         if (dx > 0)
             entity->position.x = wx - er;

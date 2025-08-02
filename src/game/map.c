@@ -33,6 +33,7 @@ typedef struct {
     i32 u1, v1, u2, v2;
     // relative spawn coordinates if spawn
     i32 spawn_x, spawn_z;
+    const char* name;
     const char* type;
     RoomCreateFuncPtr create;
 } Room;
@@ -42,6 +43,10 @@ typedef struct {
     u32* data;
     Room* rooms;
     i32 num_rooms;
+} RoomSet;
+
+typedef struct {
+    i32 x;
 } Map;
 
 typedef struct {
@@ -311,7 +316,7 @@ static i32 get_int_value(JsonValue* value)
     return json_get_int(value);
 }
 
-static Map* map_create(JsonObject* root, const char* path)
+static RoomSet* room_set_create(JsonObject* root, const char* path)
 {
     JsonObject* object;
     JsonValue* value;
@@ -319,14 +324,15 @@ static Map* map_create(JsonObject* root, const char* path)
     JsonMember* member;
     JsonArray* array;
     i32 array_length;
-    Map* map;
+    RoomSet* room_set;
     Room* rooms;
     Room* room;
     i32 num_rooms;
     Room* spawn_room = NULL;
     i32 x, y, n, i, j, idx;
-    u32* map_data;
+    u32* room_set_data;
     unsigned char* raw_data;
+    const char* string;
 
     value = json_get_value(root, "rooms");
     if (value == NULL)
@@ -342,11 +348,11 @@ static Map* map_create(JsonObject* root, const char* path)
     raw_data = stbi_load(path, &x, &y, &n, 3);
     if (raw_data == NULL)
         log_write(FATAL, "Could not load map data for %s", path);
-    map_data = st_malloc(x * y * sizeof(u32));
+    room_set_data = st_malloc(x * y * sizeof(u32));
     for (i = 0; i < y; i++) {
         for (j = 0; j < x; j++) {
             idx = i * x + j;
-            map_data[idx] = raw_data[3*idx+2] + (raw_data[3*idx+1]<<8) + (raw_data[3*idx]<<16);
+            room_set_data[idx] = raw_data[3*idx+2] + (raw_data[3*idx+1]<<8) + (raw_data[3*idx]<<16);
         }
     }
     stbi_image_free(raw_data);
@@ -356,13 +362,15 @@ static Map* map_create(JsonObject* root, const char* path)
         room = &rooms[i];
         member = json_iterator_get(it);
 
+        room->name = json_member_key(member);
+
         value = json_member_value(member);
         if (json_get_type(value) != JTYPE_OBJECT)
             throw_map_error(ERROR_MISSING);
 
         object = json_get_object(value);
 
-        value = json_get_value(object, "location");
+        value = json_get_value(object, "bounding_box");
         if (value == NULL)
             throw_map_error(ERROR_MISSING);
         if (json_get_type(value) != JTYPE_ARRAY)
@@ -378,7 +386,7 @@ static Map* map_create(JsonObject* root, const char* path)
         room->u2 = get_int_value(json_array_get(array, 2));
         room->v2 = get_int_value(json_array_get(array, 3));
 
-        const char* string = get_string_value(object, "create");
+        string = get_string_value(object, "create");
         room->create = state_load_function(string);
         if (room->create == NULL)
             throw_map_error(ERROR_GENERIC);
@@ -413,36 +421,36 @@ increment:
     if (spawn_room == NULL)
         throw_map_error(ERROR_GENERIC);
 
-    map = st_malloc(sizeof(Map));
-    map->rooms = rooms;
-    map->num_rooms = num_rooms;
-    map->data = map_data;
-    map->width = x;
-    map->height = y;
+    room_set = st_malloc(sizeof(RoomSet));
+    room_set->rooms = rooms;
+    room_set->num_rooms = num_rooms;
+    room_set->data = room_set_data;
+    room_set->width = x;
+    room_set->height = y;
 
-    return map;
+    return room_set;
 }
 
-static Room* map_get(Map* map, const char* type)
+static Room* room_set_get(RoomSet* room_set, const char* type)
 {
-    for (i32 i = 0; i < map->num_rooms; i++)
-        if (strcmp(map->rooms[i].type, type) == 0)
-            return &map->rooms[i];
+    for (i32 i = 0; i < room_set->num_rooms; i++)
+        if (strcmp(room_set->rooms[i].type, type) == 0)
+            return &room_set->rooms[i];
     return NULL;
 }
 
-static void map_destroy(Map* map)
+static void room_set_destroy(RoomSet* room_set)
 {
-    st_free(map->data);
-    st_free(map->rooms);
-    st_free(map);
+    st_free(room_set->data);
+    st_free(room_set->rooms);
+    st_free(room_set);
 }
 
 #define WHITE   0x000000
 #define GRAY    0x808080
 #define BLACK   0xFFFFFF
 
-static void load_room(Palette* palette, Map* map, Room* room, i32 origin_x, i32 origin_y)
+static void load_room(Palette* palette, RoomSet* room_set, Room* room, i32 origin_x, i32 origin_y)
 {
     TileColor* tile_color;
     Tile* tile;
@@ -451,11 +459,11 @@ static void load_room(Palette* palette, Map* map, Room* room, i32 origin_x, i32 
     u32 color;
     vec2 position;
     for (i32 i = room->v1; i < room->v2; i++) {
-        position.y = origin_y + room->v2 - i - 1;
+        position.y = origin_y + i - room->v1;
         for (i32 j = room->u1; j < room->u2; j++) {
             position.x = origin_x + j - room->u1;
-            idx = i * map->width + j;
-            color = map->data[idx];
+            idx = i * room_set->width + j;
+            color = room_set->data[idx];
             if (color == WHITE || color == GRAY || color == BLACK)
                 continue;
             tile_color = palette_get(palette, color);
@@ -481,7 +489,7 @@ static void generate_map(i32 id)
     JsonValue* value;
     JsonObject* object;
     Palette* palette;
-    Map* map;
+    RoomSet* room_set;
     const char* path;
     i32 origin_x = 0, origin_y = 0;
 
@@ -500,19 +508,19 @@ static void generate_map(i32 id)
         throw_map_error(ERROR_INVALID_TYPE);
 
     path = json_get_string(value);
-    map = map_create(object, path);
+    room_set = room_set_create(object, path);
     palette = palette_create(object);
 
-    Room* spawn_room = map_get(map, "spawn");
+    Room* spawn_room = room_set_get(room_set, "spawn");
     if (spawn_room == NULL)
         throw_map_error(ERROR_GENERIC);
 
-    load_room(palette, map, spawn_room, origin_x, origin_y);
-    game_set_player_position(vec2_create(origin_x+spawn_room->spawn_x, origin_y+spawn_room->spawn_z));
+    load_room(palette, room_set, spawn_room, origin_x, origin_y);
+    game_set_player_position(vec2_create(origin_x+spawn_room->spawn_x+0.5, origin_y+spawn_room->spawn_z+0.5));
     spawn_room->create(&global_api, origin_x, origin_y);
 
     palette_destroy(palette);
-    map_destroy(map);
+    room_set_destroy(room_set);
 }
 
 i32 map_get_id(const char* name)

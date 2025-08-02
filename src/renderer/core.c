@@ -50,9 +50,9 @@ static void GLAPIENTRY message_callback(GLenum source, GLenum type, GLuint id, G
             break;
     }
     log_write(level, "OpenGL error\n"
-                     "%-8s = 0x%04x %s\n"
-                     "%-8s = 0x%04x %s\n"
-                     "%-8s = 0x%04x %s\n"
+                     "%-8s = 0x%04X %s\n"
+                     "%-8s = 0x%04X %s\n"
+                     "%-8s = 0x%04X %s\n"
                      "%-8s = %u\n"
                      "%s",
                       "source", source, source_str,

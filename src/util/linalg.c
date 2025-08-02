@@ -71,6 +71,11 @@ void vec2_print(vec2 vec)
     printf("%.5f, %.5f\n", vec.x, vec.y);
 }
 
+bool vec2_equal(vec2 v1, vec2 v2)
+{
+    return v1.x == v2.x && v1.y == v2.y;
+}
+
 vec3 vec3_create(f32 x, f32 y, f32 z)
 {
     return (vec3) { x, y, z };
