@@ -1,5 +1,9 @@
 #include "../../src/api.h"
 
+st_export void level_1_generation()
+{
+}
+
 st_export void level_1_spawn_create(GlobalApi* api)
 {
 }

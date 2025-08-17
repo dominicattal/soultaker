@@ -65,7 +65,7 @@ typedef struct {
 
 static void update_fps(GUIComp* comp, f32 dt)
 {
-    char* string = string_create("%.5f", 10, game_get_dt());
+    char* string = string_create("%.5f", 10, 1000 * game_get_dt());
     gui_comp_set_text(comp, strlen(string), string);
 }
 

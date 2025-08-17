@@ -72,6 +72,14 @@ i32 list_search(List* list, void* item)
     return -1;
 }
 
+bool list_contains(List* list, void* item)
+{
+    for (i32 i = 0; i < list->length; i++)
+        if (list->buffer[i] == item)
+            return true;
+    return false;
+}
+
 void list_clear(List* list)
 {
     st_free(list->buffer);
@@ -95,7 +103,7 @@ void list_shuffle(List* list)
     i32 i, j;
     void* tmp;
     for (i = 1; i < list->length; i++) {
-        j = rand() % i;
+        j = rand() % (i+1);
         tmp = list->buffer[i];
         list->buffer[i] = list->buffer[j];
         list->buffer[j] = tmp;

@@ -44,7 +44,6 @@ void camera_init(void);
 void camera_cleanup(void);
 
 // Updates OpenGL buffers with current camera values.
-// Called each frame
 void camera_update(void);
 
 // It is only necessary to change the projection matrix
@@ -58,6 +57,14 @@ void camera_move(vec2 mag);
 void camera_rotate(f32 mag);
 void camera_tilt(f32 mag);
 
+// Getters
+vec3 camera_get_position(void);
+vec3 camera_get_facing(void);
+f32  camera_get_pitch(void);
+f32  camera_get_yaw(void);
+f32  camera_get_pitch(void);
+f32  camera_get_zoom(void);
+
 //**************************************************************************
 // Maps. See docs/maps.md for more information
 //**************************************************************************
@@ -66,7 +73,7 @@ void map_init(void);
 void map_load(i32 id);
 void map_cleanup(void);
 
-// gets the tile or wall at (x, z)
+// gets the tile or wall at (x, z), returns NULL if out of bounds
 void* map_get(i32 x, i32 z);
 
 // get the tile at (x, z) for the current map. returns
@@ -237,6 +244,10 @@ Wall* wall_create(vec2 position, f32 height);
 void wall_destroy(Wall* wall);
 void wall_cleanup(void);
 
+// put all of the walls not in the tilemap in
+// game_context.free_walls
+void wall_update_free_walls(void);
+
 //**************************************************************************
 // Projectile definitions
 //**************************************************************************
@@ -388,6 +399,7 @@ typedef struct {
     List* bosses;
     List* tiles;
     List* walls;
+    List* free_walls;
     List* projectiles;
     List* parstacles;
     List* obstacles;

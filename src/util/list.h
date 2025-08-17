@@ -35,6 +35,9 @@ void* list_remove_in_order(List* list, i32 idx);
 // find and return idx of the item, returns -1 if not found
 i32 list_search(List* list, void* item);
 
+// returns true if list contains item, false otherwise
+bool list_contains(List* list, void* item);
+
 // resets the list's capacity to 0. does not alter any of the list's contents
 void list_clear(List* list);
 

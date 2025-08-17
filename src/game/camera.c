@@ -18,7 +18,7 @@
 #define DISTANCE_FROM_PLAYER 100
 
 #define MIN_ZOOM 1
-#define MAX_ZOOM 15
+#define MAX_ZOOM 25
 #define MIN_PITCH 0.3
 #define MAX_PITCH 1.3
 
