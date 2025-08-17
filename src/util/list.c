@@ -11,6 +11,17 @@ List* list_create(void)
     return list;
 }
 
+List* list_copy(List* list)
+{
+    List* copy = st_malloc(sizeof(List));
+    copy->buffer = st_malloc(list->capacity * sizeof(void*));
+    for (i32 i = 0; i < list->length; i++)
+        copy->buffer[i] = list->buffer[i];
+    copy->length = list->length;
+    copy->capacity = list->capacity;
+    return copy;
+}
+
 void list_append(List* list, void* item)
 {
     if (list->length >= list->capacity) {
@@ -76,6 +87,19 @@ void* list_get(List* list, i32 idx)
 bool list_empty(List* list)
 {
     return list->length == 0;
+}
+
+void list_shuffle(List* list)
+{
+    // modern fisher-yates
+    i32 i, j;
+    void* tmp;
+    for (i = 1; i < list->length; i++) {
+        j = rand() % i;
+        tmp = list->buffer[i];
+        list->buffer[i] = list->buffer[j];
+        list->buffer[j] = tmp;
+    }
 }
 
 void  list_destroy(List* list)
