@@ -66,6 +66,20 @@ void map_init(void);
 void map_load(i32 id);
 void map_cleanup(void);
 
+// gets the tile or wall at (x, z)
+void* map_get(i32 x, i32 z);
+
+// get the tile at (x, z) for the current map. returns
+// NULL if it is out of bounds, the unit is empty, or is a wall
+Tile* map_get_tile(i32 x, i32 z);
+
+// get the wall at (x, z) for the current map. returns
+// NULL if it is out of bounds, the unit is empty, or is a tile
+Wall* map_get_wall(i32 x, i32 z);
+
+// returns true if the tile at (x, z) is a wall
+bool map_is_wall(i32 x, i32 z);
+
 //**************************************************************************
 // Entity, Player, Boss definitions
 //**************************************************************************

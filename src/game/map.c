@@ -29,36 +29,69 @@ typedef struct {
 } Palette;
 
 typedef struct {
-    // aabb in map's data
     i32 u1, v1, u2, v2;
-    // relative spawn coordinates if spawn
-    i32 spawn_x, spawn_z;
+    i32 origin_u, origin_v;
+    i32 loc_u, loc_v;
+} Alternate;
+
+typedef struct {
+    i32 u1, v1, u2, v2;
     const char* name;
     const char* type;
     RoomCreateFuncPtr create;
+    List* male_alternates;
+    List* female_alternates;
 } Room;
 
 typedef struct {
-    i32 width, height;
+    i32 width, length;
     u32* data;
     Room* rooms;
     i32 num_rooms;
 } RoomSet;
 
+// Think of the map like a tree with rooms as nodes.
+// Spawn room is like the root of the tree, and there are
+// branches the player may go down that may lead to an event
+// or a boss room.
+
+typedef struct MapNode MapNode;
+
 typedef struct {
-    i32 x;
+    QuadMask* qm;
+    RoomSet* roomset;
+    const char* current_branch;
+    i32 num_rooms_left;
+    i32 male_x, male_z;
+} MapGenerationSettings;
+
+typedef struct MapNode {
+    MapNode** children;
+    i32 num_children;
+    Room* room;
+    Alternate* female_alternate;
+    List* male_alternates;
+    i32 origin_x, origin_z;
+} MapNode;
+
+typedef struct {
+    i32 width, length;
+    MapNode* root;
+    void** tiles;
+    // bit is set if tile is wall
+    QuadMask* tile_mask;
 } Map;
 
 typedef struct {
 
     const char** names;
     i32 num_names;
-
-    // load as needed
     JsonObject* json;
+
+    Map* current_map;
     
     // error handling
-    const char* current_map;
+    const char* current_map_name;
 
 } MapContext;
 
@@ -76,7 +109,7 @@ typedef enum {
 
 static void _throw_map_error(MapError error, i32 line)
 {
-    const char* name = map_context.current_map;
+    const char* name = map_context.current_map_name;
     if (name == NULL)
         name = "n/a";
     const char* message;
@@ -152,6 +185,16 @@ static const char* get_string_value(JsonObject* object, const char* string)
     return json_get_string(value);
 }
 
+static JsonArray* get_array_value(JsonObject* object, const char* string)
+{
+    JsonValue* value = json_get_value(object, string);
+    if (value == NULL)
+        throw_map_error(ERROR_MISSING);
+    if (json_get_type(value) != JTYPE_ARRAY)
+        throw_map_error(ERROR_INVALID_TYPE);
+    return json_get_array(value);
+}
+
 static void load_palette_color(JsonObject* object, TileColor* tile)
 {
     const char* string = get_string_value(object, "color");
@@ -170,7 +213,6 @@ static void load_palette_type(JsonObject* object, TileColor* tile)
     else
         throw_map_error(ERROR_INVALID_VALUE);
 }
-
 
 static void load_palette_textures(JsonObject* object, TileColor* tile)
 {
@@ -316,23 +358,111 @@ static i32 get_int_value(JsonValue* value)
     return json_get_int(value);
 }
 
-static RoomSet* room_set_create(JsonObject* root, const char* path)
+static void parse_room_bounding_box(JsonObject* object, Room* room)
+{
+    JsonArray* array;
+    i32 array_length;
+
+    array = get_array_value(object, "bounding_box");
+    array_length = json_array_length(array);
+    if (array_length != 4)
+        throw_map_error(ERROR_GENERIC);
+    
+    room->u1 = get_int_value(json_array_get(array, 0));
+    room->v1 = get_int_value(json_array_get(array, 1));
+    room->u2 = get_int_value(json_array_get(array, 2));
+    room->v2 = get_int_value(json_array_get(array, 3));
+}
+
+static void parse_room_create(JsonObject* object, Room* room)
+{
+    const char* string;
+    string = get_string_value(object, "create");
+    room->create = state_load_function(string);
+    if (room->create == NULL)
+        throw_map_error(ERROR_GENERIC);
+}
+
+static void parse_room_type(JsonObject* object, Room* room)
+{
+    room->type = get_string_value(object, "type");
+}
+
+static void parse_room_alternates(JsonObject* object, Room* room)
+{
+    JsonValue* value;
+    JsonArray* array;
+    JsonArray* num_array;
+    Alternate* alternate;
+    const char* string;
+    i32 num_array_length, array_length, i;
+
+    room->male_alternates = list_create();
+    room->female_alternates = list_create();
+    value = json_get_value(object, "alternates");
+    if (value == NULL)
+        return;
+    if (json_get_type(value) != JTYPE_ARRAY)
+        throw_map_error(ERROR_GENERIC);
+    array = json_get_array(value);
+    array_length = json_array_length(array);
+
+    for (i = 0; i < array_length; i++) {
+        alternate = st_malloc(sizeof(Alternate));
+        value = json_array_get(array, i);
+        if (json_get_type(value) != JTYPE_OBJECT)
+            throw_map_error(ERROR_INVALID_TYPE);
+        object = json_get_object(value);
+
+        num_array = get_array_value(object, "bounding_box");
+        num_array_length = json_array_length(num_array);
+        if (num_array_length != 4)
+            throw_map_error(ERROR_GENERIC);
+
+        alternate->u1 = get_int_value(json_array_get(num_array, 0));
+        alternate->v1 = get_int_value(json_array_get(num_array, 1));
+        alternate->u2 = get_int_value(json_array_get(num_array, 2));
+        alternate->v2 = get_int_value(json_array_get(num_array, 3));
+
+        num_array = get_array_value(object, "location");
+        num_array_length = json_array_length(num_array);
+        if (num_array_length != 2)
+            throw_map_error(ERROR_GENERIC);
+
+        alternate->loc_u = get_int_value(json_array_get(num_array, 0));
+        alternate->loc_v = get_int_value(json_array_get(num_array, 1));
+
+        num_array = get_array_value(object, "origin");
+        num_array_length = json_array_length(num_array);
+        if (num_array_length != 2)
+            throw_map_error(ERROR_GENERIC);
+
+        alternate->origin_u = get_int_value(json_array_get(num_array, 0));
+        alternate->origin_v = get_int_value(json_array_get(num_array, 1));
+
+        string = get_string_value(object, "type");
+        if (strcmp(string, "male") == 0)
+            list_append(room->male_alternates, alternate);
+        else if (strcmp(string, "female") == 0)
+            list_append(room->female_alternates, alternate);
+        else
+            throw_map_error(ERROR_GENERIC);
+    }
+}
+
+static RoomSet* roomset_create(JsonObject* root, const char* path)
 {
     JsonObject* object;
     JsonValue* value;
     JsonIterator* it;
     JsonMember* member;
-    JsonArray* array;
-    i32 array_length;
-    RoomSet* room_set;
+    RoomSet* roomset;
     Room* rooms;
     Room* room;
     i32 num_rooms;
-    Room* spawn_room = NULL;
     i32 x, y, n, i, j, idx;
-    u32* room_set_data;
+    u32* roomset_data;
     unsigned char* raw_data;
-    const char* string;
 
     value = json_get_value(root, "rooms");
     if (value == NULL)
@@ -348,11 +478,11 @@ static RoomSet* room_set_create(JsonObject* root, const char* path)
     raw_data = stbi_load(path, &x, &y, &n, 3);
     if (raw_data == NULL)
         log_write(FATAL, "Could not load map data for %s", path);
-    room_set_data = st_malloc(x * y * sizeof(u32));
+    roomset_data = st_malloc(x * y * sizeof(u32));
     for (i = 0; i < y; i++) {
         for (j = 0; j < x; j++) {
             idx = i * x + j;
-            room_set_data[idx] = raw_data[3*idx+2] + (raw_data[3*idx+1]<<8) + (raw_data[3*idx]<<16);
+            roomset_data[idx] = raw_data[3*idx+2] + (raw_data[3*idx+1]<<8) + (raw_data[3*idx]<<16);
         }
     }
     stbi_image_free(raw_data);
@@ -370,128 +500,436 @@ static RoomSet* room_set_create(JsonObject* root, const char* path)
 
         object = json_get_object(value);
 
-        value = json_get_value(object, "bounding_box");
-        if (value == NULL)
-            throw_map_error(ERROR_MISSING);
-        if (json_get_type(value) != JTYPE_ARRAY)
-            throw_map_error(ERROR_INVALID_TYPE);
+        parse_room_bounding_box(object, room);
+        parse_room_create(object, room);
+        parse_room_alternates(object, room);
+        parse_room_type(object, room);
 
-        array = json_get_array(value);
-        array_length = json_array_length(array);
-        if (array_length != 4)
-            throw_map_error(ERROR_GENERIC);
-        
-        room->u1 = get_int_value(json_array_get(array, 0));
-        room->v1 = get_int_value(json_array_get(array, 1));
-        room->u2 = get_int_value(json_array_get(array, 2));
-        room->v2 = get_int_value(json_array_get(array, 3));
-
-        string = get_string_value(object, "create");
-        room->create = state_load_function(string);
-        if (room->create == NULL)
-            throw_map_error(ERROR_GENERIC);
-        
-        room->type = get_string_value(object, "type");
-        if (strcmp(room->type, "spawn") != 0)
-            goto increment;
-
-        if (spawn_room != NULL)
-            throw_map_error(ERROR_GENERIC);
-        spawn_room = room;
-        value = json_get_value(object, "spawn_point");
-        if (value == NULL)
-            throw_map_error(ERROR_MISSING);
-        if (json_get_type(value) != JTYPE_ARRAY)
-            throw_map_error(ERROR_INVALID_TYPE);
-
-        array = json_get_array(value);
-        array_length = json_array_length(array);
-        if (array_length != 2)
-            throw_map_error(ERROR_GENERIC);
-
-        room->spawn_x = get_int_value(json_array_get(array, 0));
-        room->spawn_z = get_int_value(json_array_get(array, 1));
-
-
-increment:
         json_iterator_increment(it);
     }
     json_iterator_destroy(it);
 
-    if (spawn_room == NULL)
-        throw_map_error(ERROR_GENERIC);
+    roomset = st_malloc(sizeof(RoomSet));
+    roomset->rooms = rooms;
+    roomset->num_rooms = num_rooms;
+    roomset->data = roomset_data;
+    roomset->width = x;
+    roomset->length = y;
 
-    room_set = st_malloc(sizeof(RoomSet));
-    room_set->rooms = rooms;
-    room_set->num_rooms = num_rooms;
-    room_set->data = room_set_data;
-    room_set->width = x;
-    room_set->height = y;
-
-    return room_set;
+    return roomset;
 }
 
-static Room* room_set_get(RoomSet* room_set, const char* type)
+static u32 roomset_get_color(RoomSet* roomset, i32 u, i32 v)
 {
-    for (i32 i = 0; i < room_set->num_rooms; i++)
-        if (strcmp(room_set->rooms[i].type, type) == 0)
-            return &room_set->rooms[i];
-    return NULL;
+    return roomset->data[v * roomset->width + u];
 }
 
-static void room_set_destroy(RoomSet* room_set)
+static List* roomset_get_rooms(RoomSet* roomset, const char* type)
 {
-    st_free(room_set->data);
-    st_free(room_set->rooms);
-    st_free(room_set);
+    List* rooms = list_create();
+    Room* room;
+    i32 i;
+    for (i = 0; i < roomset->num_rooms; i++) {
+        room = &roomset->rooms[i];
+        if (strcmp(room->type, type) == 0)
+            list_append(rooms, room);
+    }
+    return rooms;
 }
 
-#define WHITE   0x000000
+static void roomset_destroy(RoomSet* roomset)
+{
+    for (i32 i = 0; i < roomset->num_rooms; i++) {
+        list_destroy(roomset->rooms[i].male_alternates);
+        list_destroy(roomset->rooms[i].female_alternates);
+    }
+    st_free(roomset->rooms);
+    st_free(roomset->data);
+    st_free(roomset);
+}
+
+#define WHITE   0xFFFFFF
 #define GRAY    0x808080
-#define BLACK   0xFFFFFF
+#define BLACK   0x000000
 
-static void load_room(Palette* palette, RoomSet* room_set, Room* room, i32 origin_x, i32 origin_y)
+static bool color_is_preset(u32 color)
 {
-    TileColor* tile_color;
-    Tile* tile;
-    Wall* wall;
-    i32 idx;
+    return color == WHITE || color == GRAY || color == BLACK;
+}
+static bool can_preload_room(QuadMask* qm, RoomSet* roomset, Room* room, i32 origin_x, i32 origin_z)
+{
     u32 color;
-    vec2 position;
-    for (i32 i = room->v1; i < room->v2; i++) {
-        position.y = origin_y + i - room->v1;
-        for (i32 j = room->u1; j < room->u2; j++) {
-            position.x = origin_x + j - room->u1;
-            idx = i * room_set->width + j;
-            color = room_set->data[idx];
-            if (color == WHITE || color == GRAY || color == BLACK)
+    i32 u, v, map_x, map_z;
+    for (v = room->v1; v <= room->v2; v++) {
+        for (u = room->u1; u <= room->u2; u++) {
+            color = roomset_get_color(roomset, u, v);
+            map_x = origin_x + u - room->u1;
+            map_z = origin_z + v - room->v1;
+            if (!quadmask_in_bounds(qm, map_x, map_z))
+                return false;
+            if (color_is_preset(color))
                 continue;
-            tile_color = palette_get(palette, color);
-            if (tile_color == NULL)
-                throw_map_error(ERROR_GENERIC);
-            if (tile_color->is_wall) {
-                wall = wall_create(position, tile_color->height);
-                wall->side_tex = tile_color->side_tex;
-                wall->top_tex = tile_color->top_tex;
-            } else {
-                tile = tile_create(position);
-                tile->tex = tile_color->tex;
-                tile->collide = tile_color->collide;
-                if (tile_color->create != NULL)
-                    tile_color->create(&global_api, tile);
-            }
+            if (!quadmask_isset(qm, map_x, map_z))
+                continue;
+            return false;
+        }
+    }
+    return true;
+}
+
+static bool can_preload_room_alternate(QuadMask* qm, RoomSet* roomset, Room* room, Alternate* alternate, i32 origin_x, i32 origin_z)
+{
+    u32 room_color;
+    i32 u, v, du, dv, map_x, map_z;
+    bool room_in_bounds;
+    for (v = alternate->v1; v <= alternate->v2; v++) {
+        dv = v - alternate->v1 + alternate->loc_v - alternate->origin_v;
+        map_z = origin_z + dv;
+        for (u = alternate->u1; u <= alternate->u2; u++) {
+            du = u - alternate->u1 + alternate->loc_u - alternate->origin_u;
+            map_x = origin_x + du;
+            if (!quadmask_in_bounds(qm, map_x, map_z))
+                return false;
+            if (!quadmask_isset(qm, map_x, map_z))
+                continue;
+            room_in_bounds = du >= 0 && du <= room->u2-room->u1 && dv >= 0 && dv <= room->v2-room->v1;
+            if (!room_in_bounds)
+                return false;
+            room_color = roomset_get_color(roomset, room->u1+du, room->v1+dv);
+            if (room_color != WHITE)
+                continue;
+            return false;
+        }
+    }
+    return true;
+}
+
+static void preload_room(QuadMask* qm, RoomSet* roomset, Room* room, i32 origin_x, i32 origin_z)
+{
+    u32 color;
+    i32 u, v, map_x, map_z;
+    for (v = room->v1; v <= room->v2; v++) {
+        for (u = room->u1; u <= room->u2; u++) {
+            color = roomset_get_color(roomset, u, v);
+            map_x = origin_x + u - room->u1;
+            map_z = origin_z + v - room->v1;
+            if (color_is_preset(color))
+                continue;
+            quadmask_set(qm, map_x, map_z);
         }
     }
 }
+
+static void preload_room_alternate(QuadMask* qm, RoomSet* roomset, Room* room, Alternate* alternate, i32 origin_x, i32 origin_z)
+{
+    u32 color;
+    i32 u, v, map_x, map_z;
+    for (v = alternate->v1; v <= alternate->v2; v++) {
+        map_z = origin_z + v - alternate->v1 + alternate->loc_v - alternate->origin_v;
+        for (u = alternate->u1; u <= alternate->u2; u++) {
+            color = roomset_get_color(roomset, u, v);
+            map_x = origin_x + u - alternate->u1 + alternate->loc_u - alternate->origin_u;
+            quadmask_unset(qm, map_x, map_z);
+            if (!color_is_preset(color))
+                quadmask_set(qm, map_x, map_z);
+        }
+    }
+}
+
+static void unpreload_room(QuadMask* qm, RoomSet* roomset, Room* room, i32 origin_x, i32 origin_z)
+{
+    u32 color;
+    i32 u, v;
+    for (v = room->v1; v <= room->v2; v++) {
+        for (u = room->u1; u <= room->u2; u++) {
+            color = roomset_get_color(roomset, u, v);
+            if (color_is_preset(color))
+                continue;
+            quadmask_unset(qm, origin_x+u, origin_z+v);
+        }
+    }
+}
+
+static void unpreload_room_alternate(QuadMask* qm, RoomSet* roomset, Room* room, Alternate* alternate, i32 origin_x, i32 origin_z)
+{
+    i32 u, v, map_x, map_z;
+    for (v = alternate->v1; v <= alternate->v2; v++) {
+        for (u = alternate->u1; u <= alternate->u2; u++) {
+            map_x = origin_x + u - alternate->u1 + alternate->loc_u - alternate->origin_u;
+            map_z = origin_z + v - alternate->v1 + alternate->loc_v - alternate->origin_v;
+            quadmask_unset(qm, map_x, map_z);
+        }
+    }
+}
+
+static MapNode* map_node_create(void)
+{
+    MapNode* node = st_malloc(sizeof(MapNode));
+    node->children = NULL;
+    node->num_children = 0;
+    node->room = NULL;
+    node->female_alternate = NULL;
+    node->male_alternates = list_create();
+    return node;
+}
+
+static void map_node_destroy(MapNode* node)
+{
+    for (i32 i = 0; i < node->num_children; i++)
+        map_node_destroy(node->children[i]);
+    list_destroy(node->male_alternates);
+    st_free(node->children);
+}
+
+static void map_node_attach(MapNode* parent, MapNode* child)
+{
+    if (parent->children == NULL)
+        parent->children = st_malloc(sizeof(MapNode));
+    else
+        parent->children = st_realloc(parent->children, (parent->num_children+1) * sizeof(MapNode));
+    parent->children[parent->num_children++] = child;
+}
+
+static void map_node_detach(MapNode* parent, MapNode* child)
+{
+    for (i32 i = 0; i < parent->num_children; i++) {
+        if (parent->children[i] == child) {
+            parent->children[i] = parent->children[--parent->num_children];
+            return;
+        }
+    }
+}
+
+// returns true if successfully generated a room, false otherwise
+static bool pregenerate_map_helper(MapGenerationSettings settings, MapNode* parent)
+{
+    QuadMask* qm = settings.qm;
+    RoomSet* roomset = settings.roomset;
+    i32 num_rooms_left = settings.num_rooms_left;
+    i32 male_x = settings.male_x;
+    i32 male_z = settings.male_z;
+    const char* current_branch;
+    List* rooms;
+    List* female_alternates;
+    List* male_alternates;
+    Alternate* female_alternate;
+    Alternate* male_alternate;
+    MapNode* child;
+    Room* room;
+    i32 origin_x, origin_z;
+    i32 room_idx, fem_idx, male_idx;
+    i32 list_idx;
+
+    if (num_rooms_left == 0) {
+        if (strcmp(settings.current_branch, "spawn") == 0) {
+            settings.current_branch = "enemy";
+            settings.num_rooms_left = 3;
+        }
+        else if (strcmp(settings.current_branch, "enemy") == 0) {
+            settings.current_branch = "boss";
+            settings.num_rooms_left = 1;
+        }
+        else
+            return true;
+    }
+
+    current_branch = settings.current_branch;
+
+    rooms = roomset_get_rooms(roomset, current_branch);
+    list_shuffle(rooms);
+    for (room_idx = 0; room_idx < rooms->length; room_idx++) {
+        room = list_get(rooms, room_idx);
+        female_alternates = list_copy(room->female_alternates);
+        list_shuffle(female_alternates);
+        for (fem_idx = 0; fem_idx < female_alternates->length; fem_idx++) {
+            female_alternate = list_get(female_alternates, fem_idx);
+            origin_x = male_x - female_alternate->loc_u;
+            origin_z = male_z - female_alternate->loc_v;
+            if (!can_preload_room(qm, roomset, room, origin_x, origin_z))
+                continue;
+            if (!can_preload_room_alternate(qm, roomset, room, female_alternate, origin_x, origin_z))
+                continue;
+            preload_room(qm, roomset, room, origin_x, origin_z);
+            preload_room_alternate(qm, roomset, room, female_alternate, origin_x, origin_z);
+            settings.num_rooms_left--;
+            child = map_node_create();
+            child->room = room;
+            child->female_alternate = female_alternate;
+            child->origin_x = origin_x;
+            child->origin_z = origin_z;
+            map_node_attach(parent, child);
+            male_alternates = list_copy(room->male_alternates);
+            if (male_alternates->length == 0)
+                if (pregenerate_map_helper(settings, child))
+                    goto success;
+            list_shuffle(male_alternates);
+            for (male_idx = 0; male_idx < male_alternates->length; male_idx++) {
+                male_alternate = list_get(male_alternates, male_idx);
+                if (!can_preload_room_alternate(qm, roomset, room, male_alternate, origin_x, origin_z))
+                    continue;
+                list_append(child->male_alternates, male_alternate);
+                preload_room_alternate(qm, roomset, room, male_alternate, origin_x, origin_z);
+                settings.male_x = origin_x + male_alternate->loc_u;
+                settings.male_z = origin_z + male_alternate->loc_v;
+                if (pregenerate_map_helper(settings, child))
+                    goto success;
+                unpreload_room_alternate(qm, roomset, room, male_alternate, origin_x, origin_z);
+                list_idx = list_search(child->male_alternates, male_alternate);
+                list_remove(child->male_alternates, list_idx);
+            }
+            list_destroy(male_alternates);
+            map_node_detach(parent, child);
+            map_node_destroy(child);
+            settings.num_rooms_left++;
+            unpreload_room_alternate(qm, roomset, room, female_alternate, origin_x, origin_z);
+            unpreload_room(qm, roomset, room, origin_x, origin_z);
+        }
+        list_destroy(female_alternates);
+    }
+    list_destroy(rooms);
+    return false;
+success:
+    list_destroy(male_alternates);
+    list_destroy(female_alternates);
+    list_destroy(rooms);
+    return true;
+}
+
+typedef struct {
+    Map* map;
+    QuadMask* qm;
+    Palette* palette;
+    RoomSet* roomset;
+    Room* room;
+    Alternate* alternate;
+    i32 origin_x;
+    i32 origin_z;
+} LoadArgs;
+
+static void place_tile(TileColor* tile_color, i32 x, i32 z)
+{
+    Tile* tile;
+    Wall* wall;
+    vec2 position = vec2_create(x, z);
+    if (tile_color == NULL)
+        return;
+    if (tile_color->is_wall) {
+        wall = wall_create(position, tile_color->height);
+        wall->side_tex = tile_color->side_tex;
+        wall->top_tex = tile_color->top_tex;
+    } else {
+        tile = tile_create(position);
+        tile->tex = tile_color->tex;
+        tile->collide = tile_color->collide;
+        if (tile_color->create != NULL)
+            tile_color->create(&global_api, tile);
+    }
+}
+
+static void load_room(LoadArgs* args)
+{
+    //Map* map = args->map;
+    QuadMask* qm = args->qm;
+    Palette* palette = args->palette;
+    RoomSet* roomset = args->roomset;
+    Room* room = args->room;
+    i32 origin_x = args->origin_x;
+    i32 origin_z = args->origin_z;
+    TileColor* tile_color;
+    i32 u, v, x, z;
+    u32 color;
+    for (v = room->v1; v <= room->v2; v++) {
+        z = origin_z + v - room->v1;
+        for (u = room->u1; u <= room->u2; u++) {
+            x = origin_x + u - room->u1;
+            color = roomset_get_color(roomset, u, v);
+            if (color_is_preset(color))
+                continue;
+            if (quadmask_isset(qm, x, z))
+                continue;
+            quadmask_set(qm, x, z);
+            tile_color = palette_get(palette, color);
+            place_tile(tile_color, x, z);
+        }
+    }
+}
+
+static void load_alternate(LoadArgs* args)
+{
+    //Map* map = args->map;
+    QuadMask* qm = args->qm;
+    Palette* palette = args->palette;
+    RoomSet* roomset = args->roomset;
+    Alternate* alternate = args->alternate;
+    i32 origin_x = args->origin_x;
+    i32 origin_z = args->origin_z;
+    i32 u, v, x, z;
+    TileColor* tile_color;
+    u32 color;
+    for (v = alternate->v1; v <= alternate->v2; v++) {
+        z = origin_z + v - alternate->v1 + alternate->loc_v - alternate->origin_v;
+        for (u = alternate->u1; u <= alternate->u2; u++) {
+            x = origin_x + u - alternate->u1 + alternate->loc_u - alternate->origin_u;
+            color = roomset_get_color(roomset, u, v);
+            if (color == WHITE)
+                continue;
+            if (quadmask_isset(qm, x, z))
+                continue;
+            quadmask_set(qm, x, z);
+            tile_color = palette_get(palette, color);
+            place_tile(tile_color, x, z);
+        }
+    }
+}
+
+static void generate_map_helper(Map* map, QuadMask* qm, Palette* palette, RoomSet* roomset, MapNode* node)
+{
+    LoadArgs args;
+    i32 i;
+
+    args = (LoadArgs) {
+        .map = map,
+        .qm = qm,
+        .palette = palette,
+        .roomset = roomset,
+        .origin_x = node->origin_x,
+        .origin_z = node->origin_z
+    };
+    log_write(DEBUG, "A %d %d", args.origin_x, args.origin_z);
+
+    for (i = 0; i < node->male_alternates->length; i++) {
+        args.alternate = list_get(node->male_alternates, i);
+        load_alternate(&args);
+    }
+
+    if (node->female_alternate != NULL) {
+        args.alternate = node->female_alternate;
+        load_alternate(&args);
+    }
+
+    if (node->room != NULL) {
+        args.room = node->room;
+        load_room(&args);
+    }
+
+    for (i = 0; i < node->num_children; i++)
+        generate_map_helper(map, qm, palette, roomset, node->children[i]);
+}
+
+#define MAP_MAX_WIDTH   80
+#define MAP_MAX_LENGTH  80
 
 static void generate_map(i32 id)
 {
     JsonValue* value;
     JsonObject* object;
     Palette* palette;
-    RoomSet* room_set;
+    RoomSet* roomset;
     const char* path;
-    i32 origin_x = 0, origin_y = 0;
+    Map* map;
+    MapNode* root;
+    MapGenerationSettings settings;
+    QuadMask* qm;
 
     value = json_get_value(map_context.json, map_context.names[id]);
     if (value == NULL)
@@ -507,20 +945,41 @@ static void generate_map(i32 id)
     if (json_get_type(value) != JTYPE_STRING)
         throw_map_error(ERROR_INVALID_TYPE);
 
+    qm = quadmask_create(MAP_MAX_WIDTH, MAP_MAX_LENGTH);
     path = json_get_string(value);
-    room_set = room_set_create(object, path);
+    roomset = roomset_create(object, path);
     palette = palette_create(object);
 
-    Room* spawn_room = room_set_get(room_set, "spawn");
-    if (spawn_room == NULL)
+    settings.qm = qm;
+    settings.roomset = roomset;
+    settings.current_branch = "spawn";
+    settings.num_rooms_left = 1;
+    settings.male_x = MAP_MAX_WIDTH / 2;
+    settings.male_z = MAP_MAX_LENGTH / 2;
+
+    root = map_node_create();
+
+    if (!pregenerate_map_helper(settings, root))
         throw_map_error(ERROR_GENERIC);
 
-    load_room(palette, room_set, spawn_room, origin_x, origin_y);
-    game_set_player_position(vec2_create(origin_x+spawn_room->spawn_x+0.5, origin_y+spawn_room->spawn_z+0.5));
-    spawn_room->create(&global_api, origin_x, origin_y);
+    map = st_malloc(sizeof(Map));
+    map->width = MAP_MAX_WIDTH;
+    map->length = MAP_MAX_LENGTH;
+    map->root = root;
+    map->tile_mask = quadmask_create(MAP_MAX_WIDTH, MAP_MAX_LENGTH);
+    map->tiles = st_calloc(map->width * map->length, sizeof(void*));
+
+    quadmask_clear(qm);
+    generate_map_helper(map, qm, palette, roomset, root);
+
+    st_free(map_context.current_map);
+    map_context.current_map = map;
+
+    game_set_player_position(vec2_create(MAP_MAX_WIDTH / 2 + 0.5, MAP_MAX_LENGTH / 2 + 0.5));
 
     palette_destroy(palette);
-    room_set_destroy(room_set);
+    roomset_destroy(roomset);
+    quadmask_destroy(qm);
 }
 
 i32 map_get_id(const char* name)
@@ -569,5 +1028,6 @@ void map_load(i32 id)
 void map_cleanup(void)
 {
     st_free(map_context.names);
+    st_free(map_context.current_map);
     json_object_destroy(map_context.json);
 }

@@ -59,6 +59,16 @@ static void update_player_souls(GUIComp* comp, f32 dt)
     gui_comp_set_w(current_souls, width);
 }
 
+typedef struct {
+    f32 timer;
+} CompFpsData;
+
+static void update_fps(GUIComp* comp, f32 dt)
+{
+    char* string = string_create("%.5f", 10, game_get_dt());
+    gui_comp_set_text(comp, strlen(string), string);
+}
+
 static GUIComp* create_player_health(void)
 {
     GUIComp* player_health = gui_comp_create(0, 0, STAT_POINT_WIDTH, 20);
@@ -305,6 +315,13 @@ static void load_preset_game(GUIComp* root)
     gui_set_event_comp(GUI_COMP_WEAPON_INFO, weapon_tex);
     gui_comp_attach(weapon_info, weapon_tex);
     gui_comp_attach(root, weapon_info);
+
+    GUIComp* comp_fps = gui_comp_create(0, 0, 100, 30);
+    comp_fps->update = update_fps;
+    gui_comp_set_align(comp_fps, ALIGN_LEFT, ALIGN_BOTTOM);
+    gui_comp_set_color(comp_fps, 255, 255, 255, 255);
+    gui_comp_set_text_align(comp_fps, ALIGN_CENTER, ALIGN_CENTER);
+    gui_comp_attach(root, comp_fps);
 }
 
 // **************************************************

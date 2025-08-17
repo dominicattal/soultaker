@@ -30,7 +30,6 @@
         },
         "rooms": {
             "spawn": {
-                "spawn_point": [20, 20],
                 "bounding_box": [0, 0, 31, 37],
                 "create": "shaitan_spawn_create",
                 "type": "spawn"
@@ -46,12 +45,12 @@
                 "tex": "level_1_floor_1"
             },
             "floor_2": {
-                "color": "FF006E",
+                "color": "6DFFEE",
                 "type": "tile",
                 "tex": "level_1_floor_2"
             },
             "floor_3": {
-                "color": "9E3D3D",
+                "color": "34BC27",
                 "type": "tile",
                 "tex": "level_1_floor_3"
             },
@@ -65,10 +64,15 @@
         "rooms": {
             "spawn": {
                 "bounding_box": [0, 0, 14, 14],
-                "spawn_point": [5, 5],
                 "create": "level_1_spawn_create",
                 "type": "spawn",
                 "alternates": [
+                    {
+                        "type": "female",
+                        "location": [7, 7],
+                        "bounding_box": [16, 1, 16, 1],
+                        "origin": [0, 0]
+                    },
                     {
                         "type": "male",
                         "location": [7, 0],
@@ -96,9 +100,59 @@
                 ] 
             },
             "enemy_1": {
-                "bounding_box": [19, 0, 33, 14],
+                "bounding_box": [47, 0, 61, 14],
                 "create": "level_1_enemy_1_create",
-                "type": "enemy"
+                "type": "enemy",
+                "alternates": [
+                    {
+                        "type": "female",
+                        "location": [7, 1],
+                        "bounding_box": [63, 1, 65, 1],
+                        "origin": [1, 0]
+                    },
+                    {
+                        "type": "female",
+                        "location": [1, 7],
+                        "bounding_box": [63, 3, 63, 5],
+                        "origin": [0, 1]
+                    },
+                    {
+                        "type": "female",
+                        "location": [7, 13],
+                        "bounding_box": [63, 1, 65, 1],
+                        "origin": [1, 0]
+                    },
+                    {
+                        "type": "female",
+                        "location": [13, 7],
+                        "bounding_box": [63, 3, 63, 5],
+                        "origin": [0, 1]
+                    },
+                    {
+                        "type": "male",
+                        "location": [7, 0],
+                        "bounding_box": [63, 0, 65, 1],
+                        "origin": [1, 0]
+                    },
+                    {
+                        "type": "male",
+                        "location": [0, 7],
+                        "bounding_box": [62, 3, 63, 5],
+                        "origin": [0, 1]
+                    },
+                    {
+                        "type": "male",
+                        "location": [7, 14],
+                        "bounding_box": [63, 1, 65, 2],
+                        "origin": [1, 1]
+                    },
+                    {
+                        "type": "male",
+                        "location": [14, 7],
+                        "bounding_box": [63, 3, 64, 5],
+                        "origin": [1, 1]
+                    }
+                ]
             },
             "enemy_2": {
                 "bounding_box": [0, 19, 14, 33],
@@ -106,9 +160,35 @@
                 "type": "enemy"
             },
             "boss": {
-                "bounding_box": [19, 19, 33, 33],
+                "bounding_box": [47, 45, 61, 59],
                 "create": "level_1_boss_create",
-                "type": "boss"
+                "type": "boss",
+                "alternates": [
+                    {
+                        "type": "female",
+                        "location": [7, 1],
+                        "bounding_box": [63, 46, 65, 46],
+                        "origin": [1, 0]
+                    },
+                    {
+                        "type": "female",
+                        "location": [1, 7],
+                        "bounding_box": [63, 48, 63, 50],
+                        "origin": [0, 1]
+                    },
+                    {
+                        "type": "female",
+                        "location": [7, 13],
+                        "bounding_box": [63, 46, 65, 46],
+                        "origin": [1, 0]
+                    },
+                    {
+                        "type": "female",
+                        "location": [13, 7],
+                        "bounding_box": [63, 48, 63, 50],
+                        "origin": [0, 1]
+                    }
+                ]
             }
         }
     }

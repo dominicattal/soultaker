@@ -1,5 +1,6 @@
 #include "json.h"
 #include "../../../src/util/malloc.h"
+#include "../../../src/util/log.h"
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,7 +8,7 @@
 
 // https://www.json.org/json-en.html
 
-#define print_error(line_num, message)
+#define print_error(line_num, message) log_write(WARNING, "%d\n%s", line_num, message);
 #define json_malloc(size)       st_malloc(size)
 #define json_realloc(ptr, size) st_realloc(ptr, size)
 #define json_free(ptr)          st_free(ptr)
