@@ -1,5 +1,6 @@
 #include "internal.h"
 #include "../api.h"
+#include <math.h>
 #include <omp.h>
 
 extern GameContext game_context;
@@ -130,20 +131,52 @@ static void collide_projectile_obstacle(Projectile* projectile, Obstacle* obstac
     projectile->lifetime = 0;
 }
 
+static void game_collide_tilemap(void)
+{
+    vec2 pos;
+    f32 r;
+    i32 i, x, z;
+    Tile* tile;
+    Wall* wall;
+    for (i = 0; i < game_context.entities->length; i++) {
+        Entity* entity = list_get(game_context.entities, i);
+        pos = entity->position;
+        r = entity->size / 2;
+        for (x = floor(pos.x-r); x <= ceil(pos.x+r); x++) {
+            for (z = floor(pos.z-r); z <= ceil(pos.z+r); z++) {
+                tile = map_get_tile(x, z);
+                wall = map_get_wall(x, z);
+                if (tile != NULL)
+                    collide_entity_tile(entity, tile);
+                if (wall != NULL)
+                    collide_entity_wall(entity, wall);
+            }
+        }
+    }
+    for (i = 0; i < game_context.projectiles->length; i++) {
+        Projectile* projectile = list_get(game_context.projectiles, i);
+        pos = projectile->position;
+        r = projectile->size / 2;
+        for (x = floor(pos.x-r); x <= ceil(pos.x+r); x++) {
+            for (z = floor(pos.z-r); z <= ceil(pos.z+r); z++) {
+                wall = map_get_wall(x, z);
+                if (wall != NULL)
+                    collide_projectile_wall(projectile, wall);
+            }
+        }
+    }
+}
+
 static void game_collide_objects(void)
 {
     i32 i, j;
     for (i = 0; i < game_context.entities->length; i++) {
         Entity* entity = list_get(game_context.entities, i);
-        for (j = 0; j < game_context.tiles->length; j++) {
-            Tile* tile = list_get(game_context.tiles, j);
-            collide_entity_tile(entity, tile);
-        }
         for (j = 0; j < game_context.obstacles->length; j++) {
             Obstacle* obstacle = list_get(game_context.obstacles, j);
             collide_entity_obstacle(entity, obstacle);
         }
-        for (j = 0; j < game_context.walls->length; j++) {
+        for (j = 0; j < game_context.free_walls->length; j++) {
             Wall* wall = list_get(game_context.walls, j);
             collide_entity_wall(entity, wall);
         }
@@ -159,7 +192,7 @@ static void game_collide_objects(void)
             Obstacle* obstacle = list_get(game_context.obstacles, j);
             collide_projectile_obstacle(projectile, obstacle);
         }
-        for (j = 0; j < game_context.walls->length; j++) {
+        for (j = 0; j < game_context.free_walls->length; j++) {
             Wall* wall = list_get(game_context.walls, j);
             collide_projectile_wall(projectile, wall);
         }
@@ -218,6 +251,7 @@ void game_update_objects(void)
 
 void game_update(void)
 {
+    game_collide_tilemap();
     game_collide_objects();
     game_update_objects();
 }

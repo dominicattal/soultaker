@@ -1,11 +1,13 @@
 #include "internal.h"
 #include "../renderer.h"
+#include <math.h>
 
 extern GameContext game_context;
 
 void wall_init(void)
 {
     game_context.walls = list_create();
+    game_context.free_walls = list_create();
 }
 
 void wall_clear(void)
@@ -14,6 +16,7 @@ void wall_clear(void)
         return;
     while (game_context.walls->length > 0)
         wall_destroy(list_remove(game_context.walls, 0));
+    list_clear(game_context.free_walls);
 }
 
 Wall* wall_create(vec2 position, f32 height)
@@ -28,6 +31,20 @@ Wall* wall_create(vec2 position, f32 height)
     return wall;
 }
 
+void wall_update_free_walls(void)
+{
+    Wall* wall;
+    i32 x, z;
+    list_clear(game_context.free_walls);
+    for (i32 i = 0; i < game_context.walls->length; i++) {
+        wall = list_get(game_context.walls, i);
+        x = round(wall->position.x);
+        z = round(wall->position.z);
+        if (map_get_wall(x, z) != wall)
+            list_append(game_context.free_walls, wall);
+    }
+}
+
 void wall_destroy(Wall* wall)
 {
     st_free(wall);
@@ -40,5 +57,6 @@ void wall_cleanup(void)
     for (i32 i = 0; i < game_context.walls->length; i++)
         wall_destroy(list_get(game_context.walls, i));
     list_destroy(game_context.walls);
+    list_destroy(game_context.free_walls);
 }
 

@@ -38,6 +38,7 @@
     },
     "level_1": {
         "path": "assets/maps/level_1.png",
+        "generation": "level_1_generation",
         "palette": {
             "floor_1": {
                 "color": "FF9E3D",
@@ -50,15 +51,38 @@
                 "tex": "level_1_floor_2"
             },
             "floor_3": {
-                "color": "34BC27",
+                "color": "A587FF",
                 "type": "tile",
                 "tex": "level_1_floor_3"
             },
-            "wall": {
+            "floor_4": {
+                "color": "34BC27",
+                "type": "tile",
+                "tex": "level_1_floor_4"
+            },
+            "wall_1": {
                 "color": "FF2833",
                 "type": "wall",
-                "side_tex": "level_1_wall_side",
-                "top_tex": "level_1_wall_top"
+                "side_tex": "level_1_wall_1_side",
+                "top_tex": "level_1_wall_2_top"
+            },
+            "wall_2": {
+                "color": "0026FF",
+                "type": "wall",
+                "side_tex": "level_1_wall_2_side",
+                "top_tex": "level_1_wall_3_top"
+            },
+            "wall_3": {
+                "color": "5A23FF",
+                "type": "wall",
+                "side_tex": "level_1_wall_3_side",
+                "top_tex": "level_1_wall_4_top"
+            },
+            "wall_4": {
+                "color": "277F18",
+                "type": "wall",
+                "side_tex": "level_1_wall_4_side",
+                "top_tex": "level_1_wall_1_top"
             }
         },
         "rooms": {
@@ -69,6 +93,7 @@
                 "alternates": [
                     {
                         "type": "female",
+                        "default": "floor_1",
                         "location": [7, 7],
                         "bounding_box": [16, 1, 16, 1],
                         "origin": [0, 0]
@@ -106,24 +131,28 @@
                 "alternates": [
                     {
                         "type": "female",
+                        "default": "wall_2",
                         "location": [7, 1],
                         "bounding_box": [63, 1, 65, 1],
                         "origin": [1, 0]
                     },
                     {
                         "type": "female",
+                        "default": "wall_2",
                         "location": [1, 7],
                         "bounding_box": [63, 3, 63, 5],
                         "origin": [0, 1]
                     },
                     {
                         "type": "female",
+                        "default": "wall_2",
                         "location": [7, 13],
                         "bounding_box": [63, 1, 65, 1],
                         "origin": [1, 0]
                     },
                     {
                         "type": "female",
+                        "default": "wall_2",
                         "location": [13, 7],
                         "bounding_box": [63, 3, 63, 5],
                         "origin": [0, 1]
@@ -155,9 +184,63 @@
                 ]
             },
             "enemy_2": {
-                "bounding_box": [0, 19, 14, 33],
+                "bounding_box": [0, 45, 14, 59],
                 "create": "level_1_enemy_2_create",
-                "type": "enemy"
+                "type": "enemy",
+                "alternates": [
+                    {
+                        "type": "female",
+                        "default": "wall_3",
+                        "location": [7, 1],
+                        "bounding_box": [16, 46, 18, 46],
+                        "origin": [1, 0]
+                    },
+                    {
+                        "type": "female",
+                        "default": "wall_3",
+                        "location": [1, 7],
+                        "bounding_box": [16, 48, 16, 50],
+                        "origin": [0, 1]
+                    },
+                    {
+                        "type": "female",
+                        "default": "wall_3",
+                        "location": [7, 13],
+                        "bounding_box": [16, 46, 18, 46],
+                        "origin": [1, 0]
+                    },
+                    {
+                        "type": "female",
+                        "default": "wall_3",
+                        "location": [13, 7],
+                        "bounding_box": [16, 48, 16, 50],
+                        "origin": [0, 1]
+                    },
+                    {
+                        "type": "male",
+                        "location": [7, 0],
+                        "bounding_box": [16, 45, 18, 46],
+                        "origin": [1, 0]
+                    },
+                    {
+                        "type": "male",
+                        "location": [0, 7],
+                        "bounding_box": [15, 48, 16, 50],
+                        "origin": [0, 1]
+                    },
+                    {
+                        "type": "male",
+                        "location": [7, 14],
+                        "bounding_box": [16, 46, 18, 47],
+                        "origin": [1, 1]
+                    },
+                    {
+                        "type": "male",
+                        "location": [14, 7],
+                        "bounding_box": [16, 48, 17, 50],
+                        "origin": [1, 1]
+                    }
+                ]
             },
             "boss": {
                 "bounding_box": [47, 45, 61, 59],
@@ -166,24 +249,28 @@
                 "alternates": [
                     {
                         "type": "female",
+                        "default": "wall_4",
                         "location": [7, 1],
                         "bounding_box": [63, 46, 65, 46],
                         "origin": [1, 0]
                     },
                     {
                         "type": "female",
+                        "default": "wall_4",
                         "location": [1, 7],
                         "bounding_box": [63, 48, 63, 50],
                         "origin": [0, 1]
                     },
                     {
                         "type": "female",
+                        "default": "wall_4",
                         "location": [7, 13],
                         "bounding_box": [63, 46, 65, 46],
                         "origin": [1, 0]
                     },
                     {
                         "type": "female",
+                        "default": "wall_4",
                         "location": [13, 7],
                         "bounding_box": [63, 48, 63, 50],
                         "origin": [0, 1]

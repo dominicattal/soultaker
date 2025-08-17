@@ -934,19 +934,24 @@ void game_render_framebuffer_size_callback(void)
      || render_context.shadow_fbo == 0)
         return;
 
+    i32 width = window_width();
+    i32 height = window_height();
+    if (width == 0 || height == 0)
+        return;
+
     GLuint name;
     name = texture_get_name(TEX_GAME_SCENE);
     glBindFramebuffer(GL_FRAMEBUFFER, render_context.fbo);
     glBindTexture(GL_TEXTURE_2D, name);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, window_width(), window_height(),
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height,
             0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     name = texture_get_name(TEX_GAME_SHADOW_SCENE);
     glBindFramebuffer(GL_FRAMEBUFFER, render_context.shadow_fbo);
     glBindTexture(GL_TEXTURE_2D, name);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, window_width(), window_height(),
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height,
             0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     glBindRenderbuffer(GL_RENDERBUFFER, render_context.rbo);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, window_width(), window_height());
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
