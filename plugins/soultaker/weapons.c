@@ -1,6 +1,6 @@
 #include "../../src/api.h"
 
-st_export void weapon_pointer_attack(GlobalApi* api, Player* player, vec2 direction, vec2 target)
+st_export void weapon_pointer_attack(GameApi* api, Player* player, vec2 direction, vec2 target)
 {
     vec2 pos = player->entity->position;
     Projectile* proj = api->projectile_create(pos);
@@ -13,7 +13,7 @@ st_export void weapon_pointer_attack(GlobalApi* api, Player* player, vec2 direct
     api->projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, 1);
 }
 
-st_export void weapon_null_pointer_attack(GlobalApi* api, Player* player, vec2 direction, vec2 target)
+st_export void weapon_null_pointer_attack(GameApi* api, Player* player, vec2 direction, vec2 target)
 {
     vec2 pos = player->entity->position;
     Projectile* proj = api->projectile_create(pos);

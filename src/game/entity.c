@@ -10,9 +10,9 @@
 
 extern GameContext game_context;
 
-typedef void (*CreateFuncPtr)(GlobalApi*, Entity*);
-typedef void (*DestroyFuncPtr)(GlobalApi*, Entity*);
-typedef void (*UpdateFuncPtr)(GlobalApi*, Entity*, f32);
+typedef void (*CreateFuncPtr)(GameApi*, Entity*);
+typedef void (*DestroyFuncPtr)(GameApi*, Entity*);
+typedef void (*UpdateFuncPtr)(GameApi*, Entity*, f32);
 
 typedef struct {
     char* name;
@@ -403,7 +403,7 @@ Entity* entity_create(vec2 position, i32 id)
 
     CreateFuncPtr create = entity_context.infos[id].create;
     if (create != NULL)
-        create(&global_api, entity);
+        create(&game_api, entity);
 
     list_append(game_context.entities, entity);
     return entity;
@@ -445,10 +445,10 @@ void entity_update(Entity* entity, f32 dt)
     UpdateFuncPtr update;
     update = entity_context.infos[entity->id].update;
     if (update != NULL)
-        update(&global_api, entity, dt);
+        update(&game_api, entity, dt);
     update = entity_context.infos[entity->id].states[entity->state].update;
     if (update != NULL)
-        update(&global_api, entity, dt);
+        update(&game_api, entity, dt);
 }
 
 void entity_damage(Entity* entity, f32 damage)
@@ -558,7 +558,7 @@ void entity_destroy(Entity* entity)
 {
     DestroyFuncPtr destroy = entity_context.infos[entity->id].destroy;
     if (destroy != NULL)
-        destroy(&global_api, entity);
+        destroy(&game_api, entity);
     if (entity_get_flag(entity, ENTITY_FLAG_BOSS))
         entity_unmake_boss(entity); 
     st_free(entity);
