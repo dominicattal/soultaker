@@ -1,6 +1,12 @@
 #include "../../src/api.h"
 
-static void create_bars(GlobalApi* api, i32 side_tex, i32 top_tex, vec2 position)
+st_export void shaitan_generate(LocalMapGenerationSettings* settings)
+{
+    if (settings->num_rooms_left == 0)
+        settings->finished = true;
+}
+
+static void create_bars(GameApi* api, i32 side_tex, i32 top_tex, vec2 position)
 {
     Wall* wall;
     wall = api->wall_create(api->vec2_create(position.x, position.y+0.5), 1.5f);
@@ -35,7 +41,7 @@ void firebullet(Projectile* proj, f32 dt)
     proj->rotation += 3 * dt;
 }
 
-st_export void hand_of_shaitan_update(GlobalApi* api, Entity* entity, f32 dt)
+st_export void hand_of_shaitan_update(GameApi* api, Entity* entity, f32 dt)
 {
     HandData* data = entity->data;
     if (data->daddy == NULL)
@@ -56,7 +62,7 @@ st_export void hand_of_shaitan_update(GlobalApi* api, Entity* entity, f32 dt)
     }
 }
 
-st_export void shaitan_hand_idle(GlobalApi* api, Entity* entity, f32 dt)
+st_export void shaitan_hand_idle(GameApi* api, Entity* entity, f32 dt)
 {
     HandData* data = entity->data;
     data->state_timer += dt;
@@ -66,7 +72,7 @@ st_export void shaitan_hand_idle(GlobalApi* api, Entity* entity, f32 dt)
     }
 }
 
-st_export void shaitan_hand_attack_1(GlobalApi* api, Entity* entity, f32 dt)
+st_export void shaitan_hand_attack_1(GameApi* api, Entity* entity, f32 dt)
 {
     HandData* data = entity->data;
     Projectile* proj;
@@ -101,7 +107,7 @@ st_export void shaitan_hand_attack_1(GlobalApi* api, Entity* entity, f32 dt)
     }
 }
 
-st_export void shaitan_hand_attack_2(GlobalApi* api, Entity* entity, f32 dt)
+st_export void shaitan_hand_attack_2(GameApi* api, Entity* entity, f32 dt)
 {
     HandData* data = entity->data;
     Projectile* proj;
@@ -136,7 +142,7 @@ st_export void shaitan_hand_attack_2(GlobalApi* api, Entity* entity, f32 dt)
     }
 }
 
-st_export void hand_of_shaitan_create(GlobalApi* api, Entity* entity)
+st_export void hand_of_shaitan_create(GameApi* api, Entity* entity)
 {
     HandData* data = api->st_malloc(sizeof(HandData));
     data->daddy = NULL;
@@ -153,7 +159,7 @@ st_export void hand_of_shaitan_create(GlobalApi* api, Entity* entity)
     entity->state = api->entity_get_state_id(entity, "attack_1");
 }
 
-st_export void hand_of_shaitan_destroy(GlobalApi* api, Entity* entity)
+st_export void hand_of_shaitan_destroy(GameApi* api, Entity* entity)
 {
     HandData* data = entity->data;
     Entity* daddy = data->daddy;
@@ -168,7 +174,7 @@ free:
     api->st_free(entity->data);
 }
 
-static void spawn_hands(GlobalApi* api, Entity* advisor)
+static void spawn_hands(GameApi* api, Entity* advisor)
 {
     Entity* hand;
     AdvisorData* advisor_data = advisor->data;
@@ -190,7 +196,7 @@ static void spawn_hands(GlobalApi* api, Entity* advisor)
     data->target_rad = PI-0.2;
 }
 
-st_export void shaitan_the_advisor_grow(GlobalApi* api, Entity* entity, f32 dt)
+st_export void shaitan_the_advisor_grow(GameApi* api, Entity* entity, f32 dt)
 {
     if (entity->size >= 3.0f) {
         entity->state_timer = 0.0f;
@@ -203,7 +209,7 @@ st_export void shaitan_the_advisor_grow(GlobalApi* api, Entity* entity, f32 dt)
     }
 }
 
-static void shaitan_attack_1_firestorm(GlobalApi* api, Entity* entity)
+static void shaitan_attack_1_firestorm(GameApi* api, Entity* entity)
 {
     Projectile* proj;
     i32 tex_id = api->texture_get_id("shaitan_firestorm");
@@ -230,7 +236,7 @@ static void shaitan_attack_1_firestorm(GlobalApi* api, Entity* entity)
     }
 }
 
-st_export void shaitan_the_advisor_attack_1(GlobalApi* api, Entity* entity, f32 dt)
+st_export void shaitan_the_advisor_attack_1(GameApi* api, Entity* entity, f32 dt)
 {
     AdvisorData* data = entity->data;
     if (entity->health <= 90) {
@@ -248,7 +254,7 @@ st_export void shaitan_the_advisor_attack_1(GlobalApi* api, Entity* entity, f32 
     }
 }
 
-static void shaitan_attack_2_firestorm(GlobalApi* api, Entity* entity)
+static void shaitan_attack_2_firestorm(GameApi* api, Entity* entity)
 {
     Projectile* proj;
     vec2 position = api->game_get_nearest_player_position();
@@ -263,7 +269,7 @@ static void shaitan_attack_2_firestorm(GlobalApi* api, Entity* entity)
     proj->update = firestorm;
 }
 
-static void shaitan_attack_2_fireball(GlobalApi* api, Entity* entity)
+static void shaitan_attack_2_fireball(GameApi* api, Entity* entity)
 {
     Projectile* proj;
     vec2 direction;
@@ -280,7 +286,7 @@ static void shaitan_attack_2_fireball(GlobalApi* api, Entity* entity)
     }
 }
 
-st_export void shaitan_the_advisor_attack_2(GlobalApi* api, Entity* entity, f32 dt)
+st_export void shaitan_the_advisor_attack_2(GameApi* api, Entity* entity, f32 dt)
 {
     AdvisorData* data = entity->data;
     if (data->hand1 == NULL && data->hand2 == NULL) {
@@ -301,15 +307,15 @@ st_export void shaitan_the_advisor_attack_2(GlobalApi* api, Entity* entity, f32 
     }
 }
 
-st_export void shaitan_the_advisor_attack_3(GlobalApi* api, Entity* entity, f32 dt)
+st_export void shaitan_the_advisor_attack_3(GameApi* api, Entity* entity, f32 dt)
 {
 }
 
-st_export void shaitan_the_advisor_update(GlobalApi* api, Entity* entity, f32 dt)
+st_export void shaitan_the_advisor_update(GameApi* api, Entity* entity, f32 dt)
 {
 }
 
-st_export void shaitan_the_advisor_create(GlobalApi* api, Entity* entity)
+st_export void shaitan_the_advisor_create(GameApi* api, Entity* entity)
 {
     AdvisorData* data = api->st_malloc(sizeof(AdvisorData));
     data->hand1 = NULL;
@@ -323,23 +329,23 @@ st_export void shaitan_the_advisor_create(GlobalApi* api, Entity* entity)
     api->entity_make_boss(entity);
 }
 
-st_export void shaitan_the_advisor_destroy(GlobalApi* api, Entity* entity)
+st_export void shaitan_the_advisor_destroy(GameApi* api, Entity* entity)
 {
     api->st_free(entity->data);
 }
 
-st_export void shaitan_lava_collide(GlobalApi* api, Entity* entity)
+st_export void shaitan_lava_collide(GameApi* api, Entity* entity)
 {
     api->entity_set_flag(entity, ENTITY_FLAG_IN_LAVA, true);
 }
 
-st_export void shaitan_lava_create(GlobalApi* api, Tile* tile)
+st_export void shaitan_lava_create(GameApi* api, Tile* tile)
 {
     api->tile_set_flag(tile, TILE_FLAG_ANIMATE_VERTICAL_POS, true);
     api->tile_set_flag(tile, TILE_FLAG_ANIMATE_HORIZONTAL_NEG, true);
 }
 
-st_export void shaitan_spawn_create(GlobalApi* api, i32 origin_x, i32 origin_y)
+st_export void shaitan_spawn_create(GameApi* api, i32 origin_x, i32 origin_y)
 {
     i32 side_tex, top_tex;
     side_tex = api->texture_get_id("shaitan_bars_side");

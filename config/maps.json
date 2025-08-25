@@ -1,6 +1,7 @@
 {
     "shaitan": {
         "path": "assets/maps/shaitan.png",
+        "generation": "shaitan_generate",
         "load": "shaitan_load",
         "palette": {
             "lava": {
@@ -32,13 +33,22 @@
             "spawn": {
                 "bounding_box": [0, 0, 31, 37],
                 "create": "shaitan_spawn_create",
-                "type": "spawn"
+                "type": "spawn",
+                "alternates": [
+                    {
+                        "type": "female",
+                        "default": "floor_1",
+                        "location": [15, 30],
+                        "bounding_box": [15, 29, 15, 29],
+                        "origin": [0, 0]
+                    }
+                ]
             }
         }
     },
     "level_1": {
         "path": "assets/maps/level_1.png",
-        "generation": "level_1_generation",
+        "generation": "level_1_generate",
         "palette": {
             "floor_1": {
                 "color": "FF9E3D",

@@ -1,9 +1,9 @@
-#include "api.h"
+#include "internal.h"
 
 #define REGISTER(name) \
     .name = name
 
-GlobalApi global_api = {
+GameApi game_api = {
     // Game
     REGISTER(game_get_nearest_player_position),
     REGISTER(game_set_player_position),
@@ -27,6 +27,9 @@ GlobalApi global_api = {
     // Projectile
     REGISTER(projectile_create),
     REGISTER(projectile_set_flag),
+
+    // Map
+    REGISTER(room_create_entity),
 
     // Misc
     REGISTER(texture_get_id),

@@ -9,9 +9,9 @@
 #define MAP_MAX_WIDTH   1024
 #define MAP_MAX_LENGTH  1024
 
-typedef void (*RoomCreateFuncPtr)(GlobalApi*, i32, i32);
-typedef void (*TileCreateFuncPtr)(GlobalApi*, Tile*);
-typedef void (*RoomsetGenerationFuncPtr)(void);
+typedef void (*RoomCreateFuncPtr)(GameApi*);
+typedef void (*TileCreateFuncPtr)(GameApi*, Tile*);
+typedef void (*RoomsetGenerationFuncPtr)(LocalMapGenerationSettings*);
 
 typedef struct {
     const char* name;
@@ -54,6 +54,7 @@ typedef struct {
     Room* rooms;
     i32 num_rooms;
     Palette* palette;
+    RoomsetGenerationFuncPtr generate;
 } Roomset;
 
 // Think of the map like a tree with rooms as nodes.
@@ -66,10 +67,7 @@ typedef struct MapNode MapNode;
 typedef struct {
     Quadmask* qm;
     Roomset* roomset;
-    const char* current_branch;
-    i32 num_rooms_left;
-    i32 male_x, male_z;
-} MapGenerationSettings;
+} GlobalMapGenerationSettings;
 
 typedef struct MapNode {
     MapNode** children;
@@ -94,6 +92,7 @@ typedef struct {
     JsonObject* json;
 
     Map* current_map;
+    vec2 current_origin;
     
     // error handling
     const char* current_map_name;
@@ -461,7 +460,12 @@ static Roomset* roomset_create(JsonObject* root, const char* path, Palette* pale
     i32 num_rooms;
     i32 x, y, n, i, j, idx;
     u32* roomset_data;
+    RoomsetGenerationFuncPtr generate;
     unsigned char* raw_data;
+
+    generate = state_load_function(get_string_value(root, "generation"));
+    if (generate == NULL)
+        throw_map_error(ERROR_MISSING);
 
     value = json_get_value(root, "rooms");
     if (value == NULL)
@@ -515,6 +519,7 @@ static Roomset* roomset_create(JsonObject* root, const char* path, Palette* pale
     roomset->width = x;
     roomset->length = y;
     roomset->palette = palette;
+    roomset->generate = generate;
 
     return roomset;
 }
@@ -710,13 +715,12 @@ static void map_node_detach(MapNode* parent, MapNode* child)
 }
 
 // returns true if successfully generated a room, false otherwise
-static bool pregenerate_map_helper(MapGenerationSettings settings, MapNode* parent)
+static bool pregenerate_map_helper(GlobalMapGenerationSettings* global_settings, LocalMapGenerationSettings local_settings, MapNode* parent)
 {
-    Quadmask* qm = settings.qm;
-    Roomset* roomset = settings.roomset;
-    i32 num_rooms_left = settings.num_rooms_left;
-    i32 male_x = settings.male_x;
-    i32 male_z = settings.male_z;
+    Quadmask* qm = global_settings->qm;
+    Roomset* roomset = global_settings->roomset;
+    i32 male_x = local_settings.male_x;
+    i32 male_z = local_settings.male_z;
     const char* current_branch;
     List* rooms;
     List* female_alternates;
@@ -729,20 +733,12 @@ static bool pregenerate_map_helper(MapGenerationSettings settings, MapNode* pare
     i32 room_idx, fem_idx, male_idx;
     i32 list_idx;
 
-    if (num_rooms_left == 0) {
-        if (strcmp(settings.current_branch, "spawn") == 0) {
-            settings.current_branch = "enemy";
-            settings.num_rooms_left = 10;
-        }
-        else if (strcmp(settings.current_branch, "enemy") == 0) {
-            settings.current_branch = "boss";
-            settings.num_rooms_left = 1;
-        }
-        else
-            return true;
-    }
+    roomset->generate(&local_settings);
 
-    current_branch = settings.current_branch;
+    if (local_settings.finished)
+        return true;
+
+    current_branch = local_settings.current_branch;
 
     rooms = roomset_get_rooms(roomset, current_branch);
     list_shuffle(rooms);
@@ -760,7 +756,7 @@ static bool pregenerate_map_helper(MapGenerationSettings settings, MapNode* pare
                 continue;
             preload_room(qm, roomset, room, origin_x, origin_z);
             preload_room_alternate(qm, roomset, room, female_alternate, origin_x, origin_z);
-            settings.num_rooms_left--;
+            local_settings.num_rooms_left--;
             child = map_node_create();
             child->room = room;
             child->female_alternate = female_alternate;
@@ -769,7 +765,7 @@ static bool pregenerate_map_helper(MapGenerationSettings settings, MapNode* pare
             map_node_attach(parent, child);
             male_alternates = list_copy(room->male_alternates);
             if (male_alternates->length == 0)
-                if (pregenerate_map_helper(settings, child))
+                if (pregenerate_map_helper(global_settings, local_settings, child))
                     goto success;
             list_shuffle(male_alternates);
             for (male_idx = 0; male_idx < male_alternates->length; male_idx++) {
@@ -778,9 +774,9 @@ static bool pregenerate_map_helper(MapGenerationSettings settings, MapNode* pare
                     continue;
                 list_append(child->male_alternates, male_alternate);
                 preload_room_alternate(qm, roomset, room, male_alternate, origin_x, origin_z);
-                settings.male_x = origin_x + male_alternate->loc_u;
-                settings.male_z = origin_z + male_alternate->loc_v;
-                if (pregenerate_map_helper(settings, child))
+                local_settings.male_x = origin_x + male_alternate->loc_u;
+                local_settings.male_z = origin_z + male_alternate->loc_v;
+                if (pregenerate_map_helper(global_settings, local_settings, child))
                     goto success;
                 unpreload_room_alternate(qm, roomset, room, male_alternate, origin_x, origin_z);
                 list_idx = list_search(child->male_alternates, male_alternate);
@@ -789,7 +785,7 @@ static bool pregenerate_map_helper(MapGenerationSettings settings, MapNode* pare
             list_destroy(male_alternates);
             map_node_detach(parent, child);
             map_node_destroy(child);
-            settings.num_rooms_left++;
+            local_settings.num_rooms_left++;
             unpreload_room_alternate(qm, roomset, room, female_alternate, origin_x, origin_z);
             unpreload_room(qm, roomset, room, origin_x, origin_z);
         }
@@ -831,7 +827,7 @@ static void place_tile(Map* map, TileColor* tile_color, i32 x, i32 z)
         tile->tex = tile_color->tex;
         tile->collide = tile_color->collide;
         if (tile_color->create != NULL)
-            tile_color->create(&global_api, tile);
+            tile_color->create(&game_api, tile);
         map->tiles[z * map->width + x] = wall;
     }
 }
@@ -863,6 +859,10 @@ static void load_room(LoadArgs* args)
             quadmask_set(qm, x, z);
             place_tile(map, tile_color, x, z);
         }
+    }
+    if (room->create != NULL) {
+        map_context.current_origin = vec2_create(origin_x, origin_z);
+        room->create(&game_api);
     }
 }
 
@@ -980,7 +980,8 @@ static void generate_map(i32 id)
     const char* path;
     Map* map;
     MapNode* root;
-    MapGenerationSettings settings;
+    GlobalMapGenerationSettings global_settings;
+    LocalMapGenerationSettings local_settings;
     Quadmask* qm;
 
     value = json_get_value(map_context.json, map_context.names[id]);
@@ -1002,16 +1003,17 @@ static void generate_map(i32 id)
     palette = palette_create(object);
     roomset = roomset_create(object, path, palette);
 
-    settings.qm = qm;
-    settings.roomset = roomset;
-    settings.current_branch = "spawn";
-    settings.num_rooms_left = 1;
-    settings.male_x = MAP_MAX_WIDTH / 2;
-    settings.male_z = MAP_MAX_LENGTH / 2;
+    global_settings.qm = qm;
+    global_settings.roomset = roomset;
+    local_settings.current_branch = "spawn";
+    local_settings.num_rooms_left = 1;
+    local_settings.male_x = MAP_MAX_WIDTH / 2;
+    local_settings.male_z = MAP_MAX_LENGTH / 2;
+    local_settings.finished = false;
 
     root = map_node_create();
 
-    if (!pregenerate_map_helper(settings, root))
+    if (!pregenerate_map_helper(&global_settings, local_settings, root))
         throw_map_error(ERROR_GENERIC);
 
     map = st_malloc(sizeof(Map));
@@ -1045,6 +1047,13 @@ static void clear_map(void)
     st_free(map);
 
     map_context.current_map = NULL;
+}
+
+Entity* room_create_entity(vec2 position, i32 id)
+{
+    position.x += map_context.current_origin.x;
+    position.z += map_context.current_origin.z;
+    return entity_create(position, id);
 }
 
 i32 map_get_id(const char* name)

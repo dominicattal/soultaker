@@ -9,7 +9,7 @@
 // Forward Declarations
 //**************************************************************************
 
-typedef struct GlobalApi GlobalApi;
+typedef struct GameApi GameApi;
 typedef struct Camera Camera;
 typedef struct Weapon Weapon;
 typedef struct Entity Entity;
@@ -57,17 +57,16 @@ void camera_move(vec2 mag);
 void camera_rotate(f32 mag);
 void camera_tilt(f32 mag);
 
-// Getters
-vec3 camera_get_position(void);
-vec3 camera_get_facing(void);
-f32  camera_get_pitch(void);
-f32  camera_get_yaw(void);
-f32  camera_get_pitch(void);
-f32  camera_get_zoom(void);
-
 //**************************************************************************
 // Maps. See docs/maps.md for more information
 //**************************************************************************
+
+typedef struct {
+    const char* current_branch;
+    i32 num_rooms_left;
+    i32 male_x, male_z;
+    bool finished;
+} LocalMapGenerationSettings;
 
 void map_init(void);
 void map_load(i32 id);
@@ -86,6 +85,8 @@ Wall* map_get_wall(i32 x, i32 z);
 
 // returns true if the tile at (x, z) is a wall
 bool map_is_wall(i32 x, i32 z);
+
+Entity* room_create_entity(vec2 position, i32 id);
 
 //**************************************************************************
 // Entity, Player, Boss definitions
@@ -198,7 +199,7 @@ void weapon_shoot(Player* player, vec2 direction, vec2 target);
 // Tile definitions
 //**************************************************************************
 
-typedef void (*TileCollideFuncPtr)(GlobalApi* api, Entity* entity);
+typedef void (*TileCollideFuncPtr)(GameApi* api, Entity* entity);
 
 typedef struct Tile {
     TileCollideFuncPtr collide;
@@ -447,5 +448,65 @@ void game_render_update_tiles(void);
 void game_render_update_walls(void);
 
 void game_update_vertex_data(void);
+
+//**************************************************************************
+// API
+//**************************************************************************
+
+typedef struct GameApi {
+    // Game
+    vec2 (*game_get_nearest_player_position)(void);
+    void (*game_set_player_position)(vec2);
+
+    // Entity
+    Entity* (*entity_create)(vec2, i32);
+    void (*entity_make_boss)(Entity* entity);
+    i32 (*entity_get_id)(const char*);
+    i32 (*entity_get_state_id)(Entity*, const char*);
+    void (*entity_set_flag)(Entity*, EntityFlagEnum, bool);
+    void (*entity_set_state)(Entity*, const char*);
+
+    // Wall
+    Wall* (*wall_create)(vec2, f32);
+
+    // Tile
+    Tile* (*tile_create)(vec2);
+    void (*tile_set_flag)(Tile*, TileFlagEnum, u32);
+    bool (*tile_get_flag)(Tile*, TileFlagEnum);
+
+    // Projectile
+    Projectile* (*projectile_create)(vec2);
+    void (*projectile_set_flag)(Projectile*, ProjectileFlagEnum, bool);
+
+    // Map
+    Entity* (*room_create_entity)(vec2, i32);
+
+    // Misc
+    i32 (*texture_get_id)(const char*);
+
+    // Util
+    vec3 (*vec3_create)(f32, f32, f32);
+    vec3 (*vec3_normalize)(vec3);
+    vec3 (*vec3_sub)(vec3, vec3);
+    vec2 (*vec2_create)(f32, f32);
+    vec2 (*vec2_rotate)(vec2, f32);
+    vec2 (*vec2_direction)(f32);
+    vec2 (*vec2_sub)(vec2, vec2);
+    vec2 (*vec2_normalize)(vec2);
+    f32 (*vec2_radians)(vec2);
+
+#ifdef DEBUG_BUILD
+    void* (*_st_malloc)(size_t, const char*, int);
+    void (*_st_free)(void*, const char*, int);
+    void (*_log_write)(LogLevel, const char*, const char*, int, ...);
+#else
+    void* (*malloc)(size_t);
+    void (*free)(void*);
+    void (*_log_write)(LogLevel, const char*, ...);
+#endif
+
+} GameApi;
+
+extern GameApi game_api;
 
 #endif
