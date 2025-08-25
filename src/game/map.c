@@ -565,19 +565,37 @@ static void roomset_destroy(Roomset* roomset)
 #define GRAY    0x808080
 #define BLACK   0x000000
 
+typedef struct {
+    Quadmask* qm;
+    Roomset* roomset;
+    Room* room;
+    Alternate* alternate;
+    i32 origin_x;
+    i32 origin_z;
+    i32 orientation;
+} PreloadArgs;
+
 static bool color_is_preset(u32 color)
 {
     return color == WHITE || color == GRAY || color == BLACK;
 }
-static bool can_preload_room(Quadmask* qm, Roomset* roomset, Room* room, i32 origin_x, i32 origin_z)
+
+static bool can_preload_room(PreloadArgs* args)
 {
+    Quadmask* qm = args->qm;
+    Roomset* roomset = args->roomset;
+    Room* room = args->room;
+    i32 origin_x = args->origin_x;
+    i32 origin_z = args->origin_z;
     u32 color;
-    i32 u, v, map_x, map_z;
+    i32 u, v, du, dv, map_x, map_z;
     for (v = room->v1; v <= room->v2; v++) {
+        dv = v - room->v1;
         for (u = room->u1; u <= room->u2; u++) {
+            du = u - room->u1;
             color = roomset_get_color(roomset, u, v);
-            map_x = origin_x + u - room->u1;
-            map_z = origin_z + v - room->v1;
+            map_x = origin_x + du;
+            map_z = origin_z + dv;
             if (!quadmask_in_bounds(qm, map_x, map_z))
                 return false;
             if (color_is_preset(color))
@@ -590,8 +608,14 @@ static bool can_preload_room(Quadmask* qm, Roomset* roomset, Room* room, i32 ori
     return true;
 }
 
-static bool can_preload_room_alternate(Quadmask* qm, Roomset* roomset, Room* room, Alternate* alternate, i32 origin_x, i32 origin_z)
+static bool can_preload_room_alternate(PreloadArgs* args)
 {
+    Quadmask* qm = args->qm;
+    Roomset* roomset = args->roomset;
+    Room* room = args->room;
+    Alternate* alternate = args->alternate;
+    i32 origin_x = args->origin_x;
+    i32 origin_z = args->origin_z;
     u32 room_color;
     i32 u, v, du, dv, map_x, map_z;
     bool room_in_bounds;
@@ -617,8 +641,13 @@ static bool can_preload_room_alternate(Quadmask* qm, Roomset* roomset, Room* roo
     return true;
 }
 
-static void preload_room(Quadmask* qm, Roomset* roomset, Room* room, i32 origin_x, i32 origin_z)
+static void preload_room(PreloadArgs* args)
 {
+    Quadmask* qm = args->qm;
+    Roomset* roomset = args->roomset;
+    Room* room = args->room;
+    i32 origin_x = args->origin_x;
+    i32 origin_z = args->origin_z;
     u32 color;
     i32 u, v, map_x, map_z;
     for (v = room->v1; v <= room->v2; v++) {
@@ -633,8 +662,13 @@ static void preload_room(Quadmask* qm, Roomset* roomset, Room* room, i32 origin_
     }
 }
 
-static void preload_room_alternate(Quadmask* qm, Roomset* roomset, Room* room, Alternate* alternate, i32 origin_x, i32 origin_z)
+static void preload_room_alternate(PreloadArgs* args)
 {
+    Quadmask* qm = args->qm;
+    Roomset* roomset = args->roomset;
+    Alternate* alternate = args->alternate;
+    i32 origin_x = args->origin_x;
+    i32 origin_z = args->origin_z;
     u32 color;
     i32 u, v, map_x, map_z;
     for (v = alternate->v1; v <= alternate->v2; v++) {
@@ -649,8 +683,13 @@ static void preload_room_alternate(Quadmask* qm, Roomset* roomset, Room* room, A
     }
 }
 
-static void unpreload_room(Quadmask* qm, Roomset* roomset, Room* room, i32 origin_x, i32 origin_z)
+static void unpreload_room(PreloadArgs* args)
 {
+    Quadmask* qm = args->qm;
+    Roomset* roomset = args->roomset;
+    Room* room = args->room;
+    i32 origin_x = args->origin_x;
+    i32 origin_z = args->origin_z;
     u32 color;
     i32 u, v;
     for (v = room->v1; v <= room->v2; v++) {
@@ -663,8 +702,12 @@ static void unpreload_room(Quadmask* qm, Roomset* roomset, Room* room, i32 origi
     }
 }
 
-static void unpreload_room_alternate(Quadmask* qm, Roomset* roomset, Room* room, Alternate* alternate, i32 origin_x, i32 origin_z)
+static void unpreload_room_alternate(PreloadArgs* args)
 {
+    Quadmask* qm = args->qm;
+    Alternate* alternate = args->alternate;
+    i32 origin_x = args->origin_x;
+    i32 origin_z = args->origin_z;
     i32 u, v, map_x, map_z;
     for (v = alternate->v1; v <= alternate->v2; v++) {
         for (u = alternate->u1; u <= alternate->u2; u++) {
@@ -717,6 +760,7 @@ static void map_node_detach(MapNode* parent, MapNode* child)
 // returns true if successfully generated a room, false otherwise
 static bool pregenerate_map_helper(GlobalMapGenerationSettings* global_settings, LocalMapGenerationSettings local_settings, MapNode* parent)
 {
+    PreloadArgs args;
     Quadmask* qm = global_settings->qm;
     Roomset* roomset = global_settings->roomset;
     i32 male_x = local_settings.male_x;
@@ -729,9 +773,15 @@ static bool pregenerate_map_helper(GlobalMapGenerationSettings* global_settings,
     Alternate* male_alternate;
     MapNode* child;
     Room* room;
+    //i32 initial_orientation;
+    //i32 orientation_iter;
+    //i32 orientation;
     i32 origin_x, origin_z;
     i32 room_idx, fem_idx, male_idx;
     i32 list_idx;
+
+    args.qm = qm;
+    args.roomset = roomset;
 
     roomset->generate(&local_settings);
 
@@ -744,50 +794,56 @@ static bool pregenerate_map_helper(GlobalMapGenerationSettings* global_settings,
     list_shuffle(rooms);
     for (room_idx = 0; room_idx < rooms->length; room_idx++) {
         room = list_get(rooms, room_idx);
+        args.room = room;
         female_alternates = list_copy(room->female_alternates);
         list_shuffle(female_alternates);
         for (fem_idx = 0; fem_idx < female_alternates->length; fem_idx++) {
             female_alternate = list_get(female_alternates, fem_idx);
-            origin_x = male_x - female_alternate->loc_u;
-            origin_z = male_z - female_alternate->loc_v;
-            if (!can_preload_room(qm, roomset, room, origin_x, origin_z))
-                continue;
-            if (!can_preload_room_alternate(qm, roomset, room, female_alternate, origin_x, origin_z))
-                continue;
-            preload_room(qm, roomset, room, origin_x, origin_z);
-            preload_room_alternate(qm, roomset, room, female_alternate, origin_x, origin_z);
-            local_settings.num_rooms_left--;
-            child = map_node_create();
-            child->room = room;
-            child->female_alternate = female_alternate;
-            child->origin_x = origin_x;
-            child->origin_z = origin_z;
-            map_node_attach(parent, child);
-            male_alternates = list_copy(room->male_alternates);
-            if (male_alternates->length == 0)
-                if (pregenerate_map_helper(global_settings, local_settings, child))
-                    goto success;
-            list_shuffle(male_alternates);
-            for (male_idx = 0; male_idx < male_alternates->length; male_idx++) {
-                male_alternate = list_get(male_alternates, male_idx);
-                if (!can_preload_room_alternate(qm, roomset, room, male_alternate, origin_x, origin_z))
+            args.alternate = female_alternate;
+                origin_x = male_x - female_alternate->loc_u;
+                origin_z = male_z - female_alternate->loc_v;
+                args.origin_x = origin_x;
+                args.origin_z = origin_z;
+                if (!can_preload_room(&args))
                     continue;
-                list_append(child->male_alternates, male_alternate);
-                preload_room_alternate(qm, roomset, room, male_alternate, origin_x, origin_z);
-                local_settings.male_x = origin_x + male_alternate->loc_u;
-                local_settings.male_z = origin_z + male_alternate->loc_v;
-                if (pregenerate_map_helper(global_settings, local_settings, child))
-                    goto success;
-                unpreload_room_alternate(qm, roomset, room, male_alternate, origin_x, origin_z);
-                list_idx = list_search(child->male_alternates, male_alternate);
-                list_remove(child->male_alternates, list_idx);
-            }
-            list_destroy(male_alternates);
-            map_node_detach(parent, child);
-            map_node_destroy(child);
-            local_settings.num_rooms_left++;
-            unpreload_room_alternate(qm, roomset, room, female_alternate, origin_x, origin_z);
-            unpreload_room(qm, roomset, room, origin_x, origin_z);
+                if (!can_preload_room_alternate(&args))
+                    continue;
+                preload_room(&args);
+                preload_room_alternate(&args);
+                local_settings.num_rooms_left--;
+                child = map_node_create();
+                child->room = room;
+                child->female_alternate = female_alternate;
+                child->origin_x = origin_x;
+                child->origin_z = origin_z;
+                map_node_attach(parent, child);
+                male_alternates = list_copy(room->male_alternates);
+                if (male_alternates->length == 0)
+                    if (pregenerate_map_helper(global_settings, local_settings, child))
+                        goto success;
+                list_shuffle(male_alternates);
+                for (male_idx = 0; male_idx < male_alternates->length; male_idx++) {
+                    male_alternate = list_get(male_alternates, male_idx);
+                    args.alternate = male_alternate;
+                    if (!can_preload_room_alternate(&args))
+                        continue;
+                    list_append(child->male_alternates, male_alternate);
+                    preload_room_alternate(&args);
+                    local_settings.male_x = origin_x + male_alternate->loc_u;
+                    local_settings.male_z = origin_z + male_alternate->loc_v;
+                    if (pregenerate_map_helper(global_settings, local_settings, child))
+                        goto success;
+                    unpreload_room_alternate(&args);
+                    list_idx = list_search(child->male_alternates, male_alternate);
+                    list_remove(child->male_alternates, list_idx);
+                }
+                list_destroy(male_alternates);
+                map_node_detach(parent, child);
+                map_node_destroy(child);
+                local_settings.num_rooms_left++;
+                args.alternate = female_alternate;
+                unpreload_room_alternate(&args);
+                unpreload_room(&args);
         }
         list_destroy(female_alternates);
     }
