@@ -41,7 +41,7 @@ static void update_view_matrix(void)
 {
     view(game_context.camera.view, game_context.camera.right, game_context.camera.up, game_context.camera.facing, game_context.camera.position);
     glBindBuffer(GL_UNIFORM_BUFFER, game_context.camera.matrices_ubo);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, 16 * sizeof(GLfloat), game_context.camera.view);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, 16 * sizeof(GLfloat), &game_context.camera.view[0]);
     glBufferSubData(GL_UNIFORM_BUFFER, 33 * sizeof(GLfloat), sizeof(GLfloat), &game_context.camera.pitch);
     glBufferSubData(GL_UNIFORM_BUFFER, 34 * sizeof(GLfloat), sizeof(GLfloat), &game_context.camera.yaw);
 }
@@ -50,7 +50,7 @@ static void update_proj_matrix(void)
 {
     orthographic(game_context.camera.proj, window_aspect_ratio(), game_context.camera.zoom);
     glBindBuffer(GL_UNIFORM_BUFFER, game_context.camera.matrices_ubo);
-    glBufferSubData(GL_UNIFORM_BUFFER, 16 * sizeof(GLfloat), 16 * sizeof(GLfloat), game_context.camera.proj);
+    glBufferSubData(GL_UNIFORM_BUFFER, 16 * sizeof(GLfloat), 16 * sizeof(GLfloat), &game_context.camera.proj[0]);
     glBufferSubData(GL_UNIFORM_BUFFER, 32 * sizeof(GLfloat), sizeof(GLfloat), &game_context.camera.zoom);
 }
 

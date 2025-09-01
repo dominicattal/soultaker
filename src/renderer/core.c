@@ -38,7 +38,7 @@ static void GLAPIENTRY message_callback(GLenum source, GLenum type, GLuint id, G
             break;
         case GL_DEBUG_SEVERITY_MEDIUM:
             severity_str = "GL_DEBUG_SEVERITY_MEDIUM"; 
-            level = ERROR;
+            level = CRITICAL;
             break;
         case GL_DEBUG_SEVERITY_HIGH:
             severity_str = "GL_DEBUG_SEVERITY_HIGH"; 

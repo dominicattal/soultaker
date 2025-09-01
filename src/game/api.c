@@ -30,6 +30,7 @@ GameApi game_api = {
 
     // Map
     REGISTER(room_create_entity),
+    REGISTER(room_create_wall),
 
     // Misc
     REGISTER(texture_get_id),

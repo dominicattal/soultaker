@@ -4,7 +4,7 @@
 
 #define TILE_VERTEX_LENGTH           8
 #define WALL_VERTEX_LENGTH           (8 * 6 * 5)
-#define ENTITY_VERTEX_LENGTH_IN      11
+#define ENTITY_VERTEX_LENGTH_IN      13
 #define ENTITY_VERTEX_LENGTH_OUT     7
 #define OBSTACLE_VERTEX_LENGTH_IN    8
 #define OBSTACLE_VERTEX_LENGTH_OUT   7
@@ -97,6 +97,10 @@ static void resize_vertex_buffer(VertexBuffer* vb, i32 capacity)
     if (vb->capacity > capacity)
         return;
     vb->capacity = capacity;
+    if (vb->capacity == 0) {
+        st_free(vb->buffer);
+        return;
+    }
     size_t size = capacity * sizeof(GLfloat);
     if (vb->buffer == NULL)
         vb->buffer = st_malloc(size);
@@ -180,7 +184,6 @@ static void update_entity_vertex_data(void)
         vb->buffer[j++] = pivot.y;
         vb->buffer[j++] = stretch.x;
         vb->buffer[j++] = stretch.y;
-
     }
     vb->length = j;
     
@@ -337,7 +340,7 @@ static void update_parstacle_vertex_data(void)
     i32 i, j;
     Parstacle* parstacle;
 
-    vb = get_vertex_buffer(VBO_PARSTACLE);
+    vb = get_vertex_buffer_swap(VBO_PARSTACLE);
     resize_vertex_buffer(vb,
             OBSTACLE_VERTEX_LENGTH_IN * game_context.parstacles->capacity);
 
@@ -368,7 +371,7 @@ static void update_obstacle_vertex_data(void)
     i32 location;
     i32 i, j;
 
-    vb = get_vertex_buffer(VBO_OBSTACLE);
+    vb = get_vertex_buffer_swap(VBO_OBSTACLE);
     resize_vertex_buffer(vb,
             OBSTACLE_VERTEX_LENGTH_IN * game_context.obstacles->capacity);
 
@@ -689,6 +692,7 @@ static void render_projectiles(void)
 
 static void render_shadows(void)
 {
+    return;
     VertexBuffer* vb;
     ComputeShaderParams params;
 

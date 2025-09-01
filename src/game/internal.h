@@ -87,6 +87,7 @@ Wall* map_get_wall(i32 x, i32 z);
 bool map_is_wall(i32 x, i32 z);
 
 Entity* room_create_entity(vec2 position, i32 id);
+Wall* room_create_wall(vec2 position, f32 height);
 
 //**************************************************************************
 // Entity, Player, Boss definitions
@@ -480,6 +481,7 @@ typedef struct GameApi {
 
     // Map
     Entity* (*room_create_entity)(vec2, i32);
+    Wall* (*room_create_wall)(vec2, f32);
 
     // Misc
     i32 (*texture_get_id)(const char*);

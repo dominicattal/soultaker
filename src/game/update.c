@@ -74,6 +74,9 @@ static void collide_entity_obstacle(Entity* entity, Obstacle* obstacle)
 
 static void collide_entity_projectile(Entity* entity, Projectile* projectile)
 {
+    if (projectile->lifetime == 0)
+        return;
+
     bool is_entity_invulnerable = entity_get_flag(entity, ENTITY_FLAG_INVULNERABLE);
     bool is_entity_friendly = entity_get_flag(entity, ENTITY_FLAG_FRIENDLY);
     bool is_projectile_friendly = projectile_get_flag(projectile, PROJECTILE_FLAG_FRIENDLY);
@@ -177,7 +180,7 @@ static void game_collide_objects(void)
             collide_entity_obstacle(entity, obstacle);
         }
         for (j = 0; j < game_context.free_walls->length; j++) {
-            Wall* wall = list_get(game_context.walls, j);
+            Wall* wall = list_get(game_context.free_walls, j);
             collide_entity_wall(entity, wall);
         }
         for (j = 0; j < game_context.projectiles->length; j++) {
@@ -193,7 +196,7 @@ static void game_collide_objects(void)
             collide_projectile_obstacle(projectile, obstacle);
         }
         for (j = 0; j < game_context.free_walls->length; j++) {
-            Wall* wall = list_get(game_context.walls, j);
+            Wall* wall = list_get(game_context.free_walls, j);
             collide_projectile_wall(projectile, wall);
         }
     }
