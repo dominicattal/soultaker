@@ -31,7 +31,7 @@
         },
         "rooms": {
             "spawn": {
-                "bounding_box": [0, 0, 31, 37],
+                "bounding_box": [0, 0, 30, 36],
                 "create": "shaitan_spawn_create",
                 "type": "spawn",
                 "alternates": [
@@ -135,7 +135,7 @@
                 ] 
             },
             "enemy_1": {
-                "bounding_box": [47, 0, 61, 14],
+                "bounding_box": [41, 0, 61, 14],
                 "create": "level_1_enemy_1_create",
                 "type": "enemy",
                 "alternates": [
@@ -156,20 +156,40 @@
                     {
                         "type": "female",
                         "default": "wall_2",
-                        "location": [7, 13],
+                        "location": [13, 1],
                         "bounding_box": [63, 1, 65, 1],
                         "origin": [1, 0]
                     },
                     {
                         "type": "female",
                         "default": "wall_2",
-                        "location": [13, 7],
+                        "location": [19, 7],
                         "bounding_box": [63, 3, 63, 5],
                         "origin": [0, 1]
                     },
                     {
+                        "type": "female",
+                        "default": "wall_2",
+                        "location": [13, 13],
+                        "bounding_box": [63, 1, 65, 1],
+                        "origin": [1, 0]
+                    },
+                    {
+                        "type": "female",
+                        "default": "wall_2",
+                        "location": [7, 13],
+                        "bounding_box": [63, 1, 65, 1],
+                        "origin": [1, 0]
+                    },
+                    {
                         "type": "male",
                         "location": [7, 0],
+                        "bounding_box": [63, 0, 65, 1],
+                        "origin": [1, 0]
+                    },
+                    {
+                        "type": "male",
+                        "location": [13, 0],
                         "bounding_box": [63, 0, 65, 1],
                         "origin": [1, 0]
                     },
@@ -187,7 +207,13 @@
                     },
                     {
                         "type": "male",
-                        "location": [14, 7],
+                        "location": [13, 14],
+                        "bounding_box": [63, 1, 65, 2],
+                        "origin": [1, 1]
+                    },
+                    {
+                        "type": "male",
+                        "location": [20, 7],
                         "bounding_box": [63, 3, 64, 5],
                         "origin": [1, 1]
                     }

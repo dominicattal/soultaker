@@ -6,7 +6,7 @@ st_export void level_1_generate(LocalMapGenerationSettings* settings)
     if (settings->num_rooms_left == 0) {
         if (strcmp(settings->current_branch, "spawn") == 0) {
             settings->current_branch = "enemy";
-            settings->num_rooms_left = 10;
+            settings->num_rooms_left = 15;
         }
         else if (strcmp(settings->current_branch, "enemy") == 0) {
             settings->current_branch = "boss";
@@ -27,6 +27,8 @@ st_export void level_1_enemy_1_create(GameApi* api)
     vec2 pos = api->vec2_create(4, 4);
     api->room_create_entity(pos, id);
     pos.x = 7.5;
+    api->room_create_entity(pos, id);
+    pos.x = 11;
     api->room_create_entity(pos, id);
 }
 

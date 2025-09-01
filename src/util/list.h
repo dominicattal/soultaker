@@ -38,6 +38,9 @@ i32 list_search(List* list, void* item);
 // returns true if list contains item, false otherwise
 bool list_contains(List* list, void* item);
 
+// returns true if an item in the list passes the query function
+bool list_query(List* list, bool (*fptr)(void* item));
+
 // resets the list's capacity to 0. does not alter any of the list's contents
 void list_clear(List* list);
 

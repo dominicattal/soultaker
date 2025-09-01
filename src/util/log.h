@@ -4,12 +4,12 @@
 #include <stdio.h>
 
 typedef enum {
-    FATAL,
-    ERROR,
-    WARNING,
-    INFO,
-    DEBUG,
-    MEMORY
+    FATAL = 0,
+    CRITICAL = 1,
+    WARNING = 2,
+    INFO = 3,
+    DEBUG = 4,
+    MEMORY = 5
 } LogLevel;
 
 void log_init(char* exe_path);

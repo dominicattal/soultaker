@@ -9,7 +9,7 @@ st_export void shaitan_generate(LocalMapGenerationSettings* settings)
 static void create_bars(GameApi* api, i32 side_tex, i32 top_tex, vec2 position)
 {
     Wall* wall;
-    wall = api->wall_create(api->vec2_create(position.x, position.y+0.5), 1.5f);
+    wall = api->room_create_wall(api->vec2_create(position.x, position.y+0.5), 1.5f);
     wall->side_tex = side_tex;
     wall->top_tex = top_tex;
     wall->size.y = 0.0;
@@ -345,21 +345,21 @@ st_export void shaitan_lava_create(GameApi* api, Tile* tile)
     api->tile_set_flag(tile, TILE_FLAG_ANIMATE_HORIZONTAL_NEG, true);
 }
 
-st_export void shaitan_spawn_create(GameApi* api, i32 origin_x, i32 origin_y)
+st_export void shaitan_spawn_create(GameApi* api)
 {
     i32 side_tex, top_tex;
     side_tex = api->texture_get_id("shaitan_bars_side");
     top_tex = api->texture_get_id("shaitan_bars_top");
-    create_bars(api, side_tex, top_tex, api->vec2_create(14, 27));
-    create_bars(api, side_tex, top_tex, api->vec2_create(15, 27));
-    create_bars(api, side_tex, top_tex, api->vec2_create(16, 27));
-    create_bars(api, side_tex, top_tex, api->vec2_create(10, 27));
-    create_bars(api, side_tex, top_tex, api->vec2_create(6, 26));
-    create_bars(api, side_tex, top_tex, api->vec2_create(2, 24));
-    create_bars(api, side_tex, top_tex, api->vec2_create(20, 27));
-    create_bars(api, side_tex, top_tex, api->vec2_create(24, 26));
-    create_bars(api, side_tex, top_tex, api->vec2_create(28, 24));
+    create_bars(api, side_tex, top_tex, api->vec2_create(2, 12));
+    create_bars(api, side_tex, top_tex, api->vec2_create(6, 10));
+    create_bars(api, side_tex, top_tex, api->vec2_create(10, 9));
+    create_bars(api, side_tex, top_tex, api->vec2_create(14, 9));
+    create_bars(api, side_tex, top_tex, api->vec2_create(15, 9));
+    create_bars(api, side_tex, top_tex, api->vec2_create(16, 9));
+    create_bars(api, side_tex, top_tex, api->vec2_create(20, 9));
+    create_bars(api, side_tex, top_tex, api->vec2_create(24, 10));
+    create_bars(api, side_tex, top_tex, api->vec2_create(28, 12));
 
     i32 sta_id = api->entity_get_id("shaitan_the_advisor");
-    api->entity_create(api->vec2_create(origin_x+15.5, origin_y+16.5), sta_id);
+    api->room_create_entity(api->vec2_create(15.5, 20.5), sta_id);
 }

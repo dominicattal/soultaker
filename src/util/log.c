@@ -15,7 +15,7 @@ static const char* severity_string(LogLevel severity)
 {
     switch (severity) {
         case FATAL: return "\033[31mFATAL\033[0m";
-        case ERROR: return "\033[38;2;255;165;0mERROR\033[0m";
+        case CRITICAL: return "\033[38;2;255;165;0mCRITICAL\033[0m";
         case WARNING: return "\033[33mWARNING\033[0m";
         case INFO: return "\033[32mINFO\033[0m";
         case DEBUG: return "\033[34mDEBUG\033[0m";
@@ -29,7 +29,7 @@ static const char* severity_string(LogLevel severity)
 {
     switch (severity) {
         case FATAL: return "FATAL";
-        case ERROR: return "ERROR";
+        case CRITICAL: return "CRITICAL";
         case WARNING: return "WARNING";
         case INFO: return "INFO";
         case DEBUG: return "DEBUG";

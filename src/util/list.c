@@ -14,7 +14,10 @@ List* list_create(void)
 List* list_copy(List* list)
 {
     List* copy = st_malloc(sizeof(List));
-    copy->buffer = st_malloc(list->capacity * sizeof(void*));
+    if (list->capacity != 0)
+        copy->buffer = st_malloc(list->capacity * sizeof(void*));
+    else
+        copy->buffer = NULL;
     for (i32 i = 0; i < list->length; i++)
         copy->buffer[i] = list->buffer[i];
     copy->length = list->length;
@@ -76,6 +79,14 @@ bool list_contains(List* list, void* item)
 {
     for (i32 i = 0; i < list->length; i++)
         if (list->buffer[i] == item)
+            return true;
+    return false;
+}
+
+bool list_query(List* list, bool (*fptr)(void* item))
+{
+    for (i32 i = 0; i < list->length; i++)
+        if (fptr(list->buffer[i]))
             return true;
     return false;
 }

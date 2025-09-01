@@ -74,7 +74,7 @@ static void _remove_pointer(void* addr)
             goto done;
         }
     }
-    log_write(ERROR, "Unaccounted pointer %p", addr);
+    log_write(CRITICAL, "Unaccounted pointer %p", addr);
 done:
     pthread_mutex_unlock(&mutex);
 }
@@ -87,7 +87,7 @@ static void _print_pointers(void)
     pthread_mutex_lock(&mutex);
     for (int i = 0; i < pointers.length; i++) {
         Pointer* ptr = pointers.buffer[i];
-        sprintf(string+idx, "%p %-16lld %s:%-8d\n", ptr->addr, ptr->size, ptr->file, ptr->line); 
+        sprintf(string+idx, "%p %-16llx %s:%-8d\n", ptr->addr, ptr->size, ptr->file, ptr->line); 
         idx += 16 + 1 + 16 + 1 + strlen(ptr->file) + 1 + 8 + 1;
     }
     pthread_mutex_unlock(&mutex);
@@ -109,13 +109,16 @@ static void _print_pointers(void)
 
 void* _st_malloc(size_t size, const char* file, int line)
 {
+    return malloc(size);
+    if (size == 0)
+        log_write(FATAL, "%s:%d\nalloc 0 bytes", file, line);
     void* ptr = malloc(size + sizeof(size_t));
     size_t* sptr = (size_t*)ptr;
     if (ptr == NULL) {
-        log_write(ERROR, "%s:%d\nmalloc failed", file, line);
+        log_write(CRITICAL, "%s:%d\nmalloc failed", file, line);
         return NULL;
     }
-    log_write(MEMORY, "%s:%d\nmemory allocation\naddr: %p\nsize: %lld", file, line, sptr+1, size);
+    log_write(MEMORY, "%s:%d\nmemory allocation\naddr: %p\nsize: %llx", file, line, sptr+1, size);
     __atomic_fetch_add(&heap_size, size, __ATOMIC_SEQ_CST);
     sptr[0] = size;
     add_pointer(file, line, size, (void*)(sptr+1));
@@ -123,15 +126,18 @@ void* _st_malloc(size_t size, const char* file, int line)
 }
 void* _st_realloc(void* ptr, size_t size, const char* file, int line)
 {
+    return realloc(ptr, size);
+    if (size == 0)
+        log_write(FATAL, "%s:%d\nrealloc 0 bytes", file, line);
     size_t* sptr = (size_t*)(ptr) - 1;
     long long old_addr = (long long)(void*)(sptr);
     void* new_ptr = realloc((void*)sptr, size + sizeof(size_t));
     size_t* new_sptr = (size_t*)new_ptr;
     if (new_ptr == NULL) {
-        log_write(ERROR, "%s:%d\nrealloc failed", file, line);
+        log_write(CRITICAL, "%s:%d\nrealloc failed", file, line);
         return NULL;
     }
-    log_write(MEMORY, "%s:%d\nmemory reallocation\nold_addr: %p\nnew_addr: %p\nsize: %lld", file, line, old_addr+sizeof(size_t), new_sptr+1, size);
+    log_write(MEMORY, "%s:%d\nmemory reallocation\nold_addr: %p\nnew_addr: %p\nsize: %llx", file, line, old_addr+sizeof(size_t), new_sptr+1, size);
     __atomic_fetch_add(&heap_size, size - new_sptr[0], __ATOMIC_SEQ_CST);
     new_sptr[0] = size;
     remove_pointer(ptr);
@@ -140,13 +146,16 @@ void* _st_realloc(void* ptr, size_t size, const char* file, int line)
 }
 void* _st_calloc(int cnt, size_t size, const char* file, int line)
 {
+    return calloc(cnt, size);
+    if (cnt == 0 || size == 0)
+        log_write(FATAL, "%s:%d\ncalloc 0 bytes", file, line);
     void* ptr = calloc(cnt, size + sizeof(size_t));
     size_t* sptr = (size_t*)ptr;
     if (ptr == NULL) {
-        log_write(ERROR, "%s:%d\ncalloc failed", file, line);
+        log_write(CRITICAL, "%s:%d\ncalloc failed", file, line);
         return NULL;
     }
-    log_write(MEMORY, "%s:%d\nmemory 0 allocation\naddr: %p\nsize: %lld", file, line, sptr+1, size);
+    log_write(MEMORY, "%s:%d\nmemory callocation\naddr: %p\nsize: %llx", file, line, sptr+1, size);
     __atomic_fetch_add(&heap_size, size, __ATOMIC_SEQ_CST);
     sptr[0] = size;
     add_pointer(file, line, size, (void*)(sptr+1));
@@ -154,6 +163,8 @@ void* _st_calloc(int cnt, size_t size, const char* file, int line)
 }
 void _st_free(void* ptr, const char* file, int line)
 {
+    free(ptr);
+    return;
     size_t* sptr = (size_t*)(ptr) - 1;
     if (ptr == NULL) {
         log_write(MEMORY, "%s:%d\nfreed NULL", file, line, ptr);
@@ -161,7 +172,7 @@ void _st_free(void* ptr, const char* file, int line)
     }
     size_t size = sptr[0];
     __atomic_fetch_sub(&heap_size, size, __ATOMIC_SEQ_CST);
-    log_write(MEMORY, "%s:%d\nfreed memory %p with size %lld", file, line, ptr, size);
+    log_write(MEMORY, "%s:%d\nfreed memory %p with size %llx", file, line, ptr, size);
     free(sptr);
     remove_pointer(ptr);
 }
