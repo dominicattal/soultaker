@@ -63,9 +63,12 @@ void camera_tilt(f32 mag);
 
 typedef struct {
     const char* current_branch;
+    const char* current_room_type;
     i32 num_rooms_left;
+    i32 num_rooms_loaded;
     i32 male_x, male_z;
-    bool finished;
+    bool no_path;
+    bool create_no_path;
 } LocalMapGenerationSettings;
 
 void map_init(void);
@@ -87,7 +90,7 @@ Wall* map_get_wall(i32 x, i32 z);
 bool map_is_wall(i32 x, i32 z);
 
 Entity* room_create_entity(vec2 position, i32 id);
-Wall* room_create_wall(vec2 position, f32 height);
+Wall* room_create_wall(vec2 position, f32 height, f32 width, f32 length);
 
 //**************************************************************************
 // Entity, Player, Boss definitions
@@ -481,7 +484,7 @@ typedef struct GameApi {
 
     // Map
     Entity* (*room_create_entity)(vec2, i32);
-    Wall* (*room_create_wall)(vec2, f32);
+    Wall* (*room_create_wall)(vec2, f32, f32, f32);
 
     // Misc
     i32 (*texture_get_id)(const char*);

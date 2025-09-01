@@ -26,9 +26,11 @@ void* game_loop(void* vargp)
             start = get_time();
             if (!game_context.paused) {
                 game_context.time += game_context.dt;
-                game_update();
-                event_queue_flush();
-                game_update_vertex_data();
+                if (game_context.dt < 0.1) {
+                    game_update();
+                    event_queue_flush();
+                    game_update_vertex_data();
+                }
             }
         }
         end = get_time();

@@ -1,7 +1,10 @@
 {
     "shaitan": {
         "path": "assets/maps/shaitan.png",
-        "generation": "shaitan_generate",
+        "init": "shaitan_init",
+        "cleanup": "shaitan_cleanup",
+        "generate": "shaitan_generate",
+        "branch": "shaitan_branch",
         "load": "shaitan_load",
         "palette": {
             "lava": {
@@ -48,7 +51,10 @@
     },
     "level_1": {
         "path": "assets/maps/level_1.png",
-        "generation": "level_1_generate",
+        "init": "level_1_init",
+        "cleanup": "level_1_cleanup",
+        "generate": "level_1_generate",
+        "branch": "level_1_branch",
         "palette": {
             "floor_1": {
                 "color": "FF9E3D",
