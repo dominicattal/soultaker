@@ -1,0 +1,5 @@
+# 2025-09-01
+- collision with particular wall is broken
+- other walls work mostly, but have same core issue
+- where collision is checked several times? what
+- fix by copying the code from my other project lol

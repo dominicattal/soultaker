@@ -1,18 +1,32 @@
 #include "../../src/api.h"
 
-st_export void shaitan_generate(LocalMapGenerationSettings* settings)
+st_export void* shaitan_init(GameApi* api)
+{
+    return NULL;
+}
+
+st_export void shaitan_cleanup(GameApi* api, void* data)
+{
+}
+
+st_export bool shaitan_generate(GameApi* api, LocalMapGenerationSettings* settings)
 {
     if (settings->num_rooms_left == 0)
-        settings->finished = true;
+        return true;
+    return false;
+}
+
+st_export bool shaitan_branch(GameApi* api, void* data, LocalMapGenerationSettings* settings)
+{
+    return false;
 }
 
 static void create_bars(GameApi* api, i32 side_tex, i32 top_tex, vec2 position)
 {
     Wall* wall;
-    wall = api->room_create_wall(api->vec2_create(position.x, position.y+0.5), 1.5f);
+    wall = api->room_create_wall(api->vec2_create(position.x, position.y+0.5), 1.5f, 1.0f, 0.0f);
     wall->side_tex = side_tex;
     wall->top_tex = top_tex;
-    wall->size.y = 0.0;
 }
 
 typedef struct {

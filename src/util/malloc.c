@@ -109,7 +109,6 @@ static void _print_pointers(void)
 
 void* _st_malloc(size_t size, const char* file, int line)
 {
-    return malloc(size);
     if (size == 0)
         log_write(FATAL, "%s:%d\nalloc 0 bytes", file, line);
     void* ptr = malloc(size + sizeof(size_t));
@@ -126,7 +125,6 @@ void* _st_malloc(size_t size, const char* file, int line)
 }
 void* _st_realloc(void* ptr, size_t size, const char* file, int line)
 {
-    return realloc(ptr, size);
     if (size == 0)
         log_write(FATAL, "%s:%d\nrealloc 0 bytes", file, line);
     size_t* sptr = (size_t*)(ptr) - 1;
@@ -146,7 +144,6 @@ void* _st_realloc(void* ptr, size_t size, const char* file, int line)
 }
 void* _st_calloc(int cnt, size_t size, const char* file, int line)
 {
-    return calloc(cnt, size);
     if (cnt == 0 || size == 0)
         log_write(FATAL, "%s:%d\ncalloc 0 bytes", file, line);
     void* ptr = calloc(cnt, size + sizeof(size_t));
@@ -163,8 +160,6 @@ void* _st_calloc(int cnt, size_t size, const char* file, int line)
 }
 void _st_free(void* ptr, const char* file, int line)
 {
-    free(ptr);
-    return;
     size_t* sptr = (size_t*)(ptr) - 1;
     if (ptr == NULL) {
         log_write(MEMORY, "%s:%d\nfreed NULL", file, line, ptr);

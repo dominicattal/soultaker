@@ -9,32 +9,31 @@ static void collide_entity_wall(Entity* entity, Wall* wall)
 {
     f32 ex, ez, er, dx, dz, wx, wz, sx, sz;
     ex = entity->position.x;
-    ez = entity->position.y;
-    er = entity->size / 2 - 0.01;
+    ez = entity->position.z;
+    er = entity->size / 2;
     wx = wall->position.x;
-    wz = wall->position.y;
+    wz = wall->position.z;
     sx = wall->size.x;
-    sz = wall->size.y;
+    sz = wall->size.z;
     if (!(ex + er > wx && ex - er < wx + sx
        && ez + er > wz && ez - er < wz + sz))
         return;
     ex = entity->prev_position.x;
-    ez = entity->prev_position.y;
+    ez = entity->prev_position.z;
     dx = entity->position.x - entity->prev_position.x;
-    dz = entity->position.y - entity->prev_position.y;
-    // this will not work if er is a tight fit and on the z axis
-    // because the first check will prevent the second check, and
-    // having both checks will further bug it. this should be fine otherwise
-    if (ez + er > wz && ez - er < wz + sz) {
-        if (dx > 0)
-            entity->position.x = wx - er;
-        else if (dx < 0)
-            entity->position.x = wx + sx + er;
-    } else if (ex + er > wx && ex - er < wx + sx) {
-        if (dz > 0)
-            entity->position.y = wz - er;
-        else if (dz < 0)
-            entity->position.y = wz + sz + er;
+    dz = entity->position.z - entity->prev_position.z;
+    if (ex < wx && dx > 0 && ez - er < wz + sz && ez + er > wz) {
+        entity->position.x = wx - er;
+        entity->direction.x = 0;
+    } else if (ex > wx + sx && dx < 0 && ez - er < wz + sz && ez + er > wz) {
+        entity->position.x = wx + sx + er;
+        entity->direction.x = 0;
+    } else if (ez < wz && dz > 0 && ex - er < wx + sx && ex + er > wx) {
+        entity->position.z = wz - er;
+        entity->direction.z = 0;
+    } else if (ez > wz + sz && dz < 0 && ex - er < wx + sx && ex + er > wx) {
+        entity->position.z = wz + sz + er;
+        entity->direction.z = 0;
     }
 }
 
@@ -136,6 +135,7 @@ static void collide_projectile_obstacle(Projectile* projectile, Obstacle* obstac
 
 static void game_collide_tilemap(void)
 {
+    return;
     vec2 pos;
     f32 r;
     i32 i, x, z;
@@ -179,8 +179,8 @@ static void game_collide_objects(void)
             Obstacle* obstacle = list_get(game_context.obstacles, j);
             collide_entity_obstacle(entity, obstacle);
         }
-        for (j = 0; j < game_context.free_walls->length; j++) {
-            Wall* wall = list_get(game_context.free_walls, j);
+        for (j = 0; j < game_context.walls->length; j++) {
+            Wall* wall = list_get(game_context.walls, j);
             collide_entity_wall(entity, wall);
         }
         for (j = 0; j < game_context.projectiles->length; j++) {
@@ -254,8 +254,8 @@ void game_update_objects(void)
 
 void game_update(void)
 {
+    game_update_objects();
     game_collide_tilemap();
     game_collide_objects();
-    game_update_objects();
 }
 
