@@ -68,16 +68,14 @@ static void update_player_state(Player* player, f32 dt)
     if (entity == NULL) return;
     player->shot_timer -= dt;
     player_shoot(player);
-    if (player->shot_timer > 0) {
+    if (player_is_shooting()) {
         if (entity->state == player->state_shooting)
             return;
         entity->state = player->state_shooting;
         entity->frame = 0;
         entity->frame_timer = 0;
-        entity_set_flag(entity, ENTITY_FLAG_UPDATE_FACING, 0);
     } else {
-        entity_set_flag(entity, ENTITY_FLAG_UPDATE_FACING, 1);
-        if (vec2_mag(entity->direction) > 0) {
+        if (entity_get_flag(entity, ENTITY_FLAG_MOVING)) {
             if (entity->state == player->state_walking)
                 return;
             entity->state = player->state_walking;
@@ -112,9 +110,8 @@ static void update_player_stats(Player* player)
 
 void player_update(Player* player, f32 dt)
 {
-    if (player->entity != NULL) {
+    if (player->entity != NULL)
         player->position = player->entity->position;
-    }
     update_player_state(player, dt);
     update_player_stats(player);
 }
@@ -133,7 +130,7 @@ void player_shoot(Player* player)
         return;
     if (!player->shooting)
         return;
-    if (player->shot_timer > 0)
+    if (player_is_shooting())
         return;
     player->shot_timer = 0.5;
     vec2 cursor_position = window_cursor_position();
@@ -161,6 +158,11 @@ void player_shoot(Player* player)
     target = vec2_sub(player->entity->position, vec2_scale(direction, -2 * zoom * r * r / ratio));
     weapon_shoot(player, direction, target);
     player->entity->facing = direction;
+}
+
+bool player_is_shooting(void)
+{
+    return game_context.player.shot_timer > 0;
 }
 
 vec2 player_position(void)

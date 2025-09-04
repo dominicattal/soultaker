@@ -95,7 +95,8 @@ void camera_update(void)
 
 void camera_move(vec2 mag)
 {
-    if (game_context.camera.follow && game_context.player.entity == NULL)
+    Entity* entity = game_context.player.entity;
+    if (game_context.camera.follow && entity == NULL)
         return;
     vec2 direction = vec2_create(0, 0);
     vec2 facing, right;
@@ -106,12 +107,19 @@ void camera_move(vec2 mag)
     right.y = game_context.camera.right.z;
     right = vec2_normalize(right);
     direction = vec2_add(direction, vec2_scale(facing, mag.x));
-    direction = vec2_add(direction, vec2_scale(right, mag.y));
+    direction = vec2_add(direction, vec2_scale(right, mag.z));
     direction = vec2_normalize(direction);
-    vec3 dir3 = vec3_create(direction.x, 0, direction.y);
-    if (game_context.camera.follow)
+    vec3 dir3 = vec3_create(direction.x, 0, direction.z);
+    if (game_context.camera.follow) {
         game_context.player.entity->direction = direction;
-    else
+        if (vec2_mag(direction) != 0) {
+            entity_set_flag(entity, ENTITY_FLAG_MOVING, true);
+            if (!player_is_shooting())
+                game_context.player.entity->facing = direction;
+        } 
+        else
+            entity_set_flag(entity, ENTITY_FLAG_MOVING, false);
+    } else
         game_context.camera.position = vec3_add(game_context.camera.position, dir3);
 }
 

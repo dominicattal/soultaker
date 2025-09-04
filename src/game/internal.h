@@ -144,9 +144,9 @@ typedef struct Player {
 
 typedef enum {
     ENTITY_FLAG_FRIENDLY,
-    ENTITY_FLAG_UPDATE_FACING,
     ENTITY_FLAG_IN_LAVA,
     ENTITY_FLAG_INVULNERABLE,
+    ENTITY_FLAG_MOVING,
     ENTITY_FLAG_BOSS
 } EntityFlagEnum;
 
@@ -164,6 +164,9 @@ bool entity_get_flag(Entity* entity, EntityFlagEnum flag);
 i32 entity_get_id(const char* name);
 i32 entity_get_state_id(Entity* entity, const char* name);
 i32 entity_get_texture(Entity* entity);
+
+void entity_set_direction(Entity* entity, vec2 direction);
+void entity_set_facing(Entity* entity, vec2 facing);
 
 // sets entity state and sets frame to 0. always use this
 // rather than setting state directly.
@@ -190,6 +193,7 @@ void player_reset(void);
 void player_update(Player* player, f32 dt);
 void player_shoot(Player* player);
 void player_swap_weapons(void);
+bool player_is_shooting(void);
 
 // Initalize and cleanup weapon info
 // Loads weapon data from config/weapons.json

@@ -9,7 +9,6 @@ void game_process_input(f32 dt)
     if (game_context.halt_game_loop)
         return;
 
-    static vec2 prev_move_mag;
     vec2 move_mag = vec2_create(0, 0);
     f32 rotate_mag = 0;
     f32 tilt_mag = 0; 
@@ -23,9 +22,9 @@ void game_process_input(f32 dt)
     if (window_get_key(GLFW_KEY_S) == GLFW_PRESS)
         move_mag.x -= 1;
     if (window_get_key(GLFW_KEY_A) == GLFW_PRESS)
-        move_mag.y -= 1;
+        move_mag.z -= 1;
     if (window_get_key(GLFW_KEY_D) == GLFW_PRESS)
-        move_mag.y += 1;
+        move_mag.z += 1;
     if (window_get_key(GLFW_KEY_Q) == GLFW_PRESS)
         rotate_mag += 1;
     if (window_get_key(GLFW_KEY_E) == GLFW_PRESS)
@@ -38,9 +37,7 @@ void game_process_input(f32 dt)
         game_context.player.shooting = true;
 
 update:
-    if (vec2_equal(move_mag, prev_move_mag))
-        event_create_game_camera_move(vec2_scale(vec2_normalize(move_mag), dt));
-    prev_move_mag = move_mag;
+    event_create_game_camera_move(vec2_scale(vec2_normalize(move_mag), dt));
     camera_rotate(rotate_mag * dt);
     camera_tilt(tilt_mag * dt);
 }
