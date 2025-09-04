@@ -357,8 +357,8 @@ i32 entity_get_state_id(Entity* entity, const char* name)
 
 void entity_set_state(Entity* entity, const char* name)
 {
-    entity->frame = 0;
     entity->state = entity_get_state_id(entity, name);
+    entity->frame = 0;
 }
 
 void entity_init(void)
@@ -399,7 +399,6 @@ Entity* entity_create(vec2 position, i32 id)
     entity->flags = 0;
     entity->state = 0;
     entity->frame = 0;
-    entity_set_flag(entity, ENTITY_FLAG_UPDATE_FACING, 1);
 
     CreateFuncPtr create = entity_context.infos[id].create;
     if (create != NULL)
@@ -439,8 +438,6 @@ void entity_update(Entity* entity, f32 dt)
         entity->frame = (entity->frame + 1) % num_frames;
     }
     handle_lava(entity, dt);
-    if (entity_get_flag(entity, ENTITY_FLAG_UPDATE_FACING) && vec2_mag(entity->direction) > 0)
-        entity->facing = entity->direction;
 
     UpdateFuncPtr update;
     update = entity_context.infos[entity->id].update;
@@ -510,11 +507,11 @@ static i32 get_direction_4(f32 rad)
 {
     rad = fmod(rad, 2*PI);
     if (rad < 0) rad += 2*PI;
-    if (rad > 7 * PI / 4 + 0.01 || rad < PI / 4 - 0.01)
+    if (rad > 7 * PI / 4 + EPSILON || rad < PI / 4 - EPSILON)
         return UP;
-    if (rad < 3 * PI / 4 + 0.01)
+    if (rad < 3 * PI / 4 + EPSILON)
         return LEFT;
-    if (rad < 5 * PI / 4 - 0.01)
+    if (rad < 5 * PI / 4 - EPSILON)
         return DOWN;
     return RIGHT;
 }
@@ -552,6 +549,14 @@ i32 entity_get_texture(Entity* entity)
         dir = get_direction_4(rad);
     i32 num_frames = state.num_frames;
     return state.frames[num_frames * dir + entity->frame];
+}
+
+void entity_set_direction(Entity* entity, vec2 direction)
+{
+}
+
+void entity_set_facing(Entity* entity, vec2 facing)
+{
 }
 
 void entity_destroy(Entity* entity)

@@ -364,7 +364,7 @@ st_export void shaitan_spawn_create(GameApi* api)
     i32 side_tex, top_tex;
     side_tex = api->texture_get_id("shaitan_bars_side");
     top_tex = api->texture_get_id("shaitan_bars_top");
-    create_bars(api, side_tex, top_tex, api->vec2_create(2, 12));
+    //create_bars(api, side_tex, top_tex, api->vec2_create(2, 12));
     create_bars(api, side_tex, top_tex, api->vec2_create(6, 10));
     create_bars(api, side_tex, top_tex, api->vec2_create(10, 9));
     create_bars(api, side_tex, top_tex, api->vec2_create(14, 9));
