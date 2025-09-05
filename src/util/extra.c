@@ -43,3 +43,13 @@ void string_free(char* string)
 {
     st_free(string);
 }
+
+f32 maxf(f32 x, f32 y)
+{
+    return (x > y) ? x : y;
+}
+
+f32 minf(f32 x, f32 y)
+{
+    return (x < y) ? x : y;
+}

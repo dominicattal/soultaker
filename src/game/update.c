@@ -135,7 +135,6 @@ static void collide_projectile_obstacle(Projectile* projectile, Obstacle* obstac
 
 static void game_collide_tilemap(void)
 {
-    return;
     vec2 pos;
     f32 r;
     i32 i, x, z;
@@ -178,10 +177,6 @@ static void game_collide_objects(void)
         for (j = 0; j < game_context.obstacles->length; j++) {
             Obstacle* obstacle = list_get(game_context.obstacles, j);
             collide_entity_obstacle(entity, obstacle);
-        }
-        for (j = 0; j < game_context.walls->length; j++) {
-            Wall* wall = list_get(game_context.walls, j);
-            collide_entity_wall(entity, wall);
         }
         for (j = 0; j < game_context.projectiles->length; j++) {
             Projectile* projectile = list_get(game_context.projectiles, j);
