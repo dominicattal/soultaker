@@ -12,7 +12,6 @@
 #define GRAY    0x808080
 #define BLACK   0x000000
 
-
 typedef void (*RoomCreateFuncPtr)(GameApi*);
 typedef void (*TileCreateFuncPtr)(GameApi*, Tile*);
 typedef void* (*RoomsetInitFuncPtr)(GameApi*);
@@ -817,11 +816,11 @@ static f32 calculate_room_fdx(Room* room, Orientation orientation, f32 u, f32 v)
         case ROTATION_R1:
         // fall through
         case ROTATION_MR1:
-            return l - dv;
+            return l - dv + 1;
         case ROTATION_R2:
         // fall through
         case ROTATION_MR2:
-            return w - du;
+            return w - du + 1;
         case ROTATION_R3:
         // fall through
         case ROTATION_MR3:
@@ -847,11 +846,11 @@ static f32 calculate_room_fdz(Room* room, Orientation orientation, f32 u, f32 v)
         case ROTATION_R2:
         // fall through
         case ROTATION_MR0:
-            return l - dv;
+            return l - dv + 1;
         case ROTATION_R3:
         // fall through
         case ROTATION_MR3:
-            return w - du;
+            return w - du + 1;
         case ROTATION_R0:
         // fall through
         case ROTATION_MR2:
@@ -1501,15 +1500,19 @@ Wall* room_create_wall(vec2 position, f32 height, f32 width, f32 length)
     MapNode* node = map_context.current_map_node;
     if (node == NULL)
         log_write(FATAL, "fuck");
+
     Room* room = node->room;
     i32 orientation = node->orientation;
-    f32 u = room->u1 + position.x;
-    f32 v = room->v1 + position.z;
-    f32 dx = calculate_room_fdx(room, orientation, u, v);
-    f32 dz = calculate_room_fdz(room, orientation, u, v);
+    f32 u, v, dx1, dz1, dx2, dz2;
     vec2 new_position;
-    new_position.x = node->origin_x + dx;
-    new_position.z = node->origin_z + dz;
+    u = room->u1 + position.x;
+    v = room->v1 + position.z;
+    dx1 = calculate_room_fdx(room, orientation, u, v);
+    dz1 = calculate_room_fdz(room, orientation, u, v);
+    dx2 = calculate_room_fdx(room, orientation, u+width, v+length);
+    dz2 = calculate_room_fdz(room, orientation, u+width, v+length);
+    new_position.x = node->origin_x + minf(dx1, dx2);
+    new_position.z = node->origin_z + minf(dz1, dz2);
     Wall* wall = wall_create(new_position, height);
     i32 mod = orientation % 2;
     wall->size.x = width * (1-mod) + length * (mod); 

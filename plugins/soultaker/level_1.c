@@ -66,7 +66,7 @@ st_export void level_1_spawn_create(GameApi* api)
 st_export void level_1_enemy_1_create(GameApi* api)
 {
     i32 id = api->entity_get_id("dummy");
-    vec2 pos = api->vec2_create(9, 4);
+    vec2 pos = api->vec2_create(10, 4);
     api->room_create_entity(pos, id);
 }
 

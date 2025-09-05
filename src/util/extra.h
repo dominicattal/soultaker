@@ -16,4 +16,7 @@ char* string_create(const char* format, int n, ...);
 // free a string created by string_copy or string_create
 void  string_free(char* string);
 
+f32 maxf(f32 x, f32 y);
+f32 minf(f32 x, f32 y);
+
 #endif
