@@ -20,6 +20,7 @@ void event_create_game_swap_weapons(void);
 void event_create_game_summon(i32 id);
 void event_create_game_respawn(void);
 void event_create_game_set_player_position(vec2 position);
+void event_create_game_defog(void);
 
 // Gui events
 void event_create_gui_framebuffer_size_callback(u32 width, u32 height);

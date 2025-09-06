@@ -35,6 +35,12 @@ bool quadmask_isset(Quadmask* qm, i32 x, i32 y)
     return (qm->data[idx / 64] >> (63 - (idx % 64))) & 1;
 }
 
+void quadmask_setall(Quadmask* qm)
+{
+    for (i32 i = 0; 64 * i < qm->width * qm->length; i++)
+        qm->data[i] = ~0LL;
+}
+
 void quadmask_clear(Quadmask* qm)
 {
     for (i32 i = 0; 64 * i < qm->width * qm->length; i++)

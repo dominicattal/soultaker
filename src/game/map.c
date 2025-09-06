@@ -2,6 +2,7 @@
 #include "../state.h"
 #include "../api.h"
 #include <json.h>
+#include <math.h>
 #include <windows.h>
 #include <stb_image.h>
 
@@ -82,20 +83,26 @@ typedef struct {
 } GlobalMapGenerationSettings;
 
 typedef struct MapNode {
+    MapNode* parent;
     MapNode** children;
     i32 num_children;
     Room* room;
     Alternate* female_alternate;
     List* male_alternates;
     i32 origin_x, origin_z;
+    i32 x1, x2, z1, z2;
     i32 orientation;
+    bool visited;
+    bool cleared;
 } MapNode;
 
 typedef struct {
     i32 width, length;
     MapNode* root;
     void** tiles;
+    MapNode** map_nodes;
     Quadmask* tile_mask;
+    Quadmask* fog_mask;
 } Map;
 
 typedef struct {
@@ -1044,11 +1051,14 @@ static void unpreload_room_alternate(PreloadArgs* args)
 static MapNode* map_node_create(void)
 {
     MapNode* node = st_malloc(sizeof(MapNode));
+    node->parent = NULL;
     node->children = NULL;
     node->num_children = 0;
     node->room = NULL;
     node->female_alternate = NULL;
     node->male_alternates = list_create();
+    node->visited = false;
+    node->cleared = false;
     return node;
 }
 
@@ -1068,6 +1078,7 @@ static void map_node_attach(MapNode* parent, MapNode* child)
     else
         parent->children = st_realloc(parent->children, (parent->num_children+1) * sizeof(MapNode));
     parent->children[parent->num_children++] = child;
+    child->parent = parent;
 }
 
 static void map_node_detach(MapNode* parent, MapNode* child)
@@ -1075,6 +1086,7 @@ static void map_node_detach(MapNode* parent, MapNode* child)
     for (i32 i = 0; i < parent->num_children; i++) {
         if (parent->children[i] == child) {
             parent->children[i] = parent->children[--parent->num_children];
+            child->parent = NULL;
             return;
         }
     }
@@ -1149,6 +1161,8 @@ static bool pregenerate_map_helper(GlobalMapGenerationSettings* global_settings,
                 child->female_alternate = female_alternate;
                 child->origin_x = origin_x;
                 child->origin_z = origin_z;
+                child->x1 = child->x2 = origin_x;
+                child->z1 = child->z2 = origin_z;
                 child->orientation = orientation;
                 map_node_attach(parent, child);
                 male_alternates = list_copy(room->male_alternates);
@@ -1239,6 +1253,11 @@ static void place_tile(Map* map, TileColor* tile_color, i32 x, i32 z)
     }
 }
 
+static void set_map_node(Map* map, MapNode* node, i32 map_x, i32 map_z)
+{
+    map->map_nodes[map_z * MAP_MAX_WIDTH + map_x] = node;
+}
+
 static void load_room(LoadArgs* args)
 {
     Map* map = args->map;
@@ -1259,6 +1278,10 @@ static void load_room(LoadArgs* args)
             dz = calculate_room_dz(room, orientation, u, v);
             map_x = origin_x + dx;
             map_z = origin_z + dz;
+            node->x1 = min(node->x1, map_x);
+            node->x2 = max(node->x2, map_x);
+            node->z1 = min(node->z1, map_z);
+            node->z2 = max(node->z2, map_z);
             color = roomset_get_color(roomset, u, v);
             if (color_is_preset(color))
                 continue;
@@ -1268,6 +1291,7 @@ static void load_room(LoadArgs* args)
             if (tile_color == NULL)
                 continue;
             quadmask_set(qm, map_x, map_z);
+            set_map_node(map, node, map_x, map_z);
             place_tile(map, tile_color, map_x, map_z);
         }
     }
@@ -1281,6 +1305,7 @@ static void load_room(LoadArgs* args)
 static void load_room_alternate(LoadArgs* args)
 {
     Map* map = args->map;
+    MapNode* node = args->node;
     Quadmask* qm = args->qm;
     Palette* palette = args->palette;
     Roomset* roomset = args->roomset;
@@ -1307,6 +1332,7 @@ static void load_room_alternate(LoadArgs* args)
             if (tile_color == NULL)
                 continue;
             quadmask_set(qm, map_x, map_z);
+            set_map_node(map, node, map_x, map_z);
             place_tile(map, tile_color, map_x, map_z);
         }
     }
@@ -1315,6 +1341,7 @@ static void load_room_alternate(LoadArgs* args)
 static void load_room_alternate_default(LoadArgs* args)
 {
     Map* map = args->map;
+    MapNode* node = args->node;
     Quadmask* qm = args->qm;
     Room* room = args->room;
     Alternate* alternate = args->alternate;
@@ -1336,6 +1363,7 @@ static void load_room_alternate_default(LoadArgs* args)
     if (tile_color == NULL)
         return;
     quadmask_set(qm, map_x, map_z);
+    set_map_node(map, node, map_x, map_z);
     place_tile(map, tile_color, map_x, map_z);
 }
 
@@ -1450,7 +1478,9 @@ static void generate_map(i32 id)
     map->length = MAP_MAX_LENGTH;
     map->root = root;
     map->tile_mask = quadmask_create(MAP_MAX_WIDTH, MAP_MAX_LENGTH);
+    map->fog_mask = quadmask_create(MAP_MAX_WIDTH, MAP_MAX_LENGTH);
     map->tiles = st_calloc(map->width * map->length, sizeof(void*));
+    map->map_nodes = st_calloc(map->width * map->length, sizeof(MapNode*));
 
     quadmask_clear(qm);
     generate_map_helper(map, qm, palette, roomset, root);
@@ -1464,6 +1494,101 @@ static void generate_map(i32 id)
     quadmask_destroy(qm);
 }
 
+static MapNode* get_map_node(Map* map, i32 x, i32 z)
+{
+    if (x < 0 || z < 0 || x >= MAP_MAX_WIDTH || z >= MAP_MAX_WIDTH)
+        return NULL;
+    return map->map_nodes[z * MAP_MAX_WIDTH + x];
+}
+
+static void clear_map_node_fog(Map* map, MapNode* node)
+{
+    if (node->cleared)
+        return;
+    node->cleared = true;
+    for (i32 z = node->z1; z < node->z2; z++)
+        for (i32 x = node->x1; x < node->x2; x++)
+            if (node == get_map_node(map, x, z))
+                quadmask_set(map->fog_mask, x, z);
+}
+
+bool map_fog_contains(vec2 position)
+{
+    Map* map = map_context.current_map;
+    i32 x, z;
+    x = (i32) position.x;
+    z = (i32) position.z;
+    if (map == NULL)
+        return false;
+    if (!quadmask_in_bounds(map->fog_mask, x, z))
+        return false;
+    return quadmask_isset(map->fog_mask, x, z);
+}
+
+bool map_fog_contains_tile(Tile* tile)
+{
+    if (map_fog_contains(tile->position))
+        return true;
+
+    Map* map = map_context.current_map;
+    i32 x, z;
+    x = (i32)roundf(tile->position.x);
+    z = (i32)roundf(tile->position.z);
+    if (map == NULL)
+        return false;
+    if (tile != map_get_tile(x, z))
+        return false;
+    if (!quadmask_in_bounds(map->fog_mask, x, z))
+        return false;
+    return quadmask_isset(map->fog_mask, x, z);
+}
+
+bool map_fog_contains_wall(Wall* wall)
+{
+    if (map_fog_contains(wall->position))
+        return true;
+    return false;
+}
+
+void map_fog_explore(vec2 position)
+{
+    Map* map = map_context.current_map;
+    i32 x, z;
+    x = (i32) position.x;
+    z = (i32) position.z;
+    if (map == NULL)
+        return;
+    MapNode* node = get_map_node(map, x, z);
+    if (node == NULL)
+        return;
+    if (node->visited) 
+        return;
+    if (!quadmask_in_bounds(map->fog_mask, x, z))
+        return;
+    node->visited = true;
+    clear_map_node_fog(map, node);
+    if (node->parent != NULL)
+        clear_map_node_fog(map, node->parent);
+    for (i32 i = 0; i < node->num_children; i++)
+        clear_map_node_fog(map, node->children[i]);
+    game_render_update_walls();
+    game_render_update_tiles();
+    game_render_update_obstacles();
+    game_render_update_parstacles();
+}
+
+void map_fog_clear(void)
+{
+    Map* map = map_context.current_map;
+    if (map == NULL)
+        return;
+    quadmask_setall(map->fog_mask);
+    game_render_update_walls();
+    game_render_update_tiles();
+    game_render_update_obstacles();
+    game_render_update_parstacles();
+}
+
 static void clear_map(void)
 {
     Map* map = map_context.current_map;
@@ -1471,7 +1596,9 @@ static void clear_map(void)
         return;
 
     st_free(map->tiles);
+    st_free(map->map_nodes);
     quadmask_destroy(map->tile_mask);
+    quadmask_destroy(map->fog_mask);
     map_node_destroy(map->root);
     st_free(map);
 

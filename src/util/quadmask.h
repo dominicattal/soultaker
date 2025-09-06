@@ -23,6 +23,9 @@ void quadmask_unset(Quadmask* qm, i32 x, i32 y);
 // returns true if bit at (x, y) is set
 bool quadmask_isset(Quadmask* qm, i32 x, i32 y);
 
+// sets all bits to 1
+void quadmask_setall(Quadmask* qm);
+
 // sets all bits to 0
 void quadmask_clear(Quadmask* qm);
 

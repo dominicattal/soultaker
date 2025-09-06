@@ -110,8 +110,10 @@ static void update_player_stats(Player* player)
 
 void player_update(Player* player, f32 dt)
 {
-    if (player->entity != NULL)
+    if (player->entity != NULL) {
         player->position = player->entity->position;
+        map_fog_explore(player->position);
+    }
     update_player_state(player, dt);
     update_player_stats(player);
 }

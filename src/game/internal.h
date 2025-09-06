@@ -89,11 +89,22 @@ Wall* map_get_wall(i32 x, i32 z);
 // returns true if the tile at (x, z) is a wall
 bool map_is_wall(i32 x, i32 z);
 
+// returns whether coordinate in fog
+bool map_fog_contains(vec2 position);
+bool map_fog_contains_tile(Tile* tile);
+bool map_fog_contains_wall(Wall* wall);
+
+// defogs room that contains coordinate and adjacent rooms
+void map_fog_explore(vec2 position);
+
+// clears all the fog
+void map_fog_clear(void);
+
 Entity* room_create_entity(vec2 position, i32 id);
 Wall* room_create_wall(vec2 position, f32 height, f32 width, f32 length);
 
 //**************************************************************************
-// Entity, Player, Boss definitions
+// Entity, Player definitions
 //**************************************************************************
 
 typedef struct Weapon {

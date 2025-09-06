@@ -170,6 +170,8 @@ static void update_entity_vertex_data(void)
 
     for (i = j = 0; i < game_context.entities->length; i++) {
         entity = list_get(game_context.entities, i);
+        if (!map_fog_contains(entity->position))
+            continue;
         texture_info(entity_get_texture(entity), &location, &u, &v, &w, &h, &pivot, &stretch);
         vb->buffer[j++] = entity->position.x;
         vb->buffer[j++] = entity->elevation;
@@ -186,6 +188,7 @@ static void update_entity_vertex_data(void)
         vb->buffer[j++] = stretch.y;
     }
     vb->length = j;
+    return;
     
     for (i = j = 0; i < game_context.entities->length; i++) {
         entity = list_get(game_context.entities, i);
@@ -214,6 +217,8 @@ static void update_projectile_vertex_data(void)
 
     for (i = j = 0; i < game_context.projectiles->length; i++) {
         projectile = list_get(game_context.projectiles, i);
+        if (!map_fog_contains(projectile->position))
+            continue;
         tex = projectile->tex;
         texture_info(tex, &location, &u, &v, &w, &h, &pivot, &stretch);
         rotate_tex = projectile_get_flag(projectile, PROJECTILE_FLAG_TEX_ROTATION);
@@ -251,6 +256,8 @@ static void update_tile_vertex_data(void)
 
     for (i = j = 0; i < game_context.tiles->length; i++) {
         tile = list_get(game_context.tiles, i);
+        if (!map_fog_contains_tile(tile))
+            continue;
         animate_horizontal_pos = tile_get_flag(tile, TILE_FLAG_ANIMATE_HORIZONTAL_POS);
         animate_vertical_pos = tile_get_flag(tile, TILE_FLAG_ANIMATE_VERTICAL_POS);
         animate_horizontal_neg = tile_get_flag(tile, TILE_FLAG_ANIMATE_HORIZONTAL_NEG);
@@ -300,6 +307,8 @@ static void update_wall_vertex_data(void)
 
     for (i = j = 0; i < game_context.walls->length; i++) {
         wall = list_get(game_context.walls, i);
+        if (!map_fog_contains_wall(wall))
+            continue;
         texture_info(wall->side_tex, &location, &u, &v, &w, &h, &pivot, &stretch);
         for (i32 side = 0; side < 4; side++) {
             for (k = 0; k < 6; k++) {
@@ -349,6 +358,8 @@ static void update_parstacle_vertex_data(void)
     
     for (i = j = 0; i < game_context.parstacles->length; i++) {
         parstacle = list_get(game_context.parstacles, i);
+        if (!map_fog_contains(parstacle->position))
+            continue;
         vb->buffer[j++] = parstacle->position.x;
         vb->buffer[j++] = parstacle->position.y;
         vb->buffer[j++] = parstacle->size;
@@ -380,6 +391,8 @@ static void update_obstacle_vertex_data(void)
     
     for (i = j = 0; i < game_context.obstacles->length; i++) {
         obstacle = list_get(game_context.obstacles, i);
+        if (!map_fog_contains(obstacle->position))
+            continue;
         vb->buffer[j++] = obstacle->position.x;
         vb->buffer[j++] = obstacle->position.y;
         vb->buffer[j++] = obstacle->size;
@@ -405,6 +418,8 @@ static void update_particle_vertex_data(void)
    
     for (i = j = 0; i < game_context.particles->length; i++) {
         particle = list_get(game_context.particles, i);
+        if (!map_fog_contains(vec2_create(particle->position.x, particle->position.z)))
+            continue;
         vb->buffer[j++] = particle->position.x;
         vb->buffer[j++] = particle->position.y;
         vb->buffer[j++] = particle->position.z;
@@ -430,6 +445,8 @@ static void update_parjicle_vertex_data(void)
    
     for (i = j = 0; i < game_context.parjicles->length; i++) {
         parjicle = list_get(game_context.parjicles, i);
+        if (!map_fog_contains(vec2_create(parjicle->position.x, parjicle->position.z)))
+            continue;
         rotate_tex = parjicle_is_flag_set(parjicle, PARJICLE_FLAG_TEX_ROTATION);
         vb->buffer[j++] = parjicle->position.x;
         vb->buffer[j++] = parjicle->position.y;

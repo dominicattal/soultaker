@@ -178,6 +178,10 @@ static void game_collide_objects(void)
             Obstacle* obstacle = list_get(game_context.obstacles, j);
             collide_entity_obstacle(entity, obstacle);
         }
+        for (j = 0; j < game_context.free_walls->length; j++) {
+            Wall* wall = list_get(game_context.free_walls, j);
+            collide_entity_wall(entity, wall);
+        }
         for (j = 0; j < game_context.projectiles->length; j++) {
             Projectile* projectile = list_get(game_context.projectiles, j);
             collide_entity_projectile(entity, projectile);
