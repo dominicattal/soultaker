@@ -13,7 +13,8 @@ typedef enum {
     GAME_EVENT_SWAP_WEAPONS,
     GAME_EVENT_SUMMON,
     GAME_EVENT_RESPAWN,
-    GAME_EVENT_SET_POSITON,
+    GAME_EVENT_SET_POSITION,
+    GAME_EVENT_DEFOG,
 
     // Gui Events
     GUI_EVENT_FRAMEBUFFER_SIZE_CALLBACK,
@@ -119,8 +120,11 @@ static void execute_event(Event event)
         case GAME_EVENT_RESPAWN:
             player_reset();
             break;
-        case GAME_EVENT_SET_POSITON:
+        case GAME_EVENT_SET_POSITION:
             game_set_player_position(vec2_create(arg1._flt, arg2._flt));
+            break;
+        case GAME_EVENT_DEFOG:
+            map_fog_clear();
             break;
 
         // Gui 
@@ -222,8 +226,18 @@ void event_create_game_respawn(void)
 void event_create_game_set_player_position(vec2 position)
 {
     Event event = (Event) {
+        .type = GAME_EVENT_SET_POSITION,
         .arg1._flt = position.x,
         .arg2._flt = position.z
+    };
+    EventQueue* queue = get_event_queue("Game");
+    event_enqueue(queue, event);
+}
+
+void event_create_game_defog(void)
+{
+    Event event = (Event) {
+        .type = GAME_EVENT_DEFOG
     };
     EventQueue* queue = get_event_queue("Game");
     event_enqueue(queue, event);

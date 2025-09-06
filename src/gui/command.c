@@ -11,6 +11,7 @@ typedef enum {
     CS_START,
     CS_LOGLEVEL,
     CS_LOGLEVELFIN,
+    CS_DEFOGFIN,
     CS_PRESET,
     CS_PRESETFIN,
     CS_POSITIONFIN,
@@ -72,6 +73,9 @@ static char* state_string(CommandState state)
         case CS_RESPAWNFIN:
             message = string_copy("Respawned");
             break;
+        case CS_DEFOGFIN:
+            message = string_copy("Removed fog");
+            break;
         default:
             message = string_copy("Unrecognized command");
             break;
@@ -108,6 +112,10 @@ static CommandState new_state(CommandState state, char* command, i32 left, i32 r
             if (cmp("respawn", command, left, right)) {
                 event_create_game_respawn();
                 return CS_RESPAWNFIN;
+            }
+            if (cmp("defog", command, left, right)) {
+                event_create_game_defog();
+                return CS_DEFOGFIN;
             }
             command_context.error_message = "Unrecognized command";
             return CS_ERROR;

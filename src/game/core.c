@@ -12,6 +12,10 @@ void* game_loop(void* vargp)
     end = start = get_time();
     game_context.dt = 0;
     game_context.time = 0;
+    game_resume_loop();
+    game_resume_render();
+    i32 id = map_get_id("level_1");
+    map_load(id);
     while (!game_context.kill_thread)
     {
         if (game_context.halt_game_loop) {
