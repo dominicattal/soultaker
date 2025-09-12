@@ -16,6 +16,9 @@
 #define PROJECTILE_VERTEX_LENGTH_OUT 7
 #define SHADOW_VERTEX_LENGTH_IN      4
 #define SHADOW_VERTEX_LENGTH_OUT     5
+#define MAP_QUAD_VERTEX_LENGTH       4
+#define MAP_CIRCLE_VERTEX_LENGTH_IN  3
+#define MAP_CIRCLE_VERTEX_LENGTH_OUT 10
 
 typedef enum {
     VAO_TILE,
@@ -32,13 +35,16 @@ typedef enum {
 } GameVAOEnum;
 
 typedef enum {
+    VBO_QUAD,
     VBO_ENTITY,
     VBO_ENTITY_SHADOW,
+    VBO_ENTITY_MAP,
     VBO_PROJECTILE,
     VBO_PROJECTILE_SHADOW,
     VBO_TILE,
-    VBO_QUAD,
+    VBO_TILE_MAP,
     VBO_WALL,
+    VBO_WALL_MAP,
     VBO_OBSTACLE,
     VBO_PARSTACLE,
     VBO_PARJICLE,
@@ -62,6 +68,7 @@ typedef struct {
     RenderData* data;
     RenderData* data_swap;
     GLuint fbo, shadow_fbo, rbo;
+    GLuint map_fbo, map_rbo;
     GLuint game_time_ubo;
     GLuint vaos[NUM_VAOS];
     GLuint vbos[NUM_VBOS];
@@ -155,6 +162,7 @@ static void update_entity_vertex_data(void)
 {
     VertexBuffer* vb;
     VertexBuffer* shadow_vb;
+    VertexBuffer* map_vb;
     vec2 pivot, stretch;
     f32 u, v, w, h;
     i32 location;
@@ -163,19 +171,22 @@ static void update_entity_vertex_data(void)
 
     vb = get_vertex_buffer_swap(VBO_ENTITY);
     shadow_vb = get_vertex_buffer_swap(VBO_ENTITY_SHADOW);
+    map_vb = get_vertex_buffer_swap(VBO_ENTITY_MAP);
     resize_vertex_buffer(vb,
             ENTITY_VERTEX_LENGTH_IN * game_context.entities->capacity);
     resize_vertex_buffer(shadow_vb,
             SHADOW_VERTEX_LENGTH_IN * game_context.entities->capacity);
+    resize_vertex_buffer(map_vb,
+            MAP_CIRCLE_VERTEX_LENGTH_IN * game_context.entities->capacity);
 
     for (i = j = 0; i < game_context.entities->length; i++) {
         entity = list_get(game_context.entities, i);
-        if (!map_fog_contains(entity->position))
+        if (map_fog_contains(entity->position))
             continue;
         texture_info(entity_get_texture(entity), &location, &u, &v, &w, &h, &pivot, &stretch);
         vb->buffer[j++] = entity->position.x;
         vb->buffer[j++] = entity->elevation;
-        vb->buffer[j++] = entity->position.y;
+        vb->buffer[j++] = entity->position.z;
         vb->buffer[j++] = entity->size;
         vb->buffer[j++] = u;
         vb->buffer[j++] = v;
@@ -188,16 +199,24 @@ static void update_entity_vertex_data(void)
         vb->buffer[j++] = stretch.y;
     }
     vb->length = j;
-    return;
+
+    for (i = j = 0; i < game_context.entities->length; i++) {
+        entity = list_get(game_context.entities, i);
+        if (map_fog_contains(entity->position))
+            continue;
+        map_vb->buffer[j++] = entity->position.x;
+        map_vb->buffer[j++] = entity->position.z;
+        map_vb->buffer[j++] = entity->size;
+    }
+    map_vb->length = j;
     
     for (i = j = 0; i < game_context.entities->length; i++) {
         entity = list_get(game_context.entities, i);
         shadow_vb->buffer[j++] = entity->position.x;
         shadow_vb->buffer[j++] = entity->elevation;
-        shadow_vb->buffer[j++] = entity->position.y;
+        shadow_vb->buffer[j++] = entity->position.z;
         shadow_vb->buffer[j++] = entity->size;
     }
-
     shadow_vb->length = j;
 }
 
@@ -217,14 +236,14 @@ static void update_projectile_vertex_data(void)
 
     for (i = j = 0; i < game_context.projectiles->length; i++) {
         projectile = list_get(game_context.projectiles, i);
-        if (!map_fog_contains(projectile->position))
+        if (map_fog_contains(projectile->position))
             continue;
         tex = projectile->tex;
         texture_info(tex, &location, &u, &v, &w, &h, &pivot, &stretch);
         rotate_tex = projectile_get_flag(projectile, PROJECTILE_FLAG_TEX_ROTATION);
         vb->buffer[j++] = projectile->position.x;
         vb->buffer[j++] = projectile->elevation;
-        vb->buffer[j++] = projectile->position.y;
+        vb->buffer[j++] = projectile->position.z;
         // encode texture rotation as negative num
         vb->buffer[j++] = projectile->size * (rotate_tex ? 1 : -1);
         vb->buffer[j++] = projectile->facing;
@@ -242,6 +261,7 @@ static void update_projectile_vertex_data(void)
 static void update_tile_vertex_data(void)
 {
     VertexBuffer* vb;
+    VertexBuffer* map_vb;
     vec2 pivot, stretch;
     f32 u, v, w, h;
     i32 location;
@@ -251,12 +271,15 @@ static void update_tile_vertex_data(void)
     Tile* tile;
 
     vb = get_vertex_buffer_swap(VBO_TILE);
+    map_vb = get_vertex_buffer_swap(VBO_TILE);
     resize_vertex_buffer(vb,
         TILE_VERTEX_LENGTH * game_context.tiles->capacity);
+    resize_vertex_buffer(map_vb,
+        MAP_QUAD_VERTEX_LENGTH * game_context.tiles->capacity);
 
     for (i = j = 0; i < game_context.tiles->length; i++) {
         tile = list_get(game_context.tiles, i);
-        if (!map_fog_contains_tile(tile))
+        if (map_fog_contains_tile(tile))
             continue;
         animate_horizontal_pos = tile_get_flag(tile, TILE_FLAG_ANIMATE_HORIZONTAL_POS);
         animate_vertical_pos = tile_get_flag(tile, TILE_FLAG_ANIMATE_VERTICAL_POS);
@@ -264,7 +287,7 @@ static void update_tile_vertex_data(void)
         animate_vertical_neg = tile_get_flag(tile, TILE_FLAG_ANIMATE_VERTICAL_NEG);
         texture_info(tile->tex, &location, &u, &v, &w, &h, &pivot, &stretch);
         vb->buffer[j++] = tile->position.x;
-        vb->buffer[j++] = tile->position.y;
+        vb->buffer[j++] = tile->position.z;
         vb->buffer[j++] = u;
         vb->buffer[j++] = v;
         vb->buffer[j++] = w;
@@ -273,13 +296,25 @@ static void update_tile_vertex_data(void)
         vb->buffer[j++] = animate_horizontal_pos + (animate_horizontal_neg<<1)
             + (animate_vertical_pos<<2) + (animate_vertical_neg<<3);
     }
-
     vb->length = j;
+    return;
+
+    for (i = j = 0; i < game_context.tiles->length; i++) {
+        tile = list_get(game_context.tiles, i);
+        if (map_fog_contains_tile(tile))
+            continue;
+        map_vb->buffer[j++] = tile->position.x;
+        map_vb->buffer[j++] = tile->position.z;
+        map_vb->buffer[j++] = 1.0f;
+        map_vb->buffer[j++] = 1.0f;
+    }
+    map_vb->length = j;
 }
 
 static void update_wall_vertex_data(void)
 {
     VertexBuffer* vb;
+    VertexBuffer* map_vb;
     vec2 pivot, stretch;
     f32 u, v, w, h;
     i32 location;
@@ -288,8 +323,11 @@ static void update_wall_vertex_data(void)
     Wall* wall;
 
     vb = get_vertex_buffer_swap(VBO_WALL);
+    map_vb = get_vertex_buffer_swap(VBO_WALL_MAP);
     resize_vertex_buffer(vb,
             WALL_VERTEX_LENGTH * game_context.walls->capacity);
+    resize_vertex_buffer(map_vb,
+            MAP_QUAD_VERTEX_LENGTH * game_context.walls->capacity);
 
     static f32 dx[] = {0, 0, 0, 0, 1, 1, 1, 1};
     static f32 dy[] = {0, 0, 1, 1, 0, 0, 1, 1};
@@ -307,20 +345,21 @@ static void update_wall_vertex_data(void)
 
     for (i = j = 0; i < game_context.walls->length; i++) {
         wall = list_get(game_context.walls, i);
-        if (!map_fog_contains_wall(wall))
+        if (map_fog_contains_wall(wall))
             continue;
         texture_info(wall->side_tex, &location, &u, &v, &w, &h, &pivot, &stretch);
         for (i32 side = 0; side < 4; side++) {
             for (k = 0; k < 6; k++) {
                 idx = side_order[side][winding[k]];
-                vb->buffer[j++] = wall->position.x + dx[idx] * wall->size.x; 
+                // nvidia rounding error? epsilon fixes
+                vb->buffer[j++] = wall->position.x + dx[idx] * (wall->size.x + 0.001); 
                 vb->buffer[j++] = wall->height * dy[idx];
-                vb->buffer[j++] = wall->position.y + dz[idx] * wall->size.y;
+                vb->buffer[j++] = wall->position.z + dz[idx] * (wall->size.y + 0.001);
                 vb->buffer[j++] = u + tx[winding[k]] * w;
                 vb->buffer[j++] = v + ty[winding[k]] * h;
                 vb->buffer[j++] = location;
                 vb->buffer[j++] = wall->position.x + wall->size.x / 2;
-                vb->buffer[j++] = wall->position.y + wall->size.y / 2;
+                vb->buffer[j++] = wall->position.z + wall->size.y / 2;
             }
         }
         texture_info(wall->top_tex, &location, &u, &v, &w, &h, &pivot, &stretch);
@@ -328,16 +367,27 @@ static void update_wall_vertex_data(void)
             idx = side_order[4][winding[k]];
             vb->buffer[j++] = wall->position.x + dx[idx] * wall->size.x; 
             vb->buffer[j++] = wall->height * dy[idx];
-            vb->buffer[j++] = wall->position.y + dz[idx] * wall->size.y;
+            vb->buffer[j++] = wall->position.z + dz[idx] * wall->size.y;
             vb->buffer[j++] = u + tx[winding[k]] * w;
             vb->buffer[j++] = v + ty[winding[k]] * h;
             vb->buffer[j++] = location;
             vb->buffer[j++] = wall->position.x + wall->size.x / 2;
-            vb->buffer[j++] = wall->position.y + wall->size.y / 2;
+            vb->buffer[j++] = wall->position.z + wall->size.y / 2;
         }
     }
-
     vb->length = j;
+    return;
+
+    for (i = j = 0; game_context.walls->length; i++) {
+        wall = list_get(game_context.walls, i);
+        if (map_fog_contains_wall(wall))
+            continue;
+        map_vb->buffer[j++] = wall->position.x;
+        map_vb->buffer[j++] = wall->position.z;
+        map_vb->buffer[j++] = wall->size.x;
+        map_vb->buffer[j++] = wall->size.z;
+    }
+    map_vb->length = j;
 }
 
 static void update_parstacle_vertex_data(void)
@@ -358,10 +408,10 @@ static void update_parstacle_vertex_data(void)
     
     for (i = j = 0; i < game_context.parstacles->length; i++) {
         parstacle = list_get(game_context.parstacles, i);
-        if (!map_fog_contains(parstacle->position))
+        if (map_fog_contains(parstacle->position))
             continue;
         vb->buffer[j++] = parstacle->position.x;
-        vb->buffer[j++] = parstacle->position.y;
+        vb->buffer[j++] = parstacle->position.z;
         vb->buffer[j++] = parstacle->size;
         vb->buffer[j++] = u;
         vb->buffer[j++] = v;
@@ -391,10 +441,10 @@ static void update_obstacle_vertex_data(void)
     
     for (i = j = 0; i < game_context.obstacles->length; i++) {
         obstacle = list_get(game_context.obstacles, i);
-        if (!map_fog_contains(obstacle->position))
+        if (map_fog_contains(obstacle->position))
             continue;
         vb->buffer[j++] = obstacle->position.x;
-        vb->buffer[j++] = obstacle->position.y;
+        vb->buffer[j++] = obstacle->position.z;
         vb->buffer[j++] = obstacle->size;
         vb->buffer[j++] = u;
         vb->buffer[j++] = v;
@@ -418,10 +468,10 @@ static void update_particle_vertex_data(void)
    
     for (i = j = 0; i < game_context.particles->length; i++) {
         particle = list_get(game_context.particles, i);
-        if (!map_fog_contains(vec2_create(particle->position.x, particle->position.z)))
+        if (map_fog_contains(vec2_create(particle->position.x, particle->position.z)))
             continue;
         vb->buffer[j++] = particle->position.x;
-        vb->buffer[j++] = particle->position.y;
+        vb->buffer[j++] = particle->position.z;
         vb->buffer[j++] = particle->position.z;
         vb->buffer[j++] = particle->color.x;
         vb->buffer[j++] = particle->color.y;
@@ -445,11 +495,11 @@ static void update_parjicle_vertex_data(void)
    
     for (i = j = 0; i < game_context.parjicles->length; i++) {
         parjicle = list_get(game_context.parjicles, i);
-        if (!map_fog_contains(vec2_create(parjicle->position.x, parjicle->position.z)))
+        if (map_fog_contains(vec2_create(parjicle->position.x, parjicle->position.z)))
             continue;
         rotate_tex = parjicle_is_flag_set(parjicle, PARJICLE_FLAG_TEX_ROTATION);
         vb->buffer[j++] = parjicle->position.x;
-        vb->buffer[j++] = parjicle->position.y;
+        vb->buffer[j++] = parjicle->position.z;
         vb->buffer[j++] = parjicle->position.z;
         vb->buffer[j++] = parjicle->color.x;
         vb->buffer[j++] = parjicle->color.y;
@@ -861,6 +911,7 @@ void game_render_init(void)
     name = texture_get_name(TEX_GAME_SCENE);
     glGenFramebuffers(1, &render_context.fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, render_context.fbo);
+    log_write(DEBUG, "%d %d", unit, name);
     glActiveTexture(GL_TEXTURE0 + unit);
     glBindTexture(GL_TEXTURE_2D, name);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, window_width(), window_height(),
@@ -900,7 +951,6 @@ void game_render(void)
 
     glBindFramebuffer(GL_FRAMEBUFFER, render_context.fbo);
     renderer_check_framebuffer_status(GL_FRAMEBUFFER, "game");
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glStencilMask(0x01); // stencil mask affects glClear
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 

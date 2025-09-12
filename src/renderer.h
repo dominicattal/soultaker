@@ -28,7 +28,8 @@ typedef enum {
 typedef enum {
     TEX_GAME_SCENE,
     TEX_GAME_SHADOW_SCENE,
-    NUM_TEXTURES
+    TEX_GAME_MAP_SCENE,
+    NUM_STATIC_TEXTURES
 } TextureEnum;
 
 typedef enum {
@@ -52,10 +53,14 @@ GLint renderer_get_minor_version(void);
 const char* renderer_get_version(void);
 const char* renderer_get_vendor(void);
 const char* renderer_get_renderer_name(void);
+GLint renderer_get_max_image_units(void);
 void renderer_list_available_extensions(void);
 void renderer_list_available_versions(void);
 void renderer_list_context_flags(void);
 void renderer_print_context_profile(void);
+
+// converts all active texture units to png
+void renderer_write_texture_units(void);
 
 // checks if framebuffer is complete, prints error and exits if not
 void renderer_check_framebuffer_status(GLenum target, const char* name);
@@ -68,9 +73,10 @@ void shader_bind_uniform_block(ShaderProgramEnum program, u32 index, const char*
 void shader_cleanup(void);
 
 void texture_init(void);
-i32 texture_get_id(const char* handle);
 GLuint texture_get_unit(TextureEnum tex);
 GLuint texture_get_name(TextureEnum tex);
+i32 texture_get_enum_id(TextureEnum tex);
+i32 texture_get_id(const char* handle);
 void texture_info(i32 id, i32* location, f32* u, f32* v, f32* w, f32* h, vec2* pivot, vec2* stretch);
 void texture_cleanup(void);
 

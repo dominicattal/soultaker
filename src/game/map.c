@@ -1522,32 +1522,29 @@ bool map_fog_contains(vec2 position)
         return false;
     if (!quadmask_in_bounds(map->fog_mask, x, z))
         return false;
-    return quadmask_isset(map->fog_mask, x, z);
+    return !quadmask_isset(map->fog_mask, x, z);
 }
 
 bool map_fog_contains_tile(Tile* tile)
 {
-    if (map_fog_contains(tile->position))
-        return true;
+    return map_fog_contains(tile->position);
 
-    Map* map = map_context.current_map;
-    i32 x, z;
-    x = (i32)roundf(tile->position.x);
-    z = (i32)roundf(tile->position.z);
-    if (map == NULL)
-        return false;
-    if (tile != map_get_tile(x, z))
-        return false;
-    if (!quadmask_in_bounds(map->fog_mask, x, z))
-        return false;
-    return quadmask_isset(map->fog_mask, x, z);
+    //Map* map = map_context.current_map;
+    //i32 x, z;
+    //x = (i32)roundf(tile->position.x);
+    //z = (i32)roundf(tile->position.z);
+    //if (map == NULL)
+    //    return false;
+    //if (tile != map_get_tile(x, z))
+    //    return false;
+    //if (!quadmask_in_bounds(map->fog_mask, x, z))
+    //    return false;
+    //return !quadmask_isset(map->fog_mask, x, z);
 }
 
 bool map_fog_contains_wall(Wall* wall)
 {
-    if (map_fog_contains(wall->position))
-        return true;
-    return false;
+    return map_fog_contains(wall->position);
 }
 
 void map_fog_explore(vec2 position)

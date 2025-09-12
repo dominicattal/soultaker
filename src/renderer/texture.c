@@ -43,7 +43,7 @@ typedef struct {
     Texture* textures;
     struct {
         GLuint unit, name;
-    } static_textures[NUM_TEXTURES];
+    } static_textures[NUM_STATIC_TEXTURES];
     i32 num_textures;
     u32 texture_units[NUM_TEXTURE_UNITS];
 } TextureContext;
@@ -183,7 +183,7 @@ static void create_font_textures(i32* tex_unit_location)
     glBindTexture(GL_TEXTURE_2D, texture_context.texture_units[*tex_unit_location]);
 
     char path[512];
-    sprintf(path, "build/packed_font%d.png", *tex_unit_location);
+    sprintf(path, "data/packed_font%d.png", *tex_unit_location);
     stbi_write_png(path, BITMAP_WIDTH, BITMAP_HEIGHT, 1, bitmap, 0);
 
     st_free(bitmap);
@@ -267,7 +267,7 @@ static void pack_textures(i32* tex_unit_location, unsigned char** image_data, st
     }
 
     char path[512];
-    sprintf(path, "build/packed_tex%d.png", *tex_unit_location);
+    sprintf(path, "data/packed_tex%d.png", *tex_unit_location);
     stbi_write_png(path, BITMAP_WIDTH, BITMAP_HEIGHT, num_channels, bitmap, 0);
 
     (*tex_unit_location)++;
@@ -466,12 +466,26 @@ static const char* get_image_path(JsonValue* value, i32* is_spritesheet)
     return image_path;
 }
 
-static void initialize_rects(i32* tex_unit_location)
+static void create_static_textures(i32* tex_unit_location)
+{
+    if (*tex_unit_location + NUM_STATIC_TEXTURES >= NUM_TEXTURE_UNITS)
+        log_write(FATAL, "Out of texture units");
+    for (i32 i = 0; i < NUM_STATIC_TEXTURES; i++) {
+        glGenTextures(1, &texture_context.static_textures[i].name);
+        texture_context.static_textures[i].unit = *tex_unit_location;
+        texture_context.texture_units[*tex_unit_location] = texture_context.static_textures[i].name;
+        glActiveTexture(GL_TEXTURE0 + (*tex_unit_location)++);
+        glBindTexture(GL_TEXTURE_2D, texture_context.static_textures[i].name);
+    }
+}
+
+static void create_textures(i32* tex_unit_location)
 {
     stbrp_rect* rects;
     unsigned char** image_data;
     i32 width, height, num_channels;
     i32 num_rects;
+    i32 i;
 
     const char* textures_path = "config/textures.json";
     JsonObject* json = json_read(textures_path);
@@ -489,12 +503,12 @@ static void initialize_rects(i32* tex_unit_location)
     i32 num_images = json_object_length(json);
     texture_context.num_textures = get_num_textures(json);
 
-    texture_context.textures = st_malloc(sizeof(Texture) * texture_context.num_textures);
+    texture_context.textures = st_malloc((sizeof(Texture) + NUM_STATIC_TEXTURES) * texture_context.num_textures);
     rects  = st_malloc(sizeof(stbrp_rect) * texture_context.num_textures);
     image_data = st_malloc(sizeof(unsigned char*) * num_images);
 
     num_rects = 0;
-    for (i32 i = 0; i < num_images; i++, json_iterator_increment(it)) {
+    for (i = 0; i < num_images; i++, json_iterator_increment(it)) {
         is_spritesheet = 0;
         member = json_iterator_get(it);
         value = json_member_value(member);
@@ -517,7 +531,7 @@ static void initialize_rects(i32* tex_unit_location)
 
     qsort(texture_context.textures, texture_context.num_textures, sizeof(Texture), texture_cmp);
 
-    for (i32 i = 0; i < num_images; i++)
+    for (i = 0; i < num_images; i++)
         stbi_image_free(image_data[i]);
 
     json_iterator_destroy(it);
@@ -565,17 +579,9 @@ GLuint texture_get_name(TextureEnum tex)
     return texture_context.static_textures[tex].name;
 }
 
-static void create_static_textures(i32* tex_unit_location)
+i32 texture_get_enum_id(TextureEnum tex)
 {
-    if (*tex_unit_location + NUM_TEXTURES >= NUM_TEXTURE_UNITS)
-        log_write(FATAL, "Out of texture units");
-    for (i32 i = 0; i < NUM_TEXTURES; i++) {
-        glGenTextures(1, &texture_context.static_textures[i].name);
-        texture_context.static_textures[i].unit = *tex_unit_location;
-        texture_context.texture_units[*tex_unit_location] = texture_context.static_textures[i].name;
-        glActiveTexture(GL_TEXTURE0 + (*tex_unit_location)++);
-        glBindTexture(GL_TEXTURE_2D, texture_context.static_textures[i].name);
-    }
+    return (i32)tex + texture_context.num_textures;
 }
 
 void texture_init(void)
@@ -584,7 +590,7 @@ void texture_init(void)
     tex_unit_location = 0;
     create_static_textures(&tex_unit_location);
     create_font_textures(&tex_unit_location);
-    initialize_rects(&tex_unit_location);
+    create_textures(&tex_unit_location);
 }
 
 void texture_cleanup(void)

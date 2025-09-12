@@ -1,4 +1,6 @@
 #include "internal.h"
+#include <string.h>
+#include <stb_image_write.h>
 
 GLint renderer_get_major_version(void)
 {
@@ -29,11 +31,80 @@ const char* renderer_get_renderer_name(void)
     return (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION);
 }
 
+GLint renderer_get_max_image_units(void)
+{
+    GLint res;
+    glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &res);
+    return res;
+}
+
 void renderer_print_context_profile(void)
 {
     GLint mask;
     glGetIntegerv(GL_CONTEXT_PROFILE_MASK, &mask);
     printf((mask == GL_CONTEXT_CORE_PROFILE_BIT) ? "GL_CONTEXT_CORE_PROFILE\n" : "GL_CONTEXT_COMPATIBILITY_PROFILE\n");
+}
+
+static u8* get_pixels(i32 w, i32 h, i32 fmt, i32* c)
+{
+    i32 length;
+    u8* pixels = NULL;
+    GLenum format;
+    switch (fmt) {
+        case GL_RGBA8:
+            *c = 4;
+            format = GL_RGBA;
+            break;
+        case GL_RGB:
+            *c = 3;
+            format = GL_RGB;
+            break;
+        case GL_RED:
+            *c = 1;
+            format = GL_RED;
+            break;
+        default:
+            return NULL;
+    }
+    length = (*c) * w * h;
+    pixels = st_malloc(length * sizeof(u8));
+    glGetTexImage(GL_TEXTURE_2D, 0, format, GL_UNSIGNED_BYTE, pixels);
+    return pixels;
+}
+
+void renderer_write_texture_units(void)
+{
+    i32 i, w, h, fmt, c, n;
+    i32 max_image_units = renderer_get_max_image_units();
+    char* summary = string_create("summary", 10);
+    char* line;
+    char* tmp;
+    log_write(DEBUG, "max_image_units=%d", max_image_units);
+    for (i = 0; i < 32; i++) {
+        glActiveTexture(GL_TEXTURE0 + i);
+        glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w);
+        glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h);
+        glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &fmt);
+        if (w == 0 || h == 0)
+            continue;
+
+        u8* pixels = get_pixels(w, h, fmt, &c);
+        if (pixels == NULL)
+            continue;
+        char* path = string_create("data/unit%d.png", 100, i);
+        stbi_write_png(path, w, h, c, pixels, 0);
+        string_free(path);
+        st_free(pixels);
+
+        line = string_create("unit=%-2d w=%-4d h=%-4d fmt=0x%x", 100, i, w, h, fmt);
+        tmp = summary;
+        n = strlen(line) + strlen(tmp) + 1;
+        summary = string_create("%s\n%s", n, summary, line);
+        string_free(tmp);
+        string_free(line);
+    }
+    log_write(DEBUG, summary);
+    string_free(summary);
 }
 
 void renderer_list_available_extensions(void)
