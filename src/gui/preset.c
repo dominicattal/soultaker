@@ -322,6 +322,11 @@ static void load_preset_game(GUIComp* root)
     gui_comp_set_color(comp_fps, 255, 255, 255, 255);
     gui_comp_set_text_align(comp_fps, ALIGN_CENTER, ALIGN_CENTER);
     gui_comp_attach(root, comp_fps);
+
+    GUIComp* minimap = gui_comp_create(0, 0, 250, 250);
+    gui_comp_set_align(minimap, ALIGN_RIGHT, ALIGN_TOP);
+    gui_comp_set_color(minimap, 255, 255, 255, 100);
+    gui_comp_attach(root, minimap);
 }
 
 // **************************************************

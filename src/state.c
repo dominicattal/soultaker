@@ -36,6 +36,7 @@ void state_init(void)
 void state_loop(void)
 {
     f64 start, end;
+    renderer_write_texture_units();
     start = get_time();
     while (!window_closed())
     {

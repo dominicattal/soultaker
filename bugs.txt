@@ -3,3 +3,7 @@
 - other walls work mostly, but have same core issue
 - where collision is checked several times? what
 - fix by copying the code from my other project lol
+
+# 2025-09-02
+- intel integrated graphics doesnt have hole in wall, nvidia does
+- epsilon value when writing vertex buffer
