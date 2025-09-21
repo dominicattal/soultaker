@@ -7,3 +7,8 @@
 # 2025-09-02
 - intel integrated graphics doesnt have hole in wall, nvidia does
 - epsilon value when writing vertex buffer
+
+# 2025-09-20
+- when rendering bound framebuffer, would always clear texture unit 0
+- learned i have to use glClearBuffer instead
+- wrong param to glFramebufferTexture2D (fbo instead of texture name)

@@ -9,6 +9,7 @@ DIR_PLUG = plugins
 DIR_OBJ = build
 DIR_DEP = build
 DIR_BIN = bin
+DIR_DATA = data
 NAME = prog
 DLL_NAME = soultaker
 
@@ -32,7 +33,7 @@ PLUGIN_DEPS_REL = $(PLUGIN_OBJS_REL:%.o=%.d)
 
 all: dev
 
-dev: dev-src dev-dll
+dev: dev-src dev-dll clean-data
 
 dev-src: $(OBJS_DEV)
 	@mkdir -p $(DIR_BIN)/dev
@@ -69,6 +70,8 @@ $(DIR_OBJ)/release/%.o: %.c
 -include $(PLUGIN_DEPS_DEV)
 -include $(PLUGIN_DEPS_REL)
 
+clean-data:
+	rm -f data/*
 clean:
 	rm -rf $(DIR_OBJ) $(DIR_DEP) $(DIR_BIN)
-.PHONY: clean
+.PHONY: clean clean-data
