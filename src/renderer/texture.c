@@ -170,6 +170,7 @@ static void create_font_textures(i32* tex_unit_location)
     for (i32 font = 0; font < NUM_FONTS; font++)
         texture_context.fonts[font].location = *tex_unit_location;
 
+    glActiveTexture(GL_TEXTURE0 + *tex_unit_location);
     glGenTextures(1, &tex);
     glBindTexture(GL_TEXTURE_2D, tex);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, BITMAP_WIDTH, BITMAP_HEIGHT, 0, GL_RED, GL_UNSIGNED_BYTE, bitmap);
@@ -179,7 +180,6 @@ static void create_font_textures(i32* tex_unit_location)
     glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzle_mask);
 
     texture_context.texture_units[*tex_unit_location] = tex;
-    glActiveTexture(GL_TEXTURE0 + *tex_unit_location);
     glBindTexture(GL_TEXTURE_2D, texture_context.texture_units[*tex_unit_location]);
 
     char path[512];
@@ -588,9 +588,9 @@ void texture_init(void)
 {
     i32 tex_unit_location;
     tex_unit_location = 0;
+    create_textures(&tex_unit_location);
     create_static_textures(&tex_unit_location);
     create_font_textures(&tex_unit_location);
-    create_textures(&tex_unit_location);
 }
 
 void texture_cleanup(void)

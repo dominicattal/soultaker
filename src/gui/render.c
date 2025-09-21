@@ -301,6 +301,7 @@ void gui_render(void)
     GLsizei instance_count = gui_context.data.instance_count;
     glBufferData(GL_ARRAY_BUFFER, gui_context.data.length * sizeof(GLfloat), gui_context.data.buffer, GL_DYNAMIC_DRAW);
     pthread_mutex_unlock(&gui_context.data_mutex);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, instance_count);
 }
 

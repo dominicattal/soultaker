@@ -59,7 +59,8 @@ void renderer_list_available_versions(void);
 void renderer_list_context_flags(void);
 void renderer_print_context_profile(void);
 
-// converts all active texture units to png
+// converts active texture units to png
+void renderer_write_texture_unit(i32 unit);
 void renderer_write_texture_units(void);
 
 // checks if framebuffer is complete, prints error and exits if not

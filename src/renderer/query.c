@@ -72,6 +72,39 @@ static u8* get_pixels(i32 w, i32 h, i32 fmt, i32* c)
     return pixels;
 }
 
+void renderer_write_texture_unit(i32 unit)
+{
+    i32 w, h, fmt, c;
+    i32 max_image_units = renderer_get_max_image_units();
+    if (strcmp(thread_get_self_name(), "Main") != 0) {
+        log_write(DEBUG, "not queried from opengl context thread");
+        return;
+    }
+    if (unit >= max_image_units) {
+        log_write(DEBUG, "unit %d out of range (max=%d)", unit, max_image_units);
+        return;
+    }
+    glActiveTexture(GL_TEXTURE0 + unit);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &fmt);
+    if (w == 0 || h == 0) {
+        log_write(DEBUG, "unit %d is not active", unit);
+        return;
+    }
+    u8* pixels = get_pixels(w, h, fmt, &c);
+    if (pixels == NULL) {
+        log_write(DEBUG, "unit %d failed to get pixels", unit);
+        return;
+    }
+    char* path = string_create("data/unit%d.png", 100, unit);
+    stbi_write_png(path, w, h, c, pixels, 0);
+    string_free(path);
+    st_free(pixels);
+
+    log_write(DEBUG, "unit=%-2d w=%-4d h=%-4d fmt=0x%x", unit, w, h, fmt);
+}
+
 void renderer_write_texture_units(void)
 {
     i32 i, w, h, fmt, c, n;
@@ -87,7 +120,6 @@ void renderer_write_texture_units(void)
         glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &fmt);
         if (w == 0 || h == 0)
             continue;
-
         u8* pixels = get_pixels(w, h, fmt, &c);
         if (pixels == NULL)
             continue;
