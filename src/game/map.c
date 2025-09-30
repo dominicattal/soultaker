@@ -1506,8 +1506,8 @@ static void clear_map_node_fog(Map* map, MapNode* node)
     if (node->cleared)
         return;
     node->cleared = true;
-    for (i32 z = node->z1; z < node->z2; z++)
-        for (i32 x = node->x1; x < node->x2; x++)
+    for (i32 z = node->z1; z <= node->z2; z++)
+        for (i32 x = node->x1; x <= node->x2; x++)
             if (node == get_map_node(map, x, z))
                 quadmask_set(map->fog_mask, x, z);
 }
