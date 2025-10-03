@@ -25,7 +25,10 @@ typedef enum {
     GUI_EVENT_UPDATE_WEAPON_INFO,
     GUI_EVENT_CREATE_BOSS_HEALTHBAR,
     GUI_EVENT_DESTROY_BOSS_HEALTHBAR,
-    GUI_EVENT_UPDATE_BOSS_HEALTHBAR
+    GUI_EVENT_UPDATE_BOSS_HEALTHBAR,
+
+    // Renderer Events
+    GUI_EVENT_WRITE_TEXTURE_UNITS
 
 } EventEnum;
 
@@ -154,6 +157,11 @@ static void execute_event(Event event)
             break;
         case GUI_EVENT_DESTROY_BOSS_HEALTHBAR:
             gui_destroy_boss_healthbar(ptr);
+            break;
+
+        // Renderer
+        case GUI_EVENT_WRITE_TEXTURE_UNITS:
+            renderer_write_texture_units();
             break;
     }
 }
@@ -345,5 +353,18 @@ void event_create_gui_destroy_boss_healthbar(void* boss_ptr)
         .ptr = boss_ptr
     };
     EventQueue* queue = get_event_queue("GUI");
+    event_enqueue(queue, event);
+}
+
+//**************************************************************************
+// Renderer events
+//**************************************************************************
+
+void event_create_renderer_write_texture_units(void)
+{
+    Event event = (Event) {
+        .type = GUI_EVENT_WRITE_TEXTURE_UNITS,
+    };
+    EventQueue* queue = get_event_queue("Main");
     event_enqueue(queue, event);
 }

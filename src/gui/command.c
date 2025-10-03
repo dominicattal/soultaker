@@ -3,6 +3,7 @@
 
 #include "internal.h"
 #include "../game.h"
+#include "../renderer.h"
 #include "../event.h"
 #include <ctype.h>
 
@@ -18,6 +19,7 @@ typedef enum {
     CS_SUMMON,
     CS_SUMMONFIN,
     CS_RESPAWNFIN,
+    CS_WRITE_TEXTURESFIN,
     NUM_COMMAND_STATES
 } CommandState;
 
@@ -76,6 +78,9 @@ static char* state_string(CommandState state)
         case CS_DEFOGFIN:
             message = string_copy("Removed fog");
             break;
+        case CS_WRITE_TEXTURESFIN:
+            message = string_copy("Wrote textures");
+            break;
         default:
             message = string_copy("Unrecognized command");
             break;
@@ -112,6 +117,10 @@ static CommandState new_state(CommandState state, char* command, i32 left, i32 r
             if (cmp("respawn", command, left, right)) {
                 event_create_game_respawn();
                 return CS_RESPAWNFIN;
+            }
+            if (cmp("writetex", command, left, right)) {
+                event_create_renderer_write_texture_units();
+                return CS_WRITE_TEXTURESFIN;
             }
             if (cmp("defog", command, left, right)) {
                 event_create_game_defog();

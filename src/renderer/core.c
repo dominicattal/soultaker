@@ -1,3 +1,4 @@
+#include "../event.h"
 #include "../renderer.h"
 #include "../gui.h"
 #include "../game.h"
@@ -81,6 +82,7 @@ void renderer_render(void)
 
     game_render();
     gui_render();
+    event_queue_flush();
 }
 
 void renderer_cleanup(void)

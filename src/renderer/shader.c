@@ -326,6 +326,31 @@ static void compile_shader_program_shadow_comp(void)
     delete(comp);
 }
 
+static void compile_shader_program_minimap_circle(void)
+{
+    u32 vert, frag;
+    vert = compile(GL_VERTEX_SHADER, "assets/shaders/map_circle.vert");
+    frag = compile(GL_FRAGMENT_SHADER, "assets/shaders/map_circle.frag");
+    attach(SHADER_PROGRAM_MINIMAP_CIRCLE, vert);
+    attach(SHADER_PROGRAM_MINIMAP_CIRCLE, frag);
+    link(SHADER_PROGRAM_MINIMAP_CIRCLE);
+    detach(SHADER_PROGRAM_MINIMAP_CIRCLE, vert);
+    detach(SHADER_PROGRAM_MINIMAP_CIRCLE, frag);
+    delete(vert);
+    delete(frag);
+}
+
+static void compile_shader_program_minimap_circle_comp(void)
+{
+    u32 comp;
+    comp = compile(GL_COMPUTE_SHADER, "assets/shaders/map_circle.comp");
+    attach(SHADER_PROGRAM_MINIMAP_CIRCLE_COMP, comp);
+    link(SHADER_PROGRAM_MINIMAP_CIRCLE_COMP);
+    detach(SHADER_PROGRAM_MINIMAP_CIRCLE_COMP, comp);
+    delete(comp);
+    shader_bind_uniform_block(SHADER_PROGRAM_MINIMAP_CIRCLE_COMP, UBO_INDEX_MINIMAP, "Minimap");
+}
+
 void shader_program_compile(ShaderProgramEnum program)
 {
     switch (program) {
@@ -377,6 +402,12 @@ void shader_program_compile(ShaderProgramEnum program)
         case SHADER_PROGRAM_SHADOW_COMP:
             compile_shader_program_shadow_comp();
             break;
+        case SHADER_PROGRAM_MINIMAP_CIRCLE:
+            compile_shader_program_minimap_circle();
+            break;
+        case SHADER_PROGRAM_MINIMAP_CIRCLE_COMP:
+            compile_shader_program_minimap_circle_comp();
+            break;
         default:
             log_write(INFO, "Unrecognized program %x\n", program);
             break;
@@ -406,6 +437,8 @@ void shader_init(void)
     shader_program_compile(SHADER_PROGRAM_PARJICLE_COMP);
     shader_program_compile(SHADER_PROGRAM_SHADOW);
     shader_program_compile(SHADER_PROGRAM_SHADOW_COMP);
+    shader_program_compile(SHADER_PROGRAM_MINIMAP_CIRCLE);
+    shader_program_compile(SHADER_PROGRAM_MINIMAP_CIRCLE_COMP);
 }
 
 void shader_use(ShaderProgramEnum id)
