@@ -12,3 +12,8 @@
 - when rendering bound framebuffer, would always clear texture unit 0
 - learned i have to use glClearBuffer instead
 - wrong param to glFramebufferTexture2D (fbo instead of texture name)
+
+# 2025-10-02
+- getting pixels doesnt work in texture unit query
+- works if texture is window width and height
+- have to make sure glTexImage2D width is aligned to GL_PACK_ALIGNMENT

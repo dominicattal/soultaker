@@ -125,15 +125,15 @@ void renderer_write_texture_units(void)
             continue;
         char* path = string_create("data/unit%d.png", 100, i);
         stbi_write_png(path, w, h, c, pixels, 0);
-        string_free(path);
-        st_free(pixels);
-
         line = string_create("unit=%-2d w=%-4d h=%-4d fmt=0x%x", 100, i, w, h, fmt);
         tmp = summary;
         n = strlen(line) + strlen(tmp) + 1;
         summary = string_create("%s\n%s", n, summary, line);
+
+        string_free(path);
         string_free(tmp);
         string_free(line);
+        st_free(pixels);
     }
     log_write(DEBUG, summary);
     string_free(summary);

@@ -17,8 +17,8 @@
 #define SHADOW_VERTEX_LENGTH_IN      4
 #define SHADOW_VERTEX_LENGTH_OUT     5
 #define MAP_QUAD_VERTEX_LENGTH       4
-#define MAP_CIRCLE_VERTEX_LENGTH_IN  3
-#define MAP_CIRCLE_VERTEX_LENGTH_OUT 10
+#define MAP_CIRCLE_VERTEX_LENGTH_IN  4
+#define MAP_CIRCLE_VERTEX_LENGTH_OUT 4
 
 typedef enum {
     VAO_TILE,
@@ -31,6 +31,7 @@ typedef enum {
     VAO_PARTICLE,
     VAO_ENTITY,
     VAO_SHADOW,
+    VAO_MINIMAP_CIRCLE,
     NUM_VAOS
 } GameVAOEnum;
 
@@ -38,7 +39,7 @@ typedef enum {
     VBO_QUAD,
     VBO_ENTITY,
     VBO_ENTITY_SHADOW,
-    VBO_ENTITY_MAP,
+    VBO_ENTITY_MINIMAP,
     VBO_PROJECTILE,
     VBO_PROJECTILE_SHADOW,
     VBO_TILE,
@@ -68,7 +69,7 @@ typedef struct {
     RenderData* data;
     RenderData* data_swap;
     GLuint fbo, shadow_fbo, rbo;
-    GLuint map_fbo, map_rbo;
+    GLuint minimap_fbo;
     GLuint game_time_ubo;
     GLuint vaos[NUM_VAOS];
     GLuint vbos[NUM_VBOS];
@@ -171,7 +172,7 @@ static void update_entity_vertex_data(void)
 
     vb = get_vertex_buffer_swap(VBO_ENTITY);
     shadow_vb = get_vertex_buffer_swap(VBO_ENTITY_SHADOW);
-    map_vb = get_vertex_buffer_swap(VBO_ENTITY_MAP);
+    map_vb = get_vertex_buffer_swap(VBO_ENTITY_MINIMAP);
     resize_vertex_buffer(vb,
             ENTITY_VERTEX_LENGTH_IN * game_context.entities->capacity);
     resize_vertex_buffer(shadow_vb,
@@ -622,6 +623,34 @@ static void render_entities(void)
     glDrawArrays(GL_TRIANGLES, 0, 6 * num_entities);
 }
 
+static void render_minimap_entities(void)
+{
+    VertexBuffer* vb;
+    vb = get_vertex_buffer(VBO_ENTITY_MINIMAP);
+
+    i32 entity_length_in, entity_length_out, num_entities;
+    entity_length_in = vb->length;
+    num_entities = entity_length_in / MAP_CIRCLE_VERTEX_LENGTH_IN;
+    entity_length_out = 6 * MAP_CIRCLE_VERTEX_LENGTH_IN * num_entities;
+
+    ComputeShaderParams params = {
+        .compute_shader = SHADER_PROGRAM_MINIMAP_CIRCLE_COMP,
+        .num_objects = num_entities,
+        .object_length_in = entity_length_in,
+        .object_length_out = entity_length_out,
+        .object_buffer = vb->buffer,
+        .output_buffer = render_context.vbos[VAO_MINIMAP_CIRCLE],
+        .output_buffer_capacity_ptr = &render_context.vbo_capacities[VAO_MINIMAP_CIRCLE]
+    };
+
+    execute_compute_shader(&params);
+
+    shader_use(SHADER_PROGRAM_MINIMAP_CIRCLE_COMP);
+    glBindVertexArray(render_context.vaos[VAO_MINIMAP_CIRCLE]);
+    glDrawArrays(GL_TRIANGLES, 0, 6 * num_entities);
+}
+
+
 static void render_obstacles(void)
 {
     VertexBuffer* vb;
@@ -901,6 +930,13 @@ void game_render_init(void)
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
 
+    glBindVertexArray(render_context.vaos[VAO_MINIMAP_CIRCLE]);
+    glBindBuffer(GL_ARRAY_BUFFER, render_context.vbos[VAO_MINIMAP_CIRCLE]);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void*)0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void*)(2 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+
     GLuint unit, name;
 
     glGenRenderbuffers(1, &render_context.rbo);
@@ -931,6 +967,17 @@ void game_render_init(void)
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, name, 0);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, render_context.rbo);
 
+    unit = texture_get_unit(TEX_GAME_MINIMAP_SCENE);
+    name = texture_get_name(TEX_GAME_MINIMAP_SCENE);
+    glGenFramebuffers(1, &render_context.minimap_fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, render_context.minimap_fbo);
+    glActiveTexture(GL_TEXTURE0 + unit);
+    glBindTexture(GL_TEXTURE_2D, name);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 252, 250, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, name, 0);
+
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
@@ -943,6 +990,10 @@ void game_render(void)
 
     update_game_time();
     camera_update();
+
+    glBindFramebuffer(GL_FRAMEBUFFER, render_context.minimap_fbo);
+    renderer_check_framebuffer_status(GL_FRAMEBUFFER, "minimap");
+    render_minimap_entities();
 
     glEnable(GL_STENCIL_TEST);
     glEnable(GL_DEPTH_TEST);
@@ -1071,6 +1122,7 @@ void game_render_cleanup(void)
     glDeleteBuffers(1, &render_context.game_time_ubo);
     glDeleteFramebuffers(1, &render_context.fbo);
     glDeleteFramebuffers(1, &render_context.shadow_fbo);
+    glDeleteBuffers(1, &render_context.minimap_fbo);
     glDeleteRenderbuffers(1, &render_context.rbo);
 
     for (i32 i = 0; i < NUM_VBOS; i++) {
