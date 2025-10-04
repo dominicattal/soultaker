@@ -81,6 +81,7 @@ GLuint texture_get_unit(TextureEnum tex);
 GLuint texture_get_name(TextureEnum tex);
 i32 texture_get_enum_id(TextureEnum tex);
 i32 texture_get_id(const char* handle);
+void texture_set_dimensions(i32 id, f32 u, f32 v, f32 w, f32 h);
 void texture_info(i32 id, i32* location, f32* u, f32* v, f32* w, f32* h, vec2* pivot, vec2* stretch);
 void texture_cleanup(void);
 

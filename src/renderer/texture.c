@@ -44,7 +44,7 @@ typedef struct {
     struct {
         GLuint unit, name;
     } static_textures[NUM_STATIC_TEXTURES];
-    i32 num_textures;
+    i32 num_textures; // does not include static textures
     u32 texture_units[NUM_TEXTURE_UNITS];
 } TextureContext;
 
@@ -468,10 +468,20 @@ static const char* get_image_path(JsonValue* value, i32* is_spritesheet)
 
 static void create_static_textures(i32* tex_unit_location)
 {
+    i32 tex_idx;
     if (*tex_unit_location + NUM_STATIC_TEXTURES >= NUM_TEXTURE_UNITS)
         log_write(FATAL, "Out of texture units");
     for (i32 i = 0; i < NUM_STATIC_TEXTURES; i++) {
         glGenTextures(1, &texture_context.static_textures[i].name);
+        tex_idx = texture_context.num_textures + i;
+        texture_context.textures[tex_idx].name = "STATIC_TEX";
+        texture_context.textures[tex_idx].location = *tex_unit_location;
+        texture_context.textures[tex_idx].pivot = vec2_create(0, 0);
+        texture_context.textures[tex_idx].stretch = vec2_create(1, 1);
+        texture_context.textures[tex_idx].u = 0;
+        texture_context.textures[tex_idx].v = 0;
+        texture_context.textures[tex_idx].w = 1.0f;
+        texture_context.textures[tex_idx].h = 1.0f;
         texture_context.static_textures[i].unit = *tex_unit_location;
         texture_context.texture_units[*tex_unit_location] = texture_context.static_textures[i].name;
         glActiveTexture(GL_TEXTURE0 + (*tex_unit_location)++);
@@ -556,6 +566,14 @@ i32 texture_get_id(const char* name)
     }
     log_write(FATAL, "Failed to get id for %s\n", name);
     return -1;
+}
+
+void texture_set_dimensions(i32 id, f32 u, f32 v, f32 w, f32 h)
+{
+    texture_context.textures[id].u = u;
+    texture_context.textures[id].v = v;
+    texture_context.textures[id].w = w;
+    texture_context.textures[id].h = h;
 }
 
 void texture_info(i32 id, i32* location, f32* u, f32* v, f32* w, f32* h, vec2* pivot, vec2* stretch)

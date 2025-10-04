@@ -15,6 +15,7 @@ typedef enum {
     GAME_EVENT_RESPAWN,
     GAME_EVENT_SET_POSITION,
     GAME_EVENT_DEFOG,
+    GAME_EVENT_FRAMEBUFFER_SIZE_CALLBACK,
 
     // Gui Events
     GUI_EVENT_FRAMEBUFFER_SIZE_CALLBACK,
@@ -128,6 +129,9 @@ static void execute_event(Event event)
             break;
         case GAME_EVENT_DEFOG:
             map_fog_clear();
+            break;
+        case GAME_EVENT_FRAMEBUFFER_SIZE_CALLBACK:
+            game_framebuffer_size_callback();
             break;
 
         // Gui 
@@ -246,6 +250,15 @@ void event_create_game_defog(void)
 {
     Event event = (Event) {
         .type = GAME_EVENT_DEFOG
+    };
+    EventQueue* queue = get_event_queue("Game");
+    event_enqueue(queue, event);
+}
+
+void event_create_game_framebuffer_size_callback(void)
+{
+    Event event = (Event) {
+        .type = GAME_EVENT_FRAMEBUFFER_SIZE_CALLBACK
     };
     EventQueue* queue = get_event_queue("Game");
     event_enqueue(queue, event);

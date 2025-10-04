@@ -39,19 +39,36 @@ static void update_orientation_vectors(void)
 
 static void update_view_matrix(void)
 {
-    view(game_context.camera.view, game_context.camera.right, game_context.camera.up, game_context.camera.facing, game_context.camera.position);
-    glBindBuffer(GL_UNIFORM_BUFFER, game_context.camera.matrices_ubo);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, 16 * sizeof(GLfloat), &game_context.camera.view[0]);
-    glBufferSubData(GL_UNIFORM_BUFFER, 33 * sizeof(GLfloat), sizeof(GLfloat), &game_context.camera.pitch);
-    glBufferSubData(GL_UNIFORM_BUFFER, 34 * sizeof(GLfloat), sizeof(GLfloat), &game_context.camera.yaw);
+    Camera* cam = &game_context.camera;
+    view(cam->view, cam->right, cam->up, cam->facing, cam->position);
+    glBindBuffer(GL_UNIFORM_BUFFER, cam->matrices_ubo);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, 16 * sizeof(GLfloat), &cam->view[0]);
+    glBufferSubData(GL_UNIFORM_BUFFER, 33 * sizeof(GLfloat), sizeof(GLfloat), &cam->pitch);
+    glBufferSubData(GL_UNIFORM_BUFFER, 34 * sizeof(GLfloat), sizeof(GLfloat), &cam->yaw);
+
+    if (!game_context.camera.follow)
+        return;
+    if (game_context.player.entity == NULL)
+        return;
+
+    vec2 pos = game_context.player.entity->position;
+
+    glBindBuffer(GL_UNIFORM_BUFFER, cam->minimap_ubo);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(GLfloat), &pos.x);
+    glBufferSubData(GL_UNIFORM_BUFFER, 1 * sizeof(GLfloat), sizeof(GLfloat), &pos.z);
+    glBufferSubData(GL_UNIFORM_BUFFER, 2 * sizeof(GLfloat), sizeof(GLfloat), &cam->yaw);
 }
 
 static void update_proj_matrix(void)
 {
-    orthographic(game_context.camera.proj, window_aspect_ratio(), game_context.camera.zoom);
-    glBindBuffer(GL_UNIFORM_BUFFER, game_context.camera.matrices_ubo);
-    glBufferSubData(GL_UNIFORM_BUFFER, 16 * sizeof(GLfloat), 16 * sizeof(GLfloat), &game_context.camera.proj[0]);
-    glBufferSubData(GL_UNIFORM_BUFFER, 32 * sizeof(GLfloat), sizeof(GLfloat), &game_context.camera.zoom);
+    Camera* cam = &game_context.camera;
+    f32 ar = window_aspect_ratio();
+    orthographic(cam->proj, ar, cam->zoom);
+    glBindBuffer(GL_UNIFORM_BUFFER, cam->matrices_ubo);
+    glBufferSubData(GL_UNIFORM_BUFFER, 16 * sizeof(GLfloat), 16 * sizeof(GLfloat), &cam->proj[0]);
+    glBufferSubData(GL_UNIFORM_BUFFER, 32 * sizeof(GLfloat), sizeof(GLfloat), &cam->zoom);
+    glBindBuffer(GL_UNIFORM_BUFFER, cam->minimap_ubo);
+    glBufferSubData(GL_UNIFORM_BUFFER, 3 * sizeof(GLfloat), sizeof(GLfloat), &cam->zoom);
 }
 
 static void lock_onto_target(void)
@@ -62,7 +79,7 @@ static void lock_onto_target(void)
         return;
     vec3 position;
     vec2 pos2 = game_context.player.entity->position;
-    position = vec3_create(pos2.x, 0.0f, pos2.y);
+    position = vec3_create(pos2.x, 0.0f, pos2.z);
     game_context.camera.position = vec3_sub(position, vec3_scale(game_context.camera.facing, DISTANCE_FROM_PLAYER));
 }
 
@@ -72,6 +89,11 @@ void camera_init(void)
     glBindBuffer(GL_UNIFORM_BUFFER, game_context.camera.matrices_ubo);
     glBufferData(GL_UNIFORM_BUFFER, 35 * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
     glBindBufferBase(GL_UNIFORM_BUFFER, UBO_INDEX_MATRICES, game_context.camera.matrices_ubo);
+
+    glGenBuffers(1, &game_context.camera.minimap_ubo);
+    glBindBuffer(GL_UNIFORM_BUFFER, game_context.camera.minimap_ubo);
+    glBufferData(GL_UNIFORM_BUFFER, 5 * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
+    glBindBufferBase(GL_UNIFORM_BUFFER, UBO_INDEX_MINIMAP, game_context.camera.minimap_ubo);
 
     game_context.camera.yaw = DEFAULT_YAW;
     game_context.camera.pitch = DEFAULT_PITCH;
@@ -160,6 +182,7 @@ void camera_zoom(i32 mag)
 void camera_cleanup(void)
 {
     glDeleteBuffers(1, &game_context.camera.matrices_ubo);
+    glDeleteBuffers(1, &game_context.camera.minimap_ubo);
 }
 
 void camera_framebuffer_size_callback(void)
