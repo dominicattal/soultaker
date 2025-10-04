@@ -77,8 +77,8 @@ void renderer_init(void)
 void renderer_render(void)
 {
     //glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
-    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    //glClearColor(0.4f, 0.4f, 0.4f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    glClearColor(0.4f, 0.4f, 0.4f, 1.0f);
 
     game_render();
     gui_render();

@@ -17,3 +17,6 @@
 - getting pixels doesnt work in texture unit query
 - works if texture is window width and height
 - have to make sure glTexImage2D width is aligned to GL_PACK_ALIGNMENT
+
+# 2025-10-04
+- resizing window changes texture unit in minimap framebuffer

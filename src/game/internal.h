@@ -33,6 +33,7 @@ typedef struct Camera {
     f32 view[16], proj[16];
     vec3 position, facing, right, up;
     u32 matrices_ubo;
+    u32 minimap_ubo;
     bool follow;
 } Camera;
 

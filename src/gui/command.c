@@ -3,6 +3,7 @@
 
 #include "internal.h"
 #include "../game.h"
+#include "../window.h"
 #include "../renderer.h"
 #include "../event.h"
 #include <ctype.h>
@@ -20,6 +21,7 @@ typedef enum {
     CS_SUMMONFIN,
     CS_RESPAWNFIN,
     CS_WRITE_TEXTURESFIN,
+    CS_EXIT,
     NUM_COMMAND_STATES
 } CommandState;
 
@@ -114,6 +116,8 @@ static CommandState new_state(CommandState state, char* command, i32 left, i32 r
                 return CS_SUMMON;
             if (cmp("position", command, left, right))
                 return CS_POSITIONFIN;
+            if (cmp("exit", command, left, right))
+                window_close();
             if (cmp("respawn", command, left, right)) {
                 event_create_game_respawn();
                 return CS_RESPAWNFIN;

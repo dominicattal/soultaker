@@ -207,6 +207,7 @@ static void update_entity_vertex_data(void)
             continue;
         map_vb->buffer[j++] = entity->position.x;
         map_vb->buffer[j++] = entity->position.z;
+        map_vb->buffer[j++] = entity->hitbox_radius;
         map_vb->buffer[j++] = entity->size;
     }
     map_vb->length = j;
@@ -571,7 +572,7 @@ static void render_tiles(void)
 
     shader_use(SHADER_PROGRAM_TILE);
     glBindVertexArray(render_context.vaos[VAO_TILE]);
-    glBindBuffer(GL_ARRAY_BUFFER, render_context.vbos[VAO_TILE]);
+    glBindBuffer(GL_ARRAY_BUFFER, render_context.vbos[VBO_TILE]);
     pthread_mutex_lock(&render_context.mutex);
     i32 tile_length = vb->length;
     i32 num_tiles = tile_length / TILE_VERTEX_LENGTH;
@@ -587,7 +588,7 @@ static void render_walls(void)
 
     shader_use(SHADER_PROGRAM_WALL);
     glBindVertexArray(render_context.vaos[VAO_WALL]);
-    glBindBuffer(GL_ARRAY_BUFFER, render_context.vbos[VAO_WALL]);
+    glBindBuffer(GL_ARRAY_BUFFER, render_context.vbos[VBO_WALL]);
     pthread_mutex_lock(&render_context.mutex);
     i32 wall_length = vb->length;
     i32 num_walls = wall_length / 6;
@@ -612,8 +613,8 @@ static void render_entities(void)
         .object_length_in = entity_length_in,
         .object_length_out = entity_length_out,
         .object_buffer = vb->buffer,
-        .output_buffer = render_context.vbos[VAO_ENTITY],
-        .output_buffer_capacity_ptr = &render_context.vbo_capacities[VAO_ENTITY]
+        .output_buffer = render_context.vbos[VBO_ENTITY],
+        .output_buffer_capacity_ptr = &render_context.vbo_capacities[VBO_ENTITY]
     };
 
     execute_compute_shader(&params);
@@ -639,13 +640,13 @@ static void render_minimap_entities(void)
         .object_length_in = entity_length_in,
         .object_length_out = entity_length_out,
         .object_buffer = vb->buffer,
-        .output_buffer = render_context.vbos[VAO_MINIMAP_CIRCLE],
-        .output_buffer_capacity_ptr = &render_context.vbo_capacities[VAO_MINIMAP_CIRCLE]
+        .output_buffer = render_context.vbos[VBO_ENTITY_MINIMAP],
+        .output_buffer_capacity_ptr = &render_context.vbo_capacities[VBO_ENTITY_MINIMAP]
     };
 
     execute_compute_shader(&params);
 
-    shader_use(SHADER_PROGRAM_MINIMAP_CIRCLE_COMP);
+    shader_use(SHADER_PROGRAM_MINIMAP_CIRCLE);
     glBindVertexArray(render_context.vaos[VAO_MINIMAP_CIRCLE]);
     glDrawArrays(GL_TRIANGLES, 0, 6 * num_entities);
 }
@@ -667,8 +668,8 @@ static void render_obstacles(void)
         .object_length_in = obstacle_length_in,
         .object_length_out = obstacle_length_out,
         .object_buffer = vb->buffer,
-        .output_buffer = render_context.vbos[VAO_OBSTACLE],
-        .output_buffer_capacity_ptr = &render_context.vbo_capacities[VAO_OBSTACLE]
+        .output_buffer = render_context.vbos[VBO_OBSTACLE],
+        .output_buffer_capacity_ptr = &render_context.vbo_capacities[VBO_OBSTACLE]
     };
 
     execute_compute_shader(&params);
@@ -694,8 +695,8 @@ static void render_parstacles(void)
         .object_length_in = parstacle_length_in,
         .object_length_out = parstacle_length_out,
         .object_buffer = vb->buffer,
-        .output_buffer = render_context.vbos[VAO_PARSTACLE],
-        .output_buffer_capacity_ptr = &render_context.vbo_capacities[VAO_PARSTACLE]
+        .output_buffer = render_context.vbos[VBO_PARSTACLE],
+        .output_buffer_capacity_ptr = &render_context.vbo_capacities[VBO_PARSTACLE]
     };
 
     execute_compute_shader(&params);
@@ -721,8 +722,8 @@ static void render_particles(void)
         .object_length_in = particle_length_in,
         .object_length_out = particle_length_out,
         .object_buffer = vb->buffer,
-        .output_buffer = render_context.vbos[VAO_PARTICLE],
-        .output_buffer_capacity_ptr = &render_context.vbo_capacities[VAO_PARTICLE]
+        .output_buffer = render_context.vbos[VBO_PARTICLE],
+        .output_buffer_capacity_ptr = &render_context.vbo_capacities[VBO_PARTICLE]
     };
 
     execute_compute_shader(&params);
@@ -748,8 +749,8 @@ static void render_parjicles(void)
         .object_length_in = parjicle_length_in,
         .object_length_out = parjicle_length_out,
         .object_buffer = vb->buffer,
-        .output_buffer = render_context.vbos[VAO_PARJICLE],
-        .output_buffer_capacity_ptr = &render_context.vbo_capacities[VAO_PARJICLE]
+        .output_buffer = render_context.vbos[VBO_PARJICLE],
+        .output_buffer_capacity_ptr = &render_context.vbo_capacities[VBO_PARJICLE]
     };
 
     execute_compute_shader(&params);
@@ -775,8 +776,8 @@ static void render_projectiles(void)
         .object_length_in = projectile_length_in,
         .object_length_out = projectile_length_out,
         .object_buffer = vb->buffer,
-        .output_buffer = render_context.vbos[VAO_PROJECTILE],
-        .output_buffer_capacity_ptr = &render_context.vbo_capacities[VAO_PROJECTILE]
+        .output_buffer = render_context.vbos[VBO_PROJECTILE],
+        .output_buffer_capacity_ptr = &render_context.vbo_capacities[VBO_PROJECTILE]
     };
 
     execute_compute_shader(&params);
@@ -804,8 +805,8 @@ static void render_shadows(void)
         .object_length_in = shadow_length_in,
         .object_length_out = shadow_length_out,
         .object_buffer = vb->buffer,
-        .output_buffer = render_context.vbos[VAO_SHADOW],
-        .output_buffer_capacity_ptr = &render_context.vbo_capacities[VAO_SHADOW]
+        .output_buffer = render_context.vbos[VBO_ENTITY_SHADOW],
+        .output_buffer_capacity_ptr = &render_context.vbo_capacities[VBO_ENTITY_SHADOW]
     };
 
     execute_compute_shader(&params);
@@ -839,16 +840,16 @@ void game_render_init(void)
     };
 
     glBindVertexArray(render_context.vaos[VAO_QUAD]);
-    glBindBuffer(GL_ARRAY_BUFFER, render_context.vbos[VAO_QUAD]);
+    glBindBuffer(GL_ARRAY_BUFFER, render_context.vbos[VBO_QUAD]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(quad_data), quad_data, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (void*)0);
     glEnableVertexAttribArray(0);
 
     glBindVertexArray(render_context.vaos[VAO_TILE]);
-    glBindBuffer(GL_ARRAY_BUFFER, render_context.vbos[VAO_QUAD]);
+    glBindBuffer(GL_ARRAY_BUFFER, render_context.vbos[VBO_QUAD]);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (void*)0);
     glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, render_context.vbos[VAO_TILE]);
+    glBindBuffer(GL_ARRAY_BUFFER, render_context.vbos[VBO_TILE]);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void*)0);
     glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void*)(2 * sizeof(GLfloat)));
     glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void*)(6 * sizeof(GLfloat)));
@@ -863,7 +864,7 @@ void game_render_init(void)
     glVertexAttribDivisor(4, 1);
 
     glBindVertexArray(render_context.vaos[VAO_WALL]);
-    glBindBuffer(GL_ARRAY_BUFFER, render_context.vbos[VAO_WALL]);
+    glBindBuffer(GL_ARRAY_BUFFER, render_context.vbos[VBO_WALL]);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void*)0);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
     glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void*)(5 * sizeof(GLfloat)));
@@ -874,7 +875,7 @@ void game_render_init(void)
     glEnableVertexAttribArray(3);
 
     glBindVertexArray(render_context.vaos[VAO_ENTITY]);
-    glBindBuffer(GL_ARRAY_BUFFER, render_context.vbos[VAO_ENTITY]);
+    glBindBuffer(GL_ARRAY_BUFFER, render_context.vbos[VBO_ENTITY]);
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)0);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)(4 * sizeof(GLfloat)));
     glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)(6 * sizeof(GLfloat)));
@@ -883,7 +884,7 @@ void game_render_init(void)
     glEnableVertexAttribArray(2);
 
     glBindVertexArray(render_context.vaos[VAO_PROJECTILE]);
-    glBindBuffer(GL_ARRAY_BUFFER, render_context.vbos[VAO_PROJECTILE]);
+    glBindBuffer(GL_ARRAY_BUFFER, render_context.vbos[VBO_PROJECTILE]);
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)0);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)(4 * sizeof(GLfloat)));
     glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)(6 * sizeof(GLfloat)));
@@ -892,7 +893,7 @@ void game_render_init(void)
     glEnableVertexAttribArray(2);
     
     glBindVertexArray(render_context.vaos[VAO_OBSTACLE]);
-    glBindBuffer(GL_ARRAY_BUFFER, render_context.vbos[VAO_OBSTACLE]);
+    glBindBuffer(GL_ARRAY_BUFFER, render_context.vbos[VBO_OBSTACLE]);
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)0);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)(4 * sizeof(GLfloat)));
     glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)(6 * sizeof(GLfloat)));
@@ -901,7 +902,7 @@ void game_render_init(void)
     glEnableVertexAttribArray(2);
 
     glBindVertexArray(render_context.vaos[VAO_PARSTACLE]);
-    glBindBuffer(GL_ARRAY_BUFFER, render_context.vbos[VAO_PARSTACLE]);
+    glBindBuffer(GL_ARRAY_BUFFER, render_context.vbos[VBO_PARSTACLE]);
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)0);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)(4 * sizeof(GLfloat)));
     glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)(6 * sizeof(GLfloat)));
@@ -910,30 +911,30 @@ void game_render_init(void)
     glEnableVertexAttribArray(2);
 
     glBindVertexArray(render_context.vaos[VAO_PARTICLE]);
-    glBindBuffer(GL_ARRAY_BUFFER, render_context.vbos[VAO_PARTICLE]);
+    glBindBuffer(GL_ARRAY_BUFFER, render_context.vbos[VBO_PARTICLE]);
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)0);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)(4 * sizeof(GLfloat)));
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
 
     glBindVertexArray(render_context.vaos[VAO_PARJICLE]);
-    glBindBuffer(GL_ARRAY_BUFFER, render_context.vbos[VAO_PARJICLE]);
+    glBindBuffer(GL_ARRAY_BUFFER, render_context.vbos[VBO_PARJICLE]);
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)0);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)(4 * sizeof(GLfloat)));
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
 
     glBindVertexArray(render_context.vaos[VAO_SHADOW]);
-    glBindBuffer(GL_ARRAY_BUFFER, render_context.vbos[VAO_SHADOW]);
+    glBindBuffer(GL_ARRAY_BUFFER, render_context.vbos[VBO_ENTITY_SHADOW]);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (void*)0);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
 
     glBindVertexArray(render_context.vaos[VAO_MINIMAP_CIRCLE]);
-    glBindBuffer(GL_ARRAY_BUFFER, render_context.vbos[VAO_MINIMAP_CIRCLE]);
+    glBindBuffer(GL_ARRAY_BUFFER, render_context.vbos[VBO_ENTITY_MINIMAP]);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void*)0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void*)(2 * sizeof(GLfloat)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void*)(2 * sizeof(GLfloat)));
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
 
@@ -973,10 +974,14 @@ void game_render_init(void)
     glBindFramebuffer(GL_FRAMEBUFFER, render_context.minimap_fbo);
     glActiveTexture(GL_TEXTURE0 + unit);
     glBindTexture(GL_TEXTURE_2D, name);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 252, 250, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 252, 252, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, name, 0);
+
+    glBindBuffer(GL_UNIFORM_BUFFER, game_context.camera.minimap_ubo);
+    f32 ar = 1.0f;
+    glBufferSubData(GL_UNIFORM_BUFFER, 4 * sizeof(GLfloat), sizeof(GLfloat), &ar);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
@@ -991,18 +996,24 @@ void game_render(void)
     update_game_time();
     camera_update();
 
+    GLenum buffer[] = { GL_COLOR_ATTACHMENT0 };
+    const f32 transparent[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+    const f32 color[4] = {0.4f, 0.4f, 0.4f, 1.0f};
+
+    glViewport(0, 0, 252, 252);
     glBindFramebuffer(GL_FRAMEBUFFER, render_context.minimap_fbo);
     renderer_check_framebuffer_status(GL_FRAMEBUFFER, "minimap");
+    glDrawBuffers(1, buffer);
+    glClearBufferfv(GL_COLOR, 0, transparent);
     render_minimap_entities();
 
     glEnable(GL_STENCIL_TEST);
     glEnable(GL_DEPTH_TEST);
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
+    glViewport(0, 0, window_width(), window_height());
     glBindFramebuffer(GL_FRAMEBUFFER, render_context.fbo);
     renderer_check_framebuffer_status(GL_FRAMEBUFFER, "game");
-    GLenum buffer[] = { GL_COLOR_ATTACHMENT0 };
-    const f32 color[4] = {0.0f, 1.0f, 1.0f, 1.0f};
     //glStencilMask(0x01); // stencil mask affects glClear
     glDrawBuffers(1, buffer);
     glClearBufferfv(GL_COLOR, 0, color);
@@ -1062,13 +1073,17 @@ void game_render_framebuffer_size_callback(void)
     if (width == 0 || height == 0)
         return;
 
-    GLuint name;
+    GLuint unit, name;
+    unit = texture_get_unit(TEX_GAME_SCENE);
     name = texture_get_name(TEX_GAME_SCENE);
+    glActiveTexture(GL_TEXTURE0 + unit);
     glBindFramebuffer(GL_FRAMEBUFFER, render_context.fbo);
     glBindTexture(GL_TEXTURE_2D, name);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height,
             0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    unit = texture_get_unit(TEX_GAME_SHADOW_SCENE);
     name = texture_get_name(TEX_GAME_SHADOW_SCENE);
+    glActiveTexture(GL_TEXTURE0 + unit);
     glBindFramebuffer(GL_FRAMEBUFFER, render_context.shadow_fbo);
     glBindTexture(GL_TEXTURE_2D, name);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height,
