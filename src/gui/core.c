@@ -24,7 +24,7 @@ static void* gui_loop(void* vargp)
     end = start = get_time();
     gui_context.dt = 0;
     gui_comp_init();
-    gui_preset_load(GUI_PRESET_GAME);
+    gui_preset_load(GUI_PRESET_TEST);
     while (!gui_context.kill_thread)
     {
         if (end - start > 0.0001) {

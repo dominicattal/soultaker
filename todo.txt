@@ -8,3 +8,6 @@ music
 sfx
 
 controls
+
+free window ubo
+gui bug if no textures
