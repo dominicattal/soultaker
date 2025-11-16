@@ -162,8 +162,8 @@ static void create_font_textures(i32* tex_unit_location)
     bitmap = st_calloc(BITMAP_WIDTH * BITMAP_HEIGHT, sizeof(unsigned char));
     stbtt_PackBegin(&spc, bitmap, BITMAP_WIDTH, BITMAP_HEIGHT, 0, 1, NULL);
 
-    load_font(&spc, FONT_MOJANGLES, 16, "assets/fonts/mojangles.ttf");
-    load_font(&spc, FONT_MONOSPACE, 16, "assets/fonts/consola.ttf");
+    load_font(&spc, FONT_MOJANGLES, 32, "assets/fonts/mojangles.ttf");
+    load_font(&spc, FONT_MONOSPACE, 16, "assets/fonts/DroidSans.ttf");
 
     stbtt_PackEnd(&spc);
 
