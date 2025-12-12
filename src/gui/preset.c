@@ -6,6 +6,19 @@
 #include <math.h>
 #include <string.h>
 
+static void load_preset_test(GUIComp* root)
+{
+    GUIComp* test = gui_comp_create(200, 200, 500, 200);
+    const char* test_text = "The quick brown fox jumps over the lazy dog";
+    gui_comp_set_clickable(test, true);
+    gui_comp_set_color(test, 255, 255, 255, 255);
+    gui_comp_set_font(test, FONT_MOJANGLES);
+    gui_comp_set_font_size(test, 16);
+    gui_comp_set_text_align(test, ALIGN_CENTER, ALIGN_CENTER);
+    gui_comp_copy_text(test, strlen(test_text), test_text);
+    gui_comp_attach(root, test);
+}
+
 // **************************************************
 
 static void keyfunc(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods)
@@ -520,6 +533,9 @@ void gui_preset_load(GUIPreset preset)
             break;
         case GUI_PRESET_RUNS:
             load_preset_runs(gui_context.root);
+            break;
+        case GUI_PRESET_TEST:
+            load_preset_test(gui_context.root);
             break;
         default:
             break;

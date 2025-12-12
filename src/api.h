@@ -7,5 +7,6 @@
 #define st_export __declspec(dllexport)
 
 typedef struct GameApi GameApi;
+typedef struct GUIApi GUIApi;
 
 #endif
