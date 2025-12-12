@@ -1,6 +1,6 @@
 #include "json.h"
-#include "../src/util/malloc.h"
-#include "../src/util/log.h"
+#include "../../../src/util/malloc.h"
+#include "../../../src/util/log.h"
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>

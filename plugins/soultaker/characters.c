@@ -1,4 +1,4 @@
-#include "../../src/api.h"
+#include "../../../src/api.h"
 #include <math.h>
 
 #define NUM_STATES 3
