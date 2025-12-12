@@ -200,7 +200,6 @@ static void pack_textures(i32* tex_unit_location, unsigned char** image_data, st
     unsigned char* bitmap;
     stbrp_context* context;
     stbrp_node* nodes;
-    char path[512];
 
     num_nodes = BITMAP_WIDTH;
 
@@ -267,6 +266,7 @@ static void pack_textures(i32* tex_unit_location, unsigned char** image_data, st
         texture_context.textures[rect.id].location = location;
     }
 
+    char path[512];
     sprintf(path, "data/packed_tex%d.png", *tex_unit_location);
     stbi_write_png(path, BITMAP_WIDTH, BITMAP_HEIGHT, num_channels, bitmap, 0);
 
