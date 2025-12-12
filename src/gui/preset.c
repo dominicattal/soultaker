@@ -509,9 +509,6 @@ void gui_preset_load(GUIPreset preset)
 {
     gui_comp_destroy_children(gui_context.root);
     switch (preset) {
-        case GUI_PRESET_TEST:
-            load_preset_test(gui_context.root);
-            break;
         case GUI_PRESET_GAME:
             load_preset_game(gui_context.root); 
             break;

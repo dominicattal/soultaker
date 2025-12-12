@@ -19,7 +19,6 @@
 #define HOVER_ON        1
 
 typedef enum {
-    GUI_PRESET_TEST,
     GUI_PRESET_MAIN_MENU,
     GUI_PRESET_OPTIONS,
     GUI_PRESET_GAME,
