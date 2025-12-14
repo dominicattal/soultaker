@@ -6,6 +6,7 @@
 #define NUM_TEXTURE_UNITS 16
 
 typedef enum {
+    SHADER_PROGRAM_NONE,
     SHADER_PROGRAM_SCREEN,
     SHADER_PROGRAM_GUI,
     SHADER_PROGRAM_TILE,
@@ -61,6 +62,7 @@ void renderer_list_available_extensions(void);
 void renderer_list_available_versions(void);
 void renderer_list_context_flags(void);
 void renderer_print_context_profile(void);
+void renderer_print_state(void);
 
 // converts active texture units to png
 void renderer_write_texture_unit(i32 unit);

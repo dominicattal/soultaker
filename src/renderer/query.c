@@ -2,6 +2,54 @@
 #include <string.h>
 #include <stb_image_write.h>
 
+#define GEN_INTS(INT) INT,
+#define GEN_STRING(STRING) #STRING,
+#define BINDING_VALUES(GEN) \
+    GEN(GL_TEXTURE_BINDING_1D) \
+    GEN(GL_TEXTURE_BINDING_2D) \
+    GEN(GL_TEXTURE_BINDING_3D) \
+    GEN(GL_TEXTURE_BINDING_CUBE_MAP) \
+    GEN(GL_ARRAY_BUFFER_BINDING) \
+    GEN(GL_ELEMENT_ARRAY_BUFFER_BINDING) \
+    GEN(GL_PIXEL_PACK_BUFFER_BINDING) \
+    GEN(GL_PIXEL_UNPACK_BUFFER_BINDING) \
+    GEN(GL_TEXTURE_BINDING_1D_ARRAY) \
+    GEN(GL_TEXTURE_BINDING_2D_ARRAY) \
+    GEN(GL_TRANSFORM_FEEDBACK_BUFFER_BINDING) \
+    GEN(GL_FRAMEBUFFER_BINDING) \
+    GEN(GL_DRAW_FRAMEBUFFER_BINDING) \
+    GEN(GL_RENDERBUFFER_BINDING) \
+    GEN(GL_READ_FRAMEBUFFER_BINDING) \
+    GEN(GL_VERTEX_ARRAY_BINDING) \
+    GEN(GL_TEXTURE_BINDING_BUFFER) \
+    GEN(GL_TEXTURE_BUFFER_DATA_STORE_BINDING) \
+    GEN(GL_TEXTURE_BINDING_RECTANGLE) \
+    GEN(GL_UNIFORM_BUFFER_BINDING) \
+    GEN(GL_TEXTURE_BINDING_2D_MULTISAMPLE) \
+    GEN(GL_TEXTURE_BINDING_2D_MULTISAMPLE_ARRAY) \
+    GEN(GL_SAMPLER_BINDING) \
+    GEN(GL_TEXTURE_BINDING_CUBE_MAP_ARRAY) \
+    GEN(GL_DRAW_INDIRECT_BUFFER_BINDING) \
+    GEN(GL_TRANSFORM_FEEDBACK_BINDING) \
+    GEN(GL_PROGRAM_PIPELINE_BINDING) \
+    GEN(GL_COPY_READ_BUFFER_BINDING) \
+    GEN(GL_COPY_WRITE_BUFFER_BINDING) \
+    GEN(GL_ATOMIC_COUNTER_BUFFER_BINDING) \
+    GEN(GL_DISPATCH_INDIRECT_BUFFER_BINDING) \
+    GEN(GL_SHADER_STORAGE_BUFFER_BINDING) \
+    GEN(GL_TEXTURE_BUFFER_BINDING) \
+    GEN(GL_QUERY_BUFFER_BINDING) \
+    GEN(GL_PARAMETER_BUFFER_BINDING) \
+    GEN(GL_CURRENT_PROGRAM)
+
+const GLint query_ints[] = {
+    BINDING_VALUES(GEN_INTS)
+};
+
+const char* query_strings[] = {
+    BINDING_VALUES(GEN_STRING)
+};
+
 GLint renderer_get_major_version(void)
 {
     GLint major_version;
@@ -163,6 +211,23 @@ void renderer_list_context_flags(void)
     printf("%sGL_CONTEXT_FLAG_DEBUG\n", (mask & GL_CONTEXT_FLAG_DEBUG_BIT) ? "" : "NOT ");
     printf("%sGL_CONTEXT_FLAG_ROBUST_ACCESS\n", (mask & GL_CONTEXT_FLAG_ROBUST_ACCESS_BIT) ? "" : "NOT ");
     printf("%sGL_CONTEXT_FLAG_NO_ERROR\n", (mask & GL_CONTEXT_FLAG_NO_ERROR_BIT) ? "" : "NOT ");
+}
+
+void renderer_print_state(void)
+{
+    GLint val;
+    size_t i;
+    int n, len;
+    for (i = n = 0; i < sizeof(query_strings) / sizeof(const char*); i++) {
+        len = strlen(query_strings[i]);
+        n = (len > n) ? len : n;
+    }
+    log_write(INFO, "Opengl state queries");
+    for (i = 0; i < sizeof(query_ints) / sizeof(GLint); i++) {
+        glGetIntegerv(query_ints[i], &val);
+        printf("%*s: %u\n", n, query_strings[i], val);
+    }
+    puts("");
 }
 
 void renderer_check_framebuffer_status(GLenum target, const char* name)
