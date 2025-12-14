@@ -7,7 +7,7 @@
 // Events provide a thread-safe way of communicating
 // between threads. Each thread may enqueue an event in
 // any other thread and may flush their own event queue
-// when they want.
+// when they want. 
 
 // Flush all of the events in the calling
 // thread's event queue.

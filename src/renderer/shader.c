@@ -114,6 +114,7 @@ static void compile_shader_program_tile(void)
     glUniform1iv(shader_get_uniform_location(SHADER_PROGRAM_TILE, "textures"), NUM_TEXTURE_UNITS, texs);
     shader_bind_uniform_block(SHADER_PROGRAM_TILE, UBO_INDEX_MATRICES, "Camera");
     shader_bind_uniform_block(SHADER_PROGRAM_TILE, UBO_INDEX_GAME_TIME, "GameTime");
+    shader_use(SHADER_PROGRAM_NONE);
 }
 
 static void compile_shader_program_wall(void)
@@ -134,6 +135,7 @@ static void compile_shader_program_wall(void)
     shader_use(SHADER_PROGRAM_WALL);
     glUniform1iv(shader_get_uniform_location(SHADER_PROGRAM_WALL, "textures"), NUM_TEXTURE_UNITS, texs);
     shader_bind_uniform_block(SHADER_PROGRAM_WALL, UBO_INDEX_MATRICES, "Camera");
+    shader_use(SHADER_PROGRAM_NONE);
 }
 
 static void compile_shader_program_gui(void)
@@ -154,6 +156,7 @@ static void compile_shader_program_gui(void)
     shader_use(SHADER_PROGRAM_GUI);
     glUniform1iv(shader_get_uniform_location(SHADER_PROGRAM_GUI, "textures"), NUM_TEXTURE_UNITS, texs);
     shader_bind_uniform_block(SHADER_PROGRAM_GUI, UBO_INDEX_WINDOW, "Window");
+    shader_use(SHADER_PROGRAM_NONE);
 }
 
 static void compile_shader_program_entity(void)
@@ -173,6 +176,7 @@ static void compile_shader_program_entity(void)
         texs[i] = i;
     shader_use(SHADER_PROGRAM_ENTITY);
     glUniform1iv(shader_get_uniform_location(SHADER_PROGRAM_ENTITY, "textures"), NUM_TEXTURE_UNITS, texs);
+    shader_use(SHADER_PROGRAM_NONE);
 }
 
 static void compile_shader_program_entity_comp(void)
@@ -204,6 +208,7 @@ static void compile_shader_program_obstacle(void)
         texs[i] = i;
     shader_use(SHADER_PROGRAM_OBSTACLE);
     glUniform1iv(shader_get_uniform_location(SHADER_PROGRAM_OBSTACLE, "textures"), NUM_TEXTURE_UNITS, texs);
+    shader_use(SHADER_PROGRAM_NONE);
 }
 
 static void compile_shader_program_obstacle_comp(void)
@@ -261,6 +266,7 @@ static void compile_shader_program_projectile(void)
         texs[i] = i;
     shader_use(SHADER_PROGRAM_PROJECTILE);
     glUniform1iv(shader_get_uniform_location(SHADER_PROGRAM_PROJECTILE, "textures"), NUM_TEXTURE_UNITS, texs);
+    shader_use(SHADER_PROGRAM_NONE);
 }
 
 static void compile_shader_program_projectile_comp(void)
@@ -416,7 +422,8 @@ void shader_program_compile(ShaderProgramEnum program)
 
 void shader_init(void)
 {
-    for (i32 i = 0; i < NUM_SHADER_PROGRAMS; i++)
+    shader_context.programs[0] = 0;
+    for (i32 i = 1; i < NUM_SHADER_PROGRAMS; i++)
         shader_context.programs[i] = glCreateProgram();
     
     shader_program_compile(SHADER_PROGRAM_SCREEN);
@@ -431,8 +438,6 @@ void shader_init(void)
     shader_program_compile(SHADER_PROGRAM_OBSTACLE_COMP);
     shader_program_compile(SHADER_PROGRAM_PARTICLE);
     shader_program_compile(SHADER_PROGRAM_PARTICLE_COMP);
-    shader_program_compile(SHADER_PROGRAM_PROJECTILE);
-    shader_program_compile(SHADER_PROGRAM_PROJECTILE_COMP);
     shader_program_compile(SHADER_PROGRAM_PARJICLE);
     shader_program_compile(SHADER_PROGRAM_PARJICLE_COMP);
     shader_program_compile(SHADER_PROGRAM_SHADOW);
@@ -448,7 +453,7 @@ void shader_use(ShaderProgramEnum id)
 
 void shader_cleanup(void)
 {
-    for (i32 i = 0; i < NUM_SHADER_PROGRAMS; i++)
+    for (i32 i = 1; i < NUM_SHADER_PROGRAMS; i++)
         if (shader_context.programs[i] != 0)
             glDeleteProgram(shader_context.programs[i]);
 }

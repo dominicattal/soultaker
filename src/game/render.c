@@ -124,7 +124,7 @@ static void execute_compute_shader(const ComputeShaderParams* params)
     glUniform1i(shader_get_uniform_location(params->compute_shader, "N"), params->num_objects);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, render_context.vbos[VBO_COMP_IN]);
     if (render_context.vbo_capacities[VBO_COMP_IN] < params->object_length_in) {
-        glBufferData(GL_SHADER_STORAGE_BUFFER, params->object_length_in * sizeof(GLfloat), params->object_buffer, GL_DYNAMIC_DRAW);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, params->object_length_in * sizeof(GLfloat), params->object_buffer, GL_DYNAMIC_COPY);
         render_context.vbo_capacities[VBO_COMP_IN] = params->object_length_in;
     }
     else
@@ -133,7 +133,7 @@ static void execute_compute_shader(const ComputeShaderParams* params)
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, render_context.vbos[VBO_COMP_OUT]);
     if (render_context.vbo_capacities[VBO_COMP_OUT] < params->object_length_out) {
-        glBufferData(GL_SHADER_STORAGE_BUFFER, params->object_length_out * sizeof(GLfloat), NULL, GL_DYNAMIC_DRAW);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, params->object_length_out * sizeof(GLfloat), NULL, GL_DYNAMIC_COPY);
         render_context.vbo_capacities[VBO_COMP_OUT] = params->object_length_out;
     }
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, render_context.vbos[VBO_COMP_IN]);
@@ -143,7 +143,7 @@ static void execute_compute_shader(const ComputeShaderParams* params)
 
     if (*(params->output_buffer_capacity_ptr) < params->object_length_out) {
         glBindBuffer(GL_ARRAY_BUFFER, params->output_buffer);
-        glBufferData(GL_ARRAY_BUFFER, params->object_length_out * sizeof(GLfloat), NULL, GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, params->object_length_out * sizeof(GLfloat), NULL, GL_DYNAMIC_COPY);
         *(params->output_buffer_capacity_ptr) = params->object_length_out;
     }
     glBindBuffer(GL_COPY_READ_BUFFER, render_context.vbos[VBO_COMP_OUT]);
@@ -632,7 +632,7 @@ static void render_minimap_entities(void)
     i32 entity_length_in, entity_length_out, num_entities;
     entity_length_in = vb->length;
     num_entities = entity_length_in / MAP_CIRCLE_VERTEX_LENGTH_IN;
-    entity_length_out = 6 * MAP_CIRCLE_VERTEX_LENGTH_IN * num_entities;
+    entity_length_out = 6 * MAP_CIRCLE_VERTEX_LENGTH_OUT * num_entities;
 
     ComputeShaderParams params = {
         .compute_shader = SHADER_PROGRAM_MINIMAP_CIRCLE_COMP,
@@ -819,6 +819,7 @@ static void render_shadows(void)
 void game_render_init(void)
 {
     pthread_mutex_init(&render_context.mutex, NULL);
+    renderer_print_state();
     render_context.data = st_calloc(1, sizeof(RenderData));
     render_context.data_swap = st_calloc(1, sizeof(RenderData));
 
@@ -984,6 +985,7 @@ void game_render_init(void)
     glBufferSubData(GL_UNIFORM_BUFFER, 4 * sizeof(GLfloat), sizeof(GLfloat), &ar);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
 }
 
 void game_render(void)

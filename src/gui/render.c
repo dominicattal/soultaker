@@ -11,8 +11,14 @@ typedef struct {
     i32 location;
 } Quad;
 
+typedef struct {
+    GLuint vao;
+    GLuint vbo;
+    GLuint instance_vbo;
+} RenderContext;
+
+static RenderContext render_context;
 extern GUIContext gui_context;
-static GLuint s_vao, s_vbo, s_instance_vbo;
 
 static void resize_data_buffer(i32 num_comps)
 {
@@ -256,9 +262,9 @@ void gui_update_vertex_data(void)
 
 void gui_render_init(void)
 {
-    glGenVertexArrays(1, &s_vao);
-    glGenBuffers(1, &s_vbo);
-    glGenBuffers(1, &s_instance_vbo);
+    glGenVertexArrays(1, &render_context.vao);
+    glGenBuffers(1, &render_context.vbo);
+    glGenBuffers(1, &render_context.instance_vbo);
 
     GLfloat vertices[] = {
         0.0f, 0.0f,
@@ -267,12 +273,12 @@ void gui_render_init(void)
         1.0f, 1.0f,
     };
 
-    glBindVertexArray(s_vao);
-    glBindBuffer(GL_ARRAY_BUFFER, s_vbo);
+    glBindVertexArray(render_context.vao);
+    glBindBuffer(GL_ARRAY_BUFFER, render_context.vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (void*)0);
     glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, s_instance_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, render_context.instance_vbo);
     glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 13 * sizeof(GLfloat), (void*)0);
     glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 13 * sizeof(GLfloat), (void*)(4 * sizeof(GLfloat)));
     glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 13 * sizeof(GLfloat), (void*)(8 * sizeof(GLfloat)));
@@ -294,8 +300,8 @@ void gui_render(void)
 
     shader_use(SHADER_PROGRAM_GUI);
     glDisable(GL_DEPTH_TEST);
-    glBindVertexArray(s_vao);
-    glBindBuffer(GL_ARRAY_BUFFER, s_instance_vbo);
+    glBindVertexArray(render_context.vao);
+    glBindBuffer(GL_ARRAY_BUFFER, render_context.instance_vbo);
 
     pthread_mutex_lock(&gui_context.data_mutex);
     GLsizei instance_count = gui_context.data.instance_count;
@@ -307,12 +313,12 @@ void gui_render(void)
 
 void gui_render_cleanup(void)
 {
-    if (s_vao != 0)
-        glDeleteVertexArrays(1, &s_vao);
-    if (s_vbo != 0)
-        glDeleteBuffers(1, &s_vbo);
-    if (s_instance_vbo != 0)
-        glDeleteBuffers(1, &s_instance_vbo);
+    if (render_context.vao != 0)
+        glDeleteVertexArrays(1, &render_context.vao);
+    if (render_context.vbo != 0)
+        glDeleteBuffers(1, &render_context.vbo);
+    if (render_context.instance_vbo != 0)
+        glDeleteBuffers(1, &render_context.instance_vbo);
     st_free(gui_context.data.buffer);
     st_free(gui_context.data_swap.buffer);
 }
