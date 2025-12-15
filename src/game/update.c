@@ -256,5 +256,6 @@ void game_update(void)
     game_update_objects();
     game_collide_tilemap();
     game_collide_objects();
+    camera_update();
 }
 

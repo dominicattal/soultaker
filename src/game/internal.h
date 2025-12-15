@@ -30,11 +30,8 @@ typedef struct Parjicle Parjicle;
 typedef struct Camera {
     f32 yaw, pitch, zoom, fov;
     f32 move_speed, rotate_speed, tilt_speed;
-    f32 view[16], proj[16];
     vec3 position, facing, right, up;
     vec2 target;
-    u32 matrices_ubo;
-    u32 minimap_ubo;
     bool follow;
 } Camera;
 
