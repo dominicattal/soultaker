@@ -678,221 +678,221 @@ static void render_walls(void)
 
 static void render_entities(void)
 {
-    VertexBuffer* vb;
-    vb = get_vertex_buffer(VBO_ENTITY);
+    //VertexBuffer* vb;
+    //vb = get_vertex_buffer(VBO_ENTITY);
 
-    i32 entity_length_in, entity_length_out, num_entities;
-    entity_length_in = vb->length;
-    num_entities = entity_length_in / ENTITY_VERTEX_LENGTH_IN;
-    entity_length_out = 6 * ENTITY_VERTEX_LENGTH_OUT * num_entities;
+    //i32 entity_length_in, entity_length_out, num_entities;
+    //entity_length_in = vb->length;
+    //num_entities = entity_length_in / ENTITY_VERTEX_LENGTH_IN;
+    //entity_length_out = 6 * ENTITY_VERTEX_LENGTH_OUT * num_entities;
 
-    ComputeShaderParams params = {
-        .compute_shader = SHADER_PROGRAM_ENTITY_COMP,
-        .num_objects = num_entities,
-        .object_length_in = entity_length_in,
-        .object_length_out = entity_length_out,
-        .object_buffer = vb->buffer,
-        .output_buffer = render_context.vbos[VBO_ENTITY],
-        .output_buffer_capacity_ptr = &render_context.vbo_capacities[VBO_ENTITY]
-    };
+    //ComputeShaderParams params = {
+    //    .compute_shader = SHADER_PROGRAM_ENTITY_COMP,
+    //    .num_objects = num_entities,
+    //    .object_length_in = entity_length_in,
+    //    .object_length_out = entity_length_out,
+    //    .object_buffer = vb->buffer,
+    //    .output_buffer = render_context.vbos[VBO_ENTITY],
+    //    .output_buffer_capacity_ptr = &render_context.vbo_capacities[VBO_ENTITY]
+    //};
 
-    execute_compute_shader(&params);
+    //execute_compute_shader(&params);
 
-    shader_use(SHADER_PROGRAM_ENTITY);
-    glBindVertexArray(render_context.vaos[VAO_ENTITY]);
-    glDrawArrays(GL_TRIANGLES, 0, 6 * num_entities);
+    //shader_use(SHADER_PROGRAM_ENTITY);
+    //glBindVertexArray(render_context.vaos[VAO_ENTITY]);
+    //glDrawArrays(GL_TRIANGLES, 0, 6 * num_entities);
 }
 
 static void render_minimap_entities(void)
 {
-    VertexBuffer* vb;
-    vb = get_vertex_buffer(VBO_ENTITY_MINIMAP);
+    //VertexBuffer* vb;
+    //vb = get_vertex_buffer(VBO_ENTITY_MINIMAP);
 
-    i32 entity_length_in, entity_length_out, num_entities;
-    entity_length_in = vb->length;
-    num_entities = entity_length_in / MAP_CIRCLE_VERTEX_LENGTH_IN;
-    entity_length_out = 6 * MAP_CIRCLE_VERTEX_LENGTH_OUT * num_entities;
+    //i32 entity_length_in, entity_length_out, num_entities;
+    //entity_length_in = vb->length;
+    //num_entities = entity_length_in / MAP_CIRCLE_VERTEX_LENGTH_IN;
+    //entity_length_out = 6 * MAP_CIRCLE_VERTEX_LENGTH_OUT * num_entities;
 
-    ComputeShaderParams params = {
-        .compute_shader = SHADER_PROGRAM_MINIMAP_CIRCLE_COMP,
-        .num_objects = num_entities,
-        .object_length_in = entity_length_in,
-        .object_length_out = entity_length_out,
-        .object_buffer = vb->buffer,
-        .output_buffer = render_context.vbos[VBO_ENTITY_MINIMAP],
-        .output_buffer_capacity_ptr = &render_context.vbo_capacities[VBO_ENTITY_MINIMAP]
-    };
+    //ComputeShaderParams params = {
+    //    .compute_shader = SHADER_PROGRAM_MINIMAP_CIRCLE_COMP,
+    //    .num_objects = num_entities,
+    //    .object_length_in = entity_length_in,
+    //    .object_length_out = entity_length_out,
+    //    .object_buffer = vb->buffer,
+    //    .output_buffer = render_context.vbos[VBO_ENTITY_MINIMAP],
+    //    .output_buffer_capacity_ptr = &render_context.vbo_capacities[VBO_ENTITY_MINIMAP]
+    //};
 
-    execute_compute_shader(&params);
+    //execute_compute_shader(&params);
 
-    shader_use(SHADER_PROGRAM_MINIMAP_CIRCLE);
-    glBindVertexArray(render_context.vaos[VAO_MINIMAP_CIRCLE]);
-    glDrawArrays(GL_TRIANGLES, 0, 6 * num_entities);
+    //shader_use(SHADER_PROGRAM_MINIMAP_CIRCLE);
+    //glBindVertexArray(render_context.vaos[VAO_MINIMAP_CIRCLE]);
+    //glDrawArrays(GL_TRIANGLES, 0, 6 * num_entities);
 }
 
 
 static void render_obstacles(void)
 {
-    VertexBuffer* vb;
-    vb = get_vertex_buffer(VBO_OBSTACLE);
+    //VertexBuffer* vb;
+    //vb = get_vertex_buffer(VBO_OBSTACLE);
 
-    i32 obstacle_length_in, obstacle_length_out, num_obstacles;
-    obstacle_length_in = vb->length;
-    num_obstacles = obstacle_length_in / OBSTACLE_VERTEX_LENGTH_IN;
-    obstacle_length_out = 6 * OBSTACLE_VERTEX_LENGTH_OUT * num_obstacles;
+    //i32 obstacle_length_in, obstacle_length_out, num_obstacles;
+    //obstacle_length_in = vb->length;
+    //num_obstacles = obstacle_length_in / OBSTACLE_VERTEX_LENGTH_IN;
+    //obstacle_length_out = 6 * OBSTACLE_VERTEX_LENGTH_OUT * num_obstacles;
 
-    ComputeShaderParams params = {
-        .compute_shader = SHADER_PROGRAM_OBSTACLE_COMP,
-        .num_objects = num_obstacles,
-        .object_length_in = obstacle_length_in,
-        .object_length_out = obstacle_length_out,
-        .object_buffer = vb->buffer,
-        .output_buffer = render_context.vbos[VBO_OBSTACLE],
-        .output_buffer_capacity_ptr = &render_context.vbo_capacities[VBO_OBSTACLE]
-    };
+    //ComputeShaderParams params = {
+    //    .compute_shader = SHADER_PROGRAM_OBSTACLE_COMP,
+    //    .num_objects = num_obstacles,
+    //    .object_length_in = obstacle_length_in,
+    //    .object_length_out = obstacle_length_out,
+    //    .object_buffer = vb->buffer,
+    //    .output_buffer = render_context.vbos[VBO_OBSTACLE],
+    //    .output_buffer_capacity_ptr = &render_context.vbo_capacities[VBO_OBSTACLE]
+    //};
 
-    execute_compute_shader(&params);
+    //execute_compute_shader(&params);
 
-    shader_use(SHADER_PROGRAM_OBSTACLE);
-    glBindVertexArray(render_context.vaos[VAO_OBSTACLE]);
-    glDrawArrays(GL_TRIANGLES, 0, 6 * num_obstacles);
+    //shader_use(SHADER_PROGRAM_OBSTACLE);
+    //glBindVertexArray(render_context.vaos[VAO_OBSTACLE]);
+    //glDrawArrays(GL_TRIANGLES, 0, 6 * num_obstacles);
 }
 
 static void render_parstacles(void)
 {
-    VertexBuffer* vb;
-    vb = get_vertex_buffer(VBO_PARSTACLE);
+    //VertexBuffer* vb;
+    //vb = get_vertex_buffer(VBO_PARSTACLE);
 
-    i32 parstacle_length_in, parstacle_length_out, num_parstacles;
-    parstacle_length_in = vb->length;
-    num_parstacles = parstacle_length_in / OBSTACLE_VERTEX_LENGTH_IN;
-    parstacle_length_out = 6 * OBSTACLE_VERTEX_LENGTH_OUT * num_parstacles;
+    //i32 parstacle_length_in, parstacle_length_out, num_parstacles;
+    //parstacle_length_in = vb->length;
+    //num_parstacles = parstacle_length_in / OBSTACLE_VERTEX_LENGTH_IN;
+    //parstacle_length_out = 6 * OBSTACLE_VERTEX_LENGTH_OUT * num_parstacles;
 
-    ComputeShaderParams params = {
-        .compute_shader = SHADER_PROGRAM_OBSTACLE_COMP,
-        .num_objects = num_parstacles,
-        .object_length_in = parstacle_length_in,
-        .object_length_out = parstacle_length_out,
-        .object_buffer = vb->buffer,
-        .output_buffer = render_context.vbos[VBO_PARSTACLE],
-        .output_buffer_capacity_ptr = &render_context.vbo_capacities[VBO_PARSTACLE]
-    };
+    //ComputeShaderParams params = {
+    //    .compute_shader = SHADER_PROGRAM_OBSTACLE_COMP,
+    //    .num_objects = num_parstacles,
+    //    .object_length_in = parstacle_length_in,
+    //    .object_length_out = parstacle_length_out,
+    //    .object_buffer = vb->buffer,
+    //    .output_buffer = render_context.vbos[VBO_PARSTACLE],
+    //    .output_buffer_capacity_ptr = &render_context.vbo_capacities[VBO_PARSTACLE]
+    //};
 
-    execute_compute_shader(&params);
+    //execute_compute_shader(&params);
 
-    shader_use(SHADER_PROGRAM_OBSTACLE);
-    glBindVertexArray(render_context.vaos[VAO_PARSTACLE]);
-    glDrawArrays(GL_TRIANGLES, 0, 6 * num_parstacles);
+    //shader_use(SHADER_PROGRAM_OBSTACLE);
+    //glBindVertexArray(render_context.vaos[VAO_PARSTACLE]);
+    //glDrawArrays(GL_TRIANGLES, 0, 6 * num_parstacles);
 }
 
 static void render_particles(void)
 {
-    VertexBuffer* vb;
-    vb = get_vertex_buffer(VBO_PARTICLE);
+    //VertexBuffer* vb;
+    //vb = get_vertex_buffer(VBO_PARTICLE);
 
-    i32 particle_length_in, particle_length_out, num_particles;
-    particle_length_in = vb->length;
-    num_particles = particle_length_in / PARTICLE_VERTEX_LENGTH_IN;
-    particle_length_out = 6 * PARTICLE_VERTEX_LENGTH_OUT * num_particles;
+    //i32 particle_length_in, particle_length_out, num_particles;
+    //particle_length_in = vb->length;
+    //num_particles = particle_length_in / PARTICLE_VERTEX_LENGTH_IN;
+    //particle_length_out = 6 * PARTICLE_VERTEX_LENGTH_OUT * num_particles;
 
-    ComputeShaderParams params = {
-        .compute_shader = SHADER_PROGRAM_PARTICLE_COMP,
-        .num_objects = num_particles,
-        .object_length_in = particle_length_in,
-        .object_length_out = particle_length_out,
-        .object_buffer = vb->buffer,
-        .output_buffer = render_context.vbos[VBO_PARTICLE],
-        .output_buffer_capacity_ptr = &render_context.vbo_capacities[VBO_PARTICLE]
-    };
+    //ComputeShaderParams params = {
+    //    .compute_shader = SHADER_PROGRAM_PARTICLE_COMP,
+    //    .num_objects = num_particles,
+    //    .object_length_in = particle_length_in,
+    //    .object_length_out = particle_length_out,
+    //    .object_buffer = vb->buffer,
+    //    .output_buffer = render_context.vbos[VBO_PARTICLE],
+    //    .output_buffer_capacity_ptr = &render_context.vbo_capacities[VBO_PARTICLE]
+    //};
 
-    execute_compute_shader(&params);
+    //execute_compute_shader(&params);
 
-    shader_use(SHADER_PROGRAM_PARTICLE);
-    glBindVertexArray(render_context.vaos[VAO_PARTICLE]);
-    glDrawArrays(GL_TRIANGLES, 0, 6 * num_particles);
+    //shader_use(SHADER_PROGRAM_PARTICLE);
+    //glBindVertexArray(render_context.vaos[VAO_PARTICLE]);
+    //glDrawArrays(GL_TRIANGLES, 0, 6 * num_particles);
 }
 
 static void render_parjicles(void)
 {
-    VertexBuffer* vb;
-    vb = get_vertex_buffer(VBO_PARJICLE);
+    //VertexBuffer* vb;
+    //vb = get_vertex_buffer(VBO_PARJICLE);
 
-    i32 parjicle_length_in, parjicle_length_out, num_parjicles;
-    parjicle_length_in = vb->length;
-    num_parjicles = parjicle_length_in / PARJICLE_VERTEX_LENGTH_IN;
-    parjicle_length_out = 6 * PARJICLE_VERTEX_LENGTH_OUT * num_parjicles;
+    //i32 parjicle_length_in, parjicle_length_out, num_parjicles;
+    //parjicle_length_in = vb->length;
+    //num_parjicles = parjicle_length_in / PARJICLE_VERTEX_LENGTH_IN;
+    //parjicle_length_out = 6 * PARJICLE_VERTEX_LENGTH_OUT * num_parjicles;
 
-    ComputeShaderParams params = {
-        .compute_shader = SHADER_PROGRAM_PARJICLE_COMP,
-        .num_objects = num_parjicles,
-        .object_length_in = parjicle_length_in,
-        .object_length_out = parjicle_length_out,
-        .object_buffer = vb->buffer,
-        .output_buffer = render_context.vbos[VBO_PARJICLE],
-        .output_buffer_capacity_ptr = &render_context.vbo_capacities[VBO_PARJICLE]
-    };
+    //ComputeShaderParams params = {
+    //    .compute_shader = SHADER_PROGRAM_PARJICLE_COMP,
+    //    .num_objects = num_parjicles,
+    //    .object_length_in = parjicle_length_in,
+    //    .object_length_out = parjicle_length_out,
+    //    .object_buffer = vb->buffer,
+    //    .output_buffer = render_context.vbos[VBO_PARJICLE],
+    //    .output_buffer_capacity_ptr = &render_context.vbo_capacities[VBO_PARJICLE]
+    //};
 
-    execute_compute_shader(&params);
+    //execute_compute_shader(&params);
 
-    shader_use(SHADER_PROGRAM_PARJICLE);
-    glBindVertexArray(render_context.vaos[VAO_PARJICLE]);
-    glDrawArrays(GL_TRIANGLES, 0, 6 * num_parjicles);
+    //shader_use(SHADER_PROGRAM_PARJICLE);
+    //glBindVertexArray(render_context.vaos[VAO_PARJICLE]);
+    //glDrawArrays(GL_TRIANGLES, 0, 6 * num_parjicles);
 }
 
 static void render_projectiles(void)
 {
-    VertexBuffer* vb;
-    vb = get_vertex_buffer(VBO_PROJECTILE);
+    //VertexBuffer* vb;
+    //vb = get_vertex_buffer(VBO_PROJECTILE);
 
-    i32 projectile_length_in, projectile_length_out, num_projectiles;
-    projectile_length_in = vb->length;
-    num_projectiles = projectile_length_in / PROJECTILE_VERTEX_LENGTH_IN;
-    projectile_length_out = 6 * PROJECTILE_VERTEX_LENGTH_OUT * num_projectiles;
+    //i32 projectile_length_in, projectile_length_out, num_projectiles;
+    //projectile_length_in = vb->length;
+    //num_projectiles = projectile_length_in / PROJECTILE_VERTEX_LENGTH_IN;
+    //projectile_length_out = 6 * PROJECTILE_VERTEX_LENGTH_OUT * num_projectiles;
 
-    ComputeShaderParams params = {
-        .compute_shader = SHADER_PROGRAM_PROJECTILE_COMP,
-        .num_objects = num_projectiles,
-        .object_length_in = projectile_length_in,
-        .object_length_out = projectile_length_out,
-        .object_buffer = vb->buffer,
-        .output_buffer = render_context.vbos[VBO_PROJECTILE],
-        .output_buffer_capacity_ptr = &render_context.vbo_capacities[VBO_PROJECTILE]
-    };
+    //ComputeShaderParams params = {
+    //    .compute_shader = SHADER_PROGRAM_PROJECTILE_COMP,
+    //    .num_objects = num_projectiles,
+    //    .object_length_in = projectile_length_in,
+    //    .object_length_out = projectile_length_out,
+    //    .object_buffer = vb->buffer,
+    //    .output_buffer = render_context.vbos[VBO_PROJECTILE],
+    //    .output_buffer_capacity_ptr = &render_context.vbo_capacities[VBO_PROJECTILE]
+    //};
 
-    execute_compute_shader(&params);
+    //execute_compute_shader(&params);
 
-    shader_use(SHADER_PROGRAM_PROJECTILE);
-    glBindVertexArray(render_context.vaos[VAO_PROJECTILE]);
-    glDrawArrays(GL_TRIANGLES, 0, 6 * num_projectiles);
+    //shader_use(SHADER_PROGRAM_PROJECTILE);
+    //glBindVertexArray(render_context.vaos[VAO_PROJECTILE]);
+    //glDrawArrays(GL_TRIANGLES, 0, 6 * num_projectiles);
 }
 
 static void render_shadows(void)
 {
-    return;
-    VertexBuffer* vb;
-    ComputeShaderParams params;
+    //return;
+    //VertexBuffer* vb;
+    //ComputeShaderParams params;
 
-    i32 shadow_length_in, shadow_length_out, num_shadows;
-    vb = get_vertex_buffer(VBO_ENTITY_SHADOW);
-    shadow_length_in = vb->length;
-    num_shadows = shadow_length_in / SHADOW_VERTEX_LENGTH_IN;
-    shadow_length_out = 6 * SHADOW_VERTEX_LENGTH_OUT * num_shadows;
+    //i32 shadow_length_in, shadow_length_out, num_shadows;
+    //vb = get_vertex_buffer(VBO_ENTITY_SHADOW);
+    //shadow_length_in = vb->length;
+    //num_shadows = shadow_length_in / SHADOW_VERTEX_LENGTH_IN;
+    //shadow_length_out = 6 * SHADOW_VERTEX_LENGTH_OUT * num_shadows;
 
-    params = (ComputeShaderParams) {
-        .compute_shader = SHADER_PROGRAM_SHADOW_COMP,
-        .num_objects = num_shadows,
-        .object_length_in = shadow_length_in,
-        .object_length_out = shadow_length_out,
-        .object_buffer = vb->buffer,
-        .output_buffer = render_context.vbos[VBO_ENTITY_SHADOW],
-        .output_buffer_capacity_ptr = &render_context.vbo_capacities[VBO_ENTITY_SHADOW]
-    };
+    //params = (ComputeShaderParams) {
+    //    .compute_shader = SHADER_PROGRAM_SHADOW_COMP,
+    //    .num_objects = num_shadows,
+    //    .object_length_in = shadow_length_in,
+    //    .object_length_out = shadow_length_out,
+    //    .object_buffer = vb->buffer,
+    //    .output_buffer = render_context.vbos[VBO_ENTITY_SHADOW],
+    //    .output_buffer_capacity_ptr = &render_context.vbo_capacities[VBO_ENTITY_SHADOW]
+    //};
 
-    execute_compute_shader(&params);
+    //execute_compute_shader(&params);
 
-    shader_use(SHADER_PROGRAM_SHADOW);
-    glBindVertexArray(render_context.vaos[VAO_SHADOW]);
-    glDrawArrays(GL_TRIANGLES, 0, 6 * num_shadows);
+    //shader_use(SHADER_PROGRAM_SHADOW);
+    //glBindVertexArray(render_context.vaos[VAO_SHADOW]);
+    //glDrawArrays(GL_TRIANGLES, 0, 6 * num_shadows);
 }
 
 void game_render_init(void)
