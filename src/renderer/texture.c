@@ -13,7 +13,7 @@
 #define NUM_CHARS       96
 #define BITMAP_WIDTH    1024
 #define BITMAP_HEIGHT   1024
-#define PADDING         0
+#define PADDING         1
 
 typedef struct {
     i16 font_size;

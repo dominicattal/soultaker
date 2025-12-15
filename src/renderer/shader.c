@@ -176,6 +176,8 @@ static void compile_shader_program_entity(void)
         texs[i] = i;
     shader_use(SHADER_PROGRAM_ENTITY);
     glUniform1iv(shader_get_uniform_location(SHADER_PROGRAM_ENTITY, "textures"), NUM_TEXTURE_UNITS, texs);
+    shader_bind_uniform_block(SHADER_PROGRAM_ENTITY, UBO_INDEX_MATRICES, "Camera");
+    shader_bind_uniform_block(SHADER_PROGRAM_ENTITY, UBO_INDEX_WINDOW, "Window");
     shader_use(SHADER_PROGRAM_NONE);
 }
 
