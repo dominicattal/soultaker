@@ -2,6 +2,9 @@
 #include "../renderer.h"
 #include "../window.h"
 
+#define NEAR_CLIP_DISTANCE  0.001f
+#define FAR_CLIP_DISTANCE   1000.0f
+
 #define TILE_VERTEX_LENGTH           8
 #define WALL_VERTEX_LENGTH           (8 * 6 * 5)
 #define ENTITY_VERTEX_LENGTH_IN      13
@@ -66,19 +69,26 @@ typedef struct {
 } RenderData;
 
 typedef struct {
+    f32 yaw, pitch, zoom, fov;
+    f32 view[16], proj[16];
+    vec3 position, facing, right, up;
+    vec2 target;
+} RenderCamera;
+
+typedef struct {
     RenderData* data;
     RenderData* data_swap;
+    RenderCamera camera;
     GLuint fbo, shadow_fbo, rbo;
     GLuint minimap_fbo;
     GLuint game_time_ubo;
+    GLuint matrices_ubo;
+    GLuint minimap_ubo;
     GLuint vaos[NUM_VAOS];
     GLuint vbos[NUM_VBOS];
     i32 vbo_capacities[NUM_VBOS];
     pthread_mutex_t mutex;
 } RenderContext;
-
-static RenderContext render_context;
-extern GameContext game_context;
 
 typedef struct {
     ShaderProgramEnum compute_shader;
@@ -89,6 +99,82 @@ typedef struct {
     GLuint output_buffer;
     i32* output_buffer_capacity_ptr;
 } ComputeShaderParams;
+
+static RenderContext render_context;
+extern GameContext game_context;
+
+static void view(f32 m[16], vec3 r, vec3 u, vec3 f, vec3 p)
+{
+    f32 k1 = p.x * r.x + p.y * r.y + p.z * r.z;
+    f32 k2 = p.x * u.x + p.y * u.y + p.z * u.z;
+    f32 k3 = p.x * f.x + p.y * f.y + p.z * f.z;
+    m[0]  = r.x; m[1]  = u.x; m[2]  = f.x; m[3]  = 0.0f;
+    m[4]  = r.y; m[5]  = u.y; m[6]  = f.y; m[7]  = 0.0f;
+    m[8]  = r.z; m[9]  = u.z; m[10] = f.z; m[11] = 0.0f;
+    m[12] = -k1; m[13] = -k2; m[14] = -k3; m[15] = 1.0f;
+}
+
+static void orthographic(f32 m[16], f32 ar, f32 zoom)
+{
+    f32 r, l, t, b, f, n;
+    b = -(t = zoom);
+    l = -(r = ar * zoom);
+    f = FAR_CLIP_DISTANCE;
+    n = NEAR_CLIP_DISTANCE;
+    f32 val1, val2, val3, val4, val5, val6;
+    val1 = 2 / (r - l);
+    val2 = 2 / (t - b);
+    val3 = 2 / (f - n);
+    val4 = -(r + l) / (r - l);
+    val5 = -(t + b) / (t - b);
+    val6 = -(f + n) / (f - n);
+    m[0]  = val1; m[1]  = 0.0f; m[2]  = 0.0f; m[3]  = 0.0f;
+    m[4]  = 0.0f; m[5]  = val2; m[6]  = 0.0f; m[7]  = 0.0f;
+    m[8]  = 0.0f; m[9]  = 0.0f; m[10] = val3; m[11] = 0.0f;
+    m[12] = val4; m[13] = val5; m[14] = val6; m[15] = 1.0f;
+}
+
+static void update_view_matrix(void)
+{
+    RenderCamera* cam = &render_context.camera;
+    vec2 pos = cam->target;
+    view(cam->view, cam->right, cam->up, cam->facing, cam->position);
+    glBindBuffer(GL_UNIFORM_BUFFER, render_context.matrices_ubo);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, 16 * sizeof(GLfloat), &cam->view[0]);
+    glBufferSubData(GL_UNIFORM_BUFFER, 33 * sizeof(GLfloat), sizeof(GLfloat), &cam->pitch);
+    glBufferSubData(GL_UNIFORM_BUFFER, 34 * sizeof(GLfloat), sizeof(GLfloat), &cam->yaw);
+    glBindBuffer(GL_UNIFORM_BUFFER, render_context.minimap_ubo);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(GLfloat), &pos.x);
+    glBufferSubData(GL_UNIFORM_BUFFER, 1 * sizeof(GLfloat), sizeof(GLfloat), &pos.z);
+    glBufferSubData(GL_UNIFORM_BUFFER, 2 * sizeof(GLfloat), sizeof(GLfloat), &cam->yaw);
+}
+
+static void update_proj_matrix(void)
+{
+    RenderCamera* cam = &render_context.camera;
+    f32 ar = window_aspect_ratio();
+    orthographic(cam->proj, ar, cam->zoom);
+    glBindBuffer(GL_UNIFORM_BUFFER, render_context.matrices_ubo);
+    glBufferSubData(GL_UNIFORM_BUFFER, 16 * sizeof(GLfloat), 16 * sizeof(GLfloat), &cam->proj[0]);
+    glBufferSubData(GL_UNIFORM_BUFFER, 32 * sizeof(GLfloat), sizeof(GLfloat), &cam->zoom);
+    glBindBuffer(GL_UNIFORM_BUFFER, render_context.minimap_ubo);
+    glBufferSubData(GL_UNIFORM_BUFFER, 3 * sizeof(GLfloat), sizeof(GLfloat), &cam->zoom);
+}
+
+static void copy_camera(void)
+{
+    Camera* game_cam = &game_context.camera;
+    RenderCamera* render_cam = &render_context.camera;
+    render_cam->yaw         = game_cam->yaw;
+    render_cam->pitch       = game_cam->pitch;
+    render_cam->zoom        = game_cam->zoom;
+    render_cam->fov         = game_cam->fov;
+    render_cam->position    = game_cam->position;
+    render_cam->facing      = game_cam->facing;
+    render_cam->right       = game_cam->right;
+    render_cam->up          = game_cam->up;
+    render_cam->target      = game_cam->target;
+}
 
 static VertexBuffer* get_vertex_buffer(GameVBOEnum type)
 {
@@ -120,7 +206,6 @@ static void resize_vertex_buffer(VertexBuffer* vb, i32 capacity)
 static void execute_compute_shader(const ComputeShaderParams* params)
 {
     shader_use(params->compute_shader);
-    pthread_mutex_lock(&render_context.mutex);
     glUniform1i(shader_get_uniform_location(params->compute_shader, "N"), params->num_objects);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, render_context.vbos[VBO_COMP_IN]);
     if (render_context.vbo_capacities[VBO_COMP_IN] < params->object_length_in) {
@@ -129,7 +214,6 @@ static void execute_compute_shader(const ComputeShaderParams* params)
     }
     else
         glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, params->object_length_in * sizeof(GLfloat), params->object_buffer);
-    pthread_mutex_unlock(&render_context.mutex);
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, render_context.vbos[VBO_COMP_OUT]);
     if (render_context.vbo_capacities[VBO_COMP_OUT] < params->object_length_out) {
@@ -153,10 +237,8 @@ static void execute_compute_shader(const ComputeShaderParams* params)
 
 static void update_game_time(void)
 {
-    pthread_mutex_lock(&render_context.mutex);
     glBindBuffer(GL_UNIFORM_BUFFER, render_context.game_time_ubo);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(GLdouble), &game_context.time);
-    pthread_mutex_unlock(&render_context.mutex);
 }
     
 static void update_entity_vertex_data(void)
@@ -562,6 +644,7 @@ void game_update_vertex_data(void)
     RenderData* tmp = render_context.data;
     render_context.data = render_context.data_swap;
     render_context.data_swap = tmp;
+    copy_camera();
     pthread_mutex_unlock(&render_context.mutex);
 }
 
@@ -573,11 +656,9 @@ static void render_tiles(void)
     shader_use(SHADER_PROGRAM_TILE);
     glBindVertexArray(render_context.vaos[VAO_TILE]);
     glBindBuffer(GL_ARRAY_BUFFER, render_context.vbos[VBO_TILE]);
-    pthread_mutex_lock(&render_context.mutex);
     i32 tile_length = vb->length;
     i32 num_tiles = tile_length / TILE_VERTEX_LENGTH;
     glBufferData(GL_ARRAY_BUFFER, tile_length * sizeof(GLfloat), vb->buffer, GL_STATIC_DRAW);
-    pthread_mutex_unlock(&render_context.mutex);
     glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, num_tiles);
 }
 
@@ -589,11 +670,9 @@ static void render_walls(void)
     shader_use(SHADER_PROGRAM_WALL);
     glBindVertexArray(render_context.vaos[VAO_WALL]);
     glBindBuffer(GL_ARRAY_BUFFER, render_context.vbos[VBO_WALL]);
-    pthread_mutex_lock(&render_context.mutex);
     i32 wall_length = vb->length;
     i32 num_walls = wall_length / 6;
     glBufferData(GL_ARRAY_BUFFER, wall_length * sizeof(GLfloat), vb->buffer, GL_STATIC_DRAW);
-    pthread_mutex_unlock(&render_context.mutex);
     glDrawArrays(GL_TRIANGLES, 0, 6 * num_walls);
 }
 
@@ -833,6 +912,17 @@ void game_render_init(void)
     glGenBuffers(1, &render_context.vbos[VBO_COMP_IN]);
     glGenBuffers(1, &render_context.vbos[VBO_COMP_OUT]);
 
+    glGenBuffers(1, &render_context.matrices_ubo);
+    glBindBuffer(GL_UNIFORM_BUFFER, render_context.matrices_ubo);
+    glBufferData(GL_UNIFORM_BUFFER, 35 * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
+    glBindBufferBase(GL_UNIFORM_BUFFER, UBO_INDEX_MATRICES, render_context.matrices_ubo);
+
+    glGenBuffers(1, &render_context.minimap_ubo);
+    glBindBuffer(GL_UNIFORM_BUFFER, render_context.minimap_ubo);
+    glBufferData(GL_UNIFORM_BUFFER, 5 * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
+    glBindBufferBase(GL_UNIFORM_BUFFER, UBO_INDEX_MINIMAP, render_context.minimap_ubo);
+
+
     f32 quad_data[] = {
         0.0f, 0.0f,
         1.0f, 0.0f,
@@ -980,7 +1070,7 @@ void game_render_init(void)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, name, 0);
 
-    glBindBuffer(GL_UNIFORM_BUFFER, game_context.camera.minimap_ubo);
+    glBindBuffer(GL_UNIFORM_BUFFER, render_context.minimap_ubo);
     f32 ar = 1.0f;
     glBufferSubData(GL_UNIFORM_BUFFER, 4 * sizeof(GLfloat), sizeof(GLfloat), &ar);
 
@@ -995,8 +1085,10 @@ void game_render(void)
     if (game_context.halt_render)
         return;
 
+    pthread_mutex_lock(&render_context.mutex);
     update_game_time();
-    camera_update();
+    update_view_matrix();
+    update_proj_matrix();
 
     GLenum buffer[] = { GL_COLOR_ATTACHMENT0 };
     const f32 transparent[4] = {0.0f, 0.0f, 0.0f, 0.0f};
@@ -1061,6 +1153,7 @@ void game_render(void)
     glUniform1i(loc, unit);
     glBindVertexArray(render_context.vaos[VAO_QUAD]);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    pthread_mutex_unlock(&render_context.mutex);
 }
 
 void game_render_framebuffer_size_callback(void)
@@ -1141,6 +1234,8 @@ void game_render_cleanup(void)
     glDeleteFramebuffers(1, &render_context.shadow_fbo);
     glDeleteBuffers(1, &render_context.minimap_fbo);
     glDeleteRenderbuffers(1, &render_context.rbo);
+    glDeleteBuffers(1, &render_context.matrices_ubo);
+    glDeleteBuffers(1, &render_context.minimap_ubo);
 
     for (i32 i = 0; i < NUM_VBOS; i++) {
         st_free(render_context.data->buffers[i].buffer);
