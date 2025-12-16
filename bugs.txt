@@ -20,3 +20,8 @@
 
 # 2025-10-04
 - resizing window changes texture unit in minimap framebuffer
+
+
+
+# 2025-12-16
+- purple screen of death when tilt, couldn't reproduce
