@@ -9,7 +9,7 @@
 #define WALL_VERTEX_LENGTH           (8 * 6 * 5)
 #define ENTITY_FLOATS_PER_VERTEX      13
 #define PROJECTILE_FLOATS_PER_VERTEX  11
-#define OBSTACLE_VERTEX_LENGTH_IN    8
+#define OBSTACLE_FLOATS_PER_VERTEX    8
 #define OBSTACLE_VERTEX_LENGTH_OUT   7
 #define PARTICLE_VERTEX_LENGTH_IN    7
 #define PARTICLE_VERTEX_LENGTH_OUT   7
@@ -40,13 +40,13 @@ typedef enum {
     VBO_WALL,
     SSBO_ENTITY,
     SSBO_PROJECTILE,
+    SSBO_OBSTACLE,
     VBO_QUAD,
     SSBO_ENTITY_SHADOW,
     SSBO_ENTITY_MINIMAP,
     VBO_PROJECTILE_SHADOW,
     VBO_TILE_MAP,
     VBO_WALL_MAP,
-    VBO_OBSTACLE,
     VBO_PARSTACLE,
     VBO_PARJICLE,
     VBO_PARTICLE,
@@ -92,20 +92,8 @@ typedef struct {
     GLuint minimap_ubo;
     GLuint vaos[NUM_VAOS];
     Buffer buffers[NUM_BUFFERS];
-    //GLuint vbos[NUM_VBOS];
-    //i32 vbo_capacities[NUM_VBOS];
     pthread_mutex_t mutex;
 } RenderContext;
-
-typedef struct {
-    ShaderProgramEnum compute_shader;
-    i32 num_objects;
-    i32 object_length_in;
-    i32 object_length_out;
-    GLfloat* object_buffer;
-    GLuint output_buffer;
-    i32* output_buffer_capacity_ptr;
-} ComputeShaderParams;
 
 static RenderContext render_context;
 extern GameContext game_context;
@@ -214,38 +202,6 @@ static void resize_vertex_buffer(VertexBuffer* vb, i32 capacity)
         vb->buffer = st_malloc(size);
     else
         vb->buffer = st_realloc(vb->buffer, size);
-}
-
-static void execute_compute_shader(const ComputeShaderParams* params)
-{
-    //shader_use(params->compute_shader);
-    //glUniform1i(shader_get_uniform_location(params->compute_shader, "N"), params->num_objects);
-    //glBindBuffer(GL_SHADER_STORAGE_BUFFER, render_context.buffers[VBO_COMP_IN].name);
-    //if (render_context.vbo_capacities[VBO_COMP_IN] < params->object_length_in) {
-    //    glBufferData(GL_SHADER_STORAGE_BUFFER, params->object_length_in * sizeof(GLfloat), params->object_buffer, GL_DYNAMIC_COPY);
-    //    render_context.vbo_capacities[VBO_COMP_IN] = params->object_length_in;
-    //}
-    //else
-    //    glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, params->object_length_in * sizeof(GLfloat), params->object_buffer);
-
-    //glBindBuffer(GL_SHADER_STORAGE_BUFFER, render_context.buffers[VBO_COMP_OUT].name);
-    //if (render_context.vbo_capacities[VBO_COMP_OUT] < params->object_length_out) {
-    //    glBufferData(GL_SHADER_STORAGE_BUFFER, params->object_length_out * sizeof(GLfloat), NULL, GL_DYNAMIC_COPY);
-    //    render_context.vbo_capacities[VBO_COMP_OUT] = params->object_length_out;
-    //}
-    //glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, render_context.buffers[VBO_COMP_IN].name);
-    //glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, render_context.buffers[VBO_COMP_OUT].name);
-    //glDispatchCompute((params->num_objects + 31) / 32, 1, 1);
-    //glMemoryBarrier(GL_ALL_BARRIER_BITS);
-
-    //if (*(params->output_buffer_capacity_ptr) < params->object_length_out) {
-    //    glBindBuffer(GL_ARRAY_BUFFER, params->output_buffer);
-    //    glBufferData(GL_ARRAY_BUFFER, params->object_length_out * sizeof(GLfloat), NULL, GL_DYNAMIC_COPY);
-    //    *(params->output_buffer_capacity_ptr) = params->object_length_out;
-    //}
-    //glBindBuffer(GL_COPY_READ_BUFFER, render_context.buffers[VBO_COMP_OUT].name);
-    //glBindBuffer(GL_COPY_WRITE_BUFFER, params->output_buffer);
-    //glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, params->object_length_out * sizeof(GLfloat));
 }
 
 static void update_game_time(void)
@@ -498,7 +454,7 @@ static void update_parstacle_vertex_data(void)
 
     vb = get_vertex_buffer_swap(VBO_PARSTACLE);
     resize_vertex_buffer(vb,
-            OBSTACLE_VERTEX_LENGTH_IN * game_context.parstacles->capacity);
+            OBSTACLE_FLOATS_PER_VERTEX * game_context.parstacles->capacity);
 
     i32 tex = texture_get_id("bush");
     texture_info(tex, &location, &u, &v, &w, &h, &pivot, &stretch);
@@ -529,9 +485,9 @@ static void update_obstacle_vertex_data(void)
     i32 location;
     i32 i, j;
 
-    vb = get_vertex_buffer_swap(VBO_OBSTACLE);
+    vb = get_vertex_buffer_swap(SSBO_OBSTACLE);
     resize_vertex_buffer(vb,
-            OBSTACLE_VERTEX_LENGTH_IN * game_context.obstacles->capacity);
+            OBSTACLE_FLOATS_PER_VERTEX * game_context.obstacles->capacity);
 
     i32 tex = texture_get_id("rock");
     texture_info(tex, &location, &u, &v, &w, &h, &pivot, &stretch);
@@ -639,7 +595,7 @@ void game_update_vertex_data(void)
     update_vertex_buffer_data(VBO_TILE,         update_tile_vertex_data);
     update_vertex_buffer_data(VBO_WALL,         update_wall_vertex_data);
     update_vertex_buffer_data(VBO_PARSTACLE,    update_parstacle_vertex_data);
-    update_vertex_buffer_data(VBO_OBSTACLE,     update_obstacle_vertex_data);
+    update_vertex_buffer_data(SSBO_OBSTACLE,    update_obstacle_vertex_data);
 
     pthread_mutex_lock(&render_context.mutex);
     tmp = render_context.data;
@@ -677,6 +633,22 @@ static void render_entities(void)
     glDrawArrays(GL_TRIANGLES, 0, 6 * buffer->length / ENTITY_FLOATS_PER_VERTEX);
 }
 
+static void render_projectiles(void)
+{
+    Buffer* buffer = get_buffer(SSBO_PROJECTILE);
+    shader_use(SHADER_PROGRAM_PROJECTILE);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, buffer->name);
+    glDrawArrays(GL_TRIANGLES, 0, 6 * buffer->length / PROJECTILE_FLOATS_PER_VERTEX);
+}
+
+static void render_obstacles(void)
+{
+    Buffer* buffer = get_buffer(SSBO_OBSTACLE);
+    shader_use(SHADER_PROGRAM_OBSTACLE);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, buffer->name);
+    glDrawArrays(GL_TRIANGLES, 0, 6 * buffer->length / OBSTACLE_FLOATS_PER_VERTEX);
+}
+
 static void render_minimap_entities(void)
 {
     //VertexBuffer* vb;
@@ -705,33 +677,6 @@ static void render_minimap_entities(void)
 }
 
 
-static void render_obstacles(void)
-{
-    //VertexBuffer* vb;
-    //vb = get_vertex_buffer(VBO_OBSTACLE);
-
-    //i32 obstacle_length_in, obstacle_length_out, num_obstacles;
-    //obstacle_length_in = vb->length;
-    //num_obstacles = obstacle_length_in / OBSTACLE_VERTEX_LENGTH_IN;
-    //obstacle_length_out = 6 * OBSTACLE_VERTEX_LENGTH_OUT * num_obstacles;
-
-    //ComputeShaderParams params = {
-    //    .compute_shader = SHADER_PROGRAM_OBSTACLE_COMP,
-    //    .num_objects = num_obstacles,
-    //    .object_length_in = obstacle_length_in,
-    //    .object_length_out = obstacle_length_out,
-    //    .object_buffer = vb->buffer,
-    //    .output_buffer = render_context.buffers[VBO_OBSTACLE].name,
-    //    .output_buffer_capacity_ptr = &render_context.vbo_capacities[VBO_OBSTACLE]
-    //};
-
-    //execute_compute_shader(&params);
-
-    //shader_use(SHADER_PROGRAM_OBSTACLE);
-    //glBindVertexArray(render_context.vaos[VAO_OBSTACLE]);
-    //glDrawArrays(GL_TRIANGLES, 0, 6 * num_obstacles);
-}
-
 static void render_parstacles(void)
 {
     //VertexBuffer* vb;
@@ -739,7 +684,7 @@ static void render_parstacles(void)
 
     //i32 parstacle_length_in, parstacle_length_out, num_parstacles;
     //parstacle_length_in = vb->length;
-    //num_parstacles = parstacle_length_in / OBSTACLE_VERTEX_LENGTH_IN;
+    //num_parstacles = parstacle_length_in / OBSTACLE_FLOATS_PER_VERTEX;
     //parstacle_length_out = 6 * OBSTACLE_VERTEX_LENGTH_OUT * num_parstacles;
 
     //ComputeShaderParams params = {
@@ -813,37 +758,6 @@ static void render_parjicles(void)
     //glDrawArrays(GL_TRIANGLES, 0, 6 * num_parjicles);
 }
 
-static void render_projectiles(void)
-{
-    //VertexBuffer* vb;
-    //vb = get_vertex_buffer(VBO_PROJECTILE);
-
-    //i32 projectile_length_in, projectile_length_out, num_projectiles;
-    //projectile_length_in = vb->length;
-    //num_projectiles = projectile_length_in / PROJECTILE_VERTEX_LENGTH_IN;
-    //projectile_length_out = 6 * PROJECTILE_VERTEX_LENGTH_OUT * num_projectiles;
-
-    //ComputeShaderParams params = {
-    //    .compute_shader = SHADER_PROGRAM_PROJECTILE_COMP,
-    //    .num_objects = num_projectiles,
-    //    .object_length_in = projectile_length_in,
-    //    .object_length_out = projectile_length_out,
-    //    .object_buffer = vb->buffer,
-    //    .output_buffer = render_context.buffers[VBO_PROJECTILE].name,
-    //    .output_buffer_capacity_ptr = &render_context.vbo_capacities[VBO_PROJECTILE]
-    //};
-
-    //execute_compute_shader(&params);
-
-    //shader_use(SHADER_PROGRAM_PROJECTILE);
-    //glBindVertexArray(render_context.vaos[VAO_PROJECTILE]);
-    //glDrawArrays(GL_TRIANGLES, 0, 6 * num_projectiles);
-
-    Buffer* buffer = get_buffer(SSBO_PROJECTILE);
-    shader_use(SHADER_PROGRAM_PROJECTILE);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, buffer->name);
-    glDrawArrays(GL_TRIANGLES, 0, 6 * buffer->length / PROJECTILE_FLOATS_PER_VERTEX);
-}
 
 static void render_shadows(void)
 {
@@ -955,20 +869,12 @@ void game_render_init(void)
 
     shader_use(SHADER_PROGRAM_ENTITY);
     glUniform1i(shader_get_uniform_location(SHADER_PROGRAM_ENTITY, "floats_per_vertex"), ENTITY_FLOATS_PER_VERTEX);
-
     shader_use(SHADER_PROGRAM_PROJECTILE);
     glUniform1i(shader_get_uniform_location(SHADER_PROGRAM_PROJECTILE, "floats_per_vertex"), PROJECTILE_FLOATS_PER_VERTEX);
+    shader_use(SHADER_PROGRAM_OBSTACLE);
+    glUniform1i(shader_get_uniform_location(SHADER_PROGRAM_OBSTACLE, "floats_per_vertex"), OBSTACLE_FLOATS_PER_VERTEX);
     shader_use(SHADER_PROGRAM_NONE);
     
-    glBindVertexArray(render_context.vaos[VAO_OBSTACLE]);
-    glBindBuffer(GL_ARRAY_BUFFER, render_context.buffers[VBO_OBSTACLE].name);
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)(4 * sizeof(GLfloat)));
-    glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)(6 * sizeof(GLfloat)));
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glEnableVertexAttribArray(2);
-
     glBindVertexArray(render_context.vaos[VAO_PARSTACLE]);
     glBindBuffer(GL_ARRAY_BUFFER, render_context.buffers[VBO_PARSTACLE].name);
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)0);
@@ -1191,9 +1097,9 @@ void game_render_framebuffer_size_callback(void)
 void game_render_update_obstacles(void)
 {
     VertexBuffer* vb;
-    vb = get_vertex_buffer(VBO_WALL);
+    vb = get_vertex_buffer(SSBO_OBSTACLE);
     vb->update = true;
-    vb = get_vertex_buffer_swap(VBO_WALL);
+    vb = get_vertex_buffer_swap(SSBO_OBSTACLE);
     vb->update = true;
 }
 

@@ -210,6 +210,8 @@ static void compile_shader_program_obstacle(void)
         texs[i] = i;
     shader_use(SHADER_PROGRAM_OBSTACLE);
     glUniform1iv(shader_get_uniform_location(SHADER_PROGRAM_OBSTACLE, "textures"), NUM_TEXTURE_UNITS, texs);
+    shader_bind_uniform_block(SHADER_PROGRAM_OBSTACLE, UBO_INDEX_MATRICES, "Camera");
+    shader_bind_uniform_block(SHADER_PROGRAM_OBSTACLE, UBO_INDEX_WINDOW, "Window");
     shader_use(SHADER_PROGRAM_NONE);
 }
 
@@ -221,8 +223,6 @@ static void compile_shader_program_obstacle_comp(void)
     link(SHADER_PROGRAM_OBSTACLE_COMP);
     detach(SHADER_PROGRAM_OBSTACLE_COMP, comp);
     delete(comp);
-    shader_bind_uniform_block(SHADER_PROGRAM_OBSTACLE_COMP, UBO_INDEX_MATRICES, "Camera");
-    shader_bind_uniform_block(SHADER_PROGRAM_OBSTACLE_COMP, UBO_INDEX_WINDOW, "Window");
 }
 
 static void compile_shader_program_particle(void)
