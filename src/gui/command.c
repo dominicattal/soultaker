@@ -64,8 +64,7 @@ static char* state_string(CommandState state)
             break;
         case CS_POSITIONFIN:
             vec2 position = player_position();
-            message = string_create("%.2f %.2f", 
-                    MAX_STRING_LENGTH, position.x, position.y);
+            message = string_create("%.2f %.2f", MAX_STRING_LENGTH, position.x, position.y);
             break;
         case CS_SUMMON:
             message = string_copy("Must provide entity name");

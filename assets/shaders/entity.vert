@@ -29,9 +29,9 @@ layout (std430, binding = 0) readonly buffer Input {
 
 uniform int floats_per_vertex;
 
-int winding[] = {0, 1, 2, 2, 1, 3};
-int tu[] = {0, 1, 0, 1};
-int tv[] = {1, 1, 0, 0};
+const int winding[] = {0, 1, 2, 2, 1, 3};
+const int tu[] = {0, 1, 0, 1};
+const int tv[] = {1, 1, 0, 0};
 
 void main() {
     uint instance_idx = gl_VertexID / 6;

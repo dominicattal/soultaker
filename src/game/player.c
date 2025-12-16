@@ -145,8 +145,11 @@ void player_shoot(Player* player)
     f32 rotation = camera_get_yaw();
     f32 a, b, c, r, ratio;
     vec2 direction, target;
-    vec2 pos = vec2_create((cursor_position.x - 0.5) * ar, cursor_position.y - 0.5 + 1.0 / 4 / zoom);
-    // voodoo black magic math
+    const float character_offset = 1.0 / 4.0 / zoom;
+    vec2 pos = vec2_create((cursor_position.x - 0.5) * ar, cursor_position.y - 0.5 + character_offset);
+    // https://www.desmos.com/calculator/a7186fd475
+    // basically, think of circle as screen space and ellipse inside of it as game space
+    // the solution is the intersection point on the ellipse based on angle of screen space
     r = vec2_mag(pos);
     a = atan(pos.y/pos.x);
     b = PI/2 - tilt;
