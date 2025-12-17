@@ -404,7 +404,7 @@ static void update_wall_vertex_data(void)
         for (i32 side = 0; side < 4; side++) {
             for (k = 0; k < 6; k++) {
                 idx = side_order[side][winding[k]];
-                // nvidia rounding error? epsilon fixes kind of
+                // nvidia rounding error? epsilon fixes
                 vb->buffer[j++] = wall->position.x + dx[idx] * (wall->size.x + 0.001); 
                 vb->buffer[j++] = wall->height * dy[idx];
                 vb->buffer[j++] = wall->position.z + dz[idx] * (wall->size.y + 0.001);
@@ -619,11 +619,11 @@ static void render_walls(void)
 {
     Buffer* buffer = &render_context.buffers[VBO_WALL];
     i32 num_walls = buffer->length / WALL_VERTEX_LENGTH;
+    log_write(DEBUG, "%d", num_walls);
     shader_use(SHADER_PROGRAM_WALL);
     glBindVertexArray(render_context.vaos[VAO_WALL]);
     glBindBuffer(GL_ARRAY_BUFFER, buffer->name);
-    // 6 vertices per face, 5 faces, kind of a mess should fix this
-    glDrawArrays(GL_TRIANGLES, 0, 6 * 5 * num_walls);
+    //glDrawArrays(GL_TRIANGLES, 0, 6 * num_walls);
 }
 
 static void render_entities(void)
