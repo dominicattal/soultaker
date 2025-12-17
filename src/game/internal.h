@@ -101,6 +101,7 @@ void map_fog_clear(void);
 
 Entity* room_create_entity(vec2 position, i32 id);
 Obstacle* room_create_obstacle(vec2 position);
+Parstacle* room_create_parstacle(vec2 position);
 Wall* room_create_wall(vec2 position, f32 height, f32 width, f32 length);
 
 //**************************************************************************
@@ -500,6 +501,7 @@ typedef struct GameApi {
     // Map
     Entity* (*room_create_entity)(vec2, i32);
     Obstacle* (*room_create_obstacle)(vec2);
+    Parstacle* (*room_create_parstacle)(vec2);
     Wall* (*room_create_wall)(vec2, f32, f32, f32);
 
     // Misc

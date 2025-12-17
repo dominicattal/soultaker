@@ -31,6 +31,7 @@ GameApi game_api = {
     // Map
     REGISTER(room_create_entity),
     REGISTER(room_create_obstacle),
+    REGISTER(room_create_parstacle),
     REGISTER(room_create_wall),
 
     // Misc

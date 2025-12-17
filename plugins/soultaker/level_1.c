@@ -70,6 +70,8 @@ st_export void level_1_enemy_1_create(GameApi* api)
     api->room_create_entity(pos, id);
     pos = api->vec2_create(12, 4);
     api->room_create_obstacle(pos);
+    pos = api->vec2_create(8, 4);
+    api->room_create_parstacle(pos);
 }
 
 st_export void level_1_enemy_2_create(GameApi* api)

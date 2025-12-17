@@ -1636,6 +1636,23 @@ Obstacle* room_create_obstacle(vec2 position)
     return obstacle_create(new_position);
 }
 
+Parstacle* room_create_parstacle(vec2 position)
+{
+    MapNode* node = map_context.current_map_node;
+    if (node == NULL)
+        log_write(FATAL, "fuck");
+    Room* room = node->room;
+    i32 orientation = node->orientation;
+    f32 u = room->u1 + position.x;
+    f32 v = room->v1 + position.z;
+    f32 dx = calculate_room_fdx(room, orientation, u, v);
+    f32 dz = calculate_room_fdz(room, orientation, u, v);
+    vec2 new_position;
+    new_position.x = node->origin_x + dx;
+    new_position.z = node->origin_z + dz;
+    return parstacle_create(new_position);
+}
+
 Wall* room_create_wall(vec2 position, f32 height, f32 width, f32 length)
 {
     MapNode* node = map_context.current_map_node;

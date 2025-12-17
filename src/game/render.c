@@ -5,12 +5,11 @@
 #define NEAR_CLIP_DISTANCE  0.001f
 #define FAR_CLIP_DISTANCE   1000.0f
 
-#define TILE_VERTEX_LENGTH           8
-#define WALL_VERTEX_LENGTH           (8 * 6 * 5)
-#define ENTITY_FLOATS_PER_VERTEX      13
-#define PROJECTILE_FLOATS_PER_VERTEX  11
-#define OBSTACLE_FLOATS_PER_VERTEX    8
-#define OBSTACLE_VERTEX_LENGTH_OUT   7
+#define TILE_VERTEX_LENGTH              8
+#define WALL_VERTEX_LENGTH              (8 * 6 * 5)
+#define ENTITY_FLOATS_PER_VERTEX        13
+#define PROJECTILE_FLOATS_PER_VERTEX    11
+#define OBSTACLE_FLOATS_PER_VERTEX      8
 #define PARTICLE_VERTEX_LENGTH_IN    7
 #define PARTICLE_VERTEX_LENGTH_OUT   7
 #define PARJICLE_VERTEX_LENGTH_IN    8
@@ -650,6 +649,14 @@ static void render_obstacles(void)
     glDrawArrays(GL_TRIANGLES, 0, 6 * buffer->length / OBSTACLE_FLOATS_PER_VERTEX);
 }
 
+static void render_parstacles(void)
+{
+    Buffer* buffer = get_buffer(SSBO_PARSTACLE);
+    shader_use(SHADER_PROGRAM_OBSTACLE);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, buffer->name);
+    glDrawArrays(GL_TRIANGLES, 0, 6 * buffer->length / OBSTACLE_FLOATS_PER_VERTEX);
+}
+
 static void render_minimap_entities(void)
 {
     //VertexBuffer* vb;
@@ -677,33 +684,6 @@ static void render_minimap_entities(void)
     //glDrawArrays(GL_TRIANGLES, 0, 6 * num_entities);
 }
 
-
-static void render_parstacles(void)
-{
-    //VertexBuffer* vb;
-    //vb = get_vertex_buffer(SSBO_PARSTACLE);
-
-    //i32 parstacle_length_in, parstacle_length_out, num_parstacles;
-    //parstacle_length_in = vb->length;
-    //num_parstacles = parstacle_length_in / OBSTACLE_FLOATS_PER_VERTEX;
-    //parstacle_length_out = 6 * OBSTACLE_VERTEX_LENGTH_OUT * num_parstacles;
-
-    //ComputeShaderParams params = {
-    //    .compute_shader = SHADER_PROGRAM_OBSTACLE_COMP,
-    //    .num_objects = num_parstacles,
-    //    .object_length_in = parstacle_length_in,
-    //    .object_length_out = parstacle_length_out,
-    //    .object_buffer = vb->buffer,
-    //    .output_buffer = render_context.buffers[SSBO_PARSTACLE].name,
-    //    .output_buffer_capacity_ptr = &render_context.vbo_capacities[SSBO_PARSTACLE]
-    //};
-
-    //execute_compute_shader(&params);
-
-    //shader_use(SHADER_PROGRAM_OBSTACLE);
-    //glBindVertexArray(render_context.vaos[VAO_PARSTACLE]);
-    //glDrawArrays(GL_TRIANGLES, 0, 6 * num_parstacles);
-}
 
 static void render_particles(void)
 {
