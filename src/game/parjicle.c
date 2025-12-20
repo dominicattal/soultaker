@@ -20,8 +20,8 @@ Parjicle* parjicle_create(vec3 position)
     Parjicle* parjicle = st_malloc(sizeof(Parjicle));
     parjicle->position = position;
     parjicle->direction = vec3_create(1, 0, 0);
-    parjicle->color = vec3_create(1, 0, 1);
-    parjicle->size = 1.0f;
+    parjicle->color = vec3_create(1, 1, 0);
+    parjicle->size = 0.1f;
     parjicle->speed = 1.0f;
     parjicle->rotation = 0.0f;
     list_append(game_context.parjicles, parjicle);

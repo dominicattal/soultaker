@@ -20,7 +20,7 @@ Particle* particle_create(vec3 position)
     Particle* particle = st_malloc(sizeof(Particle));
     particle->position = position;
     particle->direction = vec3_create(0, 0, 1);
-    particle->size = 0.5f;
+    particle->size = 0.1f;
     particle->color = vec3_create(1.0f, 1.0f, 1.0f);
     particle->lifetime = 10.0f;
     particle->speed = 1.0f;
