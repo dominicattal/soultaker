@@ -110,8 +110,16 @@ static void update_player_stats(Player* player)
 
 void player_update(Player* player, f32 dt)
 {
+    vec3 pos;
     if (player->entity != NULL) {
         player->position = player->entity->position;
+        pos = vec3_create(player->position.x, 1.0, player->position.z);
+        Particle* part = particle_create(pos);
+        Parjicle* parj = parjicle_create(pos);
+        part->direction = vec3_create(1, 0, 0);
+        part->lifetime = 0.5;
+        parj->direction = vec3_create(-1, 0, 0);
+        parj->lifetime = 0.5;
         map_fog_explore(player->position);
     }
     update_player_state(player, dt);
@@ -148,7 +156,7 @@ void player_shoot(Player* player)
     const float character_offset = 1.0 / 4.0 / zoom;
     vec2 pos = vec2_create((cursor_position.x - 0.5) * ar, cursor_position.y - 0.5 + character_offset);
     // https://www.desmos.com/calculator/a7186fd475
-    // basically, think of circle as screen space and ellipse inside of it as game space
+    // think of circle as screen space and ellipse inside of it as game space
     // the solution is the intersection point on the ellipse based on angle of screen space
     r = vec2_mag(pos);
     a = atan(pos.y/pos.x);

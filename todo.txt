@@ -8,3 +8,8 @@ music
 sfx
 
 controls
+
+optimize gl stuff
+- index buffers
+- ISQRT instead of SQRT
+- send izoom to shader isntead of zoom

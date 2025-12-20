@@ -26,3 +26,7 @@
 # 2025-12-16
 - purple screen of death when tilt, couldn't reproduce
 - wall buffer accessing out of bounds
+
+# 2025-12-20
+- parjicle and particle were not rendering
+- using z instead of y when updating buffer

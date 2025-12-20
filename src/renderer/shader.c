@@ -181,18 +181,6 @@ static void compile_shader_program_entity(void)
     shader_use(SHADER_PROGRAM_NONE);
 }
 
-static void compile_shader_program_entity_comp(void)
-{
-    u32 comp;
-    comp = compile(GL_COMPUTE_SHADER, "assets/shaders/entity.comp");
-    attach(SHADER_PROGRAM_ENTITY_COMP, comp);
-    link(SHADER_PROGRAM_ENTITY_COMP);
-    detach(SHADER_PROGRAM_ENTITY_COMP, comp);
-    delete(comp);
-    shader_bind_uniform_block(SHADER_PROGRAM_ENTITY_COMP, UBO_INDEX_MATRICES, "Camera");
-    shader_bind_uniform_block(SHADER_PROGRAM_ENTITY_COMP, UBO_INDEX_WINDOW, "Window");
-}
-
 static void compile_shader_program_obstacle(void)
 {
     u32 vert, frag;
@@ -215,16 +203,6 @@ static void compile_shader_program_obstacle(void)
     shader_use(SHADER_PROGRAM_NONE);
 }
 
-static void compile_shader_program_obstacle_comp(void)
-{
-    u32 comp;
-    comp = compile(GL_COMPUTE_SHADER, "assets/shaders/obstacle.comp");
-    attach(SHADER_PROGRAM_OBSTACLE_COMP, comp);
-    link(SHADER_PROGRAM_OBSTACLE_COMP);
-    detach(SHADER_PROGRAM_OBSTACLE_COMP, comp);
-    delete(comp);
-}
-
 static void compile_shader_program_particle(void)
 {
     u32 vert, frag;
@@ -237,18 +215,8 @@ static void compile_shader_program_particle(void)
     detach(SHADER_PROGRAM_PARTICLE, frag);
     delete(vert);
     delete(frag);
-}
-
-static void compile_shader_program_particle_comp(void)
-{
-    u32 comp;
-    comp = compile(GL_COMPUTE_SHADER, "assets/shaders/particle.comp");
-    attach(SHADER_PROGRAM_PARTICLE_COMP, comp);
-    link(SHADER_PROGRAM_PARTICLE_COMP);
-    detach(SHADER_PROGRAM_PARTICLE_COMP, comp);
-    delete(comp);
-    shader_bind_uniform_block(SHADER_PROGRAM_PARTICLE_COMP, UBO_INDEX_MATRICES, "Camera");
-    shader_bind_uniform_block(SHADER_PROGRAM_PARTICLE_COMP, UBO_INDEX_WINDOW, "Window");
+    shader_bind_uniform_block(SHADER_PROGRAM_PARTICLE, UBO_INDEX_MATRICES, "Camera");
+    shader_bind_uniform_block(SHADER_PROGRAM_PARTICLE, UBO_INDEX_WINDOW, "Window");
 }
 
 static void compile_shader_program_projectile(void)
@@ -273,18 +241,6 @@ static void compile_shader_program_projectile(void)
     shader_use(SHADER_PROGRAM_NONE);
 }
 
-static void compile_shader_program_projectile_comp(void)
-{
-    u32 comp;
-    comp = compile(GL_COMPUTE_SHADER, "assets/shaders/projectile.comp");
-    attach(SHADER_PROGRAM_PROJECTILE_COMP, comp);
-    link(SHADER_PROGRAM_PROJECTILE_COMP);
-    detach(SHADER_PROGRAM_PROJECTILE_COMP, comp);
-    delete(comp);
-    shader_bind_uniform_block(SHADER_PROGRAM_PROJECTILE_COMP, UBO_INDEX_MATRICES, "Camera");
-    shader_bind_uniform_block(SHADER_PROGRAM_PROJECTILE_COMP, UBO_INDEX_WINDOW, "Window");
-}
-
 static void compile_shader_program_parjicle(void)
 {
     u32 vert, frag;
@@ -297,18 +253,8 @@ static void compile_shader_program_parjicle(void)
     detach(SHADER_PROGRAM_PARJICLE, frag);
     delete(vert);
     delete(frag);
-}
-
-static void compile_shader_program_parjicle_comp(void)
-{
-    u32 comp;
-    comp = compile(GL_COMPUTE_SHADER, "assets/shaders/parjicle.comp");
-    attach(SHADER_PROGRAM_PARJICLE_COMP, comp);
-    link(SHADER_PROGRAM_PARJICLE_COMP);
-    detach(SHADER_PROGRAM_PARJICLE_COMP, comp);
-    delete(comp);
-    shader_bind_uniform_block(SHADER_PROGRAM_PARJICLE_COMP, UBO_INDEX_MATRICES, "Camera");
-    shader_bind_uniform_block(SHADER_PROGRAM_PARJICLE_COMP, UBO_INDEX_WINDOW, "Window");
+    shader_bind_uniform_block(SHADER_PROGRAM_PARJICLE, UBO_INDEX_MATRICES, "Camera");
+    shader_bind_uniform_block(SHADER_PROGRAM_PARJICLE, UBO_INDEX_WINDOW, "Window");
 }
 
 static void compile_shader_program_shadow(void)
@@ -326,16 +272,6 @@ static void compile_shader_program_shadow(void)
     shader_bind_uniform_block(SHADER_PROGRAM_SHADOW, UBO_INDEX_MATRICES, "Camera");
 }
 
-static void compile_shader_program_shadow_comp(void)
-{
-    u32 comp;
-    comp = compile(GL_COMPUTE_SHADER, "assets/shaders/shadow.comp");
-    attach(SHADER_PROGRAM_SHADOW_COMP, comp);
-    link(SHADER_PROGRAM_SHADOW_COMP);
-    detach(SHADER_PROGRAM_SHADOW_COMP, comp);
-    delete(comp);
-}
-
 static void compile_shader_program_minimap_circle(void)
 {
     u32 vert, frag;
@@ -348,17 +284,6 @@ static void compile_shader_program_minimap_circle(void)
     detach(SHADER_PROGRAM_MINIMAP_CIRCLE, frag);
     delete(vert);
     delete(frag);
-}
-
-static void compile_shader_program_minimap_circle_comp(void)
-{
-    u32 comp;
-    comp = compile(GL_COMPUTE_SHADER, "assets/shaders/map_circle.comp");
-    attach(SHADER_PROGRAM_MINIMAP_CIRCLE_COMP, comp);
-    link(SHADER_PROGRAM_MINIMAP_CIRCLE_COMP);
-    detach(SHADER_PROGRAM_MINIMAP_CIRCLE_COMP, comp);
-    delete(comp);
-    shader_bind_uniform_block(SHADER_PROGRAM_MINIMAP_CIRCLE_COMP, UBO_INDEX_MINIMAP, "Minimap");
 }
 
 void shader_program_compile(ShaderProgramEnum program)
@@ -379,44 +304,23 @@ void shader_program_compile(ShaderProgramEnum program)
         case SHADER_PROGRAM_ENTITY:
             compile_shader_program_entity();
             break;
-        case SHADER_PROGRAM_ENTITY_COMP:
-            compile_shader_program_entity_comp();
-            break;
         case SHADER_PROGRAM_PROJECTILE:
             compile_shader_program_projectile();
-            break;
-        case SHADER_PROGRAM_PROJECTILE_COMP:
-            compile_shader_program_projectile_comp();
             break;
         case SHADER_PROGRAM_OBSTACLE:
             compile_shader_program_obstacle();
             break;
-        case SHADER_PROGRAM_OBSTACLE_COMP:
-            compile_shader_program_obstacle_comp();
-            break;
         case SHADER_PROGRAM_PARTICLE:
             compile_shader_program_particle();
-            break;
-        case SHADER_PROGRAM_PARTICLE_COMP:
-            compile_shader_program_particle_comp();
             break;
         case SHADER_PROGRAM_PARJICLE:
             compile_shader_program_parjicle();
             break;
-        case SHADER_PROGRAM_PARJICLE_COMP:
-            compile_shader_program_parjicle_comp();
-            break;
         case SHADER_PROGRAM_SHADOW:
             compile_shader_program_shadow();
             break;
-        case SHADER_PROGRAM_SHADOW_COMP:
-            compile_shader_program_shadow_comp();
-            break;
         case SHADER_PROGRAM_MINIMAP_CIRCLE:
             compile_shader_program_minimap_circle();
-            break;
-        case SHADER_PROGRAM_MINIMAP_CIRCLE_COMP:
-            compile_shader_program_minimap_circle_comp();
             break;
         default:
             log_write(INFO, "Unrecognized program %x\n", program);
@@ -435,19 +339,12 @@ void shader_init(void)
     shader_program_compile(SHADER_PROGRAM_WALL);
     shader_program_compile(SHADER_PROGRAM_GUI);
     shader_program_compile(SHADER_PROGRAM_ENTITY);
-    shader_program_compile(SHADER_PROGRAM_ENTITY_COMP);
     shader_program_compile(SHADER_PROGRAM_PROJECTILE);
-    shader_program_compile(SHADER_PROGRAM_PROJECTILE_COMP);
     shader_program_compile(SHADER_PROGRAM_OBSTACLE);
-    shader_program_compile(SHADER_PROGRAM_OBSTACLE_COMP);
     shader_program_compile(SHADER_PROGRAM_PARTICLE);
-    shader_program_compile(SHADER_PROGRAM_PARTICLE_COMP);
     shader_program_compile(SHADER_PROGRAM_PARJICLE);
-    shader_program_compile(SHADER_PROGRAM_PARJICLE_COMP);
     shader_program_compile(SHADER_PROGRAM_SHADOW);
-    shader_program_compile(SHADER_PROGRAM_SHADOW_COMP);
     shader_program_compile(SHADER_PROGRAM_MINIMAP_CIRCLE);
-    shader_program_compile(SHADER_PROGRAM_MINIMAP_CIRCLE_COMP);
 }
 
 void shader_use(ShaderProgramEnum id)
@@ -470,6 +367,6 @@ GLuint shader_get_uniform_location(ShaderProgramEnum program, const char* identi
 void shader_bind_uniform_block(ShaderProgramEnum program, u32 index, const char* identifier)
 {
     glUniformBlockBinding(shader_context.programs[program], 
-            glGetUniformBlockIndex(shader_context.programs[program], identifier), 
-            index);
+                          glGetUniformBlockIndex(shader_context.programs[program], identifier), 
+                          index);
 }
