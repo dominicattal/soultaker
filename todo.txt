@@ -13,3 +13,4 @@ optimize gl stuff
 - index buffers
 - ISQRT instead of SQRT
 - send izoom to shader isntead of zoom
+- do one pass instead of two for game shadows
