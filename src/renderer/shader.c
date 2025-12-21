@@ -284,6 +284,7 @@ static void compile_shader_program_minimap_circle(void)
     detach(SHADER_PROGRAM_MINIMAP_CIRCLE, frag);
     delete(vert);
     delete(frag);
+    shader_bind_uniform_block(SHADER_PROGRAM_MINIMAP_CIRCLE, UBO_INDEX_MINIMAP, "Minimap");
 }
 
 void shader_program_compile(ShaderProgramEnum program)
