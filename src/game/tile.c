@@ -16,11 +16,12 @@ void tile_clear(void)
         tile_destroy(list_remove(game_context.tiles, 0));
 }
 
-Tile* tile_create(vec2 position)
+Tile* tile_create(vec2 position, u32 minimap_color)
 {
     Tile* tile = st_malloc(sizeof(Tile));
     tile->collide = NULL;
     tile->position = position;
+    tile->minimap_color = minimap_color;
     tile->tex = texture_get_id("tile_1");
     tile->flags = 0;
     list_append(game_context.tiles, tile);

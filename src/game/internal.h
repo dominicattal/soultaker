@@ -102,7 +102,7 @@ void map_fog_clear(void);
 Entity* room_create_entity(vec2 position, i32 id);
 Obstacle* room_create_obstacle(vec2 position);
 Parstacle* room_create_parstacle(vec2 position);
-Wall* room_create_wall(vec2 position, f32 height, f32 width, f32 length);
+Wall* room_create_wall(vec2 position, f32 height, f32 width, f32 length, u32 minimap_color);
 
 //**************************************************************************
 // Entity, Player definitions
@@ -225,6 +225,7 @@ typedef struct Tile {
     TileCollideFuncPtr collide;
     vec2 position;
     i32 tex;
+    u32 minimap_color;
     u32 flags;
 } Tile;
 
@@ -243,7 +244,7 @@ void tile_init(void);
 void tile_clear(void);
 void tile_set_flag(Tile* tile, TileFlagEnum flag, u32 val);
 bool tile_get_flag(Tile* tile, TileFlagEnum flag);
-Tile* tile_create(vec2 position);
+Tile* tile_create(vec2 position, u32 minimap_color);
 void tile_destroy(Tile* tile);
 void tile_cleanup(void);
 void tile_lava_collision(Entity* entity);
@@ -257,11 +258,12 @@ typedef struct Wall {
     vec2 size;
     f32 height;
     i32 top_tex, side_tex;
+    u32 minimap_color;
 } Wall;
 
 void wall_init(void);
 void wall_clear(void);
-Wall* wall_create(vec2 position, f32 height);
+Wall* wall_create(vec2 position, f32 height, u32 minimap_color);
 void wall_destroy(Wall* wall);
 void wall_cleanup(void);
 
@@ -487,10 +489,10 @@ typedef struct GameApi {
     void (*entity_set_state)(Entity*, const char*);
 
     // Wall
-    Wall* (*wall_create)(vec2, f32);
+    Wall* (*wall_create)(vec2, f32, u32);
 
     // Tile
-    Tile* (*tile_create)(vec2);
+    Tile* (*tile_create)(vec2, u32);
     void (*tile_set_flag)(Tile*, TileFlagEnum, u32);
     bool (*tile_get_flag)(Tile*, TileFlagEnum);
 
@@ -502,7 +504,7 @@ typedef struct GameApi {
     Entity* (*room_create_entity)(vec2, i32);
     Obstacle* (*room_create_obstacle)(vec2);
     Parstacle* (*room_create_parstacle)(vec2);
-    Wall* (*room_create_wall)(vec2, f32, f32, f32);
+    Wall* (*room_create_wall)(vec2, f32, f32, f32, u32);
 
     // Misc
     i32 (*texture_get_id)(const char*);

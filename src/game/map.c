@@ -1238,13 +1238,13 @@ static void place_tile(Map* map, TileColor* tile_color, i32 x, i32 z)
     Wall* wall = NULL;
     vec2 position = vec2_create(x, z);
     if (tile_color->is_wall) {
-        wall = wall_create(position, tile_color->height);
+        wall = wall_create(position, tile_color->height, tile_color->color);
         wall->side_tex = tile_color->side_tex;
         wall->top_tex = tile_color->top_tex;
         quadmask_set(map->tile_mask, x, z);
         map->tiles[z * map->width + x] = wall;
     } else {
-        tile = tile_create(position);
+        tile = tile_create(position, tile_color->color);
         tile->tex = tile_color->tex;
         tile->collide = tile_color->collide;
         if (tile_color->create != NULL)
@@ -1653,7 +1653,7 @@ Parstacle* room_create_parstacle(vec2 position)
     return parstacle_create(new_position);
 }
 
-Wall* room_create_wall(vec2 position, f32 height, f32 width, f32 length)
+Wall* room_create_wall(vec2 position, f32 height, f32 width, f32 length, u32 minimap_color)
 {
     MapNode* node = map_context.current_map_node;
     if (node == NULL)
@@ -1671,7 +1671,7 @@ Wall* room_create_wall(vec2 position, f32 height, f32 width, f32 length)
     dz2 = calculate_room_fdz(room, orientation, u+width, v+length);
     new_position.x = node->origin_x + minf(dx1, dx2);
     new_position.z = node->origin_z + minf(dz1, dz2);
-    Wall* wall = wall_create(new_position, height);
+    Wall* wall = wall_create(new_position, height, minimap_color);
     i32 mod = orientation % 2;
     wall->size.x = width * (1-mod) + length * (mod); 
     wall->size.y = width * (mod) + length * (1-mod); 

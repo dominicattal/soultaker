@@ -12,12 +12,13 @@ layout (std140) uniform Minimap {
 layout (std430, binding = 0) readonly buffer Input {
     // vec2 position
     // float radius
-    // float size
+    // vec3 color
     float data_in[];
 };
 
 uniform int floats_per_vertex;
 out vec2 TexCoord;
+out vec3 Color;
 
 const int winding[] = {0, 1, 2, 1, 3, 2};
 const int tu[] = {0, 1, 0, 1};
@@ -30,9 +31,7 @@ void main() {
 
     int dx, dy;
     vec2 position = vec2(data_in[idx] - center.x, -data_in[idx+1] + center.y);
-    vec2 pos;
     float r = data_in[idx+2];
-    float size = data_in[idx+4];
     float s = sin(yaw-PI/2);
     float c = cos(yaw-PI/2);
 
@@ -48,4 +47,5 @@ void main() {
                 1.0f
             );
     TexCoord = vec2(tu[winding[vertex_idx]], tv[winding[vertex_idx]]);
+    Color = vec3(data_in[idx+3], data_in[idx+4], data_in[idx+5]);
 }

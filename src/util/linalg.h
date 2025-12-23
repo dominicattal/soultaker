@@ -5,9 +5,7 @@
 
 typedef struct {
     f32 x;
-    union {
-        f32 y, z;
-    };
+    union { f32 y, z; };
 } vec2;
 
 typedef struct {

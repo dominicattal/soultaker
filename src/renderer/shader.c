@@ -287,6 +287,21 @@ static void compile_shader_program_minimap_circle(void)
     shader_bind_uniform_block(SHADER_PROGRAM_MINIMAP_CIRCLE, UBO_INDEX_MINIMAP, "Minimap");
 }
 
+static void compile_shader_program_minimap_square(void)
+{
+    u32 vert, frag;
+    vert = compile(GL_VERTEX_SHADER, "assets/shaders/map_square.vert");
+    frag = compile(GL_FRAGMENT_SHADER, "assets/shaders/map_square.frag");
+    attach(SHADER_PROGRAM_MINIMAP_SQUARE, vert);
+    attach(SHADER_PROGRAM_MINIMAP_SQUARE, frag);
+    link(SHADER_PROGRAM_MINIMAP_SQUARE);
+    detach(SHADER_PROGRAM_MINIMAP_SQUARE, vert);
+    detach(SHADER_PROGRAM_MINIMAP_SQUARE, frag);
+    delete(vert);
+    delete(frag);
+    shader_bind_uniform_block(SHADER_PROGRAM_MINIMAP_SQUARE, UBO_INDEX_MINIMAP, "Minimap");
+}
+
 void shader_program_compile(ShaderProgramEnum program)
 {
     switch (program) {
@@ -323,6 +338,9 @@ void shader_program_compile(ShaderProgramEnum program)
         case SHADER_PROGRAM_MINIMAP_CIRCLE:
             compile_shader_program_minimap_circle();
             break;
+        case SHADER_PROGRAM_MINIMAP_SQUARE:
+            compile_shader_program_minimap_square();
+            break;
         default:
             log_write(INFO, "Unrecognized program %x\n", program);
             break;
@@ -346,6 +364,7 @@ void shader_init(void)
     shader_program_compile(SHADER_PROGRAM_PARJICLE);
     shader_program_compile(SHADER_PROGRAM_SHADOW);
     shader_program_compile(SHADER_PROGRAM_MINIMAP_CIRCLE);
+    shader_program_compile(SHADER_PROGRAM_MINIMAP_SQUARE);
 }
 
 void shader_use(ShaderProgramEnum id)
