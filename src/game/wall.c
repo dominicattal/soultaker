@@ -19,10 +19,11 @@ void wall_clear(void)
     list_clear(game_context.free_walls);
 }
 
-Wall* wall_create(vec2 position, f32 height)
+Wall* wall_create(vec2 position, f32 height, u32 minimap_color)
 {
     Wall* wall = st_malloc(sizeof(Wall));
     wall->position = position;
+    wall->minimap_color = minimap_color;
     wall->size = vec2_create(1, 1);
     wall->height = height;
     wall->top_tex = texture_get_id("wall_1");

@@ -110,16 +110,8 @@ static void update_player_stats(Player* player)
 
 void player_update(Player* player, f32 dt)
 {
-    vec3 pos;
     if (player->entity != NULL) {
         player->position = player->entity->position;
-        pos = vec3_create(player->position.x, 1.0, player->position.z);
-        Particle* part = particle_create(pos);
-        Parjicle* parj = parjicle_create(pos);
-        part->direction = vec3_create(1, 0, 0);
-        part->lifetime = 0.5;
-        parj->direction = vec3_create(-1, 0, 0);
-        parj->lifetime = 0.5;
         map_fog_explore(player->position);
     }
     update_player_state(player, dt);

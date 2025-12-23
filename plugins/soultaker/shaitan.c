@@ -24,7 +24,7 @@ st_export bool shaitan_branch(GameApi* api, void* data, LocalMapGenerationSettin
 static void create_bars(GameApi* api, i32 side_tex, i32 top_tex, vec2 position)
 {
     Wall* wall;
-    wall = api->room_create_wall(api->vec2_create(position.x, position.y+0.5), 1.5f, 1.0f, 0.0f);
+    wall = api->room_create_wall(api->vec2_create(position.x, position.y+0.5), 1.5f, 1.0f, 0.1f, 0xFF00FF);
     wall->side_tex = side_tex;
     wall->top_tex = top_tex;
 }

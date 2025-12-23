@@ -12,14 +12,16 @@
 #define OBSTACLE_FLOATS_PER_VERTEX      8
 #define PARTICLE_FLOATS_PER_VERTEX      7
 #define PARJICLE_FLOATS_PER_VERTEX      8
-#define MAP_CIRCLE_FLOATS_PER_VERTEX    4
+#define MAP_CIRCLE_FLOATS_PER_VERTEX    6
+#define MAP_SQUARE_FLOATS_PER_VERTEX    7
 #define SHADOW_FLOATS_PER_VERTEX        4
-#define MAP_QUAD_VERTEX_LENGTH          4
 
 typedef enum {
     VAO_QUAD,
     VAO_TILE,
     VAO_WALL,
+    VAO_TILE_MINIMAP,
+    VAO_WALL_MINIMAP,
     NUM_VAOS
 } GameVAOEnum;
 
@@ -28,15 +30,16 @@ typedef enum {
     VBO_TILE,
     VBO_WALL,
     SSBO_ENTITY,
+    SSBO_ENTITY_SHADOW,
+    SSBO_ENTITY_MINIMAP,
     SSBO_PROJECTILE,
     SSBO_OBSTACLE,
+    SSBO_OBSTACLE_MINIMAP,
     SSBO_PARSTACLE,
     SSBO_PARTICLE,
     SSBO_PARJICLE,
-    SSBO_ENTITY_SHADOW,
-    SSBO_ENTITY_MINIMAP,
-    VBO_TILE_MAP,
-    VBO_WALL_MAP,
+    VBO_TILE_MINIMAP,
+    VBO_WALL_MINIMAP,
     NUM_BUFFERS
 } GameBufferEnum;
 
@@ -241,7 +244,15 @@ static void update_entity_vertex_data(void)
         map_vb->buffer[j++] = entity->position.x;
         map_vb->buffer[j++] = entity->position.z;
         map_vb->buffer[j++] = entity->hitbox_radius;
-        map_vb->buffer[j++] = entity->size;
+        if (entity_get_flag(entity, ENTITY_FLAG_FRIENDLY)) {
+            map_vb->buffer[j++] = 0.0f;
+            map_vb->buffer[j++] = 1.0f;
+            map_vb->buffer[j++] = 0.0f;
+        } else {
+            map_vb->buffer[j++] = 1.0f;
+            map_vb->buffer[j++] = 0.0f;
+            map_vb->buffer[j++] = 0.0f;
+        }
     }
     map_vb->length = j;
     
@@ -307,9 +318,9 @@ static void update_tile_vertex_data(void)
     Tile* tile;
 
     vb = get_vertex_buffer_swap(VBO_TILE);
-    map_vb = get_vertex_buffer_swap(VBO_TILE);
+    map_vb = get_vertex_buffer_swap(VBO_TILE_MINIMAP);
     resize_vertex_buffer(vb, TILE_VERTEX_LENGTH * game_context.tiles->capacity);
-    resize_vertex_buffer(map_vb, MAP_QUAD_VERTEX_LENGTH * game_context.tiles->capacity);
+    resize_vertex_buffer(map_vb, MAP_SQUARE_FLOATS_PER_VERTEX * game_context.tiles->capacity);
 
     for (i = j = 0; i < game_context.tiles->length; i++) {
         tile = list_get(game_context.tiles, i);
@@ -331,7 +342,6 @@ static void update_tile_vertex_data(void)
             + (animate_vertical_pos<<2) + (animate_vertical_neg<<3);
     }
     vb->length = j;
-    return;
 
     for (i = j = 0; i < game_context.tiles->length; i++) {
         tile = list_get(game_context.tiles, i);
@@ -339,8 +349,11 @@ static void update_tile_vertex_data(void)
             continue;
         map_vb->buffer[j++] = tile->position.x;
         map_vb->buffer[j++] = tile->position.z;
-        map_vb->buffer[j++] = 1.0f;
-        map_vb->buffer[j++] = 1.0f;
+        map_vb->buffer[j++] = 1.0f; // tile width and height
+        map_vb->buffer[j++] = 1.0f; // always 1
+        map_vb->buffer[j++] = (((tile->minimap_color)>>16)&0xFF) / 255.0f;
+        map_vb->buffer[j++] = (((tile->minimap_color)>>8)&0xFF) / 255.0f;
+        map_vb->buffer[j++] = (tile->minimap_color&0xFF) / 255.0f;
     }
     map_vb->length = j;
 }
@@ -357,9 +370,9 @@ static void update_wall_vertex_data(void)
     Wall* wall;
 
     vb = get_vertex_buffer_swap(VBO_WALL);
-    map_vb = get_vertex_buffer_swap(VBO_WALL_MAP);
+    map_vb = get_vertex_buffer_swap(VBO_WALL_MINIMAP);
     resize_vertex_buffer(vb, WALL_VERTEX_LENGTH * game_context.walls->capacity);
-    resize_vertex_buffer(map_vb, MAP_QUAD_VERTEX_LENGTH * game_context.walls->capacity);
+    resize_vertex_buffer(map_vb, MAP_SQUARE_FLOATS_PER_VERTEX * game_context.walls->capacity);
 
     static f32 dx[] = {0, 0, 0, 0, 1, 1, 1, 1};
     static f32 dy[] = {0, 0, 1, 1, 0, 0, 1, 1};
@@ -408,9 +421,8 @@ static void update_wall_vertex_data(void)
         }
     }
     vb->length = j;
-    return;
 
-    for (i = j = 0; game_context.walls->length; i++) {
+    for (i = j = 0; i < game_context.walls->length; i++) {
         wall = list_get(game_context.walls, i);
         if (map_fog_contains_wall(wall))
             continue;
@@ -418,6 +430,9 @@ static void update_wall_vertex_data(void)
         map_vb->buffer[j++] = wall->position.z;
         map_vb->buffer[j++] = wall->size.x;
         map_vb->buffer[j++] = wall->size.z;
+        map_vb->buffer[j++] = (((wall->minimap_color)>>16)&0xFF) / 255.0f;
+        map_vb->buffer[j++] = (((wall->minimap_color)>>8)&0xFF) / 255.0f;
+        map_vb->buffer[j++] = (wall->minimap_color&0xFF) / 255.0f;
     }
     map_vb->length = j;
 }
@@ -457,6 +472,7 @@ static void update_parstacle_vertex_data(void)
 static void update_obstacle_vertex_data(void)
 {
     VertexBuffer* vb;
+    VertexBuffer* map_vb;
     Obstacle* obstacle;
     vec2 pivot, stretch;
     f32 u, v, w, h;
@@ -464,7 +480,9 @@ static void update_obstacle_vertex_data(void)
     i32 i, j;
 
     vb = get_vertex_buffer_swap(SSBO_OBSTACLE);
+    map_vb = get_vertex_buffer(SSBO_OBSTACLE_MINIMAP);
     resize_vertex_buffer(vb, OBSTACLE_FLOATS_PER_VERTEX * game_context.obstacles->capacity);
+    resize_vertex_buffer(map_vb, MAP_CIRCLE_FLOATS_PER_VERTEX * game_context.obstacles->capacity);
 
     i32 tex = texture_get_id("rock");
     texture_info(tex, &location, &u, &v, &w, &h, &pivot, &stretch);
@@ -482,8 +500,20 @@ static void update_obstacle_vertex_data(void)
         vb->buffer[j++] = h;
         vb->buffer[j++] = location;
     }
-
     vb->length = j;
+
+    for (i = j = 0; i < game_context.obstacles->length; i++) {
+        obstacle = list_get(game_context.obstacles, i);
+        if (map_fog_contains(obstacle->position))
+            continue;
+        map_vb->buffer[j++] = obstacle->position.x;
+        map_vb->buffer[j++] = obstacle->position.z;
+        map_vb->buffer[j++] = obstacle->size / 2;
+        map_vb->buffer[j++] = 1.0f;
+        map_vb->buffer[j++] = 0.5f;
+        map_vb->buffer[j++] = 0.5f;
+    }
+    map_vb->length = j;
 }
 
 static void update_particle_vertex_data(void)
@@ -584,6 +614,7 @@ void game_update_vertex_data(void)
     if (is_vertex_buffer_update(SSBO_OBSTACLE)) {
         update_obstacle_vertex_data();
         vertex_buffer_updated(SSBO_OBSTACLE);
+        vertex_buffer_updated(SSBO_OBSTACLE_MINIMAP);
     }
     if (is_vertex_buffer_update(SSBO_PARTICLE)) {
         update_particle_vertex_data();
@@ -596,10 +627,12 @@ void game_update_vertex_data(void)
     if (is_vertex_buffer_update(VBO_TILE)) {
         update_tile_vertex_data();
         vertex_buffer_updated(VBO_TILE);
+        vertex_buffer_updated(VBO_TILE_MINIMAP);
     }
     if (is_vertex_buffer_update(VBO_WALL)) {
         update_wall_vertex_data();
         vertex_buffer_updated(VBO_WALL);
+        vertex_buffer_updated(VBO_WALL_MINIMAP);
     }
 
     pthread_mutex_lock(&render_context.mutex);
@@ -620,6 +653,16 @@ static void render_tiles(void)
     glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, num_tiles);
 }
 
+static void render_minimap_tiles(void)
+{
+    Buffer* buffer = &render_context.buffers[VBO_TILE_MINIMAP];
+    i32 num_tiles = buffer->length / MAP_SQUARE_FLOATS_PER_VERTEX;
+    shader_use(SHADER_PROGRAM_MINIMAP_SQUARE);
+    glBindVertexArray(render_context.vaos[VAO_TILE_MINIMAP]);
+    glBindBuffer(GL_ARRAY_BUFFER, buffer->name);
+    glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, num_tiles);
+}
+
 static void render_walls(void)
 {
     Buffer* buffer = &render_context.buffers[VBO_WALL];
@@ -629,6 +672,16 @@ static void render_walls(void)
     glBindBuffer(GL_ARRAY_BUFFER, buffer->name);
     // 6 vertices per face, 5 faces, kind of a mess should fix this
     glDrawArrays(GL_TRIANGLES, 0, 6 * 5 * num_walls);
+}
+
+static void render_minimap_walls(void)
+{
+    Buffer* buffer = &render_context.buffers[VBO_WALL_MINIMAP];
+    i32 num_walls = buffer->length / MAP_SQUARE_FLOATS_PER_VERTEX;
+    shader_use(SHADER_PROGRAM_MINIMAP_SQUARE);
+    glBindVertexArray(render_context.vaos[VAO_WALL_MINIMAP]);
+    glBindBuffer(GL_ARRAY_BUFFER, buffer->name);
+    glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, num_walls);
 }
 
 static void render_entities(void)
@@ -669,6 +722,14 @@ static void render_obstacles(void)
     shader_use(SHADER_PROGRAM_OBSTACLE);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, buffer->name);
     glDrawArrays(GL_TRIANGLES, 0, 6 * buffer->length / OBSTACLE_FLOATS_PER_VERTEX);
+}
+
+static void render_minimap_obstacles(void)
+{
+    Buffer* buffer = get_buffer(SSBO_OBSTACLE_MINIMAP);
+    shader_use(SHADER_PROGRAM_MINIMAP_CIRCLE);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, buffer->name);
+    glDrawArrays(GL_TRIANGLES, 0, 6 * buffer->length / MAP_CIRCLE_FLOATS_PER_VERTEX);
 }
 
 static void render_parstacles(void)
@@ -720,6 +781,10 @@ void game_render_init(void)
     render_context.buffers[VBO_TILE].usage = GL_STATIC_DRAW;
     render_context.buffers[VBO_WALL].target = GL_ARRAY_BUFFER;
     render_context.buffers[VBO_WALL].usage = GL_STATIC_DRAW;
+    render_context.buffers[VBO_TILE_MINIMAP].target = GL_ARRAY_BUFFER;
+    render_context.buffers[VBO_TILE_MINIMAP].usage = GL_STATIC_DRAW;
+    render_context.buffers[VBO_WALL_MINIMAP].target = GL_ARRAY_BUFFER;
+    render_context.buffers[VBO_WALL_MINIMAP].usage = GL_STATIC_DRAW;
 
     glGenBuffers(1, &render_context.matrices_ubo);
     glBindBuffer(GL_UNIFORM_BUFFER, render_context.matrices_ubo);
@@ -772,6 +837,36 @@ void game_render_init(void)
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
     glEnableVertexAttribArray(3);
+
+    glBindVertexArray(render_context.vaos[VAO_TILE_MINIMAP]);
+    glBindBuffer(GL_ARRAY_BUFFER, render_context.buffers[VBO_QUAD].name);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (void*)0);
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, render_context.buffers[VBO_TILE_MINIMAP].name);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)0);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)(2 * sizeof(GLfloat)));
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)(4 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
+    glEnableVertexAttribArray(3);
+    glVertexAttribDivisor(1, 1);
+    glVertexAttribDivisor(2, 1);
+    glVertexAttribDivisor(3, 1);
+
+    glBindVertexArray(render_context.vaos[VAO_WALL_MINIMAP]);
+    glBindBuffer(GL_ARRAY_BUFFER, render_context.buffers[VBO_QUAD].name);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (void*)0);
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, render_context.buffers[VBO_WALL_MINIMAP].name);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)0);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)(2 * sizeof(GLfloat)));
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)(4 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
+    glEnableVertexAttribArray(3);
+    glVertexAttribDivisor(1, 1);
+    glVertexAttribDivisor(2, 1);
+    glVertexAttribDivisor(3, 1);
 
     shader_use(SHADER_PROGRAM_ENTITY);
     glUniform1i(shader_get_uniform_location(SHADER_PROGRAM_ENTITY, "floats_per_vertex"), ENTITY_FLOATS_PER_VERTEX);
@@ -882,6 +977,9 @@ void game_render(void)
     renderer_check_framebuffer_status(GL_FRAMEBUFFER, "minimap");
     glDrawBuffers(1, buffer);
     glClearBufferfv(GL_COLOR, 0, transparent);
+    render_minimap_tiles();
+    render_minimap_walls();
+    render_minimap_obstacles();
     render_minimap_entities();
 
     glEnable(GL_STENCIL_TEST);
@@ -926,7 +1024,7 @@ void game_render(void)
     glBindVertexArray(render_context.vaos[VAO_QUAD]);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     glStencilFunc(GL_NOTEQUAL, 1, 0x01);
-    render_shadow_entities();
+    //render_shadow_entities();
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glDisable(GL_STENCIL_TEST);
@@ -1017,7 +1115,6 @@ void game_render_cleanup(void)
     glDeleteRenderbuffers(1, &render_context.rbo);
     glDeleteBuffers(1, &render_context.matrices_ubo);
     glDeleteBuffers(1, &render_context.minimap_ubo);
-
     for (i32 i = 0; i < NUM_BUFFERS; i++) {
         glDeleteBuffers(1, &render_context.buffers[i].name);
         st_free(render_context.data->buffers[i].buffer);
