@@ -1094,6 +1094,8 @@ static MapNode* map_node_create(void)
     node->male_alternates = list_create();
     node->visited = false;
     node->cleared = false;
+    node->x1 = node->x2 = 0;
+    node->z1 = node->z2 = 0;
     return node;
 }
 
@@ -1621,10 +1623,8 @@ void map_fog_explore(vec2 position)
     if (!quadmask_in_bounds(map->fog_mask, x, z))
         return;
     node->visited = true;
-
-
     clear_map_node_fog(map, node);
-    // this should never occur since you move down tree
+    // this should never occur
     if (node->parent != NULL)
         clear_map_node_fog(map, node->parent);
     for (i32 i = 0; i < node->num_children; i++)
