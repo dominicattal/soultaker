@@ -52,6 +52,8 @@ void camera_init(void)
     game_context.camera.move_speed = DEFAULT_MOVESPEED;
     game_context.camera.rotate_speed = DEFAULT_ROTSPEED;
     game_context.camera.tilt_speed = DEFAULT_TILTSPEED;
+    game_context.camera.rotate_mag = 0;
+    game_context.camera.tilt_mag = 0;
     game_context.camera.follow = true;
     update_orientation_vectors();
     lock_onto_target();
@@ -59,10 +61,13 @@ void camera_init(void)
 
 void camera_update(void)
 {
+    camera_rotate();
+    camera_tilt();
+    update_orientation_vectors();
     lock_onto_target();
 }
 
-void camera_move(vec2 mag)
+void camera_update_direction(vec2 mag)
 {
     Entity* entity = game_context.player.entity;
     if (game_context.camera.follow && entity == NULL)
@@ -92,26 +97,32 @@ void camera_move(vec2 mag)
         game_context.camera.position = vec3_add(game_context.camera.position, dir3);
 }
 
-void camera_rotate(f32 mag)
+void camera_update_rotation(f32 mag)
 {
-    game_context.camera.yaw += mag * game_context.camera.rotate_speed;
+    game_context.camera.rotate_mag = mag;
+}
+
+void camera_update_tilt(f32 mag)
+{
+    game_context.camera.tilt_mag = mag;
+}
+
+void camera_rotate(void)
+{
+    game_context.camera.yaw += game_context.camera.rotate_speed * game_context.camera.rotate_mag * game_context.dt;
     if (game_context.camera.yaw > 2 * PI)
         game_context.camera.yaw -= 2 * PI;
     else if (game_context.camera.yaw < 0)
         game_context.camera.yaw += 2 * PI;
-    update_orientation_vectors();
-    lock_onto_target();
 }
 
-void camera_tilt(f32 mag)
+void camera_tilt(void)
 {
-    game_context.camera.pitch += mag * game_context.camera.tilt_speed;
+    game_context.camera.pitch += game_context.camera.tilt_speed * game_context.camera.tilt_mag * game_context.dt;
     if (game_context.camera.pitch > MAX_PITCH - EPSILON)
         game_context.camera.pitch = MAX_PITCH - EPSILON;
     else if (game_context.camera.pitch < MIN_PITCH + EPSILON)
         game_context.camera.pitch = MIN_PITCH + EPSILON;
-    update_orientation_vectors();
-    lock_onto_target();
 }
 
 void camera_zoom(i32 mag)

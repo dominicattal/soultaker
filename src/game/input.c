@@ -37,8 +37,8 @@ void game_process_input(f32 dt)
         game_context.player.shooting = true;
 
 update:
-    event_create_game_camera_move(vec2_scale(vec2_normalize(move_mag), dt));
-    event_create_game_camera_rotate(rotate_mag * dt);
-    event_create_game_camera_tilt(tilt_mag * dt);
+    event_create_game_camera_update_direction(move_mag);
+    event_create_game_camera_update_rotation(rotate_mag);
+    event_create_game_camera_update_tilt(tilt_mag);
 }
 

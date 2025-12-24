@@ -9,9 +9,9 @@ typedef enum {
 
     // Game Events
     GAME_EVENT_MAP_LOAD,
-    GAME_EVENT_CAMERA_MOVE,
-    GAME_EVENT_CAMERA_ROTATE,
-    GAME_EVENT_CAMERA_TILT,
+    GAME_EVENT_CAMERA_UPDATE_DIRECTION,
+    GAME_EVENT_CAMERA_UPDATE_ROTATE,
+    GAME_EVENT_CAMERA_UPDATE_TILT,
     GAME_EVENT_SWAP_WEAPONS,
     GAME_EVENT_SUMMON,
     GAME_EVENT_RESPAWN,
@@ -114,14 +114,14 @@ static void execute_event(Event event)
         case GAME_EVENT_MAP_LOAD:
             map_load(arg1._int);
             break;
-        case GAME_EVENT_CAMERA_MOVE:
-            camera_move(vec2_create(arg1._flt, arg2._flt));
+        case GAME_EVENT_CAMERA_UPDATE_DIRECTION:
+            camera_update_direction(vec2_create(arg1._flt, arg2._flt));
             break;
-        case GAME_EVENT_CAMERA_ROTATE:
-            camera_rotate(arg1._flt);
+        case GAME_EVENT_CAMERA_UPDATE_ROTATE:
+            camera_update_rotation(arg1._flt);
             break;
-        case GAME_EVENT_CAMERA_TILT:
-            camera_tilt(arg1._flt);
+        case GAME_EVENT_CAMERA_UPDATE_TILT:
+            camera_update_tilt(arg1._flt);
             break;
         case GAME_EVENT_SWAP_WEAPONS:
             player_swap_weapons();
@@ -204,10 +204,10 @@ void event_create_game_map_load(i32 map_id)
     event_enqueue(queue, event);
 }
 
-void event_create_game_camera_move(vec2 mag)
+void event_create_game_camera_update_direction(vec2 mag)
 {
     Event event = (Event) {
-        .type = GAME_EVENT_CAMERA_MOVE,
+        .type = GAME_EVENT_CAMERA_UPDATE_DIRECTION,
         .arg1._flt = mag.x,
         .arg2._flt = mag.y
     };
@@ -215,20 +215,20 @@ void event_create_game_camera_move(vec2 mag)
     event_enqueue(queue, event);
 }
 
-void event_create_game_camera_rotate(f32 mag)
+void event_create_game_camera_update_rotation(f32 mag)
 {
     Event event = (Event) {
-        .type = GAME_EVENT_CAMERA_ROTATE,
+        .type = GAME_EVENT_CAMERA_UPDATE_ROTATE,
         .arg1._flt = mag,
     };
     EventQueue* queue = get_event_queue("Game");
     event_enqueue(queue, event);
 }
 
-void event_create_game_camera_tilt(f32 mag)
+void event_create_game_camera_update_tilt(f32 mag)
 {
     Event event = (Event) {
-        .type = GAME_EVENT_CAMERA_TILT,
+        .type = GAME_EVENT_CAMERA_UPDATE_TILT,
         .arg1._flt = mag,
     };
     EventQueue* queue = get_event_queue("Game");

@@ -6,6 +6,11 @@
 #include <windows.h>
 #include <stb_image.h>
 
+// Think of the map like a tree with rooms as nodes.
+// Spawn room is like the root of the tree, and there are
+// branches the player may go down that may lead to an event
+// or a boss room.
+
 #define DEFAULT_WALL_HEIGHT 1.5f
 #define MAP_MAX_WIDTH   512
 #define MAP_MAX_LENGTH  512
@@ -68,11 +73,6 @@ typedef struct {
     RoomsetBranchFuncPtr branch;
     RoomsetCleanupFuncPtr cleanup;
 } Roomset;
-
-// Think of the map like a tree with rooms as nodes.
-// Spawn room is like the root of the tree, and there are
-// branches the player may go down that may lead to an event
-// or a boss room.
 
 typedef struct MapNode MapNode;
 
