@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -MMD -Wall -Wextra -Werror -Wfatal-errors -Wno-cast-function-type -Wno-unused-parameter \
 		 -Wno-stringop-overflow -Wno-use-after-free -finline-functions -fopenmp -pthread \
-		 -Wno-unused-function -Iinclude
+		 -Iinclude
 CFLAGS_DEV = -g3 -D DEBUG_BUILD
 CFLAGS_RELEASE = -O2 -D RELEASE_BUILD
 LINKER_FLAGS = -Llib -lm -lglfw3dll -lOpenAL32 -lsndfile
