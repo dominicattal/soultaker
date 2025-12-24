@@ -1184,17 +1184,17 @@ static bool pregenerate_map_helper(GlobalMapGenerationSettings* global_settings,
                     local_settings.male_z = origin_z + dz;
                     if (pregenerate_map_helper(global_settings, local_settings, child)) {
                         local_settings.num_rooms_loaded++;
-                        if (roomset->branch(&game_api, global_settings->data, &local_settings))
+                        if (roomset->branch(&game_api, global_settings->data, &local_settings)) {
+                            male_idx = 0;
                             continue;
-                        break;
+                        }
+                        goto success;
                     } else {
                         unpreload_room_alternate(&args);
                         list_idx = list_search(child->male_alternates, male_alternate);
                         list_remove(child->male_alternates, list_idx);
                     }
                 }
-                if (local_settings.num_rooms_loaded > 0)
-                    goto success;
 no_path:
                 local_settings.no_path = true;
                 if (pregenerate_map_helper(global_settings, local_settings, child))

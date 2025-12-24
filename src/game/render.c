@@ -702,6 +702,7 @@ static void render_minimap_entities(void)
 
 static void render_shadow_entities(void)
 {
+    return;
     Buffer* buffer = get_buffer(SSBO_ENTITY_SHADOW);
     shader_use(SHADER_PROGRAM_SHADOW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, buffer->name);
@@ -1024,7 +1025,7 @@ void game_render(void)
     glBindVertexArray(render_context.vaos[VAO_QUAD]);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     glStencilFunc(GL_NOTEQUAL, 1, 0x01);
-    //render_shadow_entities();
+    render_shadow_entities();
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glDisable(GL_STENCIL_TEST);
