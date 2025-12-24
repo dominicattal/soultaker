@@ -30,6 +30,7 @@ typedef struct Parjicle Parjicle;
 typedef struct Camera {
     f32 yaw, pitch, zoom, fov;
     f32 move_speed, rotate_speed, tilt_speed;
+    f32 rotate_mag, tilt_mag;
     vec3 position, facing, right, up;
     vec2 target;
     bool follow;
@@ -50,11 +51,11 @@ void camera_update(void);
 void camera_framebuffer_size_callback(void);
 void camera_zoom(i32 mag);
 
-// Alter camera by magnitude specified. These values
-// are taken as-is.
-void camera_move(vec2 mag);
-void camera_rotate(f32 mag);
-void camera_tilt(f32 mag);
+void camera_update_direction(vec2 mag);
+void camera_update_rotation(f32 mag);
+void camera_update_tilt(f32 mag);
+void camera_rotate(void);
+void camera_tilt(void);
 
 //**************************************************************************
 // Maps. See docs/maps.md for more information
