@@ -19,6 +19,8 @@
 #define BLACK   0x000000
 
 typedef void (*RoomCreateFuncPtr)(GameApi*);
+typedef void (*RoomEnterFuncPtr)(GameApi*);
+typedef void (*RoomExitFuncPtr)(GameApi*);
 typedef void (*TileCreateFuncPtr)(GameApi*, Tile*);
 typedef void* (*RoomsetInitFuncPtr)(GameApi*);
 // true if at end of branch, false otherwise
@@ -53,11 +55,13 @@ typedef struct {
     TileColor* default_tile;
 } Alternate;
 
-typedef struct {
+typedef struct Room {
     i32 u1, v1, u2, v2;
     const char* name;
     const char* type;
     RoomCreateFuncPtr create;
+    RoomEnterFuncPtr enter;
+    RoomExitFuncPtr exit;
     List* male_alternates;
     List* female_alternates;
 } Room;
@@ -74,8 +78,6 @@ typedef struct {
     RoomsetCleanupFuncPtr cleanup;
 } Roomset;
 
-typedef struct MapNode MapNode;
-
 typedef struct {
     Quadmask* qm;
     Roomset* roomset;
@@ -85,10 +87,10 @@ typedef struct {
 typedef struct MapNode {
     MapNode* parent;
     MapNode** children;
-    i32 num_children;
     Room* room;
     Alternate* female_alternate;
     List* male_alternates;
+    i32 num_children;
     i32 origin_x, origin_z;
     i32 x1, x2, z1, z2;
     i32 orientation;
@@ -96,8 +98,9 @@ typedef struct MapNode {
     bool cleared;
 } MapNode;
 
-typedef struct {
+typedef struct Map {
     i32 width, length;
+    Roomset* roomset;
     MapNode* root;
     void** tiles;
     MapNode** map_nodes;
@@ -112,6 +115,8 @@ typedef struct {
     JsonObject* json;
 
     Map* current_map;
+
+    // map generating / map events
     MapNode* current_map_node;
     
     // error handling
@@ -184,8 +189,9 @@ static JsonArray* get_array_value(JsonObject* object, const char* string)
 
 static void load_palette_color(JsonObject* object, TileColor* tile)
 {
+    const size_t HEX_LENGTH = 6;
     const char* string = get_string_value(object, "color");
-    if (strlen(string) != 6)
+    if (strlen(string) != HEX_LENGTH)
         throw_map_error(ERROR_INVALID_VALUE);
     tile->color = strtol(string, NULL, 16);
 }
@@ -382,11 +388,38 @@ static void parse_room_bounding_box(JsonObject* object, Room* room)
 
 static void parse_room_create(JsonObject* object, Room* room)
 {
-    const char* string;
-    string = get_string_value(object, "create");
-    room->create = state_load_function(string);
-    if (room->create == NULL)
-        throw_map_error(ERROR_GENERIC);
+    JsonValue* value;
+    room->create = NULL;
+    value = json_get_value(object, "create");
+    if (value == NULL) 
+        return;
+    if (json_get_type(value) != JTYPE_STRING)
+        return;
+    room->create = state_load_function(json_get_string(value));
+}
+
+static void parse_room_enter(JsonObject* object, Room* room)
+{
+    JsonValue* value;
+    room->enter = NULL;
+    value = json_get_value(object, "enter");
+    if (value == NULL) 
+        return;
+    if (json_get_type(value) != JTYPE_STRING)
+        return;
+    room->enter = state_load_function(json_get_string(value));
+}
+
+static void parse_room_exit(JsonObject* object, Room* room)
+{
+    JsonValue* value;
+    room->exit = NULL;
+    value = json_get_value(object, "exit");
+    if (value == NULL) 
+        return;
+    if (json_get_type(value) != JTYPE_STRING)
+        return;
+    room->exit = state_load_function(json_get_string(value));
 }
 
 static void parse_room_type(JsonObject* object, Room* room)
@@ -659,6 +692,8 @@ static Roomset* roomset_create(JsonObject* root, const char* path, Palette* pale
 
         parse_room_bounding_box(object, room);
         parse_room_create(object, room);
+        parse_room_enter(object, room);
+        parse_room_exit(object, room);
         parse_room_type(object, room);
         parse_room_alternates(object, palette, room);
 
@@ -1477,6 +1512,7 @@ static void generate_map(i32 id)
     map->width = MAP_MAX_WIDTH;
     map->length = MAP_MAX_LENGTH;
     map->root = root;
+    map->roomset = roomset;
     map->tile_mask = quadmask_create(MAP_MAX_WIDTH, MAP_MAX_LENGTH);
     map->fog_mask = quadmask_create(MAP_MAX_WIDTH, MAP_MAX_LENGTH);
     map->tiles = st_calloc(map->width * map->length, sizeof(void*));
@@ -1490,7 +1526,6 @@ static void generate_map(i32 id)
     game_set_player_position(vec2_create(MAP_MAX_WIDTH / 2 + 0.5, MAP_MAX_LENGTH / 2 + 0.5));
 
     palette_destroy(palette);
-    roomset_destroy(roomset);
     quadmask_destroy(qm);
 }
 
@@ -1547,6 +1582,24 @@ bool map_fog_contains_wall(Wall* wall)
     return map_fog_contains(wall->position);
 }
 
+static void current_map_node_exit(void)
+{
+    if (map_context.current_map_node == NULL)
+        return;
+    if (map_context.current_map_node->room->exit == NULL)
+        return;
+    map_context.current_map_node->room->exit(&game_api);
+}
+
+static void current_map_node_enter(void)
+{
+    if (map_context.current_map_node == NULL)
+        return;
+    if (map_context.current_map_node->room->enter == NULL)
+        return;
+    map_context.current_map_node->room->enter(&game_api);
+}
+
 void map_fog_explore(vec2 position)
 {
     Map* map = map_context.current_map;
@@ -1558,12 +1611,20 @@ void map_fog_explore(vec2 position)
     MapNode* node = get_map_node(map, x, z);
     if (node == NULL)
         return;
+    if (map_context.current_map_node != node) {
+        current_map_node_exit();
+        map_context.current_map_node = node;
+        current_map_node_enter();
+    }
     if (node->visited) 
         return;
     if (!quadmask_in_bounds(map->fog_mask, x, z))
         return;
     node->visited = true;
+
+
     clear_map_node_fog(map, node);
+    // this should never occur since you move down tree
     if (node->parent != NULL)
         clear_map_node_fog(map, node->parent);
     for (i32 i = 0; i < node->num_children; i++)
@@ -1597,9 +1658,11 @@ static void clear_map(void)
     quadmask_destroy(map->tile_mask);
     quadmask_destroy(map->fog_mask);
     map_node_destroy(map->root);
+    roomset_destroy(map->roomset);
     st_free(map);
 
     map_context.current_map = NULL;
+    map_context.current_map_node = NULL;
 }
 
 Entity* room_create_entity(vec2 position, i32 id)

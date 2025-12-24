@@ -52,6 +52,8 @@ There is no hard limit to the size of a map.
             "spawn_point": [x, y],
             "location": [x, y, w, h],
             "create": "map_name_spawn_room_create",
+            "enter": "map_name_spawn_room_enter",
+            "exit": "map_name_spawn_room_exit",
             "type": "spawn",
         },
         "enemy_room_1": {
@@ -83,7 +85,11 @@ The first ```load``` field is a function name that is called when the map is loa
 
 The ```palette``` field contains zero or more colors (formatted as shown above) that correspond to a unit on the map, where a unit is a tile or a wall. Tiles require the ```tex``` field and walls require the ```side_tex``` and ```top_tex``` fields, where the values in these fields are texture names described in the textures.json config file. The ```collide``` field is optional and contains a collision function for that tile. The ```create``` field is optional and contains a create function for when the tile is first made, which is how you set flags for the tile. The ```height``` specifies the height if the tile is a wall; otherwise, this value will be ignored.
 
-The ```create``` field described in each room are function names that are called when that room is loaded in, which is used to populate rooms with enemies, obstacles, or more walls. These fields are optional.
+The ```create``` field described in each room are function names that are called when that room is loaded in, which is used to populate rooms with enemies, obstacles, or more walls. This field is optional.
+
+The ```enter``` field is the name of the function to call when a player enters the room.
+
+The ```exit``` field is the name of the function to call when a player exits the room.
 
 The ```location``` field described in each room are UV coordinates that encompasses the room in the image file described in the "path" field.
 
