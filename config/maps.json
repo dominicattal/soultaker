@@ -105,6 +105,7 @@
             "spawn": {
                 "bounding_box": [0, 0, 14, 14],
                 "create": "level_1_spawn_create",
+                "exit": "level_1_spawn_exit",
                 "type": "spawn",
                 "alternates": [
                     {

@@ -22,6 +22,8 @@ typedef struct Parstacle Parstacle;
 typedef struct Obstacle Obstacle;
 typedef struct Particle Particle;
 typedef struct Parjicle Parjicle;
+typedef struct MapNode MapNode;
+typedef struct LocalMapGenerationSettings LocalMapGenerationSettings;
 
 //**************************************************************************
 // Camera definitions
@@ -61,7 +63,7 @@ void camera_tilt(void);
 // Maps. See docs/maps.md for more information
 //**************************************************************************
 
-typedef struct {
+typedef struct LocalMapGenerationSettings {
     const char* current_branch;
     const char* current_room_type;
     i32 num_rooms_left;
