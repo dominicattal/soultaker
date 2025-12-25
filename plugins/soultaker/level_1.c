@@ -2,12 +2,13 @@
 #include <string.h>
 
 typedef struct {
-    int num_branches;
-} GenerationData;
+    i32 num_branches;
+    i32 global_int;
+} LevelData;
 
 st_export void* level_1_init(GameApi* api)
 {
-    GenerationData* data = api->st_malloc(sizeof(GenerationData));
+    LevelData* data = api->st_malloc(sizeof(LevelData));
     data->num_branches = 0;
     return data;
 }
@@ -45,7 +46,7 @@ st_export bool level_1_generate(GameApi* api, LocalMapGenerationSettings* settin
 
 st_export bool level_1_branch(GameApi* api, void* data, LocalMapGenerationSettings* settings)
 {
-    GenerationData* gdata = data;
+    LevelData* gdata = data;
     if (gdata->num_branches == 3)
         return false;
     int roll = rand() % 10;
@@ -59,19 +60,19 @@ st_export bool level_1_branch(GameApi* api, void* data, LocalMapGenerationSettin
     return false;
 }
 
-st_export void level_1_spawn_create(GameApi* api)
+st_export void level_1_spawn_create(GameApi* api, LevelData* data)
 {
 }
 
-st_export void level_1_spawn_exit(GameApi* api)
+st_export void level_1_spawn_exit(GameApi* api, LevelData* data)
 {
-    //api->log_write(DEBUG, "AAAA");
+    api->log_write(DEBUG, "%d", data->num_branches);
     Wall* wall = api->room_create_wall(api->vec2_create(5.0, 5.0), 2.0f, 0.75f, 0.75f, 0xFFFF00);
     wall->side_tex = api->texture_get_id("level_1_wall_1_side");
     wall->top_tex = api->texture_get_id("level_1_wall_2_top");
 }
 
-st_export void level_1_enemy_1_create(GameApi* api)
+st_export void level_1_enemy_1_create(GameApi* api, LevelData* data)
 {
     i32 id = api->entity_get_id("dummy");
     vec2 pos = api->vec2_create(10, 4);
@@ -82,11 +83,11 @@ st_export void level_1_enemy_1_create(GameApi* api)
     api->room_create_parstacle(pos);
 }
 
-st_export void level_1_enemy_2_create(GameApi* api)
+st_export void level_1_enemy_2_create(GameApi* api, LevelData* data)
 {
 }
 
-st_export void level_1_boss_create(GameApi* api)
+st_export void level_1_boss_create(GameApi* api, LevelData* data)
 {
 }
 

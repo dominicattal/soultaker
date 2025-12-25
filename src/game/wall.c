@@ -32,18 +32,9 @@ Wall* wall_create(vec2 position, f32 height, u32 minimap_color)
     return wall;
 }
 
-void wall_update_free_walls(void)
+void wall_add_free_wall(Wall* wall)
 {
-    Wall* wall;
-    i32 x, z;
-    list_clear(game_context.free_walls);
-    for (i32 i = 0; i < game_context.walls->length; i++) {
-        wall = list_get(game_context.walls, i);
-        x = round(wall->position.x);
-        z = round(wall->position.z);
-        if (map_get_wall(x, z) != wall)
-            list_append(game_context.free_walls, wall);
-    }
+    list_append(game_context.free_walls, wall);
 }
 
 void wall_destroy(Wall* wall)

@@ -18,9 +18,9 @@
 #define GRAY    0x808080
 #define BLACK   0x000000
 
-typedef void (*RoomCreateFuncPtr)(GameApi*);
-typedef void (*RoomEnterFuncPtr)(GameApi*);
-typedef void (*RoomExitFuncPtr)(GameApi*);
+typedef void (*RoomCreateFuncPtr)(GameApi*, void*);
+typedef void (*RoomEnterFuncPtr)(GameApi*, void*);
+typedef void (*RoomExitFuncPtr)(GameApi*, void*);
 typedef void (*TileCreateFuncPtr)(GameApi*, Tile*);
 typedef void* (*RoomsetInitFuncPtr)(GameApi*);
 // true if at end of branch, false otherwise
@@ -68,9 +68,10 @@ typedef struct Room {
 
 typedef struct {
     i32 width, length;
-    u32* data;
+    u32* pixels;
     Room* rooms;
     i32 num_rooms;
+    void* data;
     Palette* palette;
     RoomsetInitFuncPtr init;
     RoomsetGenerateFuncPtr generate;
@@ -81,14 +82,13 @@ typedef struct {
 typedef struct {
     Quadmask* qm;
     Roomset* roomset;
-    void* data;
 } GlobalMapGenerationSettings;
 
 typedef struct MapNode {
     MapNode* parent;
     MapNode** children;
-    Room* room;
     Alternate* female_alternate;
+    Room* room;
     List* male_alternates;
     i32 num_children;
     i32 origin_x, origin_z;
@@ -631,7 +631,7 @@ static Roomset* roomset_create(JsonObject* root, const char* path, Palette* pale
     Room* room;
     i32 num_rooms;
     i32 x, y, n, i, j, idx;
-    u32* roomset_data;
+    u32* pixels;
     RoomsetInitFuncPtr init;
     RoomsetGenerateFuncPtr generate;
     RoomsetBranchFuncPtr branch;
@@ -668,11 +668,11 @@ static Roomset* roomset_create(JsonObject* root, const char* path, Palette* pale
     raw_data = stbi_load(path, &x, &y, &n, 3);
     if (raw_data == NULL)
         log_write(FATAL, "Could not load map data for %s", path);
-    roomset_data = st_malloc(x * y * sizeof(u32));
+    pixels = st_malloc(x * y * sizeof(u32));
     for (i = 0; i < y; i++) {
         for (j = 0; j < x; j++) {
             idx = i * x + j;
-            roomset_data[idx] = raw_data[3*idx+2] + (raw_data[3*idx+1]<<8) + (raw_data[3*idx]<<16);
+            pixels[idx] = raw_data[3*idx+2] + (raw_data[3*idx+1]<<8) + (raw_data[3*idx]<<16);
         }
     }
     stbi_image_free(raw_data);
@@ -697,7 +697,7 @@ static Roomset* roomset_create(JsonObject* root, const char* path, Palette* pale
         parse_room_type(object, room);
         parse_room_alternates(object, palette, room);
 
-        if (!verify_room_alternates(room, roomset_data, x, y))
+        if (!verify_room_alternates(room, pixels, x, y))
             throw_map_error(ERROR_MISSING);
 
         json_iterator_increment(it);
@@ -707,7 +707,7 @@ static Roomset* roomset_create(JsonObject* root, const char* path, Palette* pale
     roomset = st_malloc(sizeof(Roomset));
     roomset->rooms = rooms;
     roomset->num_rooms = num_rooms;
-    roomset->data = roomset_data;
+    roomset->pixels = pixels;
     roomset->width = x;
     roomset->length = y;
     roomset->palette = palette;
@@ -715,13 +715,14 @@ static Roomset* roomset_create(JsonObject* root, const char* path, Palette* pale
     roomset->branch = branch;
     roomset->init = init;
     roomset->cleanup = cleanup;
+    roomset->data = roomset->init(&game_api);
 
     return roomset;
 }
 
 static u32 roomset_get_color(Roomset* roomset, i32 u, i32 v)
 {
-    return roomset->data[v * roomset->width + u];
+    return roomset->pixels[v * roomset->width + u];
 }
 
 static List* roomset_get_rooms(Roomset* roomset, const char* type)
@@ -741,6 +742,7 @@ static void roomset_destroy(Roomset* roomset)
 {
     List* list;
     i32 i, j;
+    roomset->cleanup(&game_api, roomset->data);
     for (i = 0; i < roomset->num_rooms; i++) {
         list = roomset->rooms[i].male_alternates;
         for (j = 0; j < list->length; j++)
@@ -752,7 +754,7 @@ static void roomset_destroy(Roomset* roomset)
         list_destroy(list);
     }
     st_free(roomset->rooms);
-    st_free(roomset->data);
+    st_free(roomset->pixels);
     st_free(roomset);
 }
 
@@ -1221,7 +1223,7 @@ static bool pregenerate_map_helper(GlobalMapGenerationSettings* global_settings,
                     local_settings.male_z = origin_z + dz;
                     if (pregenerate_map_helper(global_settings, local_settings, child)) {
                         local_settings.num_rooms_loaded++;
-                        if (roomset->branch(&game_api, global_settings->data, &local_settings)) {
+                        if (roomset->branch(&game_api, roomset->data, &local_settings)) {
                             male_idx = 0;
                             continue;
                         }
@@ -1334,7 +1336,7 @@ static void load_room(LoadArgs* args)
     }
     if (room->create != NULL) {
         map_context.current_map_node = node;
-        room->create(&game_api);
+        room->create(&game_api, map->roomset->data);
         map_context.current_map_node = NULL;
     }
 }
@@ -1494,7 +1496,6 @@ static void generate_map(i32 id)
 
     global_settings.qm = qm;
     global_settings.roomset = roomset;
-    global_settings.data = roomset->init(&game_api);
     local_settings.current_branch = "main";
     local_settings.current_room_type = "spawn";
     local_settings.num_rooms_left = 1;
@@ -1507,8 +1508,6 @@ static void generate_map(i32 id)
 
     if (!pregenerate_map_helper(&global_settings, local_settings, root))
         throw_map_error(ERROR_GENERIC);
-
-    roomset->cleanup(&game_api, global_settings.data);
 
     map = st_malloc(sizeof(Map));
     map->width = MAP_MAX_WIDTH;
@@ -1590,7 +1589,7 @@ static void current_map_node_exit(void)
         return;
     if (map_context.current_map_node->room->exit == NULL)
         return;
-    map_context.current_map_node->room->exit(&game_api);
+    map_context.current_map_node->room->exit(&game_api, map_context.current_map->roomset->data);
 }
 
 static void current_map_node_enter(void)
@@ -1599,7 +1598,7 @@ static void current_map_node_enter(void)
         return;
     if (map_context.current_map_node->room->enter == NULL)
         return;
-    map_context.current_map_node->room->enter(&game_api);
+    map_context.current_map_node->room->enter(&game_api, map_context.current_map->roomset->data);
 }
 
 void map_fog_explore(vec2 position)
@@ -1738,6 +1737,7 @@ Wall* room_create_wall(vec2 position, f32 height, f32 width, f32 length, u32 min
     i32 mod = orientation % 2;
     wall->size.x = width * (1-mod) + length * (mod); 
     wall->size.y = width * (mod) + length * (1-mod); 
+    wall_add_free_wall(wall);
     return wall;
 }
 
@@ -1823,7 +1823,6 @@ void map_load(i32 id)
 
     clear_map();
     generate_map(id);
-    wall_update_free_walls();
     log_write(DEBUG, "loaded");
 }
 

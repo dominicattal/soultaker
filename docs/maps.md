@@ -30,7 +30,11 @@ There is no hard limit to the size of a map.
 ```
 "map_name" {
     "path": "assets/maps/map_name.png",
-    "load": "map_name_load",
+    "generate": "map_name_generate",
+    "cleanup": "map_name_cleanup",
+    "branch": "map_name_branch",
+    "init": "map_name_init",
+    "cleanup": "map_name_cleanup",
     "palette": {
         "tile_name": {
             "color": "FF0000",
@@ -81,7 +85,10 @@ There is no hard limit to the size of a map.
 ```
 The ```path``` field contains the path to the image file used for loading the rooms.
 
-The first ```load``` field is a function name that is called when the map is loaded in, which can be used to tinker with the generation settings. This field is optional.
+The ```generate_init``` field is a function name that is called before generating the map. It returns a void pointer.
+The ```generate_cleanup``` field is a function name that is called after generating the map.
+The first ```generate``` field is a function name that determines whether a room should be loaded or not. You can use the data in the ```LocalMapGenerationSettings``` struct and the data in your own struct passed from ```generate_init``` to make this decision.
+These fields are all optional.
 
 The ```palette``` field contains zero or more colors (formatted as shown above) that correspond to a unit on the map, where a unit is a tile or a wall. Tiles require the ```tex``` field and walls require the ```side_tex``` and ```top_tex``` fields, where the values in these fields are texture names described in the textures.json config file. The ```collide``` field is optional and contains a collision function for that tile. The ```create``` field is optional and contains a create function for when the tile is first made, which is how you set flags for the tile. The ```height``` specifies the height if the tile is a wall; otherwise, this value will be ignored.
 
