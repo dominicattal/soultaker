@@ -5,7 +5,6 @@
         "cleanup": "shaitan_cleanup",
         "generate": "shaitan_generate",
         "branch": "shaitan_branch",
-        "load": "shaitan_load",
         "palette": {
             "lava": {
                 "color": "FFAE00",

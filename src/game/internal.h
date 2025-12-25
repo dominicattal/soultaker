@@ -269,10 +269,7 @@ void wall_clear(void);
 Wall* wall_create(vec2 position, f32 height, u32 minimap_color);
 void wall_destroy(Wall* wall);
 void wall_cleanup(void);
-
-// put all of the walls not in the tilemap in
-// game_context.free_walls
-void wall_update_free_walls(void);
+void wall_add_free_wall(Wall* wall);
 
 //**************************************************************************
 // Projectile definitions

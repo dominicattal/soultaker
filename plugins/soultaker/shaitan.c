@@ -359,7 +359,7 @@ st_export void shaitan_lava_create(GameApi* api, Tile* tile)
     api->tile_set_flag(tile, TILE_FLAG_ANIMATE_HORIZONTAL_NEG, true);
 }
 
-st_export void shaitan_spawn_create(GameApi* api)
+st_export void shaitan_spawn_create(GameApi* api, void* data)
 {
     i32 side_tex, top_tex;
     side_tex = api->texture_get_id("shaitan_bars_side");

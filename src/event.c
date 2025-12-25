@@ -182,11 +182,15 @@ void event_queue_flush(void)
 {
     EventQueue* queue;
     Event event;
-    i32 id = thread_get_self_id();
-    for (i32 i = 0; i < NUM_THREADS; i++) {
+    i32 tail, id, i;
+    id = thread_get_self_id();
+    for (i = 0; i < NUM_THREADS; i++) {
         queue = &event_context.queues[id][i];
-        while ((event = event_dequeue(queue)).type != EVENT_NONE)
+        tail = queue->tail;
+        while (queue->head != tail) {
+            event = event_dequeue(queue);
             execute_event(event);
+        }
     }
 }
 
