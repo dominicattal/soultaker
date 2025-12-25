@@ -28,11 +28,17 @@ GameApi game_api = {
     REGISTER(projectile_create),
     REGISTER(projectile_set_flag),
 
+    // Trigger
+    REGISTER(trigger_create),
+    REGISTER(trigger_set_flag),
+    REGISTER(trigger_get_flag),
+
     // Map
     REGISTER(room_create_entity),
     REGISTER(room_create_obstacle),
     REGISTER(room_create_parstacle),
     REGISTER(room_create_wall),
+    REGISTER(room_create_trigger),
 
     // Misc
     REGISTER(texture_get_id),

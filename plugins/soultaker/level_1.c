@@ -73,8 +73,14 @@ st_export void level_1_spawn_exit(GameApi* api, LevelData* data, i32 num_exits)
     wall->top_tex = api->texture_get_id("level_1_wall_2_top");
 }
 
+static void test(GameApi* api, Entity* entity, void* args)
+{
+    api->log_write(DEBUG, "test %f %f %d", entity->position.x, entity->position.z, *(int*)args);
+}
+
 st_export void level_1_enemy_1_create(GameApi* api, LevelData* data)
 {
+    Trigger* trigger;
     i32 id = api->entity_get_id("dummy");
     vec2 pos = api->vec2_create(10, 4);
     api->room_create_entity(pos, id);
@@ -82,6 +88,8 @@ st_export void level_1_enemy_1_create(GameApi* api, LevelData* data)
     api->room_create_obstacle(pos);
     pos = api->vec2_create(8, 4);
     api->room_create_parstacle(pos);
+    trigger = api->room_create_trigger(pos, 0.5f, test, &id);
+    api->trigger_set_flag(trigger, TRIGGER_FLAG_ONCE, true);
 }
 
 st_export void level_1_enemy_2_create(GameApi* api, LevelData* data)
