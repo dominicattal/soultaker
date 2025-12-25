@@ -64,9 +64,10 @@ st_export void level_1_spawn_create(GameApi* api, LevelData* data)
 {
 }
 
-st_export void level_1_spawn_exit(GameApi* api, LevelData* data)
+st_export void level_1_spawn_exit(GameApi* api, LevelData* data, i32 num_exits)
 {
-    api->log_write(DEBUG, "%d", data->num_branches);
+    api->log_write(DEBUG, "%d", num_exits);
+    if (num_exits > 0) return;
     Wall* wall = api->room_create_wall(api->vec2_create(5.0, 5.0), 2.0f, 0.75f, 0.75f, 0xFFFF00);
     wall->side_tex = api->texture_get_id("level_1_wall_1_side");
     wall->top_tex = api->texture_get_id("level_1_wall_2_top");
