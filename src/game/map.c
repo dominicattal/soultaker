@@ -19,8 +19,8 @@
 #define BLACK   0x000000
 
 typedef void (*RoomCreateFuncPtr)(GameApi*, void*);
-typedef void (*RoomEnterFuncPtr)(GameApi*, void*);
-typedef void (*RoomExitFuncPtr)(GameApi*, void*);
+typedef void (*RoomEnterFuncPtr)(GameApi*, void*, i32);
+typedef void (*RoomExitFuncPtr)(GameApi*, void*, i32);
 typedef void (*TileCreateFuncPtr)(GameApi*, Tile*);
 typedef void* (*RoomsetInitFuncPtr)(GameApi*);
 // true if at end of branch, false otherwise
@@ -94,6 +94,8 @@ typedef struct MapNode {
     i32 origin_x, origin_z;
     i32 x1, x2, z1, z2;
     i32 orientation;
+    i32 num_exits;
+    i32 num_enters;
     bool visited;
     bool cleared;
 } MapNode;
@@ -1096,6 +1098,8 @@ static MapNode* map_node_create(void)
     node->male_alternates = list_create();
     node->visited = false;
     node->cleared = false;
+    node->num_exits = 0;
+    node->num_enters = 0;
     node->x1 = node->x2 = 0;
     node->z1 = node->z2 = 0;
     return node;
@@ -1583,22 +1587,22 @@ bool map_fog_contains_wall(Wall* wall)
     return map_fog_contains(wall->position);
 }
 
-static void current_map_node_exit(void)
+static void current_map_node_exit(Map* map, MapNode* node)
 {
-    if (map_context.current_map_node == NULL)
+    if (node == NULL)
         return;
-    if (map_context.current_map_node->room->exit == NULL)
+    if (node->room->exit == NULL)
         return;
-    map_context.current_map_node->room->exit(&game_api, map_context.current_map->roomset->data);
+    node->room->exit(&game_api, map->roomset->data, node->num_exits++);
 }
 
-static void current_map_node_enter(void)
+static void current_map_node_enter(Map* map, MapNode* node)
 {
-    if (map_context.current_map_node == NULL)
+    if (node == NULL)
         return;
-    if (map_context.current_map_node->room->enter == NULL)
+    if (node->room->enter == NULL)
         return;
-    map_context.current_map_node->room->enter(&game_api, map_context.current_map->roomset->data);
+    node->room->enter(&game_api, map->roomset->data, node->num_enters++);
 }
 
 void map_fog_explore(vec2 position)
@@ -1613,9 +1617,9 @@ void map_fog_explore(vec2 position)
     if (node == NULL)
         return;
     if (map_context.current_map_node != node) {
-        current_map_node_exit();
+        current_map_node_exit(map_context.current_map, map_context.current_map_node);
         map_context.current_map_node = node;
-        current_map_node_enter();
+        current_map_node_enter(map_context.current_map, map_context.current_map_node);
     }
     if (node->visited) 
         return;
