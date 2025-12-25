@@ -1685,6 +1685,23 @@ Entity* room_create_entity(vec2 position, i32 id)
     return entity_create(new_position, id);
 }
 
+Trigger* room_create_trigger(vec2 position, f32 radius, TriggerFunc func, void* args)
+{
+    MapNode* node = map_context.current_map_node;
+    if (node == NULL)
+        log_write(FATAL, "fuck");
+    Room* room = node->room;
+    i32 orientation = node->orientation;
+    f32 u = room->u1 + position.x;
+    f32 v = room->v1 + position.z;
+    f32 dx = calculate_room_fdx(room, orientation, u, v);
+    f32 dz = calculate_room_fdz(room, orientation, u, v);
+    vec2 new_position;
+    new_position.x = node->origin_x + dx;
+    new_position.z = node->origin_z + dz;
+    return trigger_create(new_position, radius, func, args);
+}
+
 Obstacle* room_create_obstacle(vec2 position)
 {
     MapNode* node = map_context.current_map_node;

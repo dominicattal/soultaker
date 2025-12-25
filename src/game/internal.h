@@ -22,6 +22,7 @@ typedef struct Parstacle Parstacle;
 typedef struct Obstacle Obstacle;
 typedef struct Particle Particle;
 typedef struct Parjicle Parjicle;
+typedef struct Trigger Trigger;
 typedef struct MapNode MapNode;
 typedef struct LocalMapGenerationSettings LocalMapGenerationSettings;
 
@@ -58,6 +59,33 @@ void camera_update_rotation(f32 mag);
 void camera_update_tilt(f32 mag);
 void camera_rotate(void);
 void camera_tilt(void);
+
+//**************************************************************************
+// Trigger definitions
+//**************************************************************************
+
+typedef void (*TriggerFunc)(GameApi*, Entity*, void*);
+typedef struct Trigger {
+    void* args;
+    TriggerFunc func;
+    vec2 position;
+    f32 radius;
+    u32 flags;
+} Trigger;
+
+typedef enum {
+    TRIGGER_FLAG_USED,
+    TRIGGER_FLAG_ONCE,
+    TRIGGER_FLAG_FRIENDLY,
+    TRIGGER_FLAG_PLAYER
+} TriggerFlagEnum;
+
+void trigger_init(void);
+Trigger* trigger_create(vec2 position, f32 radius, TriggerFunc func, void* args);
+void trigger_set_flag(Trigger* trigger, TriggerFlagEnum flag, bool val);
+bool trigger_get_flag(Trigger* trigger, TriggerFlagEnum flag);
+void trigger_destroy(Trigger* trigger);
+void trigger_cleanup(void);
 
 //**************************************************************************
 // Maps. See docs/maps.md for more information
@@ -106,6 +134,7 @@ Entity* room_create_entity(vec2 position, i32 id);
 Obstacle* room_create_obstacle(vec2 position);
 Parstacle* room_create_parstacle(vec2 position);
 Wall* room_create_wall(vec2 position, f32 height, f32 width, f32 length, u32 minimap_color);
+Trigger* room_create_trigger(vec2 position, f32 radius, TriggerFunc func, void* args);
 
 //**************************************************************************
 // Entity, Player definitions
@@ -428,6 +457,7 @@ typedef struct {
     List* obstacles;
     List* particles;
     List* parjicles;
+    List* triggers;
     Camera camera;
     pthread_t thread_id;
     pthread_mutex_t getter_mutex;
@@ -500,11 +530,17 @@ typedef struct GameApi {
     Projectile* (*projectile_create)(vec2);
     void (*projectile_set_flag)(Projectile*, ProjectileFlagEnum, bool);
 
+    // Trigger
+    Trigger* (*trigger_create)(vec2, f32, TriggerFunc, void*);
+    void (*trigger_set_flag)(Trigger*, TriggerFlagEnum, bool);
+    bool (*trigger_get_flag)(Trigger*, TriggerFlagEnum);
+
     // Map
     Entity* (*room_create_entity)(vec2, i32);
     Obstacle* (*room_create_obstacle)(vec2);
     Parstacle* (*room_create_parstacle)(vec2);
     Wall* (*room_create_wall)(vec2, f32, f32, f32, u32);
+    Trigger* (*room_create_trigger)(vec2, f32, TriggerFunc, void*);
 
     // Misc
     i32 (*texture_get_id)(const char*);

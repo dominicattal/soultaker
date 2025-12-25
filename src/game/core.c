@@ -88,6 +88,7 @@ void game_init(void)
     obstacle_init();
     particle_init();
     parjicle_init();
+    trigger_init();
     camera_init();
     game_render_init();
     game_halt_loop();
@@ -114,6 +115,7 @@ void game_cleanup(void)
     obstacle_cleanup();
     particle_cleanup();
     parjicle_cleanup();
+    trigger_cleanup();
     map_cleanup();
 
 }

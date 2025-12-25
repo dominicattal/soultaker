@@ -101,6 +101,23 @@ static void collide_entity_projectile(Entity* entity, Projectile* projectile)
     entity_damage(entity, 1);
 }
 
+static void collide_entity_trigger(Entity* entity, Trigger* trigger)
+{
+    f32 ex, ez, er, tx, tz, tr;
+    vec2 offset;
+    ex = entity->position.x;
+    ez = entity->position.y;
+    er = entity->hitbox_radius;
+    tx = trigger->position.x;
+    tz = trigger->position.y;
+    tr = trigger->radius;
+    offset = vec2_create(ex - tx, ez - tz);
+    if (vec2_mag(offset) >= er + tr)
+        return;
+    trigger->func(&game_api, entity, trigger->args);
+    trigger_set_flag(trigger, TRIGGER_FLAG_USED, true);
+}
+
 static void collide_projectile_wall(Projectile* projectile, Wall* wall)
 {
     f32 px, pz, pr, wx, wz, sx, sz;
@@ -186,6 +203,10 @@ static void game_collide_objects(void)
             Projectile* projectile = list_get(game_context.projectiles, j);
             collide_entity_projectile(entity, projectile);
         }
+        for (j = 0; j < game_context.triggers->length; j++) {
+            Trigger* trigger = list_get(game_context.triggers, j);
+            collide_entity_trigger(entity, trigger);
+        }
     }
     for (i = 0; i < game_context.projectiles->length; i++) {
         Projectile* projectile = list_get(game_context.projectiles, i);
@@ -203,7 +224,7 @@ static void game_collide_objects(void)
 
 void game_update_objects(void)
 {
-    int i;
+    i32 i, once, used;
     i = 0;
     while (i < game_context.bosses->length) {
         Entity* entity = list_get(game_context.bosses, i);
@@ -218,6 +239,16 @@ void game_update_objects(void)
         entity_update(entity, game_context.dt);
         if (entity->health <= 0)
             entity_destroy(list_remove(game_context.entities, i));
+        else
+            i++;
+    }
+    i = 0;
+    while (i < game_context.triggers->length) {
+        Trigger* trigger = list_get(game_context.triggers, i);
+        once = trigger_get_flag(trigger, TRIGGER_FLAG_ONCE);
+        used = trigger_get_flag(trigger, TRIGGER_FLAG_USED);
+        if (once && used)
+            trigger_destroy(list_remove(game_context.triggers, i));
         else
             i++;
     }
