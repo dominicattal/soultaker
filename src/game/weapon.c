@@ -60,11 +60,11 @@ static void _throw_weapon_error(WeaponError error, i32 line)
 
 static void load_tooltip(JsonObject* object, i32 id)
 {
-    JsonValue* val_string = json_get_value(object, "tooltip");
-    if (json_get_type(val_string) != JTYPE_STRING)
+    JsonValue* val_string = json_object_get_value(object, "tooltip");
+    if (json_value_get_type(val_string) != JTYPE_STRING)
         throw_weapon_error(ERROR_INVALID_TYPE);
 
-    char* string = json_get_string(val_string);
+    char* string = json_value_get_string(val_string);
     if (string == NULL)
         throw_weapon_error(ERROR_MISSING);
 
@@ -73,11 +73,11 @@ static void load_tooltip(JsonObject* object, i32 id)
 
 static void load_texture(JsonObject* object, i32 id)
 {
-    JsonValue* val_string = json_get_value(object, "texture");
-    if (json_get_type(val_string) != JTYPE_STRING)
+    JsonValue* val_string = json_object_get_value(object, "texture");
+    if (json_value_get_type(val_string) != JTYPE_STRING)
         throw_weapon_error(ERROR_INVALID_TYPE);
 
-    char* string = json_get_string(val_string);
+    char* string = json_value_get_string(val_string);
     if (string == NULL)
         throw_weapon_error(ERROR_MISSING);
 
@@ -86,11 +86,11 @@ static void load_texture(JsonObject* object, i32 id)
 
 static void load_attack_func(JsonObject* object, i32 id)
 {
-    JsonValue* val_string = json_get_value(object, "attack");
-    if (json_get_type(val_string) != JTYPE_STRING)
+    JsonValue* val_string = json_object_get_value(object, "attack");
+    if (json_value_get_type(val_string) != JTYPE_STRING)
         throw_weapon_error(ERROR_INVALID_TYPE);
 
-    char* string = json_get_string(val_string);
+    char* string = json_value_get_string(val_string);
     if (string == NULL)
         throw_weapon_error(ERROR_MISSING);
 
@@ -116,10 +116,10 @@ static void load_weapon_info(void)
 
     for (i32 i = 0; i < weapon_context.num_weapons; i++) {
         member = json_iterator_get(it);
-        string = json_member_key(member);
+        string = json_member_get_key(member);
         weapon_context.infos[i].name = string_copy(string);
-        val_object = json_member_value(member);
-        object = json_get_object(val_object);
+        val_object = json_member_get_value(member);
+        object = json_value_get_object(val_object);
         load_tooltip(object, i);
         load_texture(object, i);
         load_attack_func(object, i);

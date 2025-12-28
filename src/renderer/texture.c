@@ -296,21 +296,21 @@ static i32 get_num_textures(JsonObject* json)
     i32 res = 0;
     for (i32 i = 0; i < num_members; i++) {
         member = json_iterator_get(it);
-        value = json_member_value(member);
-        type = json_get_type(value);
+        value = json_member_get_value(member);
+        type = json_value_get_type(value);
 
         if (type == JTYPE_STRING)
             res++;
         else if  (type == JTYPE_OBJECT) {
-            val_object = json_get_object(value);
-            value = json_get_value(val_object, "spritesheet");
-            if (value == NULL || json_get_type(value) != JTYPE_TRUE)
+            val_object = json_value_get_object(value);
+            value = json_object_get_value(val_object, "spritesheet");
+            if (value == NULL || json_value_get_type(value) != JTYPE_TRUE)
                 res++;
             else {
-                value = json_get_value(val_object, "textures");
+                value = json_object_get_value(val_object, "textures");
                 assert(value);
-                assert(json_get_type(value) == JTYPE_OBJECT);
-                val_object = json_get_object(value);
+                assert(json_value_get_type(value) == JTYPE_OBJECT);
+                val_object = json_value_get_object(value);
                 res += json_object_length(val_object);
             }
         } else
@@ -333,8 +333,8 @@ static i32 get_int(JsonArray* array, i32 idx)
 {
     JsonValue* value = json_array_get(array, idx);
     assert(value);
-    assert(json_get_type(value) == JTYPE_INT);
-    return json_get_int(value);
+    assert(json_value_get_type(value) == JTYPE_INT);
+    return json_value_get_int(value);
 }
 
 static void parse_array(JsonArray* array, ParseObjectArgs* args)
@@ -349,30 +349,30 @@ static void parse_object(JsonObject* object, ParseObjectArgs* args)
 {
     JsonValue* value;
     JsonArray* array;
-    value = json_get_value(object, "pivot_x");
+    value = json_object_get_value(object, "pivot_x");
     if (value != NULL) {
-        assert(json_get_type(value) == JTYPE_FLOAT);
-        args->pivot.x = json_get_float(value);
+        assert(json_value_get_type(value) == JTYPE_FLOAT);
+        args->pivot.x = json_value_get_float(value);
     }
-    value = json_get_value(object, "pivot_y");
+    value = json_object_get_value(object, "pivot_y");
     if (value != NULL) {
-        assert(json_get_type(value) == JTYPE_FLOAT);
-        args->pivot.y = json_get_float(value);
+        assert(json_value_get_type(value) == JTYPE_FLOAT);
+        args->pivot.y = json_value_get_float(value);
     }
-    value = json_get_value(object, "stretch_x");
+    value = json_object_get_value(object, "stretch_x");
     if (value != NULL) {
-        assert(json_get_type(value) == JTYPE_FLOAT);
-        args->stretch.x = json_get_float(value);
+        assert(json_value_get_type(value) == JTYPE_FLOAT);
+        args->stretch.x = json_value_get_float(value);
     }
-    value = json_get_value(object, "stretch_y");
+    value = json_object_get_value(object, "stretch_y");
     if (value != NULL) {
-        assert(json_get_type(value) == JTYPE_FLOAT);
-        args->stretch.y = json_get_float(value);
+        assert(json_value_get_type(value) == JTYPE_FLOAT);
+        args->stretch.y = json_value_get_float(value);
     }
-    value = json_get_value(object, "location");
+    value = json_object_get_value(object, "location");
     if (value != NULL) {
-        assert(json_get_type(value) == JTYPE_ARRAY);
-        array = json_get_array(value);
+        assert(json_value_get_type(value) == JTYPE_ARRAY);
+        array = json_value_get_array(value);
         assert(array);
         parse_array(array, args);
     }
@@ -386,10 +386,10 @@ static void parse_texture(JsonMember* member, stbrp_rect* rects, i32 width, i32 
     JsonType type;
     const char* key;
     char* texture_name;
-    key = json_member_key(member);
+    key = json_member_get_key(member);
     assert(key);
     texture_name = string_copy(key);
-    value = json_member_value(member);
+    value = json_member_get_value(member);
     assert(value);
     ParseObjectArgs args;
     args.pivot = vec2_create(0, 0);
@@ -398,12 +398,12 @@ static void parse_texture(JsonMember* member, stbrp_rect* rects, i32 width, i32 
     args.w = width;
     args.h = height;
     texture_context.textures[*num_rects].wint = width;
-    type = json_get_type(value);
+    type = json_value_get_type(value);
     if (type == JTYPE_OBJECT) {
-        val_object = json_get_object(value);
+        val_object = json_value_get_object(value);
         parse_object(val_object, &args);
     } else if (type == JTYPE_ARRAY) {
-        array = json_get_array(value);
+        array = json_value_get_array(value);
         assert(array);
         parse_array(array, &args);
     }
@@ -425,11 +425,11 @@ static void parse_spritesheet(JsonValue* value, stbrp_rect* rects, i32 width, i3
     JsonObject* val_object;
     JsonIterator* it;
     JsonMember* member;
-    val_object = json_get_object(value);
-    value = json_get_value(val_object, "textures");
+    val_object = json_value_get_object(value);
+    value = json_object_get_value(val_object, "textures");
     assert(value);
-    assert(json_get_type(value) == JTYPE_OBJECT);
-    val_object = json_get_object(value);
+    assert(json_value_get_type(value) == JTYPE_OBJECT);
+    val_object = json_value_get_object(value);
     num_textures = json_object_length(val_object);
     it = json_iterator_create(val_object);
     for (i32 i = 0; i < num_textures; i++) {
@@ -445,22 +445,22 @@ static const char* get_image_path(JsonValue* value, i32* is_spritesheet)
     JsonType type;
     JsonObject* val_object;
     const char* image_path = NULL;
-    type = json_get_type(value);
+    type = json_value_get_type(value);
     if (type == JTYPE_OBJECT) {
-        val_object = json_get_object(value);
+        val_object = json_value_get_object(value);
         assert(val_object);
-        value = json_get_value(val_object, "path");
+        value = json_object_get_value(val_object, "path");
         assert(value);
-        assert(json_get_type(value) == JTYPE_STRING);
-        image_path = json_get_string(value);
-        value = json_get_value(val_object, "spritesheet");
+        assert(json_value_get_type(value) == JTYPE_STRING);
+        image_path = json_value_get_string(value);
+        value = json_object_get_value(val_object, "spritesheet");
         if (value != NULL) {
-            type = json_get_type(value);
+            type = json_value_get_type(value);
             if (type == JTYPE_TRUE)
                 *is_spritesheet = 1;
         }
     } else if (type == JTYPE_STRING)
-        image_path = json_get_string(value);
+        image_path = json_value_get_string(value);
     else
         assert(0);
     return image_path;
@@ -521,7 +521,7 @@ static void create_textures(i32* tex_unit_location)
     for (i = 0; i < num_images; i++, json_iterator_increment(it)) {
         is_spritesheet = 0;
         member = json_iterator_get(it);
-        value = json_member_value(member);
+        value = json_member_get_value(member);
         image_path = get_image_path(value, &is_spritesheet);
         assert(image_path);
 

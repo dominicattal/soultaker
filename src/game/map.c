@@ -171,22 +171,22 @@ static void _throw_map_error(MapError error, i32 line)
 
 static const char* get_string_value(JsonObject* object, const char* string)
 {
-    JsonValue* value = json_get_value(object, string);
+    JsonValue* value = json_object_get_value(object, string);
     if (value == NULL)
         throw_map_error(ERROR_MISSING);
-    if (json_get_type(value) != JTYPE_STRING)
+    if (json_value_get_type(value) != JTYPE_STRING)
         throw_map_error(ERROR_INVALID_TYPE);
-    return json_get_string(value);
+    return json_value_get_string(value);
 }
 
 static JsonArray* get_array_value(JsonObject* object, const char* string)
 {
-    JsonValue* value = json_get_value(object, string);
+    JsonValue* value = json_object_get_value(object, string);
     if (value == NULL)
         throw_map_error(ERROR_MISSING);
-    if (json_get_type(value) != JTYPE_ARRAY)
+    if (json_value_get_type(value) != JTYPE_ARRAY)
         throw_map_error(ERROR_INVALID_TYPE);
-    return json_get_array(value);
+    return json_value_get_array(value);
 }
 
 static void load_palette_color(JsonObject* object, TileColor* tile)
@@ -229,13 +229,13 @@ static void load_palette_create(JsonObject* object, TileColor* tile)
     const char* string;
     tile->create = NULL;
 
-    value = json_get_value(object, "create");
+    value = json_object_get_value(object, "create");
     if (value == NULL)
         return;
-    if (json_get_type(value) != JTYPE_STRING)
+    if (json_value_get_type(value) != JTYPE_STRING)
         throw_map_error(ERROR_INVALID_TYPE);
 
-    string = json_get_string(value);
+    string = json_value_get_string(value);
     tile->create = state_load_function(string);
     if (tile->create == NULL)
         throw_map_error(ERROR_MISSING);
@@ -247,13 +247,13 @@ static void load_palette_collide(JsonObject* object, TileColor* tile)
     const char* string;
     tile->collide = NULL;
 
-    value = json_get_value(object, "collide");
+    value = json_object_get_value(object, "collide");
     if (value == NULL)
         return;
-    if (json_get_type(value) != JTYPE_STRING)
+    if (json_value_get_type(value) != JTYPE_STRING)
         throw_map_error(ERROR_INVALID_TYPE);
 
-    string = json_get_string(value);
+    string = json_value_get_string(value);
     tile->collide = state_load_function(string);
     if (tile->collide == NULL)
         throw_map_error(ERROR_MISSING);
@@ -267,14 +267,14 @@ static void load_palette_height(JsonObject* object, TileColor* tile)
         return;
     
     tile->height = DEFAULT_WALL_HEIGHT;
-    value = json_get_value(object, "height");
+    value = json_object_get_value(object, "height");
     if (value == NULL)
         return;
 
-    if (json_get_type(value) == JTYPE_INT)
-        tile->height = (f32)json_get_int(value);
-    else if (json_get_type(value) == JTYPE_FLOAT)
-        tile->height = json_get_float(value);
+    if (json_value_get_type(value) == JTYPE_INT)
+        tile->height = (f32)json_value_get_int(value);
+    else if (json_value_get_type(value) == JTYPE_FLOAT)
+        tile->height = json_value_get_float(value);
     else
         throw_map_error(ERROR_INVALID_TYPE);
 }
@@ -290,13 +290,13 @@ static Palette* palette_create(JsonObject* root)
     TileColor* color;
     i32 num_colors;
 
-    value = json_get_value(root, "palette");
+    value = json_object_get_value(root, "palette");
     if (value == NULL)
         throw_map_error(ERROR_MISSING);
-    if (json_get_type(value) != JTYPE_OBJECT)
+    if (json_value_get_type(value) != JTYPE_OBJECT)
         throw_map_error(ERROR_INVALID_TYPE);
 
-    object = json_get_object(value);
+    object = json_value_get_object(value);
 
     num_colors = json_object_length(object);
     colors = st_malloc(num_colors * sizeof(TileColor));
@@ -305,12 +305,12 @@ static Palette* palette_create(JsonObject* root)
     for (i32 i = 0; i < num_colors; i++) {
         color = &colors[i];
         member = json_iterator_get(it);
-        color->name = json_member_key(member);
-        value = json_member_value(member);
-        if (json_get_type(value) != JTYPE_OBJECT)
+        color->name = json_member_get_key(member);
+        value = json_member_get_value(member);
+        if (json_value_get_type(value) != JTYPE_OBJECT)
             throw_map_error(ERROR_INVALID_TYPE);
 
-        object = json_get_object(value);
+        object = json_value_get_object(value);
         
         load_palette_color(object, color);
         load_palette_type(object, color);
@@ -367,9 +367,9 @@ static i32 get_int_value(JsonValue* value)
 {
     if (value == NULL)
         throw_map_error(ERROR_MISSING);
-    if (json_get_type(value) != JTYPE_INT)
+    if (json_value_get_type(value) != JTYPE_INT)
         throw_map_error(ERROR_INVALID_TYPE);
-    return json_get_int(value);
+    return json_value_get_int(value);
 }
 
 static void parse_room_bounding_box(JsonObject* object, Room* room)
@@ -392,36 +392,36 @@ static void parse_room_create(JsonObject* object, Room* room)
 {
     JsonValue* value;
     room->create = NULL;
-    value = json_get_value(object, "create");
+    value = json_object_get_value(object, "create");
     if (value == NULL) 
         return;
-    if (json_get_type(value) != JTYPE_STRING)
+    if (json_value_get_type(value) != JTYPE_STRING)
         return;
-    room->create = state_load_function(json_get_string(value));
+    room->create = state_load_function(json_value_get_string(value));
 }
 
 static void parse_room_enter(JsonObject* object, Room* room)
 {
     JsonValue* value;
     room->enter = NULL;
-    value = json_get_value(object, "enter");
+    value = json_object_get_value(object, "enter");
     if (value == NULL) 
         return;
-    if (json_get_type(value) != JTYPE_STRING)
+    if (json_value_get_type(value) != JTYPE_STRING)
         return;
-    room->enter = state_load_function(json_get_string(value));
+    room->enter = state_load_function(json_value_get_string(value));
 }
 
 static void parse_room_exit(JsonObject* object, Room* room)
 {
     JsonValue* value;
     room->exit = NULL;
-    value = json_get_value(object, "exit");
+    value = json_object_get_value(object, "exit");
     if (value == NULL) 
         return;
-    if (json_get_type(value) != JTYPE_STRING)
+    if (json_value_get_type(value) != JTYPE_STRING)
         return;
-    room->exit = state_load_function(json_get_string(value));
+    room->exit = state_load_function(json_value_get_string(value));
 }
 
 static void parse_room_type(JsonObject* object, Room* room)
@@ -440,20 +440,20 @@ static void parse_room_alternates(JsonObject* object, Palette* palette, Room* ro
 
     room->male_alternates = list_create();
     room->female_alternates = list_create();
-    value = json_get_value(object, "alternates");
+    value = json_object_get_value(object, "alternates");
     if (value == NULL)
         return;
-    if (json_get_type(value) != JTYPE_ARRAY)
+    if (json_value_get_type(value) != JTYPE_ARRAY)
         throw_map_error(ERROR_GENERIC);
-    array = json_get_array(value);
+    array = json_value_get_array(value);
     array_length = json_array_length(array);
 
     for (i = 0; i < array_length; i++) {
         alternate = st_malloc(sizeof(Alternate));
         value = json_array_get(array, i);
-        if (json_get_type(value) != JTYPE_OBJECT)
+        if (json_value_get_type(value) != JTYPE_OBJECT)
             throw_map_error(ERROR_INVALID_TYPE);
-        object = json_get_object(value);
+        object = json_value_get_object(value);
 
         num_array = get_array_value(object, "bounding_box");
         num_array_length = json_array_length(num_array);
@@ -481,13 +481,13 @@ static void parse_room_alternates(JsonObject* object, Palette* palette, Room* ro
         alternate->origin_u = get_int_value(json_array_get(num_array, 0));
         alternate->origin_v = get_int_value(json_array_get(num_array, 1));
 
-        value = json_get_value(object, "default");
+        value = json_object_get_value(object, "default");
         if (value == NULL)
             alternate->default_tile = NULL;
         else {
-            if (json_get_type(value) != JTYPE_STRING)
+            if (json_value_get_type(value) != JTYPE_STRING)
                 throw_map_error(ERROR_INVALID_TYPE);
-            string = json_get_string(value);
+            string = json_value_get_string(value);
             alternate->default_tile = palette_get_from_name(palette, string);
             if (alternate->default_tile == NULL)
                 throw_map_error(ERROR_GENERIC);
@@ -656,13 +656,13 @@ static Roomset* roomset_create(JsonObject* root, const char* path, Palette* pale
     if (cleanup == NULL)
         throw_map_error(ERROR_MISSING);
 
-    value = json_get_value(root, "rooms");
+    value = json_object_get_value(root, "rooms");
     if (value == NULL)
         throw_map_error(ERROR_MISSING);
-    if (json_get_type(value) != JTYPE_OBJECT)
+    if (json_value_get_type(value) != JTYPE_OBJECT)
         throw_map_error(ERROR_INVALID_TYPE);
 
-    object = json_get_object(value);
+    object = json_value_get_object(value);
 
     num_rooms = json_object_length(object);
     rooms = st_malloc(num_rooms * sizeof(Room));
@@ -684,13 +684,13 @@ static Roomset* roomset_create(JsonObject* root, const char* path, Palette* pale
         room = &rooms[i];
         member = json_iterator_get(it);
 
-        room->name = json_member_key(member);
+        room->name = json_member_get_key(member);
 
-        value = json_member_value(member);
-        if (json_get_type(value) != JTYPE_OBJECT)
+        value = json_member_get_value(member);
+        if (json_value_get_type(value) != JTYPE_OBJECT)
             throw_map_error(ERROR_MISSING);
 
-        object = json_get_object(value);
+        object = json_value_get_object(value);
 
         parse_room_bounding_box(object, room);
         parse_room_create(object, room);
@@ -1479,22 +1479,22 @@ static void generate_map(i32 id)
     LocalMapGenerationSettings local_settings;
     Quadmask* qm;
 
-    value = json_get_value(map_context.json, map_context.names[id]);
+    value = json_object_get_value(map_context.json, map_context.names[id]);
     if (value == NULL)
         throw_map_error(ERROR_MISSING);
-    if (json_get_type(value) != JTYPE_OBJECT)
+    if (json_value_get_type(value) != JTYPE_OBJECT)
         throw_map_error(ERROR_INVALID_TYPE);
 
-    object = json_get_object(value);
+    object = json_value_get_object(value);
 
-    value = json_get_value(object, "path");
+    value = json_object_get_value(object, "path");
     if (value == NULL)
         throw_map_error(ERROR_MISSING);
-    if (json_get_type(value) != JTYPE_STRING)
+    if (json_value_get_type(value) != JTYPE_STRING)
         throw_map_error(ERROR_INVALID_TYPE);
 
     qm = quadmask_create(MAP_MAX_WIDTH, MAP_MAX_LENGTH);
-    path = json_get_string(value);
+    path = json_value_get_string(value);
     palette = palette_create(object);
     roomset = roomset_create(object, path, palette);
 
@@ -1546,6 +1546,7 @@ static void clear_map_node_fog(Map* map, MapNode* node)
     if (node->cleared)
         return;
     node->cleared = true;
+    log_write(DEBUG, "%d %d %d %d", node->z1, node->z2, node->x1, node->x2);
     for (i32 z = node->z1; z <= node->z2; z++)
         for (i32 x = node->x1; x <= node->x2; x++)
             if (node == get_map_node(map, x, z))
@@ -1868,7 +1869,7 @@ void map_init(void)
         if (member == NULL)
             throw_map_error(ERROR_GENERIC);
 
-        name = json_member_key(member);
+        name = json_member_get_key(member);
         if (name == NULL)
             throw_map_error(ERROR_GENERIC);
 
