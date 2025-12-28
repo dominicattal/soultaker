@@ -13,69 +13,467 @@
 #define json_realloc(ptr, size) st_realloc(ptr, size)
 #define json_free(ptr)          st_free(ptr)
 
-typedef struct JsonMember {
+struct JsonMember {
     char* key;
     JsonValue* value;
-} JsonMember;
+};
 
-typedef struct JsonObject {
+struct JsonObject {
     JsonMember** members;
     int num_members;
-} JsonObject;
+};
 
-typedef struct JsonArray {
+struct JsonArray {
     JsonValue** values;
     int num_values;
-} JsonArray;
+};
 
-typedef struct JsonValue {
+struct JsonValue {
     JsonType type;
     union {
-        JsonObject* val_object;
-        JsonArray* val_array;
-        char* val_string;
-        double val_float;
-        long long val_int;
-    };
-} JsonValue;
+        JsonObject* _object;
+        JsonArray* _array;
+        char* _string;
+        JsonFloat _float;
+        JsonInt _int;
+    } val;
+};
 
-typedef struct JsonIterator {
+struct JsonIterator {
     const JsonObject* object;
     int idx;
-} JsonIterator;
+};
 
-static JsonValue*  parse_value(FILE* file, int* line_num);
-static JsonValue*  parse_value_object(FILE* file, int* line_num);
-static JsonValue*  parse_value_array(FILE* file, int* line_num);
-static JsonValue*  parse_value_number(FILE* file, int* line_num);
-static JsonValue*  parse_value_string(FILE* file, int* line_num);
-static JsonValue*  parse_value_true(FILE* file, int* line_num);
-static JsonValue*  parse_value_false(FILE* file, int* line_num);
-static JsonValue*  parse_value_null(FILE* file, int* line_num);
-static JsonObject* parse_object(FILE* file, int* line_num);
-static JsonMember* parse_member(FILE* file, int* line_num);
+// ---- Some helper functions defined below main api ------
+static JsonValue*   parse_value(FILE* file, int* line_num);
+static JsonValue*   parse_value_object(FILE* file, int* line_num);
+static JsonValue*   parse_value_array(FILE* file, int* line_num);
+static JsonValue*   parse_value_number(FILE* file, int* line_num);
+static JsonValue*   parse_value_string(FILE* file, int* line_num);
+static JsonValue*   parse_value_true(FILE* file, int* line_num);
+static JsonValue*   parse_value_false(FILE* file, int* line_num);
+static JsonValue*   parse_value_null(FILE* file, int* line_num);
+static JsonObject*  parse_object(FILE* file, int* line_num);
+static JsonMember*  parse_member(FILE* file, int* line_num);
+static char         get_next_nonspace(FILE* file, int* line_num);
 
-static void json_member_destroy(JsonMember* member);
-static void json_members_destroy(JsonMember** members, int num_members);
-static void json_value_destroy(JsonValue* value);
-static void json_values_destroy(JsonValue** values, int num_values);
-static void json_array_destroy(JsonArray* array);
+static void         json_members_destroy(JsonMember** members, int num_members);
+static void         json_values_destroy(JsonValue** values, int num_values);
 
-static void json_object_print(const JsonObject* object, int depth);
-static void json_array_print(const JsonArray* array, int depth);
+static void*        push_data(void** list, void* data, int* length, size_t size);
+static JsonMember** push_member(JsonMember** members, JsonMember* member, int* length);
+static JsonValue**  push_value(JsonValue** values, JsonValue* value, int* length);
 
-static void json_value_destroy(JsonValue* value)
+static void         print_object(FILE* fptr, const JsonObject* object, int depth);
+static void         print_value(FILE* fptr, const JsonValue* value, int depth);
+static void         print_array(FILE* fptr, const JsonArray* array, int depth);
+
+// ------------------- Objects ------------------------
+
+JsonObject* json_read(const char* path)
+{
+    FILE* file;
+    int line_num;
+    JsonObject* object;
+
+    file = fopen(path, "r");
+    if (file == NULL)
+        return NULL;
+
+    line_num = 1;
+    object = parse_object(file, &line_num);
+    if (object != NULL && get_next_nonspace(file, &line_num) != EOF) {
+        print_error(&line_num, "Excess characters after root");
+        json_object_destroy(object);
+        object = NULL;
+    }
+
+    if (fclose(file) == EOF) {
+        print_error(&line_num, "Unexpected error when closing file");
+        json_object_destroy(object);
+        object = NULL;
+    }
+
+    return object;
+}
+
+JsonObject* json_object_create(void)
+{
+    JsonObject* object;
+    object = json_malloc(sizeof(JsonObject));
+    if (object == NULL)
+        return NULL;
+    object->members = NULL;
+    object->num_members = 0;
+    return object;
+}
+
+JsonObject* json_merge_objects(JsonObject* object1, JsonObject* object2)
+{
+    JsonObject* object3;
+    JsonMember* member1;
+    JsonMember* member2;
+    JsonIterator* it1;
+    JsonIterator* it2;
+    const char* key1;
+    const char* key2;
+    int num_members1, num_members2, idx;
+    int cmp;
+
+    it1 = json_iterator_create(object1);
+    if (it1 == NULL)
+        return NULL;
+    
+    it2 = json_iterator_create(object2);
+    if (it2 == NULL) {
+        json_iterator_destroy(it1);
+        return NULL;
+    }
+
+    object3 = json_malloc(sizeof(JsonObject));
+    if (object3 == NULL) {
+        json_iterator_destroy(it1);
+        json_iterator_destroy(it2);
+        return NULL;
+    }
+
+    num_members1 = json_object_length(object1);
+    num_members2 = json_object_length(object2);
+    object3->num_members = num_members1 + num_members2;
+    object3->members = json_malloc(object3->num_members * sizeof(JsonMember*));
+    if (object3->members == NULL) {
+        json_free(object3);
+        json_iterator_destroy(it1);
+        json_iterator_destroy(it2);
+        return NULL;
+    }
+
+    idx = 0;
+    member1 = json_iterator_get(it1);
+    member2 = json_iterator_get(it2);
+    while (member1 != NULL && member2 != NULL) {
+        key1 = json_member_get_key(member1);
+        key2 = json_member_get_key(member2);
+        cmp = strcmp(key1, key2);
+        if (cmp < 0) {
+            object3->members[idx++] = member1;
+            json_iterator_increment(it1);
+            member1 = json_iterator_get(it1);
+        } else {
+            object3->members[idx++] = member2;
+            json_iterator_increment(it2);
+            member2 = json_iterator_get(it2);
+        }
+    }
+    while (member1 != NULL) {
+        object3->members[idx++] = member1;
+        json_iterator_increment(it1);
+        member1 = json_iterator_get(it1);
+    }
+    while (member2 != NULL) {
+        object3->members[idx++] = member2;
+        json_iterator_increment(it2);
+        member2 = json_iterator_get(it2);
+    }
+
+    json_free(object1->members);
+    json_free(object2->members);
+    json_free(object1);
+    json_free(object2);
+    json_iterator_destroy(it1);
+    json_iterator_destroy(it2);
+    
+    return object3;
+}
+
+int json_object_length(const JsonObject* object)
+{
+    return object->num_members;
+}
+
+JsonMember* json_object_get_member(const JsonObject* object, const char* key)
+{
+    JsonMember* member;
+    int m, l, r, a;
+    l = 0;
+    r = object->num_members - 1;
+    while (l <= r) {
+        m = l + (r - l) / 2;
+        member = object->members[m];
+        a = strcmp(key, member->key);
+        if (a > 0) 
+            l = m + 1;
+        else if (a < 0) 
+            r = m - 1;
+        else 
+            return member;
+    }
+    return NULL;
+}
+
+JsonValue* json_object_get_value(const JsonObject* object, const char* key)
+{
+    JsonMember* member = json_object_get_member(object, key);
+    if (member == NULL) 
+        return NULL;
+    return member->value;
+}
+
+int json_object_attach(JsonObject* object, JsonMember* member)
+{
+    JsonMember** new_members;
+    JsonMember* test_member;
+    int m, l, r, a;
+    l = m = 0;
+    r = object->num_members - 1;
+    while (l <= r) {
+        m = l + (r - l) / 2;
+        test_member = object->members[m];
+        a = strcmp(member->key, test_member->key);
+        if (a > 0) 
+            l = m + 1;
+        else if (a < 0) 
+            r = m - 1;
+        else
+            return 1;
+    }
+    if (object->num_members == 0)
+        new_members = json_malloc(sizeof(JsonMember*));
+    else
+        new_members = json_realloc(object->members, (object->num_members+1)  * sizeof(JsonMember*));
+    if (new_members == NULL)
+        return 2;
+    for (r = object->num_members; r > l; r--)
+        new_members[r] = new_members[r-1];
+    new_members[l] = member;
+    object->members = new_members;
+    object->num_members++;
+    return 0;
+}
+
+JsonMember* json_object_detach(JsonObject* object, const char* key)
+{
+    JsonMember** new_members;
+    JsonMember* member;
+    int m, l, r, a;
+    l = 0;
+    r = object->num_members - 1;
+    while (l <= r) {
+        m = l + (r - l) / 2;
+        member = object->members[m];
+        a = strcmp(key, member->key);
+        if (a > 0) 
+            l = m + 1;
+        else if (a < 0) 
+            r = m - 1;
+        else  {
+            while (m < object->num_members-1) {
+                object->members[m] = object->members[m+1];
+                m++;
+            }
+            if (object->num_members == 1) {
+                json_free(object->members);
+                new_members = NULL;
+            } else {
+                new_members = json_realloc(object->members, (object->num_members-1)  * sizeof(JsonMember*));
+                if (new_members == NULL)
+                    return NULL;
+            }
+            object->members = new_members;
+            object->num_members--;
+            return member;
+        }
+    }
+    return NULL;
+}
+
+void json_object_detach_and_destroy(JsonObject* object, const char* key)
+{
+    json_member_destroy(json_object_detach(object, key));
+}
+
+void json_object_destroy(JsonObject* object)
+{
+    if (object == NULL) return;
+    json_members_destroy(object->members, object->num_members);
+    json_free(object);
+}
+
+void json_object_print(const JsonObject* object)
+{
+    print_object(stdout, object, 0);
+    puts("");
+}
+
+int json_object_write(const JsonObject* object, const char* filename)
+{
+    FILE* fptr;
+    fptr = fopen(filename, "w");
+    if (fptr == NULL)
+        return 1;
+    print_object(fptr, object, 0);
+    fprintf(fptr, "\n");
+    fclose(fptr);
+    return 0;
+}
+
+// ------------------ Members -------------------------
+
+JsonMember* json_member_create(const char* key, JsonValue* value)
+{
+    JsonMember* member;
+    int n;
+    n = strlen(key);
+    member = json_malloc(sizeof(JsonMember));
+    member->key = json_malloc((n+1) * sizeof(char));
+    memcpy(member->key, key, (n+1) * sizeof(char));
+    member->value = value;
+    return member;
+}
+
+char* json_member_get_key(const JsonMember* member)
+{
+    return member->key;
+}
+
+JsonValue* json_member_get_value(const JsonMember* member)
+{
+    return member->value;
+}
+
+void json_member_update(JsonMember* member, JsonValue* value)
+{
+    json_value_destroy(member->value);
+    member->value = value;
+}
+
+void json_member_destroy(JsonMember* member)
+{
+    if (member == NULL) return;
+    json_free(member->key);
+    json_value_destroy(member->value);
+    json_free(member);
+}
+
+void json_member_print(JsonMember* member)
+{
+    printf("\"%s\": ", member->key);
+    json_value_print(member->value);
+}
+
+// ------------------- Value ------------------------
+
+JsonValue* json_value_create_null(void)
+{
+    JsonValue* value = json_malloc(sizeof(JsonValue));
+    if (value == NULL) return NULL;
+    value->type = JTYPE_NULL;
+    return value;
+}
+
+JsonValue* json_value_create_true(void)
+{
+    JsonValue* value = json_malloc(sizeof(JsonValue));
+    if (value == NULL) return NULL;
+    value->type = JTYPE_TRUE;
+    return value;
+}
+
+JsonValue* json_value_create_false(void)
+{
+    JsonValue* value = json_malloc(sizeof(JsonValue));
+    if (value == NULL) return NULL;
+    value->type = JTYPE_FALSE;
+    return value;
+}
+
+JsonValue* json_value_create_int(JsonInt val)
+{
+    JsonValue* value = json_malloc(sizeof(JsonValue));
+    if (value == NULL) return NULL;
+    value->type = JTYPE_INT;
+    value->val._int = val;
+    return value;
+}
+
+JsonValue* json_value_create_float(JsonFloat val)
+{
+    JsonValue* value = json_malloc(sizeof(JsonValue));
+    if (value == NULL) return NULL;
+    value->type = JTYPE_FLOAT;
+    value->val._float = val;
+    return value;
+}
+
+JsonValue* json_value_create_string(char* val)
+{
+    JsonValue* value = json_malloc(sizeof(JsonValue));
+    if (value == NULL) return NULL;
+    value->type = JTYPE_STRING;
+    value->val._string = val;
+    return value;
+}
+
+JsonValue* json_value_create_object(JsonObject* val)
+{
+    JsonValue* value = json_malloc(sizeof(JsonValue));
+    if (value == NULL) return NULL;
+    value->type = JTYPE_OBJECT;
+    value->val._object = val;
+    return value;
+}
+
+JsonValue* json_value_create_array(JsonArray* val)
+{
+    JsonValue* value = json_malloc(sizeof(JsonValue));
+    if (value == NULL) return NULL;
+    value->type = JTYPE_ARRAY;
+    value->val._array = val;
+    return value;
+}
+
+JsonType json_value_get_type(const JsonValue* value)
+{
+    return value->type;
+}
+
+JsonObject* json_value_get_object(const JsonValue* value)
+{
+    return value->val._object;
+}
+
+JsonArray* json_value_get_array(const JsonValue* value)
+{
+    return value->val._array;
+}
+
+char* json_value_get_string(const JsonValue* value)
+{
+    return value->val._string;
+}
+
+JsonInt json_value_get_int(const JsonValue* value)
+{
+    return value->val._int;
+}
+
+JsonFloat json_value_get_float(const JsonValue* value)
+{
+    return value->val._float;
+}
+
+void json_value_destroy(JsonValue* value)
 {
     if (value == NULL) return;
     switch (value->type) {
         case JTYPE_OBJECT:
-            json_object_destroy(value->val_object);
+            json_object_destroy(value->val._object);
             break;
         case JTYPE_ARRAY:
-            json_array_destroy(value->val_array);
+            json_array_destroy(value->val._array);
             break;
         case JTYPE_STRING:
-            json_free(value->val_string);
+            json_free(value->val._string);
             break;
         default:
             break;
@@ -83,13 +481,128 @@ static void json_value_destroy(JsonValue* value)
     json_free(value);
 }
 
-static void json_member_destroy(JsonMember* member)
+void json_value_print(const JsonValue* value)
 {
-    if (member == NULL) return;
-    json_free(member->key);
-    json_value_destroy(member->value);
-    json_free(member);
+    print_value(stdout, value, 0);
+    puts("");
 }
+
+// ------------------- Array ------------------------
+
+JsonArray* json_array_create(void)
+{
+    JsonArray* array = json_malloc(sizeof(JsonArray));
+    array->values = NULL;
+    array->num_values = 0;
+    return array;
+}
+
+int json_array_length(const JsonArray* array)
+{
+    return array->num_values;
+}
+
+JsonValue* json_array_get(const JsonArray* array, int idx)
+{
+    return array->values[idx];
+}
+
+void json_array_append(JsonArray* array, JsonValue* value)
+{
+    array->values = push_value(array->values, value, &array->num_values);
+}
+
+void json_array_insert(JsonArray* array, int idx, JsonValue* value)
+{
+    JsonValue** new_values;
+    int i;
+    new_values = json_realloc(array->values,(array->num_values+1) * sizeof(JsonValue*));
+    for (i = array->num_values; i > idx; i--)
+        new_values[i] = new_values[i-1];
+    new_values[idx] = value;
+    array->values = new_values;
+    array->num_values++;
+}
+
+void json_array_insert_fast(JsonArray* array, int idx, JsonValue* value)
+{
+    JsonValue** new_values;
+    new_values = json_realloc(array->values,(array->num_values+1) * sizeof(JsonValue*));
+    new_values[array->num_values] = new_values[idx];
+    new_values[idx] = value;
+    array->values = new_values;
+    array->num_values++;
+}
+
+void json_array_remove(JsonArray* array, int idx)
+{
+    JsonValue** new_values;
+    int i;
+    json_value_destroy(array->values[idx]);
+    for (i = idx; i < array->num_values-1; i++)
+        array->values[i] = array->values[i+1];
+    new_values = json_realloc(array->values,(array->num_values-1) * sizeof(JsonValue*));
+    array->values = new_values;
+    array->num_values--;
+}
+
+void json_array_remove_fast(JsonArray* array, int idx)
+{
+    JsonValue** new_values;
+    json_value_destroy(array->values[idx]);
+    array->values[idx] = array->values[array->num_values-1];
+    new_values = json_realloc(array->values,(array->num_values-1) * sizeof(JsonValue*));
+    array->values = new_values;
+    array->num_values--;
+}
+
+void json_array_destroy(JsonArray* array)
+{
+    if (array == NULL) 
+        return;
+    json_values_destroy(array->values, array->num_values);
+    json_free(array);
+}
+
+void json_array_print(const JsonArray* array)
+{
+    print_array(stdout, array, 0);
+    puts("");
+}
+
+// ------------------- Iterator ------------------------
+
+JsonIterator* json_iterator_create(const JsonObject* object)
+{
+    JsonIterator* iterator = json_malloc(sizeof(JsonIterator));
+    if (iterator == NULL) {
+        fprintf(stderr, "Failed to allocate memory for iterator");
+        return NULL;
+    }
+    iterator->object = object;
+    iterator->idx = 0;
+    return iterator;
+}
+
+JsonMember* json_iterator_get(const JsonIterator* iterator)
+{
+    if (iterator->idx >= iterator->object->num_members)
+        return NULL;
+    return iterator->object->members[iterator->idx];
+}
+
+void json_iterator_increment(JsonIterator* iterator)
+{
+    iterator->idx++;
+}
+
+void json_iterator_destroy(JsonIterator* iterator)
+{
+    json_free(iterator);
+}
+
+
+// ---------------- Helper functions ------------------
 
 static void json_members_destroy(JsonMember** members, int num_members)
 {
@@ -105,19 +618,6 @@ static void json_values_destroy(JsonValue** values, int num_values)
     json_free(values);
 }
 
-static void json_array_destroy(JsonArray* array)
-{
-    if (array == NULL) return;
-    json_values_destroy(array->values, array->num_values);
-    json_free(array);
-}
-
-void json_object_destroy(JsonObject* object)
-{
-    if (object == NULL) return;
-    json_members_destroy(object->members, object->num_members);
-    json_free(object);
-}
 
 static int json_member_cmp(const void* x, const void* y)
 {
@@ -189,12 +689,14 @@ static char peek_next_nonspace(FILE* file, int* line_num)
 // gets substring from start_pos until end_pos, returns NULL if not valid
 static char* get_string_in_range(FILE* file, int* line_num, long start_pos, long end_pos)
 {
+    char* string;
+    int n;
     if (fseek(file, start_pos, SEEK_SET) == -1) {
         print_error(line_num, "Something unexpected happened");
         return NULL;
     }
-    int n = end_pos - start_pos;
-    char* string = json_malloc((n+1) * sizeof(char));
+    n = end_pos - start_pos;
+    string = json_malloc((n+1) * sizeof(char));
     if (string == NULL) {
         print_error(line_num, "Error allocating memory for string");
         return NULL;
@@ -245,6 +747,9 @@ static char map_escape_sequence(char c)
 // gets next string surrounded by quotes, returns NULL if not valid
 static char* get_next_string(FILE* file, int* line_num)
 {
+    long start_pos;
+    int count, hex, dig;
+    char* string;
     char c;
     c = get_next_nonspace(file, line_num);
     if (c != '"') {
@@ -252,8 +757,7 @@ static char* get_next_string(FILE* file, int* line_num)
         return NULL;
     }
 
-    long start_pos = ftell(file);
-    int count, hex, dig;
+    start_pos = ftell(file);
     count = 0;
     while (1) {
         count += 1;
@@ -282,7 +786,7 @@ static char* get_next_string(FILE* file, int* line_num)
         return NULL;
     }
 
-    char* string = json_malloc(count * sizeof(char));
+    string = json_malloc(count * sizeof(char));
     if (string == NULL) {
         print_error(line_num, "Error allocating memory for string");
         return NULL;
@@ -348,18 +852,21 @@ static char* get_next_string(FILE* file, int* line_num)
 
 static JsonValue* parse_value_object(FILE* file, int* line_num)
 {
-    JsonObject* object = parse_object(file, line_num);
+    JsonObject* object;
+    JsonValue* value;
+
+    object = parse_object(file, line_num);
     if (object == NULL) {
         print_error(line_num, "Error reading value object");
         return NULL;
     }
-    JsonValue* value = json_malloc(sizeof(JsonValue));
+    value = json_malloc(sizeof(JsonValue));
     if (value == NULL) {
         print_error(line_num, "Error allocating memory for value");
         return NULL;
     }
     value->type = JTYPE_OBJECT;
-    value->val_object = object;
+    value->val._object = object;
     return value;
 }
 
@@ -406,6 +913,8 @@ static JsonValue** parse_values(FILE* file, int* line_num, int* num_values)
 static JsonArray* parse_array(FILE* file, int* line_num)
 {
     JsonArray* array;
+    JsonValue** values;
+    int num_values;
     char c;
     c = get_next_nonspace(file, line_num);
     if (c == EOF) {
@@ -434,8 +943,8 @@ static JsonArray* parse_array(FILE* file, int* line_num)
         return array;
     }
  
-    int num_values = 0;
-    JsonValue** values = parse_values(file, line_num, &num_values);
+    num_values = 0;
+    values = parse_values(file, line_num, &num_values);
 
     if (values == NULL) {
         print_error(line_num, "Error parsing array");
@@ -464,18 +973,20 @@ static JsonArray* parse_array(FILE* file, int* line_num)
 
 static JsonValue* parse_value_array(FILE* file, int* line_num)
 {
-    JsonArray* array = parse_array(file, line_num);
+    JsonArray* array;
+    JsonValue* value;
+    array = parse_array(file, line_num);
     if (array == NULL) {
         print_error(line_num, "Error reading value array");
         return NULL;
     }
-    JsonValue* value = json_malloc(sizeof(JsonValue));
+    value = json_malloc(sizeof(JsonValue));
     if (value == NULL) {
         print_error(line_num, "Error allocating memory for value in array");
         return NULL;
     }
     value->type = JTYPE_ARRAY;
-    value->val_array = array;
+    value->val._array = array;
     return value;
 }
 
@@ -491,6 +1002,7 @@ static int accepting_state_float(int state)
 
 static int next_state_number(int state, char c)
 {
+    // consult dfa.png
     switch (state) {
         case 0:
             if (c == '-') return 1;
@@ -562,8 +1074,11 @@ static long dfa_number(FILE* file, int* line_num, JsonType* type)
 
 static JsonValue* parse_value_number(FILE* file, int* line_num)
 {
+    JsonValue* value;
     JsonType type;
     long start_pos, end_pos;
+    double num;
+    char* string;
     start_pos = ftell(file);
     if (start_pos == -1) {
         print_error(line_num, "Error reading file");
@@ -579,49 +1094,52 @@ static JsonValue* parse_value_number(FILE* file, int* line_num)
         return NULL;
     }
 
-    char* string = get_string_in_range(file, line_num, start_pos, end_pos);
+    string = get_string_in_range(file, line_num, start_pos, end_pos);
+
     if (string == NULL)
         return NULL;
 
-    double num = atof(string);
-
+    num = atof(string);
     json_free(string);
 
-    JsonValue* value = json_malloc(sizeof(JsonValue));
+    value = json_malloc(sizeof(JsonValue));
     if (value == NULL) {
         print_error(line_num, "Error allocating memory for value");
         return NULL;
     }
     value->type = type;
     if (type == JTYPE_INT)
-        value->val_int = num;
+        value->val._int = num;
     else
-        value->val_float = num;
+        value->val._float = num;
     
     return value;
 }
 
 static JsonValue* parse_value_string(FILE* file, int* line_num)
 {
-    char* string = get_next_string(file, line_num);
+    JsonValue* value;
+    char* string;
+    string = get_next_string(file, line_num);
     if (string == NULL) {
         print_error(line_num, "Error parsing value string");
         return NULL;
     }
 
-    JsonValue* value = json_malloc(sizeof(JsonValue));
+    value = json_malloc(sizeof(JsonValue));
     if (value == NULL) {
         print_error(line_num, "Error allocating memory for value");
         return NULL;
     }
     value->type = JTYPE_STRING;
-    value->val_string = string;
+    value->val._string = string;
 
     return value;
 }
 
 static JsonValue* parse_value_true(FILE* file, int* line_num)
 {
+    JsonValue* value;
     char str[5];
     if (fgets(str, 5, file) == NULL) {
         print_error(line_num, "Error reading file");
@@ -630,7 +1148,7 @@ static JsonValue* parse_value_true(FILE* file, int* line_num)
     str[4] = '\0';
     if (strcmp(str, "true"))
         return NULL;
-    JsonValue* value = json_malloc(sizeof(JsonValue));
+    value = json_malloc(sizeof(JsonValue));
     if (value == NULL) {
         print_error(line_num, "Error allocating memory for value");
         return NULL;
@@ -641,6 +1159,7 @@ static JsonValue* parse_value_true(FILE* file, int* line_num)
 
 static JsonValue* parse_value_false(FILE* file, int* line_num)
 {
+    JsonValue* value;
     char str[6];
     if (fgets(str, 6, file) == NULL) {
         print_error(line_num, "Error reading file");
@@ -649,7 +1168,7 @@ static JsonValue* parse_value_false(FILE* file, int* line_num)
     str[5] = '\0';
     if (strcmp(str, "false"))
         return NULL;
-    JsonValue* value = json_malloc(sizeof(JsonValue));
+    value = json_malloc(sizeof(JsonValue));
     if (value == NULL) {
         print_error(line_num, "Error allocating memory for value");
         return NULL;
@@ -660,6 +1179,7 @@ static JsonValue* parse_value_false(FILE* file, int* line_num)
 
 static JsonValue* parse_value_null(FILE* file, int* line_num)
 {
+    JsonValue* value;
     char str[5];
     if (fgets(str, 5, file) == NULL) {
         print_error(line_num, "Error reading file");
@@ -668,7 +1188,7 @@ static JsonValue* parse_value_null(FILE* file, int* line_num)
     str[4] = '\0';
     if (strcmp(str, "null"))
         return NULL;
-    JsonValue* value = json_malloc(sizeof(JsonValue));
+    value = json_malloc(sizeof(JsonValue));
     if (value == NULL) {
         print_error(line_num, "Error allocating memory for value");
         return NULL;
@@ -700,8 +1220,11 @@ static JsonValue* parse_value(FILE* file, int* line_num)
 
 static JsonMember* parse_member(FILE* file, int* line_num)
 {
+    JsonValue* value;
+    JsonMember* member;
+    char* key;
     char c;
-    char* key = get_next_string(file, line_num);
+    key = get_next_string(file, line_num);
     if (key == NULL) {
         print_error(line_num, "Error reading key");
         return NULL;
@@ -714,7 +1237,6 @@ static JsonMember* parse_member(FILE* file, int* line_num)
         return NULL;
     }
 
-    JsonValue* value;
     value = parse_value(file, line_num);
     if (value == NULL) {
         print_error(line_num, "Error reading value");
@@ -722,7 +1244,7 @@ static JsonMember* parse_member(FILE* file, int* line_num)
         return NULL;
     }
 
-    JsonMember* member = json_malloc(sizeof(JsonMember));
+    member = json_malloc(sizeof(JsonMember));
     if (member == NULL) {
         print_error(line_num, "Error allocating memory for member");
         json_value_destroy(value);
@@ -780,6 +1302,8 @@ static JsonMember** parse_members(FILE* file, int* line_num, int* num_members)
 static JsonObject* parse_object(FILE* file, int* line_num)
 {
     JsonObject* object;
+    JsonMember** members;
+    int num_members;
     char c;
 
     c = get_next_nonspace(file, line_num);
@@ -809,8 +1333,8 @@ static JsonObject* parse_object(FILE* file, int* line_num)
         return object;
     }
 
-    int num_members = 0;
-    JsonMember** members = parse_members(file, line_num, &num_members);
+    num_members = 0;
+    members = parse_members(file, line_num, &num_members);
 
     if (members == NULL) {
         print_error(line_num, "Error parsing object");
@@ -837,319 +1361,106 @@ static JsonObject* parse_object(FILE* file, int* line_num)
     return object;
 }
 
-JsonObject* json_read(const char* path)
-{
-    FILE* file = fopen(path, "r");
-    if (file == NULL)
-        return NULL;
-
-    int line_num = 1;
-    JsonObject* object = parse_object(file, &line_num);
-    if (object != NULL && get_next_nonspace(file, &line_num) != EOF) {
-        print_error(&line_num, "Excess characters after root");
-        json_object_destroy(object);
-        object = NULL;
-    }
-
-    if (fclose(file) == EOF) {
-        json_object_destroy(object);
-        return NULL;
-    }
-
-    return object;
-}
-
-JsonValue* json_get_value(const JsonObject* object, const char* key)
-{
-    JsonMember* member;
-    int m, l, r, a;
-    l = 0;
-    r = object->num_members - 1;
-    while (l <= r) {
-        m = l + (r - l) / 2;
-        member = object->members[m];
-        a = strcmp(key, member->key);
-        if (a > 0) 
-            l = m + 1;
-        else if (a < 0) 
-            r = m - 1;
-        else 
-            return member->value;
-    }
-    return NULL;
-}
-
-JsonType json_get_type(const JsonValue* value)
-{
-    return value->type;
-}
-
-JsonObject* json_get_object(const JsonValue* value)
-{
-    return value->val_object;
-}
-
-JsonArray* json_get_array(const JsonValue* value)
-{
-    return value->val_array;
-}
-
-char* json_get_string(const JsonValue* value)
-{
-    return value->val_string;
-}
-
-long long json_get_int(const JsonValue* value)
-{
-    return value->val_int;
-}
-
-double json_get_float(const JsonValue* value)
-{
-    return value->val_float;
-}
-
-char* json_member_key(const JsonMember* member)
-{
-    return member->key;
-}
-
-JsonValue* json_member_value(const JsonMember* member)
-{
-    return member->value;
-}
-
-int json_object_length(const JsonObject* object)
-{
-    return object->num_members;
-}
-
-JsonObject* json_merge_objects(JsonObject* object1, JsonObject* object2)
-{
-    JsonObject* object3;
-    JsonMember* member1;
-    JsonMember* member2;
-    JsonIterator* it1;
-    JsonIterator* it2;
-    const char* key1;
-    const char* key2;
-    int num_members1, num_members2, idx;
-
-    it1 = json_iterator_create(object1);
-    if (it1 == NULL)
-        return NULL;
-    
-    it2 = json_iterator_create(object2);
-    if (it2 == NULL) {
-        json_iterator_destroy(it1);
-        return NULL;
-    }
-
-    object3 = json_malloc(sizeof(JsonObject));
-    if (object3 == NULL) {
-        json_iterator_destroy(it1);
-        json_iterator_destroy(it2);
-        return NULL;
-    }
-
-    num_members1 = json_object_length(object1);
-    num_members2 = json_object_length(object2);
-    object3->num_members = num_members1 + num_members2;
-    object3->members = json_malloc(object3->num_members * sizeof(JsonMember*));
-    if (object3->members == NULL) {
-        json_free(object3);
-        json_iterator_destroy(it1);
-        json_iterator_destroy(it2);
-        return NULL;
-    }
-
-    idx = 0;
-    member1 = json_iterator_get(it1);
-    member2 = json_iterator_get(it2);
-    while (member1 != NULL && member2 != NULL) {
-        key1 = json_member_key(member1);
-        key2 = json_member_key(member2);
-        if (strcmp(key1, key2) < 0) {
-            object3->members[idx++] = member1;
-            json_iterator_increment(it1);
-            member1 = json_iterator_get(it1);
-        } else {
-            object3->members[idx++] = member2;
-            json_iterator_increment(it2);
-            member2 = json_iterator_get(it2);
-        }
-    }
-    while (member1 != NULL) {
-        object3->members[idx++] = member1;
-        json_iterator_increment(it1);
-        member1 = json_iterator_get(it1);
-    }
-    while (member2 != NULL) {
-        object3->members[idx++] = member2;
-        json_iterator_increment(it2);
-        member2 = json_iterator_get(it2);
-    }
-
-    json_free(object1);
-    json_free(object2);
-    
-    return object3;
-}
-
-JsonIterator* json_iterator_create(const JsonObject* object)
-{
-    JsonIterator* iterator = json_malloc(sizeof(JsonIterator));
-    if (iterator == NULL) {
-        fprintf(stderr, "Failed to allocate memory for iterator");
-        return NULL;
-    }
-    iterator->object = object;
-    iterator->idx = 0;
-    return iterator;
-}
-
-JsonMember* json_iterator_get(const JsonIterator* iterator)
-{
-    if (iterator->idx >= iterator->object->num_members)
-        return NULL;
-    return iterator->object->members[iterator->idx];
-}
-
-void json_iterator_increment(JsonIterator* iterator)
-{
-    iterator->idx++;
-}
-
-void json_iterator_destroy(JsonIterator* iterator)
-{
-    json_free(iterator);
-}
-
-int json_array_length(const JsonArray* array)
-{
-    return array->num_values;
-}
-
-JsonValue* json_array_get(const JsonArray* array, int idx)
-{
-    return array->values[idx];
-}
-
-static void tab(int depth)
+static void tab(FILE* fptr, int depth)
 {
     for (int j = 0; j < depth; j++)
-        printf("  ");
+        fprintf(fptr, "  ");
 }
 
-static void print_string(char* string)
+static void print_string(FILE* fptr, char* string)
 {
-    printf("\"");
+    fprintf(fptr, "\"");
     for (int i = 0; string[i] != '\0'; i++) {
         if (string[i] == '"' || string[i] == '\\' || string[i] == '/')
-            printf("\\");
-        printf("%c", string[i]);
+            fprintf(fptr, "\\");
+        fprintf(fptr, "%c", string[i]);
     }
-    printf("\"");
+    fprintf(fptr, "\"");
 }
 
-static void json_value_print(const JsonValue* value, int depth)
+static void print_value(FILE* fptr, const JsonValue* value, int depth)
 {
     switch (value->type) {
         case JTYPE_TRUE:
-            printf("true");
+            fprintf(fptr, "true");
             break;
         case JTYPE_FALSE:
-            printf("false");
+            fprintf(fptr, "false");
             break;
         case JTYPE_NULL:
-            printf("null");
+            fprintf(fptr, "null");
             break;
         case JTYPE_STRING:
-            print_string(value->val_string);
+            print_string(fptr, value->val._string);
             break;
         case JTYPE_INT:
-            printf("%lld", value->val_int);
+            fprintf(fptr, "%lld", value->val._int);
             break;
         case JTYPE_FLOAT:
-            printf("%f", value->val_float);
+            fprintf(fptr, "%f", value->val._float);
             break;
         case JTYPE_OBJECT:
-            json_object_print(value->val_object, depth);
+            print_object(fptr, value->val._object, depth);
             break;
         case JTYPE_ARRAY:
-            json_array_print(value->val_array, depth);
+            print_array(fptr, value->val._array, depth);
             break;
         default:
             break;
     }
 }
 
-static void json_array_print(const JsonArray* array, int depth)
+static void print_array(FILE* fptr, const JsonArray* array, int depth)
 {
-    printf("[");
+    const JsonValue* value;
+
+    fprintf(fptr, "[");
     if (array->num_values == 0) {
-        printf("]");
+        fprintf(fptr, "]");
         return;
     }
-    printf("\n");
+    fprintf(fptr, "\n");
 
-    const JsonValue* value;
     value = array->values[0];
-    tab(depth+1);
-    json_value_print(value, depth+1);
+    tab(fptr, depth+1);
+    print_value(fptr, value, depth+1);
 
     for (int i = 1; i < array->num_values; i++) {
         value = array->values[i];
-        printf(",\n");
-        tab(depth+1);
-        json_value_print(value, depth+1);
+        fprintf(fptr, ",\n");
+        tab(fptr, depth+1);
+        print_value(fptr, value, depth+1);
     }
-    printf("\n");
-    tab(depth);
-    printf("]");
+    fprintf(fptr, "\n");
+    tab(fptr, depth);
+    fprintf(fptr, "]");
 }
 
-static void json_object_print(const JsonObject* object, int depth)
+static void print_object(FILE* fptr, const JsonObject* object, int depth)
 {
-    printf("{");
+    const JsonMember* member;
+    
+    fprintf(fptr, "{");
     if (object->num_members == 0) {
-        printf("}");
+        fprintf(fptr, "}");
         return;
     }
-    printf("\n");
+    fprintf(fptr, "\n");
 
-    const JsonMember* member;
     member = object->members[0];
-    tab(depth+1);
-    printf("\"%s\": ", member->key);
-    json_value_print(member->value, depth+1);
+    tab(fptr, depth+1);
+    fprintf(fptr, "\"%s\": ", member->key);
+    print_value(fptr, member->value, depth+1);
 
     for (int i = 1; i < object->num_members; i++) {
         member = object->members[i];
-        printf(",\n");
-        tab(depth+1);
-        printf("\"%s\": ", member->key);
-        json_value_print(member->value, depth+1);
+        fprintf(fptr, ",\n");
+        tab(fptr, depth+1);
+        fprintf(fptr, "\"%s\": ", member->key);
+        print_value(fptr, member->value, depth+1);
     }
-    printf("\n");
-    tab(depth);
-    printf("}");
+    fprintf(fptr, "\n");
+    tab(fptr, depth);
+    fprintf(fptr, "}");
 }
 
-void json_print_object(const JsonObject* object)
-{
-    json_object_print(object, 0);
-    puts("");
-}
-
-void json_print_array(const JsonArray* array)
-{
-    json_array_print(array, 0);
-    puts("");
-}
-
-void json_print_value(const JsonValue* value)
-{
-    json_value_print(value, 0);
-    puts("");
-}

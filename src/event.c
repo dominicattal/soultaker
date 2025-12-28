@@ -70,7 +70,7 @@ static bool event_queue_empty(EventQueue* queue)
 static void event_enqueue(EventQueue* queue, Event event)
 {
     if (event_queue_full(queue)) {
-        log_write(WARNING, "Event queue is full, dropping event %d", event.type);
+        log_write(WARNING, "Event queue is full, dropping event %d %d %d", event.type, queue->head, queue->tail);
         return;
     }
     queue->buffer[queue->tail] = event;

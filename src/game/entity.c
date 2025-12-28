@@ -96,15 +96,15 @@ static void _throw_entity_error(EntityError error, i32 line)
 
 static void* load_function(JsonObject* object, const char* key)
 {
-    JsonValue* val_string = json_get_value(object, key);
+    JsonValue* val_string = json_object_get_value(object, key);
 
     if (val_string == NULL)
         return NULL;
     
-    if (json_get_type(val_string) != JTYPE_STRING)
+    if (json_value_get_type(val_string) != JTYPE_STRING)
         throw_entity_error(ERROR_INVALID_TYPE);
 
-    const char* function_name = json_get_string(val_string);
+    const char* function_name = json_value_get_string(val_string);
     if (function_name == NULL)
         throw_entity_error(ERROR_MISSING);
 
@@ -123,17 +123,17 @@ static void load_state_frame_lengths(EntityState* state, JsonObject* object)
     JsonArray* array;
     i32 int_val, i;
     f32 float_val;
-    value = json_get_value(object, "timers");
+    value = json_object_get_value(object, "timers");
     if (value == NULL) {
         for (i = 0; i < state->num_frames; i++)
             state->frame_lengths[i] = DEFAULT_FRAME_LENGTH;
         return;
     }
 
-    if (json_get_type(value) != JTYPE_ARRAY)
+    if (json_value_get_type(value) != JTYPE_ARRAY)
         throw_entity_error(ERROR_INVALID_TYPE);
 
-    array = json_get_array(value);
+    array = json_value_get_array(value);
     int_val  = json_array_length(array);
     if (int_val != state->num_frames)
         throw_entity_error(ERROR_INVALID_COUNT);
@@ -142,9 +142,9 @@ static void load_state_frame_lengths(EntityState* state, JsonObject* object)
         value = json_array_get(array, i);
         if (value == NULL)
             throw_entity_error(ERROR_MISSING);
-        if (json_get_type(value) != JTYPE_FLOAT)
+        if (json_value_get_type(value) != JTYPE_FLOAT)
             throw_entity_error(ERROR_INVALID_TYPE);
-        float_val = json_get_float(value);
+        float_val = json_value_get_float(value);
         state->frame_lengths[i] = float_val;
     }
 }
@@ -156,13 +156,13 @@ static void load_state_frames(EntityState* state, JsonObject* object, const char
     const char* string;
     i32 int_val;
     i32 num_frames = state->num_frames;
-    value = json_get_value(object, dir_str);
+    value = json_object_get_value(object, dir_str);
     if (value == NULL)
         throw_entity_error(ERROR_MISSING);
-    if (json_get_type(value) != JTYPE_ARRAY)
+    if (json_value_get_type(value) != JTYPE_ARRAY)
         throw_entity_error(ERROR_INVALID_TYPE);
 
-    array = json_get_array(value);
+    array = json_value_get_array(value);
     int_val = json_array_length(array);
     if (int_val != num_frames)
         throw_entity_error(ERROR_INVALID_COUNT);
@@ -171,10 +171,10 @@ static void load_state_frames(EntityState* state, JsonObject* object, const char
         value = json_array_get(array, j);
         if (value == NULL)
             throw_entity_error(ERROR_MISSING);
-        if (json_get_type(value) != JTYPE_STRING)
+        if (json_value_get_type(value) != JTYPE_STRING)
             throw_entity_error(ERROR_INVALID_TYPE);
 
-        string = json_get_string(value);
+        string = json_value_get_string(value);
         if (string == NULL)
             throw_entity_error(ERROR_MISSING);
         state->frames[num_frames * dir_int + j] = texture_get_id(string);
@@ -193,20 +193,20 @@ static void load_state_info(i32 entity_id, JsonObject* object)
     i32 bidirectional;
     
     bidirectional = 0;
-    value = json_get_value(object, "bidirectional");
+    value = json_object_get_value(object, "bidirectional");
     if (value != NULL)  {
-        type = json_get_type(value);
+        type = json_value_get_type(value);
         if (type == JTYPE_TRUE)
             bidirectional = 1;
     }
 
-    value = json_get_value(object, "states");
+    value = json_object_get_value(object, "states");
     if (value == NULL)
         throw_entity_error(ERROR_MISSING);
-    if (json_get_type(value) != JTYPE_OBJECT)
+    if (json_value_get_type(value) != JTYPE_OBJECT)
         throw_entity_error(ERROR_INVALID_TYPE);
 
-    obj_states = json_get_object(value);
+    obj_states = json_value_get_object(value);
     if (obj_states == NULL)
         throw_entity_error(ERROR_MISSING);
 
@@ -217,27 +217,27 @@ static void load_state_info(i32 entity_id, JsonObject* object)
     for (i32 i = 0; i < num_states; i++) {
 
         member = json_iterator_get(it);
-        name = json_member_key(member);
+        name = json_member_get_key(member);
 
         entity_context.current_state_name = name;
 
-        value = json_member_value(member);
+        value = json_member_get_value(member);
         if (value == NULL)
             throw_entity_error(ERROR_MISSING);
-        if (json_get_type(value) != JTYPE_OBJECT)
+        if (json_value_get_type(value) != JTYPE_OBJECT)
             throw_entity_error(ERROR_INVALID_TYPE);
 
-        object = json_get_object(value);
+        object = json_value_get_object(value);
         if (object == NULL)
             throw_entity_error(ERROR_MISSING);
 
-        value = json_get_value(object, "frames");
+        value = json_object_get_value(object, "frames");
         if (value == NULL)
             throw_entity_error(ERROR_MISSING);
-        if (json_get_type(value) != JTYPE_INT)
+        if (json_value_get_type(value) != JTYPE_INT)
             throw_entity_error(ERROR_INVALID_TYPE);
 
-        num_frames = json_get_int(value);
+        num_frames = json_value_get_int(value);
         if (num_frames <= 0)
             throw_entity_error(ERROR_INVALID_COUNT);
 
@@ -287,20 +287,20 @@ static void load_entity_info(void)
         if (member == NULL)
             throw_entity_error(ERROR_GENERIC);
 
-        string = json_member_key(member);
+        string = json_member_get_key(member);
         if (string == NULL)
             throw_entity_error(ERROR_GENERIC);
 
         entity_context.infos[i].name = string_copy(string);
         entity_context.current_entity_name = string;
 
-        val_object = json_member_value(member);
+        val_object = json_member_get_value(member);
         if (val_object == NULL)
             throw_entity_error(ERROR_MISSING);
-        if (json_get_type(val_object) != JTYPE_OBJECT)
+        if (json_value_get_type(val_object) != JTYPE_OBJECT)
             throw_entity_error(ERROR_INVALID_TYPE);
 
-        object = json_get_object(val_object);
+        object = json_value_get_object(val_object);
         if (object == NULL)
             throw_entity_error(ERROR_MISSING);
 
