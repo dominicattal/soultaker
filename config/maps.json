@@ -295,27 +295,6 @@
                         "location": [7, 1],
                         "bounding_box": [63, 46, 65, 46],
                         "origin": [1, 0]
-                    },
-                    {
-                        "type": "female",
-                        "default": "wall_4",
-                        "location": [1, 7],
-                        "bounding_box": [63, 48, 63, 50],
-                        "origin": [0, 1]
-                    },
-                    {
-                        "type": "female",
-                        "default": "wall_4",
-                        "location": [7, 13],
-                        "bounding_box": [63, 46, 65, 46],
-                        "origin": [1, 0]
-                    },
-                    {
-                        "type": "female",
-                        "default": "wall_4",
-                        "location": [13, 7],
-                        "bounding_box": [63, 48, 63, 50],
-                        "origin": [0, 1]
                     }
                 ]
             }

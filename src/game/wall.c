@@ -42,6 +42,29 @@ void wall_destroy(Wall* wall)
     st_free(wall);
 }
 
+void wall_search_and_destroy(Wall* wall)
+{
+    Wall* test_wall;
+    i32 i;
+#ifdef DEBUG_BUILD
+    for (i = 0; i < game_context.free_walls->length; i++) {
+        test_wall = list_get(game_context.free_walls, i);
+        if (wall == test_wall) {
+            log_write(CRITICAL, "Wall found in free walls when not supposed to");
+            break;
+        }
+    }
+#endif
+    for (i = 0; i < game_context.walls->length; i++) {
+        test_wall = list_get(game_context.walls, i);
+        if (wall == test_wall) {
+            wall_destroy(list_remove(game_context.walls, i));
+            return;
+        }
+    }
+    log_write(WARNING, "Could not find wall in tile list");
+}
+
 void wall_cleanup(void)
 {
     if (game_context.walls == NULL)

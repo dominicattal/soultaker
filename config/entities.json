@@ -182,5 +182,18 @@
                 "down": [ "dummy" ]
             }
         }
+    },
+    "dummy_boss": {
+        "create": "dummy_boss_create",
+        "destroy": "dummy_boss_destroy",
+        "states": {
+            "idle": {
+                "frames": 1,
+                "left": [ "dummy" ],
+                "right": [ "dummy" ],
+                "up": [ "dummy" ],
+                "down": [ "dummy" ]
+            }
+        }
     }
 }

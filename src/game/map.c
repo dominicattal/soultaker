@@ -780,6 +780,7 @@ typedef enum {
     ROTATION_R1,
     ROTATION_R2,
     ROTATION_R3,
+    // mirrored rotations
     ROTATION_MR0,
     ROTATION_MR1,
     ROTATION_MR2,
@@ -1651,6 +1652,13 @@ void map_fog_clear(void)
     game_render_update_parstacles();
 }
 
+void map_handle_trigger(Trigger* trigger, Entity* entity)
+{
+    map_context.current_map_node = trigger->map_node;
+    trigger->func(&game_api, entity, trigger->args);
+    map_context.current_map_node = NULL;
+}
+
 static void clear_map(void)
 {
     Map* map = map_context.current_map;
@@ -1688,6 +1696,7 @@ Entity* room_create_entity(vec2 position, i32 id)
 
 Trigger* room_create_trigger(vec2 position, f32 radius, TriggerFunc func, void* args)
 {
+    Trigger* trigger;
     MapNode* node = map_context.current_map_node;
     if (node == NULL)
         log_write(FATAL, "fuck");
@@ -1700,7 +1709,9 @@ Trigger* room_create_trigger(vec2 position, f32 radius, TriggerFunc func, void* 
     vec2 new_position;
     new_position.x = node->origin_x + dx;
     new_position.z = node->origin_z + dz;
-    return trigger_create(new_position, radius, func, args);
+    trigger = trigger_create(new_position, radius, func, args);
+    trigger->map_node = node;
+    return trigger;
 }
 
 Obstacle* room_create_obstacle(vec2 position)
@@ -1763,6 +1774,46 @@ Wall* room_create_wall(vec2 position, f32 height, f32 width, f32 length, u32 min
     return wall;
 }
 
+Tile* room_set_tilemap_tile(i32 x, i32 z, u32 minimap_color)
+{
+    Tile* tile;
+    MapNode* node = map_context.current_map_node;
+    if (node == NULL)
+        log_write(FATAL, "fuck");
+    Room* room = node->room;
+    i32 orientation = node->orientation;
+    i32 u, v, dx, dz;
+    u = room->u1 + x;
+    v = room->v1 + z;
+    dx = calculate_room_dx(room, orientation, u, v);
+    dz = calculate_room_dz(room, orientation, u, v);
+    x = node->origin_x + dx;
+    z = node->origin_z + dz;
+    tile = tile_create(vec2_create(x, z), minimap_color);
+    map_set_tile(x, z, tile);
+    return tile;
+}
+
+Wall* room_set_tilemap_wall(i32 x, i32 z, f32 height, u32 minimap_color)
+{
+    Wall* wall;
+    MapNode* node = map_context.current_map_node;
+    if (node == NULL)
+        log_write(FATAL, "fuck");
+    Room* room = node->room;
+    i32 orientation = node->orientation;
+    i32 u, v, dx, dz;
+    u = room->u1 + x;
+    v = room->v1 + z;
+    dx = calculate_room_dx(room, orientation, u, v);
+    dz = calculate_room_dz(room, orientation, u, v);
+    x = node->origin_x + dx;
+    z = node->origin_z + dz;
+    wall = wall_create(vec2_create(x, z), height, minimap_color);
+    map_set_wall(x, z, wall);
+    return wall;
+}
+
 i32 map_get_id(const char* name)
 {
     int l, r, m, a;
@@ -1820,6 +1871,42 @@ Wall* map_get_wall(i32 x, i32 z)
     if (!quadmask_isset(map->tile_mask, x, z))
         return NULL;
     return map->tiles[z * map->width + x];
+}
+
+void map_set_tile(i32 x, i32 z, Tile* tile)
+{
+    Map* map = map_context.current_map;
+    void* prev_tile;
+    if (map == NULL) return;
+    if (x < 0 || x >= map->width) return;
+    if (z < 0 || z >= map->length) return;
+    prev_tile = map->tiles[z * map->width + x];
+    if (quadmask_isset(map->tile_mask, x, z))
+        wall_search_and_destroy(prev_tile);
+    else
+        tile_search_and_destroy(prev_tile);
+    map->tiles[z * map->width + x] = tile;
+    quadmask_unset(map->tile_mask, x, z);
+    game_render_update_tiles();
+    game_render_update_walls();
+}
+
+void map_set_wall(i32 x, i32 z, Wall* wall)
+{
+    Map* map = map_context.current_map;
+    void* prev_tile;
+    if (map == NULL) return;
+    if (x < 0 || x >= map->width) return;
+    if (z < 0 || z >= map->length) return;
+    prev_tile = map->tiles[z * map->width + x];
+    if (quadmask_isset(map->tile_mask, x, z))
+        wall_search_and_destroy(prev_tile);
+    else
+        tile_search_and_destroy(prev_tile);
+    map->tiles[z * map->width + x] = wall;
+    quadmask_set(map->tile_mask, x, z);
+    game_render_update_tiles();
+    game_render_update_walls();
 }
 
 void map_load(i32 id)

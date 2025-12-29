@@ -114,7 +114,7 @@ static void collide_entity_trigger(Entity* entity, Trigger* trigger)
     offset = vec2_create(ex - tx, ez - tz);
     if (vec2_mag(offset) >= er + tr)
         return;
-    trigger->func(&game_api, entity, trigger->args);
+    map_handle_trigger(trigger, entity);
     trigger_set_flag(trigger, TRIGGER_FLAG_USED, true);
 }
 
@@ -228,9 +228,10 @@ void game_update_objects(void)
     i = 0;
     while (i < game_context.bosses->length) {
         Entity* entity = list_get(game_context.bosses, i);
-        if (entity->health <= 0)
+        if (entity->health <= 0) {
+            entity_unmake_boss(entity);
             list_remove(game_context.bosses, i);
-        else
+        } else
             i++;
     }
     i = 0;

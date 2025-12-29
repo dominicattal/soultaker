@@ -31,7 +31,7 @@ st_export bool level_1_generate(GameApi* api, LocalMapGenerationSettings* settin
     if (strcmp(settings->current_branch, "main") == 0) {
         if (strcmp(settings->current_room_type, "spawn") == 0) {
             settings->current_room_type = "enemy";
-            settings->num_rooms_left = 15;
+            settings->num_rooms_left = 1;
             return false;
         }
         if (strcmp(settings->current_room_type, "enemy") == 0) {
@@ -96,7 +96,41 @@ st_export void level_1_enemy_2_create(GameApi* api, LevelData* data)
 {
 }
 
+st_export void dummy_boss_create(GameApi* api, Entity* entity)
+{
+    entity->size = 1.0f;
+    entity->hitbox_radius = 0.5f;
+    entity->health = 1;
+    entity->max_health = 1;
+    api->entity_make_boss(entity);
+}
+
+st_export void dummy_boss_destroy(GameApi* api, Entity* entity)
+{
+    Trigger* trigger;
+    api->log_write(DEBUG, "killed boss");
+    trigger = api->trigger_create(entity->position, 0.5, test, &entity->id);
+    api->trigger_set_flag(trigger, TRIGGER_FLAG_ONCE, true);
+    api->room_set_tilemap_tile(6, 1, 0x00FF00);
+    api->room_set_tilemap_tile(7, 1, 0x00FF00);
+    api->room_set_tilemap_tile(8, 1, 0x00FF00);
+}
+
+static void start_boss(GameApi* api, Entity* entity, void* args)
+{
+    i32 id = api->entity_get_id("dummy_boss");
+    vec2 pos = api->vec2_create(7.5, 3);
+    api->room_create_entity(pos, id);
+    api->room_set_tilemap_wall(6, 1, 1.0f, 0xFF0000);
+    api->room_set_tilemap_wall(7, 1, 1.0f, 0xFF0000);
+    api->room_set_tilemap_wall(8, 1, 1.0f, 0xFF0000);
+}
+
 st_export void level_1_boss_create(GameApi* api, LevelData* data)
 {
+    Trigger* trigger;
+    vec2 pos = api->vec2_create(7.5, 7.5);
+    trigger = api->room_create_trigger(pos, 0.5f, start_boss, NULL);
+    api->trigger_set_flag(trigger, TRIGGER_FLAG_ONCE, true);
 }
 
