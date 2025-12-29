@@ -67,6 +67,7 @@ void camera_tilt(void);
 typedef void (*TriggerFunc)(GameApi*, Entity*, void*);
 typedef struct Trigger {
     void* args;
+    MapNode* map_node;
     TriggerFunc func;
     vec2 position;
     f32 radius;
@@ -105,6 +106,9 @@ void map_init(void);
 void map_load(i32 id);
 void map_cleanup(void);
 
+// returns true if the tile at (x, z) is a wall
+bool map_is_wall(i32 x, i32 z);
+
 // gets the tile or wall at (x, z), returns NULL if out of bounds
 void* map_get(i32 x, i32 z);
 
@@ -116,8 +120,9 @@ Tile* map_get_tile(i32 x, i32 z);
 // NULL if it is out of bounds, the unit is empty, or is a tile
 Wall* map_get_wall(i32 x, i32 z);
 
-// returns true if the tile at (x, z) is a wall
-bool map_is_wall(i32 x, i32 z);
+// replaces the tile or wall at (x, z) with tile or wall
+void map_set_tile(i32 x, i32 z, Tile* tile);
+void map_set_wall(i32 x, i32 z, Wall* wall);
 
 // returns whether coordinate in fog
 bool map_fog_contains(vec2 position);
@@ -130,11 +135,15 @@ void map_fog_explore(vec2 position);
 // clears all the fog
 void map_fog_clear(void);
 
+void map_handle_trigger(Trigger* trigger, Entity* entity);
+
 Entity* room_create_entity(vec2 position, i32 id);
 Obstacle* room_create_obstacle(vec2 position);
 Parstacle* room_create_parstacle(vec2 position);
 Wall* room_create_wall(vec2 position, f32 height, f32 width, f32 length, u32 minimap_color);
 Trigger* room_create_trigger(vec2 position, f32 radius, TriggerFunc func, void* args);
+Tile* room_set_tilemap_tile(i32 x, i32 z, u32 minimap_color);
+Wall* room_set_tilemap_wall(i32 x, i32 z, f32 height, u32 minimap_color);
 
 //**************************************************************************
 // Entity, Player definitions
@@ -278,6 +287,8 @@ void tile_set_flag(Tile* tile, TileFlagEnum flag, u32 val);
 bool tile_get_flag(Tile* tile, TileFlagEnum flag);
 Tile* tile_create(vec2 position, u32 minimap_color);
 void tile_destroy(Tile* tile);
+// search for tile in global tiles list, removes and destroys it
+void tile_search_and_destroy(Tile* tile);
 void tile_cleanup(void);
 void tile_lava_collision(Entity* entity);
 
@@ -297,6 +308,9 @@ void wall_init(void);
 void wall_clear(void);
 Wall* wall_create(vec2 position, f32 height, u32 minimap_color);
 void wall_destroy(Wall* wall);
+// search for wall in global walls list, removes and destroys it
+// does not look in free walls list
+void wall_search_and_destroy(Wall* wall);
 void wall_cleanup(void);
 void wall_add_free_wall(Wall* wall);
 
@@ -541,6 +555,8 @@ typedef struct GameApi {
     Parstacle* (*room_create_parstacle)(vec2);
     Wall* (*room_create_wall)(vec2, f32, f32, f32, u32);
     Trigger* (*room_create_trigger)(vec2, f32, TriggerFunc, void*);
+    Tile* (*room_set_tilemap_tile)(i32, i32, u32);
+    Wall* (*room_set_tilemap_wall)(i32, i32, f32, u32);
 
     // Misc
     i32 (*texture_get_id)(const char*);

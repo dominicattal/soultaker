@@ -44,7 +44,7 @@ void player_reset(void)
     game_context.player.entity = entity;
     game_context.player.entity->direction = vec2_create(0, 0);
     game_context.player.entity->size = 1.0;
-    game_context.player.entity->speed = 10;
+    game_context.player.entity->speed = 20;
     entity_set_flag(game_context.player.entity, ENTITY_FLAG_FRIENDLY, 1);
     game_context.player.weapon.id = weapon_get_id("pointer");
     game_context.player.swap_out.id = weapon_get_id("null_pointer");

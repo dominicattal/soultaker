@@ -43,6 +43,20 @@ void tile_destroy(Tile* tile)
     st_free(tile);
 }
 
+void tile_search_and_destroy(Tile* tile)
+{
+    Tile* test_tile;
+    i32 i;
+    for (i = 0; i < game_context.tiles->length; i++) {
+        test_tile = list_get(game_context.tiles, i);
+        if (tile == test_tile) {
+            tile_destroy(list_remove(game_context.tiles, i));
+            return;
+        }
+    }
+    log_write(WARNING, "Could not find tile in tile list");
+}
+
 void tile_cleanup(void)
 {
     if (game_context.tiles == NULL)

@@ -481,9 +481,7 @@ void entity_boss_update(Entity* entity)
 
 void entity_unmake_boss(Entity* entity)
 {
-    i32 idx = list_search(game_context.bosses, entity);
-    log_assert(idx != -1, "Entity %p was not found in boss list", entity);
-    list_remove(game_context.bosses, idx);
+    log_assert(entity_get_flag(entity, ENTITY_FLAG_BOSS), "Entity is already not boss");
     entity_set_flag(entity, ENTITY_FLAG_BOSS, 0);
     event_create_gui_destroy_boss_healthbar(entity);
     pthread_mutex_lock(&game_context.getter_mutex);
@@ -564,8 +562,6 @@ void entity_destroy(Entity* entity)
     DestroyFuncPtr destroy = entity_context.infos[entity->id].destroy;
     if (destroy != NULL)
         destroy(&game_api, entity);
-    if (entity_get_flag(entity, ENTITY_FLAG_BOSS))
-        entity_unmake_boss(entity); 
     st_free(entity);
 }
 
