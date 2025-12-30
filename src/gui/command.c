@@ -166,7 +166,7 @@ static CommandState new_state(CommandState state, char* command, i32 left, i32 r
                 command_context.error_message = "Invalid preset name";
                 return CS_ERROR;
             }
-            event_create_game_map_load(id);
+            event_create_game_map_create(id);
             return CS_PRESETFIN;
         default:
             return CS_ERROR;

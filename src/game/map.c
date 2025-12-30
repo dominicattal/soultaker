@@ -79,12 +79,18 @@ typedef struct {
     RoomsetCleanupFuncPtr cleanup;
 } Roomset;
 
-typedef struct {
-    Quadmask* qm;
+typedef struct Map {
+    i32 width, length;
     Roomset* roomset;
-} GlobalMapGenerationSettings;
+    MapNode* root;
+    void** tiles;
+    MapNode** map_nodes;
+    Quadmask* tile_mask;
+    Quadmask* fog_mask;
+} Map;
 
 typedef struct MapNode {
+    Map* map;
     MapNode* parent;
     MapNode** children;
     Alternate* female_alternate;
@@ -100,23 +106,17 @@ typedef struct MapNode {
     bool cleared;
 } MapNode;
 
-typedef struct Map {
-    i32 width, length;
+typedef struct {
+    Map* map;
+    Quadmask* qm;
     Roomset* roomset;
-    MapNode* root;
-    void** tiles;
-    MapNode** map_nodes;
-    Quadmask* tile_mask;
-    Quadmask* fog_mask;
-} Map;
+} GlobalMapGenerationSettings;
 
 typedef struct {
 
     const char** names;
     i32 num_names;
     JsonObject* json;
-
-    Map* current_map;
 
     // map generating / map events
     MapNode* current_map_node;
@@ -1088,9 +1088,10 @@ static void unpreload_room_alternate(PreloadArgs* args)
     }
 }
 
-static MapNode* map_node_create(void)
+static MapNode* map_node_create(Map* map)
 {
     MapNode* node = st_malloc(sizeof(MapNode));
+    node->map = map;
     node->parent = NULL;
     node->children = NULL;
     node->num_children = 0;
@@ -1140,6 +1141,7 @@ static void map_node_detach(MapNode* parent, MapNode* child)
 static bool pregenerate_map_helper(GlobalMapGenerationSettings* global_settings, LocalMapGenerationSettings local_settings, MapNode* parent)
 {
     PreloadArgs args;
+    Map* map = global_settings->map;
     Quadmask* qm = global_settings->qm;
     Roomset* roomset = global_settings->roomset;
     i32 male_x = local_settings.male_x;
@@ -1200,7 +1202,7 @@ static bool pregenerate_map_helper(GlobalMapGenerationSettings* global_settings,
                 preload_room(&args);
                 preload_room_alternate(&args);
                 local_settings.num_rooms_left--;
-                child = map_node_create();
+                child = map_node_create(map);
                 child->room = room;
                 child->female_alternate = female_alternate;
                 child->origin_x = origin_x;
@@ -1467,7 +1469,7 @@ static void generate_map_helper(Map* map, Quadmask* qm, Palette* palette, Roomse
         generate_map_helper(map, qm, palette, roomset, node->children[i]);
 }
 
-static void generate_map(i32 id)
+static Map* generate_map(i32 id)
 {
     JsonValue* value;
     JsonObject* object;
@@ -1494,11 +1496,13 @@ static void generate_map(i32 id)
     if (json_value_get_type(value) != JTYPE_STRING)
         throw_map_error(ERROR_INVALID_TYPE);
 
+    map = st_malloc(sizeof(Map));
     qm = quadmask_create(MAP_MAX_WIDTH, MAP_MAX_LENGTH);
     path = json_value_get_string(value);
     palette = palette_create(object);
     roomset = roomset_create(object, path, palette);
 
+    global_settings.map = map;
     global_settings.qm = qm;
     global_settings.roomset = roomset;
     local_settings.current_branch = "main";
@@ -1509,34 +1513,35 @@ static void generate_map(i32 id)
     local_settings.no_path = false;
     local_settings.create_no_path = false;
 
-    root = map_node_create();
-
-    if (!pregenerate_map_helper(&global_settings, local_settings, root))
-        throw_map_error(ERROR_GENERIC);
-
-    map = st_malloc(sizeof(Map));
     map->width = MAP_MAX_WIDTH;
     map->length = MAP_MAX_LENGTH;
-    map->root = root;
+    map->root = NULL;
     map->roomset = roomset;
     map->tile_mask = quadmask_create(MAP_MAX_WIDTH, MAP_MAX_LENGTH);
     map->fog_mask = quadmask_create(MAP_MAX_WIDTH, MAP_MAX_LENGTH);
     map->tiles = st_calloc(map->width * map->length, sizeof(void*));
     map->map_nodes = st_calloc(map->width * map->length, sizeof(MapNode*));
 
+    root = map_node_create(map);
+    map->root = root;
+
+    if (!pregenerate_map_helper(&global_settings, local_settings, root))
+        throw_map_error(ERROR_GENERIC);
+
     quadmask_clear(qm);
     generate_map_helper(map, qm, palette, roomset, root);
-
-    map_context.current_map = map;
 
     game_set_player_position(vec2_create(MAP_MAX_WIDTH / 2 + 0.5, MAP_MAX_LENGTH / 2 + 0.5));
 
     palette_destroy(palette);
     quadmask_destroy(qm);
+
+    return map;
 }
 
 static MapNode* get_map_node(Map* map, i32 x, i32 z)
 {
+    log_assert(map != NULL, "map is null");
     if (x < 0 || z < 0 || x >= MAP_MAX_WIDTH || z >= MAP_MAX_WIDTH)
         return NULL;
     return map->map_nodes[z * MAP_MAX_WIDTH + x];
@@ -1544,6 +1549,7 @@ static MapNode* get_map_node(Map* map, i32 x, i32 z)
 
 static void clear_map_node_fog(Map* map, MapNode* node)
 {
+    log_assert(map != NULL, "map is null");
     if (node->cleared)
         return;
     node->cleared = true;
@@ -1554,9 +1560,9 @@ static void clear_map_node_fog(Map* map, MapNode* node)
                 quadmask_set(map->fog_mask, x, z);
 }
 
-bool map_fog_contains(vec2 position)
+bool map_fog_contains(Map* map, vec2 position)
 {
-    Map* map = map_context.current_map;
+    log_assert(map != NULL, "map is null");
     i32 x, z;
     x = (i32) position.x;
     z = (i32) position.z;
@@ -1567,9 +1573,10 @@ bool map_fog_contains(vec2 position)
     return !quadmask_isset(map->fog_mask, x, z);
 }
 
-bool map_fog_contains_tile(Tile* tile)
+bool map_fog_contains_tile(Map* map, Tile* tile)
 {
-    return map_fog_contains(tile->position);
+    log_assert(map != NULL, "map is null");
+    return map_fog_contains(map, tile->position);
 
     //Map* map = map_context.current_map;
     //i32 x, z;
@@ -1584,13 +1591,15 @@ bool map_fog_contains_tile(Tile* tile)
     //return !quadmask_isset(map->fog_mask, x, z);
 }
 
-bool map_fog_contains_wall(Wall* wall)
+bool map_fog_contains_wall(Map* map, Wall* wall)
 {
-    return map_fog_contains(wall->position);
+    log_assert(map != NULL, "map is null");
+    return map_fog_contains(map, wall->position);
 }
 
 static void current_map_node_exit(Map* map, MapNode* node)
 {
+    log_assert(map != NULL, "map is null");
     if (node == NULL)
         return;
     if (node->room->exit == NULL)
@@ -1600,6 +1609,8 @@ static void current_map_node_exit(Map* map, MapNode* node)
 
 static void current_map_node_enter(Map* map, MapNode* node)
 {
+    log_assert(map != NULL, "map is null");
+    log_assert(node != NULL, "node is null");
     if (node == NULL)
         return;
     if (node->room->enter == NULL)
@@ -1607,9 +1618,9 @@ static void current_map_node_enter(Map* map, MapNode* node)
     node->room->enter(&game_api, map->roomset->data, node->num_enters++);
 }
 
-void map_fog_explore(vec2 position)
+void map_fog_explore(Map* map, vec2 position)
 {
-    Map* map = map_context.current_map;
+    log_assert(map != NULL, "map is null");
     i32 x, z;
     x = (i32) position.x;
     z = (i32) position.z;
@@ -1618,11 +1629,11 @@ void map_fog_explore(vec2 position)
     MapNode* node = get_map_node(map, x, z);
     if (node == NULL)
         return;
-    if (map_context.current_map_node != node) {
-        current_map_node_exit(map_context.current_map, map_context.current_map_node);
-        map_context.current_map_node = node;
-        current_map_node_enter(map_context.current_map, map_context.current_map_node);
-    }
+    //if (map_context.current_map_node != node) {
+    //    current_map_node_exit(map_context.current_map, map_context.current_map_node);
+    //    map_context.current_map_node = node;
+    //    current_map_node_enter(map_context.current_map, map_context.current_map_node);
+    //}
     if (node->visited) 
         return;
     if (!quadmask_in_bounds(map->fog_mask, x, z))
@@ -1640,9 +1651,9 @@ void map_fog_explore(vec2 position)
     game_render_update_parstacles();
 }
 
-void map_fog_clear(void)
+void map_fog_clear(Map* map)
 {
-    Map* map = map_context.current_map;
+    log_assert(map != NULL, "map is null");
     if (map == NULL)
         return;
     quadmask_setall(map->fog_mask);
@@ -1652,7 +1663,7 @@ void map_fog_clear(void)
     game_render_update_parstacles();
 }
 
-void map_handle_trigger(Trigger* trigger, Entity* entity)
+void map_handle_trigger(Map* map, Trigger* trigger, Entity* entity)
 {
     map_context.current_map_node = trigger->map_node;
     trigger->func(&game_api, entity, trigger->args);
@@ -1661,7 +1672,7 @@ void map_handle_trigger(Trigger* trigger, Entity* entity)
 
 static void clear_map(void)
 {
-    Map* map = map_context.current_map;
+    Map* map = game_context.current_map;
     if (map == NULL)
         return;
 
@@ -1673,7 +1684,7 @@ static void clear_map(void)
     roomset_destroy(map->roomset);
     st_free(map);
 
-    map_context.current_map = NULL;
+    game_context.current_map = NULL;
     map_context.current_map_node = NULL;
 }
 
@@ -1790,7 +1801,7 @@ Tile* room_set_tilemap_tile(i32 x, i32 z, u32 minimap_color)
     x = node->origin_x + dx;
     z = node->origin_z + dz;
     tile = tile_create(vec2_create(x, z), minimap_color);
-    map_set_tile(x, z, tile);
+    map_set_tile(game_context.current_map, x, z, tile);
     return tile;
 }
 
@@ -1810,7 +1821,7 @@ Wall* room_set_tilemap_wall(i32 x, i32 z, f32 height, u32 minimap_color)
     x = node->origin_x + dx;
     z = node->origin_z + dz;
     wall = wall_create(vec2_create(x, z), height, minimap_color);
-    map_set_wall(x, z, wall);
+    map_set_wall(game_context.current_map, x, z, wall);
     return wall;
 }
 
@@ -1833,27 +1844,27 @@ i32 map_get_id(const char* name)
     return -1;
 }
 
-bool map_is_wall(i32 x, i32 z)
+bool map_is_wall(Map* map, i32 x, i32 z)
 {
-    Map* map = map_context.current_map;
+    log_assert(map != NULL, "map is null");
     if (map == NULL) return false;
     if (x < 0 || x >= map->width) return false;
     if (z < 0 || z >= map->length) return false;
     return quadmask_isset(map->tile_mask, x, z);
 }
 
-void* map_get(i32 x, i32 z)
+void* map_get(Map* map, i32 x, i32 z)
 {
-    Map* map = map_context.current_map;
+    log_assert(map != NULL, "map is null");
     if (map == NULL) return NULL;
     if (x < 0 || x >= map->width) return NULL;
     if (z < 0 || z >= map->length) return NULL;
     return map->tiles[z * map->width + x];
 }
 
-Tile* map_get_tile(i32 x, i32 z)
+Tile* map_get_tile(Map* map, i32 x, i32 z)
 {
-    Map* map = map_context.current_map;
+    log_assert(map != NULL, "map is null");
     if (map == NULL) return NULL;
     if (x < 0 || x >= map->width) return NULL;
     if (z < 0 || z >= map->length) return NULL;
@@ -1862,9 +1873,9 @@ Tile* map_get_tile(i32 x, i32 z)
     return map->tiles[z * map->width + x];
 }
 
-Wall* map_get_wall(i32 x, i32 z)
+Wall* map_get_wall(Map* map, i32 x, i32 z)
 {
-    Map* map = map_context.current_map;
+    log_assert(map != NULL, "map is null");
     if (map == NULL) return NULL;
     if (x < 0 || x >= map->width) return NULL;
     if (z < 0 || z >= map->length) return NULL;
@@ -1873,9 +1884,9 @@ Wall* map_get_wall(i32 x, i32 z)
     return map->tiles[z * map->width + x];
 }
 
-void map_set_tile(i32 x, i32 z, Tile* tile)
+void map_set_tile(Map* map, i32 x, i32 z, Tile* tile)
 {
-    Map* map = map_context.current_map;
+    log_assert(map != NULL, "map is null");
     void* prev_tile;
     if (map == NULL) return;
     if (x < 0 || x >= map->width) return;
@@ -1891,9 +1902,9 @@ void map_set_tile(i32 x, i32 z, Tile* tile)
     game_render_update_walls();
 }
 
-void map_set_wall(i32 x, i32 z, Wall* wall)
+void map_set_wall(Map* map, i32 x, i32 z, Wall* wall)
 {
-    Map* map = map_context.current_map;
+    log_assert(map != NULL, "map is null");
     void* prev_tile;
     if (map == NULL) return;
     if (x < 0 || x >= map->width) return;
@@ -1907,32 +1918,6 @@ void map_set_wall(i32 x, i32 z, Wall* wall)
     quadmask_set(map->tile_mask, x, z);
     game_render_update_tiles();
     game_render_update_walls();
-}
-
-void map_load(i32 id)
-{
-    if (id == -1) {
-        log_write(WARNING, "Tried to load map with id of -1");
-        return;
-    }
-
-    entity_clear();
-    tile_clear();
-    wall_clear();
-    projectile_clear();
-    parstacle_clear();
-    obstacle_clear();
-    particle_clear();
-    parjicle_clear();
-    player_reset();
-    game_render_update_obstacles();
-    game_render_update_parstacles();
-    game_render_update_tiles();
-    game_render_update_walls();
-
-    clear_map();
-    generate_map(id);
-    log_write(DEBUG, "loaded");
 }
 
 void map_init(void)
@@ -1976,6 +1961,45 @@ void map_cleanup(void)
 {
     clear_map();
     st_free(map_context.names);
-    st_free(map_context.current_map);
+    map_destroy(game_context.current_map);
     json_object_destroy(map_context.json);
+}
+
+Map* map_create(i32 id)
+{
+    Map* map;
+
+    if (id == -1) {
+        log_write(WARNING, "Tried to load map with id of -1");
+        return NULL;
+    }
+
+    entity_clear();
+    tile_clear();
+    wall_clear();
+    projectile_clear();
+    parstacle_clear();
+    obstacle_clear();
+    particle_clear();
+    parjicle_clear();
+    player_reset();
+    game_render_update_obstacles();
+    game_render_update_parstacles();
+    game_render_update_tiles();
+    game_render_update_walls();
+
+    clear_map();
+    map = generate_map(id);
+    log_write(DEBUG, "loaded");
+
+    return map;
+}
+
+void map_destroy(Map* map)
+{
+    st_free(map);
+}
+
+void map_update(Map* map)
+{
 }

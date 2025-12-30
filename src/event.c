@@ -8,7 +8,7 @@ typedef enum {
     EVENT_NONE,
 
     // Game Events
-    GAME_EVENT_MAP_LOAD,
+    GAME_EVENT_MAP_CREATE,
     GAME_EVENT_CAMERA_UPDATE_DIRECTION,
     GAME_EVENT_CAMERA_UPDATE_ROTATE,
     GAME_EVENT_CAMERA_UPDATE_TILT,
@@ -111,8 +111,8 @@ static void execute_event(Event event)
             break;
 
         // Game events
-        case GAME_EVENT_MAP_LOAD:
-            map_load(arg1._int);
+        case GAME_EVENT_MAP_CREATE:
+            map_create(arg1._int);
             break;
         case GAME_EVENT_CAMERA_UPDATE_DIRECTION:
             camera_update_direction(vec2_create(arg1._flt, arg2._flt));
@@ -136,7 +136,7 @@ static void execute_event(Event event)
             game_set_player_position(vec2_create(arg1._flt, arg2._flt));
             break;
         case GAME_EVENT_DEFOG:
-            map_fog_clear();
+            map_fog_clear(game_context.current_map);
             break;
         case GAME_EVENT_FRAMEBUFFER_SIZE_CALLBACK:
             game_framebuffer_size_callback();
@@ -198,10 +198,10 @@ void event_queue_flush(void)
 // Game Events
 //**************************************************************************
 
-void event_create_game_map_load(i32 map_id)
+void event_create_game_map_create(i32 map_id)
 {
     Event event = (Event) {
-        .type = GAME_EVENT_MAP_LOAD,
+        .type = GAME_EVENT_MAP_CREATE,
         .arg1._int = map_id
     };
     EventQueue* queue = get_event_queue("Game");

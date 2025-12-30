@@ -429,7 +429,7 @@ static void load_save(void)
     game_resume_loop();
     game_resume_render();
     i32 id = map_get_id("level_1");
-    event_create_game_map_load(id);
+    event_create_game_map_create(id);
 }
 
 static void new_run_onclick(GUIComp* comp, i32 button, i32 action, i32 mods)
