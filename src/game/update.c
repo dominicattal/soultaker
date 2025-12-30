@@ -114,7 +114,7 @@ static void collide_entity_trigger(Entity* entity, Trigger* trigger)
     offset = vec2_create(ex - tx, ez - tz);
     if (vec2_mag(offset) >= er + tr)
         return;
-    map_handle_trigger(trigger, entity);
+    map_handle_trigger(game_context.current_map, trigger, entity);
     trigger_set_flag(trigger, TRIGGER_FLAG_USED, true);
 }
 
@@ -163,8 +163,8 @@ static void game_collide_tilemap(void)
         r = entity->size / 2;
         for (x = floor(pos.x-r); x <= ceil(pos.x+r); x++) {
             for (z = floor(pos.z-r); z <= ceil(pos.z+r); z++) {
-                tile = map_get_tile(x, z);
-                wall = map_get_wall(x, z);
+                tile = map_get_tile(game_context.current_map, x, z);
+                wall = map_get_wall(game_context.current_map, x, z);
                 if (tile != NULL)
                     collide_entity_tile(entity, tile);
                 if (wall != NULL)
@@ -178,7 +178,7 @@ static void game_collide_tilemap(void)
         r = projectile->size / 2;
         for (x = floor(pos.x-r); x <= ceil(pos.x+r); x++) {
             for (z = floor(pos.z-r); z <= ceil(pos.z+r); z++) {
-                wall = map_get_wall(x, z);
+                wall = map_get_wall(game_context.current_map, x, z);
                 if (wall != NULL)
                     collide_projectile_wall(projectile, wall);
             }

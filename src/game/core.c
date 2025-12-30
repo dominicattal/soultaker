@@ -15,7 +15,7 @@ void* game_loop(void* vargp)
     game_resume_loop();
     game_resume_render();
     i32 id = map_get_id("level_1");
-    map_load(id);
+    game_context.current_map = map_create(id);
     while (!game_context.kill_thread)
     {
         if (game_context.halt_game_loop) {

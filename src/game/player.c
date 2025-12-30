@@ -112,7 +112,7 @@ void player_update(Player* player, f32 dt)
 {
     if (player->entity != NULL) {
         player->position = player->entity->position;
-        map_fog_explore(player->position);
+        map_fog_explore(game_context.current_map, player->position);
     }
     update_player_state(player, dt);
     update_player_stats(player);

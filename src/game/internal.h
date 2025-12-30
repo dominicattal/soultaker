@@ -23,8 +23,11 @@ typedef struct Obstacle Obstacle;
 typedef struct Particle Particle;
 typedef struct Parjicle Parjicle;
 typedef struct Trigger Trigger;
+typedef struct Map Map;
 typedef struct MapNode MapNode;
 typedef struct LocalMapGenerationSettings LocalMapGenerationSettings;
+
+typedef void (*TriggerFunc)(GameApi*, Entity*, void*);
 
 //**************************************************************************
 // Camera definitions
@@ -61,10 +64,68 @@ void camera_rotate(void);
 void camera_tilt(void);
 
 //**************************************************************************
+// Maps. See docs/maps.md for more information
+//**************************************************************************
+
+typedef struct LocalMapGenerationSettings {
+    const char* current_branch;
+    const char* current_room_type;
+    i32 num_rooms_left;
+    i32 num_rooms_loaded;
+    i32 male_x, male_z;
+    bool no_path;
+    bool create_no_path;
+} LocalMapGenerationSettings;
+
+void map_init(void);
+Map* map_create(i32 id);
+void map_update(Map* map);
+void map_destroy(Map* map);
+void map_cleanup(void);
+
+// returns true if the tile at (x, z) is a wall
+bool map_is_wall(Map* map, i32 x, i32 z);
+
+// gets the tile or wall at (x, z), returns NULL if out of bounds
+void* map_get(Map* map, i32 x, i32 z);
+
+// get the tile at (x, z) for the current map. returns
+// NULL if it is out of bounds, the unit is empty, or is a wall
+Tile* map_get_tile(Map* map, i32 x, i32 z);
+
+// get the wall at (x, z) for the current map. returns
+// NULL if it is out of bounds, the unit is empty, or is a tile
+Wall* map_get_wall(Map* map, i32 x, i32 z);
+
+// replaces the tile or wall at (x, z) with tile or wall
+void map_set_tile(Map* map, i32 x, i32 z, Tile* tile);
+void map_set_wall(Map* map, i32 x, i32 z, Wall* wall);
+
+// returns whether coordinate in fog
+bool map_fog_contains(Map* map, vec2 position);
+bool map_fog_contains_tile(Map* map, Tile* tile);
+bool map_fog_contains_wall(Map* map, Wall* wall);
+
+// defogs room that contains coordinate and adjacent rooms
+void map_fog_explore(Map* map, vec2 position);
+
+// clears all the fog
+void map_fog_clear(Map* map);
+
+void map_handle_trigger(Map* map, Trigger* trigger, Entity* entity);
+
+Entity* room_create_entity(vec2 position, i32 id);
+Obstacle* room_create_obstacle(vec2 position);
+Parstacle* room_create_parstacle(vec2 position);
+Wall* room_create_wall(vec2 position, f32 height, f32 width, f32 length, u32 minimap_color);
+Trigger* room_create_trigger(vec2 position, f32 radius, TriggerFunc func, void* args);
+Tile* room_set_tilemap_tile(i32 x, i32 z, u32 minimap_color);
+Wall* room_set_tilemap_wall(i32 x, i32 z, f32 height, u32 minimap_color);
+
+//**************************************************************************
 // Trigger definitions
 //**************************************************************************
 
-typedef void (*TriggerFunc)(GameApi*, Entity*, void*);
 typedef struct Trigger {
     void* args;
     MapNode* map_node;
@@ -87,63 +148,6 @@ void trigger_set_flag(Trigger* trigger, TriggerFlagEnum flag, bool val);
 bool trigger_get_flag(Trigger* trigger, TriggerFlagEnum flag);
 void trigger_destroy(Trigger* trigger);
 void trigger_cleanup(void);
-
-//**************************************************************************
-// Maps. See docs/maps.md for more information
-//**************************************************************************
-
-typedef struct LocalMapGenerationSettings {
-    const char* current_branch;
-    const char* current_room_type;
-    i32 num_rooms_left;
-    i32 num_rooms_loaded;
-    i32 male_x, male_z;
-    bool no_path;
-    bool create_no_path;
-} LocalMapGenerationSettings;
-
-void map_init(void);
-void map_load(i32 id);
-void map_cleanup(void);
-
-// returns true if the tile at (x, z) is a wall
-bool map_is_wall(i32 x, i32 z);
-
-// gets the tile or wall at (x, z), returns NULL if out of bounds
-void* map_get(i32 x, i32 z);
-
-// get the tile at (x, z) for the current map. returns
-// NULL if it is out of bounds, the unit is empty, or is a wall
-Tile* map_get_tile(i32 x, i32 z);
-
-// get the wall at (x, z) for the current map. returns
-// NULL if it is out of bounds, the unit is empty, or is a tile
-Wall* map_get_wall(i32 x, i32 z);
-
-// replaces the tile or wall at (x, z) with tile or wall
-void map_set_tile(i32 x, i32 z, Tile* tile);
-void map_set_wall(i32 x, i32 z, Wall* wall);
-
-// returns whether coordinate in fog
-bool map_fog_contains(vec2 position);
-bool map_fog_contains_tile(Tile* tile);
-bool map_fog_contains_wall(Wall* wall);
-
-// defogs room that contains coordinate and adjacent rooms
-void map_fog_explore(vec2 position);
-
-// clears all the fog
-void map_fog_clear(void);
-
-void map_handle_trigger(Trigger* trigger, Entity* entity);
-
-Entity* room_create_entity(vec2 position, i32 id);
-Obstacle* room_create_obstacle(vec2 position);
-Parstacle* room_create_parstacle(vec2 position);
-Wall* room_create_wall(vec2 position, f32 height, f32 width, f32 length, u32 minimap_color);
-Trigger* room_create_trigger(vec2 position, f32 radius, TriggerFunc func, void* args);
-Tile* room_set_tilemap_tile(i32 x, i32 z, u32 minimap_color);
-Wall* room_set_tilemap_wall(i32 x, i32 z, f32 height, u32 minimap_color);
 
 //**************************************************************************
 // Entity, Player definitions
@@ -460,6 +464,7 @@ typedef struct {
 
 typedef struct {
     GetterValues values;
+    Map* current_map;
     Player player;
     List* entities;
     List* bosses;
