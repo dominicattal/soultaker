@@ -4,6 +4,13 @@
 
 GameContext game_context;
 
+void game_update(void)
+{
+    map_update(game_context.current_map);
+    player_update(&game_context.player, game_context.dt);
+    camera_update();
+}
+
 void* game_loop(void* vargp)
 {
     thread_link("Game");
@@ -106,6 +113,7 @@ void game_cleanup(void)
     sem_destroy(&game_context.game_loop_sem);
     game_render_cleanup();
     camera_cleanup();
+    map_cleanup();
     weapon_cleanup();
     entity_cleanup();
     projectile_cleanup();
@@ -116,7 +124,6 @@ void game_cleanup(void)
     particle_cleanup();
     parjicle_cleanup();
     trigger_cleanup();
-    map_cleanup();
 
 }
 

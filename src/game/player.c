@@ -7,52 +7,48 @@ extern GameContext game_context;
 
 vec2 game_get_player_position(void)
 {
-    if (game_context.player.entity == NULL)
-        return vec2_create(0, 0);
+    log_assert(game_context.player.entity != NULL, "");
     return game_context.player.entity->position;
 }
 
 vec2 game_get_player_direction(void)
 {
-    if (game_context.player.entity == NULL)
-        return vec2_create(0, 0);
+    log_assert(game_context.player.entity != NULL, "");
     return game_context.player.entity->direction;
 }
 
 vec2 game_get_player_facing(void)
 {
-    if (game_context.player.entity == NULL)
-        return vec2_create(0, 0);
+    log_assert(game_context.player.entity != NULL, "");
     return game_context.player.entity->facing;
 }
 
 void game_set_player_position(vec2 position)
 {
-    if (game_context.player.entity == NULL)
-        return;
+    log_assert(game_context.player.entity != NULL, "");
     game_context.player.entity->position = position;
 }
 
-void player_reset(void)
+void player_reset(Entity* entity)
 {
     if (game_context.player.entity != NULL) {
         log_write(WARNING, "Did not destroy player entity before resetting");
         entity_destroy(game_context.player.entity);
     }
-    i32 knight_id = entity_get_id("knight");
-    Entity* entity = entity_create(vec2_create(0, 0), knight_id);
+    entity->id = entity_get_id("knight");
     game_context.player.entity = entity;
-    game_context.player.entity->direction = vec2_create(0, 0);
-    game_context.player.entity->size = 1.0;
-    game_context.player.entity->speed = 20;
-    entity_set_flag(game_context.player.entity, ENTITY_FLAG_FRIENDLY, 1);
+    entity->direction = vec2_create(0, 0);
+    entity->size = 1.0;
+    entity->speed = 20;
+    entity->frame_speed = 2;
+    entity->health = entity->max_health = 100;
+    entity_set_flag(entity, ENTITY_FLAG_FRIENDLY, 1);
     game_context.player.weapon.id = weapon_get_id("pointer");
     game_context.player.swap_out.id = weapon_get_id("null_pointer");
     event_create_gui_update_weapon_info(game_context.player.weapon.id);
     game_context.player.state_idle = entity_get_state_id(entity, "idle");
     game_context.player.state_walking = entity_get_state_id(entity, "walking");
     game_context.player.state_shooting = entity_get_state_id(entity, "shooting");
-    game_context.player.entity->frame_speed = 2;
 }
 
 vec2 game_get_nearest_player_position(void)

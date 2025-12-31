@@ -363,7 +363,6 @@ void entity_set_state(Entity* entity, const char* name)
 
 void entity_init(void)
 {
-    game_context.entities = list_create();
     game_context.bosses = list_create();
 
     load_entity_info();
@@ -371,11 +370,11 @@ void entity_init(void)
 
 void entity_clear(void)
 {
-    if (game_context.entities == NULL)
-        return;
-    while (game_context.entities->length > 0)
-        entity_destroy(list_remove(game_context.entities, 0));
-    game_context.player.entity = NULL;
+    //if (game_context.entities == NULL)
+    //    return;
+    //while (game_context.entities->length > 0)
+    //    entity_destroy(list_remove(game_context.entities, 0));
+    //game_context.player.entity = NULL;
 }
 
 Entity* entity_create(vec2 position, i32 id)
@@ -404,7 +403,6 @@ Entity* entity_create(vec2 position, i32 id)
     if (create != NULL)
         create(&game_api, entity);
 
-    list_append(game_context.entities, entity);
     return entity;
 }
 
@@ -567,11 +565,6 @@ void entity_destroy(Entity* entity)
 
 void entity_cleanup(void)
 {
-    if (game_context.entities != NULL) {
-        for (i32 i = 0; i < game_context.entities->length; i++)
-            entity_destroy(list_get(game_context.entities, i));
-        list_destroy(game_context.entities);
-    }
     if (game_context.bosses != NULL)
         list_destroy(game_context.bosses);
     for (i32 i = 0; i < entity_context.num_entities; i++) {

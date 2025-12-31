@@ -25,6 +25,7 @@ typedef struct Parjicle Parjicle;
 typedef struct Trigger Trigger;
 typedef struct Map Map;
 typedef struct MapNode MapNode;
+typedef struct MapInfo MapInfo;
 typedef struct LocalMapGenerationSettings LocalMapGenerationSettings;
 
 typedef void (*TriggerFunc)(GameApi*, Entity*, void*);
@@ -77,6 +78,13 @@ typedef struct LocalMapGenerationSettings {
     bool create_no_path;
 } LocalMapGenerationSettings;
 
+typedef struct MapInfo {
+    MapNode* spawn_node;
+    MapNode* current_node;
+} MapInfo;
+
+List* map_list_entities(Map* map);
+
 void map_init(void);
 Map* map_create(i32 id);
 void map_update(Map* map);
@@ -112,7 +120,7 @@ void map_fog_explore(Map* map, vec2 position);
 // clears all the fog
 void map_fog_clear(Map* map);
 
-void map_handle_trigger(Map* map, Trigger* trigger, Entity* entity);
+void map_handle_trigger(Trigger* trigger, Entity* entity);
 
 Entity* room_create_entity(vec2 position, i32 id);
 Obstacle* room_create_obstacle(vec2 position);
@@ -165,6 +173,7 @@ typedef struct {
 } Stats;
 
 typedef struct Entity {
+    MapInfo map_info;
     void* data;
     vec2 position;
     vec2 prev_position;
@@ -246,7 +255,7 @@ void entity_boss_update(Entity* entity);
 void entity_unmake_boss(Entity* entity);
 
 // Assigns default entity for the player
-void player_reset(void);
+void player_reset(Entity* entity);
 void player_update(Player* player, f32 dt);
 void player_shoot(Player* player);
 void player_swap_weapons(void);
@@ -466,7 +475,7 @@ typedef struct {
     GetterValues values;
     Map* current_map;
     Player player;
-    List* entities;
+    //List* entities;
     List* bosses;
     List* tiles;
     List* walls;
@@ -519,6 +528,18 @@ void game_render_update_tiles(void);
 void game_render_update_walls(void);
 
 void game_update_vertex_data(void);
+
+//**************************************************************************
+// Collision functions
+//**************************************************************************
+
+void collide_entity_wall(Entity* entity, Wall* wall);
+void collide_entity_tile(Entity* entity, Tile* tile);
+void collide_entity_obstacle(Entity* entity, Obstacle* obstacle);
+void collide_entity_projectile(Entity* entity, Projectile* projectile);
+void collide_entity_trigger(Entity* entity, Trigger* trigger);
+void collide_projectile_wall(Projectile* projectile, Wall* wall);
+void collide_projectile_obstacle(Projectile* projectile, Obstacle* obstacle);
 
 //**************************************************************************
 // API

@@ -81,16 +81,17 @@ typedef struct {
 
 typedef struct Map {
     i32 width, length;
+    vec2 spawn_point;
     Roomset* roomset;
     MapNode* root;
-    void** tiles;
+    void** tilemap;
     MapNode** map_nodes;
     Quadmask* tile_mask;
     Quadmask* fog_mask;
+    List* entities;
 } Map;
 
 typedef struct MapNode {
-    Map* map;
     MapNode* parent;
     MapNode** children;
     Alternate* female_alternate;
@@ -107,7 +108,6 @@ typedef struct MapNode {
 } MapNode;
 
 typedef struct {
-    Map* map;
     Quadmask* qm;
     Roomset* roomset;
 } GlobalMapGenerationSettings;
@@ -119,6 +119,7 @@ typedef struct {
     JsonObject* json;
 
     // map generating / map events
+    Map* current_map;
     MapNode* current_map_node;
     
     // error handling
@@ -1088,10 +1089,9 @@ static void unpreload_room_alternate(PreloadArgs* args)
     }
 }
 
-static MapNode* map_node_create(Map* map)
+static MapNode* map_node_create(void)
 {
     MapNode* node = st_malloc(sizeof(MapNode));
-    node->map = map;
     node->parent = NULL;
     node->children = NULL;
     node->num_children = 0;
@@ -1141,7 +1141,6 @@ static void map_node_detach(MapNode* parent, MapNode* child)
 static bool pregenerate_map_helper(GlobalMapGenerationSettings* global_settings, LocalMapGenerationSettings local_settings, MapNode* parent)
 {
     PreloadArgs args;
-    Map* map = global_settings->map;
     Quadmask* qm = global_settings->qm;
     Roomset* roomset = global_settings->roomset;
     i32 male_x = local_settings.male_x;
@@ -1202,7 +1201,7 @@ static bool pregenerate_map_helper(GlobalMapGenerationSettings* global_settings,
                 preload_room(&args);
                 preload_room_alternate(&args);
                 local_settings.num_rooms_left--;
-                child = map_node_create(map);
+                child = map_node_create();
                 child->room = room;
                 child->female_alternate = female_alternate;
                 child->origin_x = origin_x;
@@ -1288,14 +1287,14 @@ static void place_tile(Map* map, TileColor* tile_color, i32 x, i32 z)
         wall->side_tex = tile_color->side_tex;
         wall->top_tex = tile_color->top_tex;
         quadmask_set(map->tile_mask, x, z);
-        map->tiles[z * map->width + x] = wall;
+        map->tilemap[z * map->width + x] = wall;
     } else {
         tile = tile_create(position, tile_color->color);
         tile->tex = tile_color->tex;
         tile->collide = tile_color->collide;
         if (tile_color->create != NULL)
             tile_color->create(&game_api, tile);
-        map->tiles[z * map->width + x] = tile;
+        map->tilemap[z * map->width + x] = tile;
     }
 }
 
@@ -1502,7 +1501,6 @@ static Map* generate_map(i32 id)
     palette = palette_create(object);
     roomset = roomset_create(object, path, palette);
 
-    global_settings.map = map;
     global_settings.qm = qm;
     global_settings.roomset = roomset;
     local_settings.current_branch = "main";
@@ -1513,25 +1511,28 @@ static Map* generate_map(i32 id)
     local_settings.no_path = false;
     local_settings.create_no_path = false;
 
+    root = map_node_create();
+
     map->width = MAP_MAX_WIDTH;
     map->length = MAP_MAX_LENGTH;
     map->root = NULL;
     map->roomset = roomset;
     map->tile_mask = quadmask_create(MAP_MAX_WIDTH, MAP_MAX_LENGTH);
     map->fog_mask = quadmask_create(MAP_MAX_WIDTH, MAP_MAX_LENGTH);
-    map->tiles = st_calloc(map->width * map->length, sizeof(void*));
+    map->tilemap = st_calloc(map->width * map->length, sizeof(void*));
     map->map_nodes = st_calloc(map->width * map->length, sizeof(MapNode*));
-
-    root = map_node_create(map);
+    map->entities = list_create();
     map->root = root;
+    map->spawn_point = vec2_create(MAP_MAX_WIDTH / 2 + 0.5, MAP_MAX_LENGTH / 2 + 0.5);
 
     if (!pregenerate_map_helper(&global_settings, local_settings, root))
         throw_map_error(ERROR_GENERIC);
 
     quadmask_clear(qm);
-    generate_map_helper(map, qm, palette, roomset, root);
 
-    game_set_player_position(vec2_create(MAP_MAX_WIDTH / 2 + 0.5, MAP_MAX_LENGTH / 2 + 0.5));
+    map_context.current_map = map;
+    generate_map_helper(map, qm, palette, roomset, root);
+    map_context.current_map = NULL;
 
     palette_destroy(palette);
     quadmask_destroy(qm);
@@ -1663,7 +1664,7 @@ void map_fog_clear(Map* map)
     game_render_update_parstacles();
 }
 
-void map_handle_trigger(Map* map, Trigger* trigger, Entity* entity)
+void map_handle_trigger(Trigger* trigger, Entity* entity)
 {
     map_context.current_map_node = trigger->map_node;
     trigger->func(&game_api, entity, trigger->args);
@@ -1675,21 +1676,14 @@ static void clear_map(void)
     Map* map = game_context.current_map;
     if (map == NULL)
         return;
-
-    st_free(map->tiles);
-    st_free(map->map_nodes);
-    quadmask_destroy(map->tile_mask);
-    quadmask_destroy(map->fog_mask);
-    map_node_destroy(map->root);
-    roomset_destroy(map->roomset);
-    st_free(map);
-
+    map_destroy(map);
     game_context.current_map = NULL;
     map_context.current_map_node = NULL;
 }
 
 Entity* room_create_entity(vec2 position, i32 id)
 {
+    Map* map = map_context.current_map;
     MapNode* node = map_context.current_map_node;
     if (node == NULL)
         log_write(FATAL, "fuck");
@@ -1702,7 +1696,11 @@ Entity* room_create_entity(vec2 position, i32 id)
     vec2 new_position;
     new_position.x = node->origin_x + dx;
     new_position.z = node->origin_z + dz;
-    return entity_create(new_position, id);
+    Entity* entity = entity_create(new_position, id);
+    entity->map_info.spawn_node = node;
+    entity->map_info.current_node = NULL;
+    list_append(map->entities, entity);
+    return entity;
 }
 
 Trigger* room_create_trigger(vec2 position, f32 radius, TriggerFunc func, void* args)
@@ -1801,7 +1799,7 @@ Tile* room_set_tilemap_tile(i32 x, i32 z, u32 minimap_color)
     x = node->origin_x + dx;
     z = node->origin_z + dz;
     tile = tile_create(vec2_create(x, z), minimap_color);
-    map_set_tile(game_context.current_map, x, z, tile);
+    map_set_tile(map_context.current_map, x, z, tile);
     return tile;
 }
 
@@ -1821,7 +1819,7 @@ Wall* room_set_tilemap_wall(i32 x, i32 z, f32 height, u32 minimap_color)
     x = node->origin_x + dx;
     z = node->origin_z + dz;
     wall = wall_create(vec2_create(x, z), height, minimap_color);
-    map_set_wall(game_context.current_map, x, z, wall);
+    map_set_wall(map_context.current_map, x, z, wall);
     return wall;
 }
 
@@ -1859,7 +1857,7 @@ void* map_get(Map* map, i32 x, i32 z)
     if (map == NULL) return NULL;
     if (x < 0 || x >= map->width) return NULL;
     if (z < 0 || z >= map->length) return NULL;
-    return map->tiles[z * map->width + x];
+    return map->tilemap[z * map->width + x];
 }
 
 Tile* map_get_tile(Map* map, i32 x, i32 z)
@@ -1870,7 +1868,7 @@ Tile* map_get_tile(Map* map, i32 x, i32 z)
     if (z < 0 || z >= map->length) return NULL;
     if (quadmask_isset(map->tile_mask, x, z))
         return NULL;
-    return map->tiles[z * map->width + x];
+    return map->tilemap[z * map->width + x];
 }
 
 Wall* map_get_wall(Map* map, i32 x, i32 z)
@@ -1881,7 +1879,7 @@ Wall* map_get_wall(Map* map, i32 x, i32 z)
     if (z < 0 || z >= map->length) return NULL;
     if (!quadmask_isset(map->tile_mask, x, z))
         return NULL;
-    return map->tiles[z * map->width + x];
+    return map->tilemap[z * map->width + x];
 }
 
 void map_set_tile(Map* map, i32 x, i32 z, Tile* tile)
@@ -1891,12 +1889,12 @@ void map_set_tile(Map* map, i32 x, i32 z, Tile* tile)
     if (map == NULL) return;
     if (x < 0 || x >= map->width) return;
     if (z < 0 || z >= map->length) return;
-    prev_tile = map->tiles[z * map->width + x];
+    prev_tile = map->tilemap[z * map->width + x];
     if (quadmask_isset(map->tile_mask, x, z))
         wall_search_and_destroy(prev_tile);
     else
         tile_search_and_destroy(prev_tile);
-    map->tiles[z * map->width + x] = tile;
+    map->tilemap[z * map->width + x] = tile;
     quadmask_unset(map->tile_mask, x, z);
     game_render_update_tiles();
     game_render_update_walls();
@@ -1909,12 +1907,12 @@ void map_set_wall(Map* map, i32 x, i32 z, Wall* wall)
     if (map == NULL) return;
     if (x < 0 || x >= map->width) return;
     if (z < 0 || z >= map->length) return;
-    prev_tile = map->tiles[z * map->width + x];
+    prev_tile = map->tilemap[z * map->width + x];
     if (quadmask_isset(map->tile_mask, x, z))
         wall_search_and_destroy(prev_tile);
     else
         tile_search_and_destroy(prev_tile);
-    map->tiles[z * map->width + x] = wall;
+    map->tilemap[z * map->width + x] = wall;
     quadmask_set(map->tile_mask, x, z);
     game_render_update_tiles();
     game_render_update_walls();
@@ -1959,7 +1957,6 @@ void map_init(void)
 
 void map_cleanup(void)
 {
-    clear_map();
     st_free(map_context.names);
     map_destroy(game_context.current_map);
     json_object_destroy(map_context.json);
@@ -1968,13 +1965,13 @@ void map_cleanup(void)
 Map* map_create(i32 id)
 {
     Map* map;
+    Entity* entity;
 
     if (id == -1) {
         log_write(WARNING, "Tried to load map with id of -1");
         return NULL;
     }
 
-    entity_clear();
     tile_clear();
     wall_clear();
     projectile_clear();
@@ -1982,14 +1979,19 @@ Map* map_create(i32 id)
     obstacle_clear();
     particle_clear();
     parjicle_clear();
-    player_reset();
     game_render_update_obstacles();
     game_render_update_parstacles();
     game_render_update_tiles();
     game_render_update_walls();
 
     clear_map();
+    game_context.player.entity = NULL;
+
     map = generate_map(id);
+    entity = entity_create(map->spawn_point, 0); 
+    player_reset(entity);
+    list_append(map->entities, entity);
+
     log_write(DEBUG, "loaded");
 
     return map;
@@ -1997,9 +1999,162 @@ Map* map_create(i32 id)
 
 void map_destroy(Map* map)
 {
+    for (i32 i = 0; i < map->entities->length; i++)
+        entity_destroy(list_get(map->entities, i));
+    list_destroy(map->entities);
+    st_free(map->tilemap);
+    st_free(map->map_nodes);
+    quadmask_destroy(map->tile_mask);
+    quadmask_destroy(map->fog_mask);
+    map_node_destroy(map->root);
+    roomset_destroy(map->roomset);
     st_free(map);
+}
+
+static void map_collide_tilemap(Map* map)
+{
+    vec2 pos;
+    f32 r;
+    i32 i, x, z;
+    Tile* tile;
+    Wall* wall;
+    for (i = 0; i < map->entities->length; i++) {
+        Entity* entity = list_get(map->entities, i);
+        pos = entity->position;
+        r = entity->size / 2;
+        for (x = floor(pos.x-r); x <= ceil(pos.x+r); x++) {
+            for (z = floor(pos.z-r); z <= ceil(pos.z+r); z++) {
+                tile = map_get_tile(map, x, z);
+                wall = map_get_wall(map, x, z);
+                if (tile != NULL)
+                    collide_entity_tile(entity, tile);
+                if (wall != NULL)
+                    collide_entity_wall(entity, wall);
+            }
+        }
+    }
+    for (i = 0; i < game_context.projectiles->length; i++) {
+        Projectile* projectile = list_get(game_context.projectiles, i);
+        pos = projectile->position;
+        r = projectile->size / 2;
+        for (x = floor(pos.x-r); x <= ceil(pos.x+r); x++) {
+            for (z = floor(pos.z-r); z <= ceil(pos.z+r); z++) {
+                wall = map_get_wall(map, x, z);
+                if (wall != NULL)
+                    collide_projectile_wall(projectile, wall);
+            }
+        }
+    }
+}
+
+void map_collide_objects(Map* map)
+{
+    i32 i, j;
+    for (i = 0; i < map->entities->length; i++) {
+        Entity* entity = list_get(map->entities, i);
+        for (j = 0; j < game_context.obstacles->length; j++) {
+            Obstacle* obstacle = list_get(game_context.obstacles, j);
+            collide_entity_obstacle(entity, obstacle);
+        }
+        for (j = 0; j < game_context.free_walls->length; j++) {
+            Wall* wall = list_get(game_context.free_walls, j);
+            collide_entity_wall(entity, wall);
+        }
+        for (j = 0; j < game_context.projectiles->length; j++) {
+            Projectile* projectile = list_get(game_context.projectiles, j);
+            collide_entity_projectile(entity, projectile);
+        }
+        for (j = 0; j < game_context.triggers->length; j++) {
+            Trigger* trigger = list_get(game_context.triggers, j);
+            collide_entity_trigger(entity, trigger);
+        }
+    }
+    for (i = 0; i < game_context.projectiles->length; i++) {
+        Projectile* projectile = list_get(game_context.projectiles, i);
+        if (projectile->lifetime <= 0) continue;
+        for (j = 0; j < game_context.obstacles->length; j++) {
+            Obstacle* obstacle = list_get(game_context.obstacles, j);
+            collide_projectile_obstacle(projectile, obstacle);
+        }
+        for (j = 0; j < game_context.free_walls->length; j++) {
+            Wall* wall = list_get(game_context.free_walls, j);
+            collide_projectile_wall(projectile, wall);
+        }
+    }
+}
+
+static void map_update_objects(Map* map)
+{
+    i32 i, once, used;
+    i = 0;
+    while (i < game_context.bosses->length) {
+        Entity* entity = list_get(game_context.bosses, i);
+        if (entity->health <= 0) {
+            entity_unmake_boss(entity);
+            list_remove(game_context.bosses, i);
+        } else
+            i++;
+    }
+    i = 0;
+    while (i < map->entities->length) {
+        Entity* entity = list_get(map->entities, i);
+        entity_update(entity, game_context.dt);
+        if (entity->health <= 0) {
+            map_context.current_map_node = entity->map_info.spawn_node;
+            entity_destroy(list_remove(map->entities, i));
+            map_context.current_map_node = NULL;
+        } else
+            i++;
+    }
+    i = 0;
+    while (i < game_context.triggers->length) {
+        Trigger* trigger = list_get(game_context.triggers, i);
+        once = trigger_get_flag(trigger, TRIGGER_FLAG_ONCE);
+        used = trigger_get_flag(trigger, TRIGGER_FLAG_USED);
+        if (once && used)
+            trigger_destroy(list_remove(game_context.triggers, i));
+        else
+            i++;
+    }
+    i = 0;
+    while (i < game_context.projectiles->length) {
+        Projectile* projectile = list_get(game_context.projectiles, i);
+        projectile_update(projectile, game_context.dt);
+        if (projectile->lifetime <= 0)
+            projectile_destroy(list_remove(game_context.projectiles, i));
+        else
+            i++;
+    }
+    i = 0;
+    while (i < game_context.particles->length) {
+        Particle* particle = list_get(game_context.particles, i);
+        particle_update(particle, game_context.dt);
+        if (particle->lifetime <= 0)
+            particle_destroy(list_remove(game_context.particles, i));
+        else
+            i++;
+    }
+    i = 0;
+    while (i < game_context.parjicles->length) {
+        Parjicle* parjicle = list_get(game_context.parjicles, i);
+        parjicle_update(parjicle, game_context.dt);
+        if (parjicle->lifetime <= 0)
+            parjicle_destroy(list_remove(game_context.parjicles, i));
+        else
+            i++;
+    }
 }
 
 void map_update(Map* map)
 {
+    map_context.current_map = map;
+    map_update_objects(map);
+    map_collide_tilemap(map);
+    map_collide_objects(map);
+    map_context.current_map = NULL;
+}
+
+List* map_list_entities(Map* map)
+{
+    return map->entities;
 }
