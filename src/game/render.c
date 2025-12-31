@@ -208,16 +208,18 @@ static void update_entity_vertex_data(Map* map)
     i32 location;
     i32 i, j;
     Entity* entity;
+    List* entities;
 
+    entities = map_list_entities(map);
     vb = get_vertex_buffer_swap(SSBO_ENTITY);
     shadow_vb = get_vertex_buffer_swap(SSBO_ENTITY_SHADOW);
     map_vb = get_vertex_buffer_swap(SSBO_ENTITY_MINIMAP);
-    resize_vertex_buffer(vb, ENTITY_FLOATS_PER_VERTEX * game_context.entities->capacity);
-    resize_vertex_buffer(shadow_vb, SHADOW_FLOATS_PER_VERTEX * game_context.entities->capacity);
-    resize_vertex_buffer(map_vb, MAP_CIRCLE_FLOATS_PER_VERTEX * game_context.entities->capacity);
+    resize_vertex_buffer(vb, ENTITY_FLOATS_PER_VERTEX * entities->capacity);
+    resize_vertex_buffer(shadow_vb, SHADOW_FLOATS_PER_VERTEX * entities->capacity);
+    resize_vertex_buffer(map_vb, MAP_CIRCLE_FLOATS_PER_VERTEX * entities->capacity);
 
-    for (i = j = 0; i < game_context.entities->length; i++) {
-        entity = list_get(game_context.entities, i);
+    for (i = j = 0; i < entities->length; i++) {
+        entity = list_get(entities, i);
         if (map_fog_contains(map, entity->position))
             continue;
         texture_info(entity_get_texture(entity), &location, &u, &v, &w, &h, &pivot, &stretch);
@@ -237,8 +239,8 @@ static void update_entity_vertex_data(Map* map)
     }
     vb->length = j;
 
-    for (i = j = 0; i < game_context.entities->length; i++) {
-        entity = list_get(game_context.entities, i);
+    for (i = j = 0; i < entities->length; i++) {
+        entity = list_get(entities, i);
         if (map_fog_contains(map, entity->position))
             continue;
         map_vb->buffer[j++] = entity->position.x;
@@ -256,8 +258,8 @@ static void update_entity_vertex_data(Map* map)
     }
     map_vb->length = j;
     
-    for (i = j = 0; i < game_context.entities->length; i++) {
-        entity = list_get(game_context.entities, i);
+    for (i = j = 0; i < entities->length; i++) {
+        entity = list_get(entities, i);
         if (map_fog_contains(map, entity->position))
             continue;
         shadow_vb->buffer[j++] = entity->position.x;

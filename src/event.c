@@ -130,7 +130,7 @@ static void execute_event(Event event)
             game_summon(arg1._int);
             break;
         case GAME_EVENT_RESPAWN:
-            player_reset();
+            //player_reset();
             break;
         case GAME_EVENT_SET_POSITION:
             game_set_player_position(vec2_create(arg1._flt, arg2._flt));
