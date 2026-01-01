@@ -90,6 +90,8 @@ List* map_list_walls(Map* map);
 List* map_list_projectiles(Map* map);
 List* map_list_obstacles(Map* map);
 List* map_list_parstacles(Map* map);
+List* map_list_particles(Map* map);
+List* map_list_parjicles(Map* map);
 
 void map_make_boss(Entity* entity);
 void map_boss_update(Entity* entity);
@@ -423,12 +425,9 @@ typedef struct Particle {
     f32 size;
 } Particle;
 
-void particle_init(void);
-void particle_clear(void);
 Particle* particle_create(vec3 position);
 void particle_update(Particle* particle, f32 dt);
 void particle_destroy(Particle* particle);
-void particle_cleanup(void);
 
 //**************************************************************************
 // Parjicle definitions
@@ -450,14 +449,11 @@ typedef enum {
     PARJICLE_FLAG_TEX_ROTATION
 } ParjicleFlagEnum;
 
-void parjicle_init(void);
-void parjicle_clear(void);
 Parjicle* parjicle_create(vec3 position);
 void parjicle_update(Parjicle* parjicle, f32 dt);
 void parjicle_set_flag(Parjicle* parjicle, ParjicleFlagEnum flag, u32 val);
 bool parjicle_is_flag_set(Parjicle* parjicle, ParjicleFlagEnum flag);
 void parjicle_destroy(Parjicle* parjicle);
-void parjicle_cleanup(void);
 
 //**************************************************************************
 // Game Context
@@ -476,8 +472,6 @@ typedef struct {
     GetterValues values;
     Map* current_map;
     Player player;
-    List* particles;
-    List* parjicles;
     List* triggers;
     Camera camera;
     pthread_t thread_id;

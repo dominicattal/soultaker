@@ -541,12 +541,14 @@ static void update_particle_vertex_data(Map* map)
     VertexBuffer* vb;
     Particle* particle;
     i32 i, j;
+    List* particles;
 
+    particles = map_list_particles(map);
     vb = get_vertex_buffer_swap(SSBO_PARTICLE);
-    resize_vertex_buffer(vb, PARTICLE_FLOATS_PER_VERTEX * game_context.particles->capacity);
+    resize_vertex_buffer(vb, PARTICLE_FLOATS_PER_VERTEX * particles->capacity);
    
-    for (i = j = 0; i < game_context.particles->length; i++) {
-        particle = list_get(game_context.particles, i);
+    for (i = j = 0; i < particles->length; i++) {
+        particle = list_get(particles, i);
         if (map_fog_contains(map, vec2_create(particle->position.x, particle->position.z)))
             continue;
         vb->buffer[j++] = particle->position.x;
@@ -567,12 +569,14 @@ static void update_parjicle_vertex_data(Map* map)
     Parjicle* parjicle;
     bool rotate_tex;
     i32 i, j;
+    List* parjicles;
 
+    parjicles = map_list_parjicles(map);
     vb = get_vertex_buffer_swap(SSBO_PARJICLE);
-    resize_vertex_buffer(vb, PARJICLE_FLOATS_PER_VERTEX * game_context.parjicles->capacity);
+    resize_vertex_buffer(vb, PARJICLE_FLOATS_PER_VERTEX * parjicles->capacity);
    
-    for (i = j = 0; i < game_context.parjicles->length; i++) {
-        parjicle = list_get(game_context.parjicles, i);
+    for (i = j = 0; i < parjicles->length; i++) {
+        parjicle = list_get(parjicles, i);
         if (map_fog_contains(map, vec2_create(parjicle->position.x, parjicle->position.z)))
             continue;
         rotate_tex = parjicle_is_flag_set(parjicle, PARJICLE_FLAG_TEX_ROTATION);
