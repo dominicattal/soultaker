@@ -94,6 +94,7 @@ typedef struct Map {
     List* tiles;
     List* walls;
     List* free_walls;
+    List* projectiles;
     bool active;
 } Map;
 
@@ -1534,6 +1535,7 @@ static Map* generate_map(i32 id)
     map->tiles = list_create();
     map->walls = list_create();
     map->free_walls = list_create();
+    map->projectiles = list_create();
     map->root = root;
     map->spawn_point = vec2_create(MAP_MAX_WIDTH / 2 + 0.5, MAP_MAX_LENGTH / 2 + 0.5);
     map->active = true;
@@ -1694,14 +1696,24 @@ static void clear_map(void)
     map_context.current_map_node = NULL;
 }
 
+Projectile* map_create_projectile(vec2 position)
+{
+    Projectile* proj;
+    Map* map = map_context.current_map;
+    if (!map->active)
+        return NULL;
+    proj = projectile_create(position);
+    list_append(map->projectiles, proj);
+    return proj;
+}
+
 Entity* room_create_entity(vec2 position, i32 id)
 {
     Map* map = map_context.current_map;
     MapNode* node = map_context.current_map_node;
     if (!map->active)
         return NULL;
-    if (node == NULL)
-        log_write(FATAL, "fuck");
+    log_assert(node != NULL, "fuck");
     Room* room = node->room;
     i32 orientation = node->orientation;
     f32 u = room->u1 + position.x;
@@ -1715,7 +1727,6 @@ Entity* room_create_entity(vec2 position, i32 id)
     entity->map_info.spawn_node = node;
     entity->map_info.current_node = NULL;
     list_append(map->entities, entity);
-    log_write(DEBUG, "%f %f", entity->position.x, entity->position.z);
     return entity;
 }
 
@@ -1726,8 +1737,7 @@ Trigger* room_create_trigger(vec2 position, f32 radius, TriggerFunc func, Trigge
     MapNode* node = map_context.current_map_node;
     if (!map->active)
         return NULL;
-    if (node == NULL)
-        log_write(FATAL, "fuck");
+    log_assert(node != NULL, "fuck");
     Room* room = node->room;
     i32 orientation = node->orientation;
     f32 u = room->u1 + position.x;
@@ -1748,8 +1758,7 @@ Obstacle* room_create_obstacle(vec2 position)
     MapNode* node = map_context.current_map_node;
     if (!map->active)
         return NULL;
-    if (node == NULL)
-        log_write(FATAL, "fuck");
+    log_assert(node != NULL, "fuck");
     Room* room = node->room;
     i32 orientation = node->orientation;
     f32 u = room->u1 + position.x;
@@ -1768,8 +1777,7 @@ Parstacle* room_create_parstacle(vec2 position)
     MapNode* node = map_context.current_map_node;
     if (!map->active)
         return NULL;
-    if (node == NULL)
-        log_write(FATAL, "fuck");
+    log_assert(node != NULL, "fuck");
     Room* room = node->room;
     i32 orientation = node->orientation;
     f32 u = room->u1 + position.x;
@@ -1788,8 +1796,7 @@ Wall* room_create_wall(vec2 position, f32 height, f32 width, f32 length, u32 min
     MapNode* node = map_context.current_map_node;
     if (!map->active)
         return NULL;
-    if (node == NULL)
-        log_write(FATAL, "fuck");
+    log_assert(node != NULL, "fuck");
 
     Room* room = node->room;
     i32 orientation = node->orientation;
@@ -1820,8 +1827,7 @@ Tile* room_set_tilemap_tile(i32 x, i32 z, u32 minimap_color)
     MapNode* node = map_context.current_map_node;
     if (!map->active)
         return NULL;
-    if (node == NULL)
-        log_write(FATAL, "fuck");
+    log_assert(node != NULL, "fuck");
     Room* room = node->room;
     i32 orientation = node->orientation;
     i32 u, v, dx, dz;
@@ -1844,8 +1850,7 @@ Wall* room_set_tilemap_wall(i32 x, i32 z, f32 height, u32 minimap_color)
     MapNode* node = map_context.current_map_node;
     if (!map->active)
         return NULL;
-    if (node == NULL)
-        log_write(FATAL, "fuck");
+    log_assert(node != NULL, "fuck");
     Room* room = node->room;
     i32 orientation = node->orientation;
     i32 u, v, dx, dz;
@@ -2010,7 +2015,6 @@ Map* map_create(i32 id)
         return NULL;
     }
 
-    projectile_clear();
     parstacle_clear();
     obstacle_clear();
     particle_clear();
@@ -2050,12 +2054,24 @@ static void destroy_entities(Map* map)
     list_destroy(map->entities);
 }
 
+static void destroy_projectiles(Map* map)
+{
+    Projectile* proj;
+    i32 i;
+    for (i = 0; i < map->projectiles->length; i++) {
+        proj = list_get(map->projectiles, i);
+        projectile_destroy(proj);
+    }
+    list_destroy(map->projectiles);
+}
+
 void map_destroy(Map* map)
 {
     i32 i;
     map_context.current_map = map;
     map->active = false;
     destroy_entities(map);
+    destroy_projectiles(map);
     for (i = 0; i < map->tiles->length; i++)
         tile_destroy(list_get(map->tiles, i));
     list_destroy(map->tiles);
@@ -2095,8 +2111,8 @@ static void map_collide_tilemap(Map* map)
             }
         }
     }
-    for (i = 0; i < game_context.projectiles->length; i++) {
-        Projectile* projectile = list_get(game_context.projectiles, i);
+    for (i = 0; i < map->projectiles->length; i++) {
+        Projectile* projectile = list_get(map->projectiles, i);
         pos = projectile->position;
         r = projectile->size / 2;
         for (x = floor(pos.x-r); x <= ceil(pos.x+r); x++) {
@@ -2122,8 +2138,8 @@ void map_collide_objects(Map* map)
             Wall* wall = list_get(map->free_walls, j);
             collide_entity_wall(entity, wall);
         }
-        for (j = 0; j < game_context.projectiles->length; j++) {
-            Projectile* projectile = list_get(game_context.projectiles, j);
+        for (j = 0; j < map->projectiles->length; j++) {
+            Projectile* projectile = list_get(map->projectiles, j);
             collide_entity_projectile(entity, projectile);
         }
         for (j = 0; j < game_context.triggers->length; j++) {
@@ -2131,8 +2147,8 @@ void map_collide_objects(Map* map)
             collide_entity_trigger(entity, trigger);
         }
     }
-    for (i = 0; i < game_context.projectiles->length; i++) {
-        Projectile* projectile = list_get(game_context.projectiles, i);
+    for (i = 0; i < map->projectiles->length; i++) {
+        Projectile* projectile = list_get(map->projectiles, i);
         if (projectile->lifetime <= 0) continue;
         for (j = 0; j < game_context.obstacles->length; j++) {
             Obstacle* obstacle = list_get(game_context.obstacles, j);
@@ -2172,11 +2188,11 @@ static void map_update_objects(Map* map)
             i++;
     }
     i = 0;
-    while (i < game_context.projectiles->length) {
-        Projectile* projectile = list_get(game_context.projectiles, i);
+    while (i < map->projectiles->length) {
+        Projectile* projectile = list_get(map->projectiles, i);
         projectile_update(projectile, game_context.dt);
         if (projectile->lifetime <= 0)
-            projectile_destroy(list_remove(game_context.projectiles, i));
+            projectile_destroy(list_remove(map->projectiles, i));
         else
             i++;
     }
@@ -2198,6 +2214,7 @@ static void map_update_objects(Map* map)
         else
             i++;
     }
+    player_update(&game_context.player, game_context.dt);
 }
 
 void map_update(Map* map)
@@ -2206,6 +2223,7 @@ void map_update(Map* map)
     map_update_objects(map);
     map_collide_tilemap(map);
     map_collide_objects(map);
+    camera_update();
     map_context.current_map = NULL;
 }
 
@@ -2262,4 +2280,9 @@ List* map_list_tiles(Map* map)
 List* map_list_walls(Map* map)
 {
     return map->walls;
+}
+
+List* map_list_projectiles(Map* map)
+{
+    return map->projectiles;
 }

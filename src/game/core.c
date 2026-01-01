@@ -4,13 +4,6 @@
 
 GameContext game_context;
 
-void game_update(void)
-{
-    map_update(game_context.current_map);
-    player_update(&game_context.player, game_context.dt);
-    camera_update();
-}
-
 void* game_loop(void* vargp)
 {
     thread_link("Game");
@@ -37,7 +30,7 @@ void* game_loop(void* vargp)
             if (!game_context.paused) {
                 game_context.time += game_context.dt;
                 if (game_context.dt < 0.1) {
-                    game_update();
+                    map_update(game_context.current_map);
                     event_queue_flush();
                     game_update_vertex_data();
                 }
@@ -87,7 +80,6 @@ void game_init(void)
     map_init();
     weapon_init();
     entity_init();
-    projectile_init();
     parstacle_init();
     obstacle_init();
     particle_init();
@@ -113,7 +105,6 @@ void game_cleanup(void)
     map_cleanup();
     weapon_cleanup();
     entity_cleanup();
-    projectile_cleanup();
     parstacle_cleanup();
     obstacle_cleanup();
     particle_cleanup();

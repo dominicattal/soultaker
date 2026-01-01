@@ -26,7 +26,6 @@ GameApi game_api = {
     REGISTER(tile_get_flag),
 
     // Projectile
-    REGISTER(projectile_create),
     REGISTER(projectile_set_flag),
 
     // Trigger
@@ -35,6 +34,7 @@ GameApi game_api = {
     REGISTER(trigger_get_flag),
 
     // Map
+    REGISTER(map_create_projectile),
     REGISTER(map_make_boss),
     REGISTER(map_unmake_boss),
     REGISTER(room_create_entity),

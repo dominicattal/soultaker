@@ -2,19 +2,6 @@
 
 extern GameContext game_context;
 
-void projectile_init(void)
-{
-    game_context.projectiles = list_create();
-}
-
-void projectile_clear(void)
-{
-    if (game_context.projectiles == NULL)
-        return;
-    while (game_context.projectiles->length > 0)
-        projectile_destroy(list_remove(game_context.projectiles, 0));
-}
-
 static void default_update_function(Projectile*, f32) {}
 static void default_destroy_function(Projectile*) {}
 
@@ -32,7 +19,6 @@ Projectile* projectile_create(vec2 position)
     proj->flags = 0;
     proj->update = default_update_function;
     proj->destroy = default_destroy_function;
-    list_append(game_context.projectiles, proj);
     return proj;
 }
 
@@ -56,13 +42,4 @@ bool projectile_get_flag(Projectile* proj, ProjectileFlagEnum flag)
 void projectile_destroy(Projectile* proj)
 {
     st_free(proj);
-}
-
-void projectile_cleanup(void)
-{
-    if (game_context.projectiles == NULL)
-        return;
-    for (i32 i = 0; i < game_context.projectiles->length; i++)
-        projectile_destroy(list_get(game_context.projectiles, i));
-    list_destroy(game_context.projectiles);
 }
