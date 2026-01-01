@@ -29,12 +29,12 @@ GameApi game_api = {
     REGISTER(projectile_set_flag),
 
     // Trigger
-    REGISTER(trigger_create),
     REGISTER(trigger_set_flag),
     REGISTER(trigger_get_flag),
 
     // Map
     REGISTER(map_create_projectile),
+    REGISTER(map_create_trigger),
     REGISTER(map_make_boss),
     REGISTER(map_unmake_boss),
     REGISTER(room_create_entity),

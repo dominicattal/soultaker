@@ -136,6 +136,7 @@ void map_handle_trigger(Trigger* trigger, Entity* entity);
 
 // create object in global map coords
 Projectile*     map_create_projectile(vec2 position);
+Trigger*        map_create_trigger(vec2 position, f32 radius, TriggerFunc func, TriggerDestroyFunc destroy, void* args);
 
 // create objects in local room coords
 Entity*         room_create_entity(vec2 position, i32 id);
@@ -167,7 +168,6 @@ typedef enum {
     TRIGGER_FLAG_PLAYER
 } TriggerFlagEnum;
 
-void trigger_init(void);
 // create trigger at position with hitbox radius
 // func -> function to trigger, where args are passed through
 // once trigger is destroyed, it will call it destroy function to 
@@ -176,7 +176,6 @@ Trigger* trigger_create(vec2 position, f32 radius, TriggerFunc func, TriggerDest
 void trigger_set_flag(Trigger* trigger, TriggerFlagEnum flag, bool val);
 bool trigger_get_flag(Trigger* trigger, TriggerFlagEnum flag);
 void trigger_destroy(Trigger* trigger);
-void trigger_cleanup(void);
 
 //**************************************************************************
 // Entity, Player definitions
@@ -472,7 +471,6 @@ typedef struct {
     GetterValues values;
     Map* current_map;
     Player player;
-    List* triggers;
     Camera camera;
     pthread_t thread_id;
     pthread_mutex_t getter_mutex;
@@ -558,7 +556,6 @@ typedef struct GameApi {
     void (*projectile_set_flag)(Projectile*, ProjectileFlagEnum, bool);
 
     // Trigger
-    Trigger* (*trigger_create)(vec2, f32, TriggerFunc, TriggerDestroyFunc, void*);
     void (*trigger_set_flag)(Trigger*, TriggerFlagEnum, bool);
     bool (*trigger_get_flag)(Trigger*, TriggerFlagEnum);
 
@@ -566,6 +563,7 @@ typedef struct GameApi {
     void (*map_make_boss)(Entity*);
     void (*map_unmake_boss)(Entity*);
     Projectile* (*map_create_projectile)(vec2);
+    Trigger* (*map_create_trigger)(vec2, f32, TriggerFunc, TriggerDestroyFunc, void*);
     Entity* (*room_create_entity)(vec2, i32);
     Obstacle* (*room_create_obstacle)(vec2);
     Parstacle* (*room_create_parstacle)(vec2);

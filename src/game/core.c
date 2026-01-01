@@ -80,7 +80,6 @@ void game_init(void)
     map_init();
     weapon_init();
     entity_init();
-    trigger_init();
     camera_init();
     game_render_init();
     game_halt_loop();
@@ -101,7 +100,6 @@ void game_cleanup(void)
     map_cleanup();
     weapon_cleanup();
     entity_cleanup();
-    trigger_cleanup();
 }
 
 f32 game_get_dt(void)
