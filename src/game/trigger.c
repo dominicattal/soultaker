@@ -1,10 +1,5 @@
 #include "internal.h"
 
-void trigger_init(void)
-{
-    game_context.triggers = list_create();
-}
-
 Trigger* trigger_create(vec2 position, f32 radius, TriggerFunc func, TriggerDestroyFunc destroy, void* args)
 {
     Trigger* trigger = st_malloc(sizeof(Trigger));
@@ -14,7 +9,6 @@ Trigger* trigger_create(vec2 position, f32 radius, TriggerFunc func, TriggerDest
     trigger->flags = 0;
     trigger->args = args;
     trigger->destroy = destroy;
-    list_append(game_context.triggers, trigger);
     return trigger;
 }
 
@@ -35,13 +29,4 @@ void trigger_destroy(Trigger* trigger)
     else
         trigger->destroy(&game_api, trigger->args);
     st_free(trigger);
-}
-
-void trigger_cleanup(void)
-{
-    if (game_context.triggers == NULL)
-        return;
-    for (i32 i = 0; i < game_context.triggers->length; i++)
-        trigger_destroy(list_get(game_context.triggers, i));
-    list_destroy(game_context.triggers);
 }

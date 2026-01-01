@@ -99,6 +99,7 @@ typedef struct Map {
     List* parstacles;
     List* particles;
     List* parjicles;
+    List* triggers;
     bool active;
 } Map;
 
@@ -1544,6 +1545,7 @@ static Map* generate_map(i32 id)
     map->parstacles = list_create();
     map->particles = list_create();
     map->parjicles = list_create();
+    map->triggers = list_create();
     map->root = root;
     map->spawn_point = vec2_create(MAP_MAX_WIDTH / 2 + 0.5, MAP_MAX_LENGTH / 2 + 0.5);
     map->active = true;
@@ -1715,6 +1717,17 @@ Projectile* map_create_projectile(vec2 position)
     return proj;
 }
 
+Trigger* map_create_trigger(vec2 position, f32 radius, TriggerFunc func, TriggerDestroyFunc destroy, void* args)
+{
+    Trigger* trigger;
+    Map* map = map_context.current_map;
+    if (!map->active)
+        return NULL;
+    trigger = trigger_create(position, radius, func, destroy, args);
+    list_append(map->triggers, trigger);
+    return trigger;
+}
+
 Entity* room_create_entity(vec2 position, i32 id)
 {
     Map* map = map_context.current_map;
@@ -1757,6 +1770,7 @@ Trigger* room_create_trigger(vec2 position, f32 radius, TriggerFunc func, Trigge
     new_position.z = node->origin_z + dz;
     trigger = trigger_create(new_position, radius, func, destroy, args);
     trigger->map_node = node;
+    list_append(map->triggers, trigger);
     return trigger;
 }
 
@@ -2119,6 +2133,17 @@ static void destroy_parjicles(Map* map)
     list_destroy(map->parjicles);
 }
 
+static void destroy_triggers(Map* map)
+{
+    Trigger* trigger;
+    i32 i;
+    for (i = 0; i < map->triggers->length; i++) {
+        trigger = list_get(map->triggers, i);
+        trigger_destroy(trigger);
+    }
+    list_destroy(map->triggers);
+}
+
 void map_destroy(Map* map)
 {
     i32 i;
@@ -2130,6 +2155,7 @@ void map_destroy(Map* map)
     destroy_parstacles(map);
     destroy_particles(map);
     destroy_parjicles(map);
+    destroy_triggers(map);
     for (i = 0; i < map->tiles->length; i++)
         tile_destroy(list_get(map->tiles, i));
     list_destroy(map->tiles);
@@ -2200,8 +2226,8 @@ void map_collide_objects(Map* map)
             Projectile* projectile = list_get(map->projectiles, j);
             collide_entity_projectile(entity, projectile);
         }
-        for (j = 0; j < game_context.triggers->length; j++) {
-            Trigger* trigger = list_get(game_context.triggers, j);
+        for (j = 0; j < map->triggers->length; j++) {
+            Trigger* trigger = list_get(map->triggers, j);
             collide_entity_trigger(entity, trigger);
         }
     }
@@ -2236,12 +2262,12 @@ static void map_update_objects(Map* map)
             i++;
     }
     i = 0;
-    while (i < game_context.triggers->length) {
-        Trigger* trigger = list_get(game_context.triggers, i);
+    while (i < map->triggers->length) {
+        Trigger* trigger = list_get(map->triggers, i);
         once = trigger_get_flag(trigger, TRIGGER_FLAG_ONCE);
         used = trigger_get_flag(trigger, TRIGGER_FLAG_USED);
         if (once && used)
-            trigger_destroy(list_remove(game_context.triggers, i));
+            trigger_destroy(list_remove(map->triggers, i));
         else
             i++;
     }
@@ -2363,4 +2389,9 @@ List* map_list_particles(Map* map)
 List* map_list_parjicles(Map* map)
 {
     return map->parjicles;
+}
+
+List* map_list_triggers(Map* map)
+{
+    return map->triggers;
 }
