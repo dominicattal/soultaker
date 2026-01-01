@@ -88,6 +88,8 @@ List* map_list_entities(Map* map);
 List* map_list_tiles(Map* map);
 List* map_list_walls(Map* map);
 List* map_list_projectiles(Map* map);
+List* map_list_obstacles(Map* map);
+List* map_list_parstacles(Map* map);
 
 void map_make_boss(Entity* entity);
 void map_boss_update(Entity* entity);
@@ -389,11 +391,8 @@ typedef struct Obstacle {
     i32 tex;
 } Obstacle;
 
-void obstacle_init(void);
-void obstacle_clear(void);
 Obstacle* obstacle_create(vec2 position);
 void obstacle_destroy(Obstacle* obstacle);
-void obstacle_cleanup(void);
 
 //**************************************************************************
 // Parstacle definitions
@@ -407,11 +406,8 @@ typedef struct Parstacle {
     i32 tex;
 } Parstacle;
 
-void parstacle_init(void);
-void parstacle_clear(void);
 Parstacle* parstacle_create(vec2 position);
 void parstacle_destroy(Parstacle* parstacle);
-void parstacle_cleanup(void);
 
 //**************************************************************************
 // Particle definitions
@@ -480,8 +476,6 @@ typedef struct {
     GetterValues values;
     Map* current_map;
     Player player;
-    List* parstacles;
-    List* obstacles;
     List* particles;
     List* parjicles;
     List* triggers;

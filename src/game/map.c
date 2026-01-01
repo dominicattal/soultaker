@@ -95,6 +95,8 @@ typedef struct Map {
     List* walls;
     List* free_walls;
     List* projectiles;
+    List* obstacles;
+    List* parstacles;
     bool active;
 } Map;
 
@@ -1536,6 +1538,8 @@ static Map* generate_map(i32 id)
     map->walls = list_create();
     map->free_walls = list_create();
     map->projectiles = list_create();
+    map->obstacles = list_create();
+    map->parstacles = list_create();
     map->root = root;
     map->spawn_point = vec2_create(MAP_MAX_WIDTH / 2 + 0.5, MAP_MAX_LENGTH / 2 + 0.5);
     map->active = true;
@@ -1754,6 +1758,7 @@ Trigger* room_create_trigger(vec2 position, f32 radius, TriggerFunc func, Trigge
 
 Obstacle* room_create_obstacle(vec2 position)
 {
+    Obstacle* obstacle;
     Map* map = map_context.current_map;
     MapNode* node = map_context.current_map_node;
     if (!map->active)
@@ -1768,11 +1773,14 @@ Obstacle* room_create_obstacle(vec2 position)
     vec2 new_position;
     new_position.x = node->origin_x + dx;
     new_position.z = node->origin_z + dz;
-    return obstacle_create(new_position);
+    obstacle = obstacle_create(new_position);
+    list_append(map->obstacles, obstacle);
+    return obstacle;
 }
 
 Parstacle* room_create_parstacle(vec2 position)
 {
+    Parstacle* parstacle;
     Map* map = map_context.current_map;
     MapNode* node = map_context.current_map_node;
     if (!map->active)
@@ -1787,7 +1795,9 @@ Parstacle* room_create_parstacle(vec2 position)
     vec2 new_position;
     new_position.x = node->origin_x + dx;
     new_position.z = node->origin_z + dz;
-    return parstacle_create(new_position);
+    parstacle = parstacle_create(new_position);
+    list_append(map->parstacles, parstacle);
+    return parstacle;
 }
 
 Wall* room_create_wall(vec2 position, f32 height, f32 width, f32 length, u32 minimap_color)
@@ -2015,8 +2025,6 @@ Map* map_create(i32 id)
         return NULL;
     }
 
-    parstacle_clear();
-    obstacle_clear();
     particle_clear();
     parjicle_clear();
     game_render_update_obstacles();
@@ -2065,6 +2073,28 @@ static void destroy_projectiles(Map* map)
     list_destroy(map->projectiles);
 }
 
+static void destroy_obstacles(Map* map)
+{
+    Obstacle* obstacle;
+    i32 i;
+    for (i = 0; i < map->obstacles->length; i++) {
+        obstacle = list_get(map->obstacles, i);
+        obstacle_destroy(obstacle);
+    }
+    list_destroy(map->obstacles);
+}
+
+static void destroy_parstacles(Map* map)
+{
+    Parstacle* parstacle;
+    i32 i;
+    for (i = 0; i < map->parstacles->length; i++) {
+        parstacle = list_get(map->parstacles, i);
+        parstacle_destroy(parstacle);
+    }
+    list_destroy(map->parstacles);
+}
+
 void map_destroy(Map* map)
 {
     i32 i;
@@ -2072,6 +2102,8 @@ void map_destroy(Map* map)
     map->active = false;
     destroy_entities(map);
     destroy_projectiles(map);
+    destroy_obstacles(map);
+    destroy_parstacles(map);
     for (i = 0; i < map->tiles->length; i++)
         tile_destroy(list_get(map->tiles, i));
     list_destroy(map->tiles);
@@ -2130,8 +2162,8 @@ void map_collide_objects(Map* map)
     i32 i, j;
     for (i = 0; i < map->entities->length; i++) {
         Entity* entity = list_get(map->entities, i);
-        for (j = 0; j < game_context.obstacles->length; j++) {
-            Obstacle* obstacle = list_get(game_context.obstacles, j);
+        for (j = 0; j < map->obstacles->length; j++) {
+            Obstacle* obstacle = list_get(map->obstacles, j);
             collide_entity_obstacle(entity, obstacle);
         }
         for (j = 0; j < map->free_walls->length; j++) {
@@ -2150,8 +2182,8 @@ void map_collide_objects(Map* map)
     for (i = 0; i < map->projectiles->length; i++) {
         Projectile* projectile = list_get(map->projectiles, i);
         if (projectile->lifetime <= 0) continue;
-        for (j = 0; j < game_context.obstacles->length; j++) {
-            Obstacle* obstacle = list_get(game_context.obstacles, j);
+        for (j = 0; j < map->obstacles->length; j++) {
+            Obstacle* obstacle = list_get(map->obstacles, j);
             collide_projectile_obstacle(projectile, obstacle);
         }
         for (j = 0; j < map->free_walls->length; j++) {
@@ -2285,4 +2317,14 @@ List* map_list_walls(Map* map)
 List* map_list_projectiles(Map* map)
 {
     return map->projectiles;
+}
+
+List* map_list_obstacles(Map* map)
+{
+    return map->obstacles;
+}
+
+List* map_list_parstacles(Map* map)
+{
+    return map->parstacles;
 }

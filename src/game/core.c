@@ -80,8 +80,6 @@ void game_init(void)
     map_init();
     weapon_init();
     entity_init();
-    parstacle_init();
-    obstacle_init();
     particle_init();
     parjicle_init();
     trigger_init();
@@ -105,8 +103,6 @@ void game_cleanup(void)
     map_cleanup();
     weapon_cleanup();
     entity_cleanup();
-    parstacle_cleanup();
-    obstacle_cleanup();
     particle_cleanup();
     parjicle_cleanup();
     trigger_cleanup();

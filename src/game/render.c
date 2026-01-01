@@ -461,15 +461,17 @@ static void update_parstacle_vertex_data(Map* map)
     i32 location;
     i32 i, j;
     Parstacle* parstacle;
+    List* parstacles;
 
+    parstacles = map_list_parstacles(map);
     vb = get_vertex_buffer_swap(SSBO_PARSTACLE);
-    resize_vertex_buffer(vb, OBSTACLE_FLOATS_PER_VERTEX * game_context.parstacles->capacity);
+    resize_vertex_buffer(vb, OBSTACLE_FLOATS_PER_VERTEX * parstacles->capacity);
 
     i32 tex = texture_get_id("bush");
     texture_info(tex, &location, &u, &v, &w, &h, &pivot, &stretch);
     
-    for (i = j = 0; i < game_context.parstacles->length; i++) {
-        parstacle = list_get(game_context.parstacles, i);
+    for (i = j = 0; i < parstacles->length; i++) {
+        parstacle = list_get(parstacles, i);
         if (map_fog_contains(map, parstacle->position))
             continue;
         vb->buffer[j++] = parstacle->position.x;
@@ -494,17 +496,19 @@ static void update_obstacle_vertex_data(Map* map)
     f32 u, v, w, h;
     i32 location;
     i32 i, j;
+    List* obstacles;
 
+    obstacles = map_list_obstacles(map);
     vb = get_vertex_buffer_swap(SSBO_OBSTACLE);
     map_vb = get_vertex_buffer(SSBO_OBSTACLE_MINIMAP);
-    resize_vertex_buffer(vb, OBSTACLE_FLOATS_PER_VERTEX * game_context.obstacles->capacity);
-    resize_vertex_buffer(map_vb, MAP_CIRCLE_FLOATS_PER_VERTEX * game_context.obstacles->capacity);
+    resize_vertex_buffer(vb, OBSTACLE_FLOATS_PER_VERTEX * obstacles->capacity);
+    resize_vertex_buffer(map_vb, MAP_CIRCLE_FLOATS_PER_VERTEX * obstacles->capacity);
 
     i32 tex = texture_get_id("rock");
     texture_info(tex, &location, &u, &v, &w, &h, &pivot, &stretch);
     
-    for (i = j = 0; i < game_context.obstacles->length; i++) {
-        obstacle = list_get(game_context.obstacles, i);
+    for (i = j = 0; i < obstacles->length; i++) {
+        obstacle = list_get(obstacles, i);
         if (map_fog_contains(map, obstacle->position))
             continue;
         vb->buffer[j++] = obstacle->position.x;
@@ -518,8 +522,8 @@ static void update_obstacle_vertex_data(Map* map)
     }
     vb->length = j;
 
-    for (i = j = 0; i < game_context.obstacles->length; i++) {
-        obstacle = list_get(game_context.obstacles, i);
+    for (i = j = 0; i < obstacles->length; i++) {
+        obstacle = list_get(obstacles, i);
         if (map_fog_contains(map, obstacle->position))
             continue;
         map_vb->buffer[j++] = obstacle->position.x;
