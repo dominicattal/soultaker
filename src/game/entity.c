@@ -363,8 +363,6 @@ void entity_set_state(Entity* entity, const char* name)
 
 void entity_init(void)
 {
-    game_context.bosses = list_create();
-
     load_entity_info();
 }
 
@@ -454,41 +452,6 @@ void entity_damage(Entity* entity, f32 damage)
     event_create_gui_update_boss_healthbar(entity, entity->health, entity->max_health);
 }
 
-void entity_make_boss(Entity* entity)
-{
-    list_append(game_context.bosses, entity);
-    log_assert(!entity_get_flag(entity, ENTITY_FLAG_BOSS), "Entity is already boss");
-    entity_set_flag(entity, ENTITY_FLAG_BOSS, 1);
-    entity_boss_update(entity);
-    event_create_gui_create_boss_healthbar(entity, entity->health, entity->max_health);
-    pthread_mutex_lock(&game_context.getter_mutex);
-    game_context.values.num_bosses = 1;
-    game_context.values.boss_health = entity->health;
-    game_context.values.boss_max_health = entity->max_health;
-    pthread_mutex_unlock(&game_context.getter_mutex);
-}
-
-void entity_boss_update(Entity* entity)
-{
-    pthread_mutex_lock(&game_context.getter_mutex);
-    game_context.values.num_bosses = 1;
-    game_context.values.boss_health = entity->health;
-    game_context.values.boss_max_health = entity->max_health;
-    pthread_mutex_unlock(&game_context.getter_mutex);
-}
-
-void entity_unmake_boss(Entity* entity)
-{
-    log_assert(entity_get_flag(entity, ENTITY_FLAG_BOSS), "Entity is already not boss");
-    entity_set_flag(entity, ENTITY_FLAG_BOSS, 0);
-    event_create_gui_destroy_boss_healthbar(entity);
-    pthread_mutex_lock(&game_context.getter_mutex);
-    game_context.values.num_bosses = 0;
-    game_context.values.boss_health = 0;
-    game_context.values.boss_max_health = 0;
-    pthread_mutex_unlock(&game_context.getter_mutex);
-}
-
 void entity_set_flag(Entity* entity, EntityFlagEnum flag, bool val)
 {
     entity->flags = (entity->flags & ~(1<<flag)) | (val<<flag);
@@ -565,8 +528,6 @@ void entity_destroy(Entity* entity)
 
 void entity_cleanup(void)
 {
-    if (game_context.bosses != NULL)
-        list_destroy(game_context.bosses);
     for (i32 i = 0; i < entity_context.num_entities; i++) {
         st_free(entity_context.infos[i].name);
         for (i32 j = 0; j < entity_context.infos[i].num_states; j++) {
