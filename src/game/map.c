@@ -1696,6 +1696,44 @@ void map_handle_trigger(Trigger* trigger, Entity* entity)
     map_context.current_map_node = NULL;
 }
 
+vec2 map_orientation(void)
+{
+    MapNode* node = map_context.current_map_node;
+    vec2 vec;
+    if (node == NULL)
+        return vec2_create(0, 0);
+    switch (node->orientation) {
+        case ROTATION_R0:
+            vec = vec2_create(0, 1);
+            break;
+        case ROTATION_R1:
+            vec = vec2_create(1, 0);
+            break;
+        case ROTATION_R2:
+            vec = vec2_create(0, -1);
+            break;
+        case ROTATION_R3:
+            vec = vec2_create(-1, 0);
+            break;
+        case ROTATION_MR0:
+            vec = vec2_create(0, 1);
+            break;
+        case ROTATION_MR1:
+            vec = vec2_create(-1, 0);
+            break;
+        case ROTATION_MR2:
+            vec = vec2_create(0, -1);
+            break;
+        case ROTATION_MR3:
+            vec = vec2_create(1, 0);
+            break;
+        default:
+            vec = vec2_create(0, 0);
+            break;
+    }
+    return vec;
+}
+
 static void clear_map(void)
 {
     Map* map = game_context.current_map;
@@ -2251,16 +2289,16 @@ static void map_update_objects(Map* map)
     i = 0;
     while (i < map->entities->length) {
         Entity* entity = list_get(map->entities, i);
+        map_context.current_map_node = entity->map_info.spawn_node;
         entity_update(entity, game_context.dt);
         if (entity->health <= 0) {
-            map_context.current_map_node = entity->map_info.spawn_node;
             if (entity_get_flag(entity, ENTITY_FLAG_BOSS))
                 map_unmake_boss(entity);
             entity_destroy(list_remove(map->entities, i));
-            map_context.current_map_node = NULL;
         } else
             i++;
     }
+    map_context.current_map_node = NULL;
     i = 0;
     while (i < map->triggers->length) {
         Trigger* trigger = list_get(map->triggers, i);

@@ -21,6 +21,7 @@ void gui_comp_cleanup(void)
 GUIComp* gui_comp_create(i16 x, i16 y, i16 w, i16 h)
 {
     GUIComp* comp = st_calloc(1, sizeof(GUIComp));
+    comp->event_id = GUI_COMP_DEFAULT;
     gui_comp_set_bbox(comp, x, y, w, h);
     gui_comp_set_tex(comp, texture_get_id("color"));
     gui_comp_set_font_size(comp, 16);
@@ -65,9 +66,8 @@ void gui_comp_detach(GUIComp* parent, GUIComp* child)
 
 void gui_comp_destroy(GUIComp* comp)
 {
-    for (i32 i = 0; i < NUM_GUI_EVENT_COMPS; i++)
-        if (gui_context.event_comps[i] == comp)
-            gui_context.event_comps[i] = NULL;
+    if (comp->event_id != GUI_COMP_DEFAULT)
+        gui_context.event_comps[comp->event_id] = NULL;
     if (comp->destroy != NULL)
         comp->destroy(comp);
     for (i32 i = 0; i < gui_comp_num_children(comp); i++)

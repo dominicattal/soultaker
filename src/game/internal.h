@@ -134,6 +134,10 @@ void map_fog_clear(Map* map);
 
 void map_handle_trigger(Trigger* trigger, Entity* entity);
 
+// gets the orientation of the current map node, where northwest is toward 0, 0 in uv map
+// returns vec2(0,0) if no map node currently bounded
+vec2 map_orientation(void);
+
 // create object in global map coords
 Projectile*     map_create_projectile(vec2 position);
 Trigger*        map_create_trigger(vec2 position, f32 radius, TriggerFunc func, TriggerDestroyFunc destroy, void* args);
@@ -560,6 +564,7 @@ typedef struct GameApi {
     bool (*trigger_get_flag)(Trigger*, TriggerFlagEnum);
 
     // Map
+    vec2 (*map_orientation)(void);
     void (*map_make_boss)(Entity*);
     void (*map_unmake_boss)(Entity*);
     Projectile* (*map_create_projectile)(vec2);

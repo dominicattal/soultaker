@@ -1,4 +1,5 @@
 #include "internal.h"
+#include <string.h>
 #include "../event.h"
 
 extern GameContext game_context;
@@ -11,6 +12,7 @@ void game_framebuffer_size_callback(void)
 
 void game_key_callback(i32 key, i32 scancode, i32 action, i32 mods)
 {
+    char* test = "This is a notification";
     if (game_context.halt_input)
         return;
     if (key == GLFW_KEY_O && action == GLFW_PRESS)
@@ -21,6 +23,8 @@ void game_key_callback(i32 key, i32 scancode, i32 action, i32 mods)
         game_context.paused = 1-game_context.paused;
     if (key == GLFW_KEY_M && action == GLFW_PRESS)
         event_create_game_swap_weapons();
+    if (key == GLFW_KEY_G && action == GLFW_PRESS)
+        event_create_gui_create_notification(string_create(test, strlen(test)));
 }
 
 void game_mouse_button_callback(i32 button, i32 action, i32 mods)

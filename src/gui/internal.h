@@ -26,6 +26,15 @@ typedef enum {
     NUM_GUI_PRESETS
 } GUIPreset;
 
+typedef enum {
+    GUI_COMP_TYPING,
+    GUI_COMP_WEAPON_INFO,
+    GUI_COMP_BOSS_HEALTH,
+    GUI_COMP_NOTIFICATIONS,
+    NUM_GUI_EVENT_COMPS,
+    GUI_COMP_DEFAULT
+} GUIEventCompEnum;
+
 typedef struct GUIComp GUIComp;
 typedef void (*GUIHoverFPtr)(GUIComp* comp, bool status); 
 typedef void (*GUIClickFPtr)(GUIComp* comp, i32 button, i32 action, i32 mods);
@@ -42,6 +51,7 @@ typedef struct GUIComp {
     GUIClickFPtr click;
     GUIKeyFPtr key;
     GUICompDestroyFPtr destroy;
+    GUIEventCompEnum event_id;
     void* data;
     GUIComp* parent;
     GUIComp** children;
@@ -54,18 +64,12 @@ typedef struct GUIData {
     GLfloat* buffer;
 } GUIData;
 
-typedef enum {
-    GUI_COMP_TYPING,
-    GUI_COMP_WEAPON_INFO,
-    GUI_COMP_BOSS_HEALTH,
-    NUM_GUI_EVENT_COMPS
-} GUIEventCompEnum;
-
 typedef struct GUIContext {
     GUIData data;
     GUIData data_swap;
     GUIComp* root;
     GUIComp* event_comps[NUM_GUI_EVENT_COMPS];
+    void* event_comp_data[NUM_GUI_EVENT_COMPS];
     bool kill_thread;
     pthread_t thread_id;
     pthread_mutex_t data_mutex;
@@ -83,6 +87,7 @@ void gui_update_weapon_info(i32 weapon_id);
 void gui_create_boss_healthbar(void* boss_ptr, f32 health, f32 max_health);
 void gui_update_boss_healthbar(void* boss_ptr, f32 health, f32 max_health);
 void gui_destroy_boss_healthbar(void* boss_ptr);
+void gui_create_notification(char* notif);
 
 void gui_framebuffer_size_callback(i32 width, i32 height);
 bool gui_cursor_pos_callback(f64 xpos, f64 ypos);
