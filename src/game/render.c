@@ -318,14 +318,18 @@ static void update_tile_vertex_data(Map* map)
     bool animate_horizontal_pos, animate_vertical_pos;
     bool animate_horizontal_neg, animate_vertical_neg;
     Tile* tile;
+    List* tiles;
 
+    tiles = map_list_tiles(map);
     vb = get_vertex_buffer_swap(VBO_TILE);
     map_vb = get_vertex_buffer_swap(VBO_TILE_MINIMAP);
-    resize_vertex_buffer(vb, TILE_VERTEX_LENGTH * game_context.tiles->capacity);
-    resize_vertex_buffer(map_vb, MAP_SQUARE_FLOATS_PER_VERTEX * game_context.tiles->capacity);
+    resize_vertex_buffer(vb, TILE_VERTEX_LENGTH * tiles->capacity);
+    resize_vertex_buffer(map_vb, MAP_SQUARE_FLOATS_PER_VERTEX * tiles->capacity);
 
-    for (i = j = 0; i < game_context.tiles->length; i++) {
-        tile = list_get(game_context.tiles, i);
+    for (i = j = 0; i < tiles->length; i++) {
+        tile = list_get(tiles, i);
+        if (!tile_get_flag(tile, TILE_FLAG_ACTIVE))
+            continue;
         if (map_fog_contains_tile(map, tile))
             continue;
         animate_horizontal_pos = tile_get_flag(tile, TILE_FLAG_ANIMATE_HORIZONTAL_POS);
@@ -345,8 +349,10 @@ static void update_tile_vertex_data(Map* map)
     }
     vb->length = j;
 
-    for (i = j = 0; i < game_context.tiles->length; i++) {
-        tile = list_get(game_context.tiles, i);
+    for (i = j = 0; i < tiles->length; i++) {
+        tile = list_get(tiles, i);
+        if (!tile_get_flag(tile, TILE_FLAG_ACTIVE))
+            continue;
         if (map_fog_contains_tile(map, tile))
             continue;
         map_vb->buffer[j++] = tile->position.x;
@@ -370,11 +376,13 @@ static void update_wall_vertex_data(Map* map)
     i32 idx;
     i32 i, j, k;
     Wall* wall;
+    List* walls;
 
+    walls = map_list_walls(map);
     vb = get_vertex_buffer_swap(VBO_WALL);
     map_vb = get_vertex_buffer_swap(VBO_WALL_MINIMAP);
-    resize_vertex_buffer(vb, WALL_VERTEX_LENGTH * game_context.walls->capacity);
-    resize_vertex_buffer(map_vb, MAP_SQUARE_FLOATS_PER_VERTEX * game_context.walls->capacity);
+    resize_vertex_buffer(vb, WALL_VERTEX_LENGTH * walls->capacity);
+    resize_vertex_buffer(map_vb, MAP_SQUARE_FLOATS_PER_VERTEX * walls->capacity);
 
     static f32 dx[] = {0, 0, 0, 0, 1, 1, 1, 1};
     static f32 dy[] = {0, 0, 1, 1, 0, 0, 1, 1};
@@ -390,8 +398,10 @@ static void update_wall_vertex_data(Map* map)
     };
     static i32 winding[] = {0, 1, 2, 0, 2, 3};
 
-    for (i = j = 0; i < game_context.walls->length; i++) {
-        wall = list_get(game_context.walls, i);
+    for (i = j = 0; i < walls->length; i++) {
+        wall = list_get(walls, i);
+        if (!wall_get_flag(wall, WALL_FLAG_ACTIVE))
+            continue;
         if (map_fog_contains_wall(map, wall))
             continue;
         texture_info(wall->side_tex, &location, &u, &v, &w, &h, &pivot, &stretch);
@@ -424,8 +434,10 @@ static void update_wall_vertex_data(Map* map)
     }
     vb->length = j;
 
-    for (i = j = 0; i < game_context.walls->length; i++) {
-        wall = list_get(game_context.walls, i);
+    for (i = j = 0; i < walls->length; i++) {
+        wall = list_get(walls, i);
+        if (!wall_get_flag(wall, WALL_FLAG_ACTIVE))
+            continue;
         if (map_fog_contains_wall(map, wall))
             continue;
         map_vb->buffer[j++] = wall->position.x;

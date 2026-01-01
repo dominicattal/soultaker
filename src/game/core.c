@@ -21,8 +21,7 @@ void* game_loop(void* vargp)
     game_context.time = 0;
     game_resume_loop();
     game_resume_render();
-    i32 id = map_get_id("level_1");
-    game_context.current_map = map_create(id);
+    map_create(map_get_id("level_1"));
     while (!game_context.kill_thread)
     {
         if (game_context.halt_game_loop) {
@@ -86,8 +85,6 @@ void game_init(void)
     sem_init(&game_context.game_loop_sem, 0, 1);
 
     map_init();
-    tile_init();
-    wall_init();
     weapon_init();
     entity_init();
     projectile_init();
@@ -117,14 +114,11 @@ void game_cleanup(void)
     weapon_cleanup();
     entity_cleanup();
     projectile_cleanup();
-    tile_cleanup();
-    wall_cleanup();
     parstacle_cleanup();
     obstacle_cleanup();
     particle_cleanup();
     parjicle_cleanup();
     trigger_cleanup();
-
 }
 
 f32 game_get_dt(void)

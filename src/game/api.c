@@ -10,7 +10,6 @@ GameApi game_api = {
 
     // Entity
     REGISTER(entity_create),
-    REGISTER(entity_make_boss),
     REGISTER(entity_get_id),
     REGISTER(entity_get_state_id),
     REGISTER(entity_set_flag),
@@ -18,6 +17,8 @@ GameApi game_api = {
 
     // Wall
     REGISTER(wall_create),
+    REGISTER(wall_set_flag),
+    REGISTER(wall_get_flag),
 
     // Tile
     REGISTER(tile_create),
@@ -34,6 +35,8 @@ GameApi game_api = {
     REGISTER(trigger_get_flag),
 
     // Map
+    REGISTER(map_make_boss),
+    REGISTER(map_unmake_boss),
     REGISTER(room_create_entity),
     REGISTER(room_create_obstacle),
     REGISTER(room_create_parstacle),

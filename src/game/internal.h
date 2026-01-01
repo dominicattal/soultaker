@@ -29,6 +29,7 @@ typedef struct MapInfo MapInfo;
 typedef struct LocalMapGenerationSettings LocalMapGenerationSettings;
 
 typedef void (*TriggerFunc)(GameApi*, Entity*, void*);
+typedef void (*TriggerDestroyFunc)(GameApi*, void*);
 
 //**************************************************************************
 // Camera definitions
@@ -84,6 +85,12 @@ typedef struct MapInfo {
 } MapInfo;
 
 List* map_list_entities(Map* map);
+List* map_list_tiles(Map* map);
+List* map_list_walls(Map* map);
+
+void map_make_boss(Entity* entity);
+void map_boss_update(Entity* entity);
+void map_unmake_boss(Entity* entity);
 
 void map_init(void);
 Map* map_create(i32 id);
@@ -126,7 +133,7 @@ Entity* room_create_entity(vec2 position, i32 id);
 Obstacle* room_create_obstacle(vec2 position);
 Parstacle* room_create_parstacle(vec2 position);
 Wall* room_create_wall(vec2 position, f32 height, f32 width, f32 length, u32 minimap_color);
-Trigger* room_create_trigger(vec2 position, f32 radius, TriggerFunc func, void* args);
+Trigger* room_create_trigger(vec2 position, f32 radius, TriggerFunc func, TriggerDestroyFunc destroy, void* args);
 Tile* room_set_tilemap_tile(i32 x, i32 z, u32 minimap_color);
 Wall* room_set_tilemap_wall(i32 x, i32 z, f32 height, u32 minimap_color);
 
@@ -138,6 +145,7 @@ typedef struct Trigger {
     void* args;
     MapNode* map_node;
     TriggerFunc func;
+    TriggerDestroyFunc destroy;
     vec2 position;
     f32 radius;
     u32 flags;
@@ -151,7 +159,11 @@ typedef enum {
 } TriggerFlagEnum;
 
 void trigger_init(void);
-Trigger* trigger_create(vec2 position, f32 radius, TriggerFunc func, void* args);
+// create trigger at position with hitbox radius
+// func -> function to trigger, where args are passed through
+// once trigger is destroyed, it will call it destroy function to 
+// clean up any allocations. if destroy is NULL, just frees data
+Trigger* trigger_create(vec2 position, f32 radius, TriggerFunc func, TriggerDestroyFunc destroy, void* args);
 void trigger_set_flag(Trigger* trigger, TriggerFlagEnum flag, bool val);
 bool trigger_get_flag(Trigger* trigger, TriggerFlagEnum flag);
 void trigger_destroy(Trigger* trigger);
@@ -250,10 +262,6 @@ void entity_destroy(Entity* entity);
 // on any modifiers it might have
 void entity_damage(Entity* entity, f32 damage);
 
-void entity_make_boss(Entity* entity);
-void entity_boss_update(Entity* entity);
-void entity_unmake_boss(Entity* entity);
-
 // Assigns default entity for the player
 void player_reset(Entity* entity);
 void player_update(Player* player, f32 dt);
@@ -291,18 +299,17 @@ typedef enum {
     TILE_FLAG_ANIMATE_HORIZONTAL_POS,
     TILE_FLAG_ANIMATE_HORIZONTAL_NEG,
     TILE_FLAG_ANIMATE_VERTICAL_POS,
-    TILE_FLAG_ANIMATE_VERTICAL_NEG
+    TILE_FLAG_ANIMATE_VERTICAL_NEG,
+
+    // rather than remove tile from list, flag as active
+    // to prevent O(n) list updates
+    TILE_FLAG_ACTIVE
 } TileFlagEnum;
  
-void tile_init(void);
-void tile_clear(void);
-void tile_set_flag(Tile* tile, TileFlagEnum flag, u32 val);
+void tile_set_flag(Tile* tile, TileFlagEnum flag, bool val);
 bool tile_get_flag(Tile* tile, TileFlagEnum flag);
 Tile* tile_create(vec2 position, u32 minimap_color);
 void tile_destroy(Tile* tile);
-// search for tile in global tiles list, removes and destroys it
-void tile_search_and_destroy(Tile* tile);
-void tile_cleanup(void);
 void tile_lava_collision(Entity* entity);
 
 //**************************************************************************
@@ -315,17 +322,17 @@ typedef struct Wall {
     f32 height;
     i32 top_tex, side_tex;
     u32 minimap_color;
+    u32 flags;
 } Wall;
 
-void wall_init(void);
-void wall_clear(void);
+typedef enum {
+    WALL_FLAG_ACTIVE
+} WallFlagEnum;
+
 Wall* wall_create(vec2 position, f32 height, u32 minimap_color);
+void wall_set_flag(Wall* wall, WallFlagEnum flag, bool val);
+bool wall_get_flag(Wall* wall, WallFlagEnum flag);
 void wall_destroy(Wall* wall);
-// search for wall in global walls list, removes and destroys it
-// does not look in free walls list
-void wall_search_and_destroy(Wall* wall);
-void wall_cleanup(void);
-void wall_add_free_wall(Wall* wall);
 
 //**************************************************************************
 // Projectile definitions
@@ -475,11 +482,6 @@ typedef struct {
     GetterValues values;
     Map* current_map;
     Player player;
-    //List* entities;
-    List* bosses;
-    List* tiles;
-    List* walls;
-    List* free_walls;
     List* projectiles;
     List* parstacles;
     List* obstacles;
@@ -552,7 +554,6 @@ typedef struct GameApi {
 
     // Entity
     Entity* (*entity_create)(vec2, i32);
-    void (*entity_make_boss)(Entity* entity);
     i32 (*entity_get_id)(const char*);
     i32 (*entity_get_state_id)(Entity*, const char*);
     void (*entity_set_flag)(Entity*, EntityFlagEnum, bool);
@@ -560,10 +561,12 @@ typedef struct GameApi {
 
     // Wall
     Wall* (*wall_create)(vec2, f32, u32);
+    void (*wall_set_flag)(Wall*, WallFlagEnum, bool);
+    bool (*wall_get_flag)(Wall*, WallFlagEnum);
 
     // Tile
     Tile* (*tile_create)(vec2, u32);
-    void (*tile_set_flag)(Tile*, TileFlagEnum, u32);
+    void (*tile_set_flag)(Tile*, TileFlagEnum, bool);
     bool (*tile_get_flag)(Tile*, TileFlagEnum);
 
     // Projectile
@@ -571,16 +574,18 @@ typedef struct GameApi {
     void (*projectile_set_flag)(Projectile*, ProjectileFlagEnum, bool);
 
     // Trigger
-    Trigger* (*trigger_create)(vec2, f32, TriggerFunc, void*);
+    Trigger* (*trigger_create)(vec2, f32, TriggerFunc, TriggerDestroyFunc, void*);
     void (*trigger_set_flag)(Trigger*, TriggerFlagEnum, bool);
     bool (*trigger_get_flag)(Trigger*, TriggerFlagEnum);
 
     // Map
+    void (*map_make_boss)(Entity*);
+    void (*map_unmake_boss)(Entity*);
     Entity* (*room_create_entity)(vec2, i32);
     Obstacle* (*room_create_obstacle)(vec2);
     Parstacle* (*room_create_parstacle)(vec2);
     Wall* (*room_create_wall)(vec2, f32, f32, f32, u32);
-    Trigger* (*room_create_trigger)(vec2, f32, TriggerFunc, void*);
+    Trigger* (*room_create_trigger)(vec2, f32, TriggerFunc, TriggerDestroyFunc, void*);
     Tile* (*room_set_tilemap_tile)(i32, i32, u32);
     Wall* (*room_set_tilemap_wall)(i32, i32, f32, u32);
 

@@ -5,7 +5,7 @@ void trigger_init(void)
     game_context.triggers = list_create();
 }
 
-Trigger* trigger_create(vec2 position, f32 radius, TriggerFunc func, void* args)
+Trigger* trigger_create(vec2 position, f32 radius, TriggerFunc func, TriggerDestroyFunc destroy, void* args)
 {
     Trigger* trigger = st_malloc(sizeof(Trigger));
     trigger->position = position;
@@ -13,6 +13,7 @@ Trigger* trigger_create(vec2 position, f32 radius, TriggerFunc func, void* args)
     trigger->func = func;
     trigger->flags = 0;
     trigger->args = args;
+    trigger->destroy = destroy;
     list_append(game_context.triggers, trigger);
     return trigger;
 }
@@ -29,6 +30,10 @@ bool trigger_get_flag(Trigger* trigger, TriggerFlagEnum flag)
 
 void trigger_destroy(Trigger* trigger)
 {
+    if (trigger->destroy == NULL)
+        st_free(trigger->args);
+    else
+        trigger->destroy(&game_api, trigger->args);
     st_free(trigger);
 }
 

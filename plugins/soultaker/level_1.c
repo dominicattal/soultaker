@@ -73,13 +73,18 @@ st_export void level_1_spawn_exit(GameApi* api, LevelData* data, i32 num_exits)
     wall->top_tex = api->texture_get_id("level_1_wall_2_top");
 }
 
+typedef struct {
+    i32 test;
+} TestArgs;
+
 static void test(GameApi* api, Entity* entity, void* args)
 {
-    api->log_write(DEBUG, "test %f %f %d", entity->position.x, entity->position.z, *(int*)args);
+    api->log_write(DEBUG, "test %f %f %d", entity->position.x, entity->position.z, ((TestArgs*)args)->test);
 }
 
 st_export void level_1_enemy_1_create(GameApi* api, LevelData* data)
 {
+    TestArgs* args = api->st_malloc(sizeof(TestArgs));
     Trigger* trigger;
     i32 id = api->entity_get_id("dummy");
     vec2 pos = api->vec2_create(10, 4);
@@ -88,7 +93,8 @@ st_export void level_1_enemy_1_create(GameApi* api, LevelData* data)
     api->room_create_obstacle(pos);
     pos = api->vec2_create(8, 4);
     api->room_create_parstacle(pos);
-    trigger = api->room_create_trigger(pos, 0.5f, test, &id);
+    args->test = id;
+    trigger = api->room_create_trigger(pos, 0.5f, test, NULL, args);
     api->trigger_set_flag(trigger, TRIGGER_FLAG_ONCE, true);
 }
 
@@ -102,15 +108,12 @@ st_export void dummy_boss_create(GameApi* api, Entity* entity)
     entity->hitbox_radius = 0.5f;
     entity->health = 1;
     entity->max_health = 1;
-    api->entity_make_boss(entity);
+    api->map_make_boss(entity);
 }
 
 st_export void dummy_boss_destroy(GameApi* api, Entity* entity)
 {
-    Trigger* trigger;
     api->log_write(DEBUG, "killed boss");
-    trigger = api->trigger_create(entity->position, 0.5, test, &entity->id);
-    api->trigger_set_flag(trigger, TRIGGER_FLAG_ONCE, true);
     api->room_set_tilemap_tile(6, 1, 0x00FF00);
     api->room_set_tilemap_tile(7, 1, 0x00FF00);
     api->room_set_tilemap_tile(8, 1, 0x00FF00);
@@ -130,7 +133,7 @@ st_export void level_1_boss_create(GameApi* api, LevelData* data)
 {
     Trigger* trigger;
     vec2 pos = api->vec2_create(7.5, 7.5);
-    trigger = api->room_create_trigger(pos, 0.5f, start_boss, NULL);
+    trigger = api->room_create_trigger(pos, 0.5f, start_boss, NULL, NULL);
     api->trigger_set_flag(trigger, TRIGGER_FLAG_ONCE, true);
 }
 
