@@ -52,7 +52,15 @@ GUIComp* gui_get_event_comp(GUIEventCompEnum type)
 
 void gui_set_event_comp(GUIEventCompEnum type, GUIComp* comp)
 {
+    GUIComp* prev_comp = gui_context.event_comps[type];
     gui_context.event_comps[type] = comp;
+    if (prev_comp != NULL) {
+        prev_comp->event_id = GUI_COMP_DEFAULT;
+    }
+    if (comp != NULL) {
+        log_assert(comp->event_id == GUI_COMP_DEFAULT, "cannot assign event comp to another event comp");
+        comp->event_id = type;
+    }
 }
 
 bool gui_event_comp_equal(GUIEventCompEnum type, GUIComp* comp)

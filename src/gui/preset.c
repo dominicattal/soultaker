@@ -277,6 +277,44 @@ void gui_update_weapon_info(i32 weapon_id)
     gui_comp_set_tex(comp, tex_id);
 }
 
+typedef struct {
+    List* notifications;
+} NotificationManagerData;
+
+void gui_create_notification(char* notif)
+{
+    GUIComp* notif_comp = gui_get_event_comp(GUI_COMP_NOTIFICATIONS);
+    if (notif_comp == NULL) {
+        log_write(WARNING, "notification comp is null");
+        return;
+    }
+    NotificationManagerData* manager_data = notif_comp->data;
+    i32 idx = manager_data->notifications->length;
+    list_append(manager_data->notifications, notif);
+
+    log_write(DEBUG, "%p %d", manager_data, idx);
+}
+
+static void notification_manager_destroy(GUIComp* comp)
+{
+    NotificationManagerData* data = comp->data;
+    while (!list_empty(data->notifications))
+        st_free(list_remove(data->notifications, 0));
+    list_destroy(data->notifications);
+}
+
+static GUIComp* create_notifications(void)
+{
+    GUIComp* notifications = gui_comp_create(20, 147, 400, 400);
+    NotificationManagerData* data = st_malloc(sizeof(NotificationManagerData));
+    data->notifications = list_create();
+    notifications->data = data;
+    notifications->destroy = notification_manager_destroy;
+    gui_set_event_comp(GUI_COMP_NOTIFICATIONS, notifications);
+    gui_comp_set_color(notifications, 255, 255, 255, 100);
+    return notifications;
+}
+
 static void load_preset_game(GUIComp* root)
 {
     GUIComp* player_stats = gui_comp_create(20, 20, 400, 50);
@@ -328,6 +366,9 @@ static void load_preset_game(GUIComp* root)
     gui_comp_set_align(minimap, ALIGN_RIGHT, ALIGN_TOP);
     gui_comp_set_color(minimap, 255, 255, 255, 100);
     gui_comp_attach(root, minimap);
+
+    GUIComp* notifications = create_notifications();
+    gui_comp_attach(root, notifications);
 }
 
 // **************************************************

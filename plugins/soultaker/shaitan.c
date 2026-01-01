@@ -64,10 +64,13 @@ st_export void hand_of_shaitan_update(GameApi* api, Entity* entity, f32 dt)
     // is the orthogonal of its vector to the origin
     vec2 hand_pos = entity->position;
     vec2 daddy_pos = data->daddy->position;
+    //f32 rad = api->vec2_radians(api->map_orientation());
     vec2 direction = api->vec2_normalize(api->vec2_sub(daddy_pos, hand_pos));
     direction.x *= 2 * data->rotate_direction - 1;
     direction.y *= 2 * data->rotate_direction - 1;
-    entity->direction = api->vec2_create(direction.y, -direction.x);
+    //entity->direction = api->vec2_create(direction.y, -direction.x);
+    entity->direction = api->vec2_rotate(direction, 0);
+    //entity->direction = api->vec2_rotate(entity->direction, rad);
     data->rotate_timer += dt;
     data->target_rad += (2 * data->rotate_direction - 1) * 1.25 * dt;
     if (data->rotate_timer > 1.7f) {
@@ -179,11 +182,12 @@ st_export void hand_of_shaitan_destroy(GameApi* api, Entity* entity)
     Entity* daddy = data->daddy;
     if (daddy == NULL)
         goto free;
-    AdvisorData* daddys_data = daddy->data;
-    if (entity == daddys_data->hand1)
-        daddys_data->hand1 = NULL;
-    else if (entity == daddys_data->hand2)
-        daddys_data->hand2 = NULL;
+    // daddy is freed before this is called
+    //AdvisorData* daddys_data = daddy->data;
+    //if (entity == daddys_data->hand1)
+    //    daddys_data->hand1 = NULL;
+    //else if (entity == daddys_data->hand2)
+    //    daddys_data->hand2 = NULL;
 free:
     api->st_free(entity->data);
 }
@@ -194,15 +198,17 @@ static void spawn_hands(GameApi* api, Entity* advisor)
     AdvisorData* advisor_data = advisor->data;
     HandData* data;
     i32 id = api->entity_get_id("hand_of_shaitan");
-    f32 x = advisor->position.x;
-    f32 y = advisor->position.y;
-    hand = api->entity_create(api->vec2_create(x+7.5, y), id);
+    //f32 x = advisor->position.x;
+    //f32 y = advisor->position.y;
+    //hand = api->entity_create(api->vec2_create(x+7.5, y), id);
+    hand = api->room_create_entity(api->vec2_create(8, 20), id);
     data = hand->data;
     data->daddy = advisor;
     advisor_data->hand1 = hand;
     data->rotate_direction = 0;
     data->target_rad = 0.2;
-    hand = api->entity_create(api->vec2_create(x-7.5, y), id);
+    //hand = api->entity_create(api->vec2_create(x-7.5, y), id);
+    hand = api->room_create_entity(api->vec2_create(23, 20), id);
     data = hand->data;
     data->daddy = advisor;
     advisor_data->hand2 = hand;
@@ -253,7 +259,7 @@ static void shaitan_attack_1_firestorm(GameApi* api, Entity* entity)
 st_export void shaitan_the_advisor_attack_1(GameApi* api, Entity* entity, f32 dt)
 {
     AdvisorData* data = entity->data;
-    if (entity->health <= 90) {
+    if (entity->health <= 99) {
         api->entity_set_state(entity, "attack_2");
         spawn_hands(api, entity);
         api->entity_set_flag(entity, ENTITY_FLAG_INVULNERABLE, 1);

@@ -29,6 +29,7 @@ typedef enum {
     GUI_EVENT_CREATE_BOSS_HEALTHBAR,
     GUI_EVENT_DESTROY_BOSS_HEALTHBAR,
     GUI_EVENT_UPDATE_BOSS_HEALTHBAR,
+    GUI_EVENT_CREATE_NOTIFICATION,
 
     // Renderer Events
     GUI_EVENT_WRITE_TEXTURE_UNITS
@@ -127,7 +128,7 @@ static void execute_event(Event event)
             player_swap_weapons();
             break;
         case GAME_EVENT_SUMMON:
-            game_summon(arg1._int);
+            //game_summon(arg1._int);
             break;
         case GAME_EVENT_RESPAWN:
             //player_reset();
@@ -169,6 +170,9 @@ static void execute_event(Event event)
             break;
         case GUI_EVENT_DESTROY_BOSS_HEALTHBAR:
             gui_destroy_boss_healthbar(ptr);
+            break;
+        case GUI_EVENT_CREATE_NOTIFICATION:
+            gui_create_notification(ptr);
             break;
 
         // Renderer
@@ -396,6 +400,16 @@ void event_create_gui_destroy_boss_healthbar(void* boss_ptr)
     Event event = (Event) {
         .type = GUI_EVENT_DESTROY_BOSS_HEALTHBAR,
         .ptr = boss_ptr
+    };
+    EventQueue* queue = get_event_queue("GUI");
+    event_enqueue(queue, event);
+}
+
+void event_create_gui_create_notification(char* notif)
+{
+    Event event = (Event) {
+        .type = GUI_EVENT_CREATE_NOTIFICATION,
+        .ptr = notif
     };
     EventQueue* queue = get_event_queue("GUI");
     event_enqueue(queue, event);

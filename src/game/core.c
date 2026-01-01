@@ -119,6 +119,6 @@ f32 game_get_boss_max_health(void)
 
 void game_summon(i32 id)
 {
-    vec2 position = player_position();
-    entity_create(position, id);
+    //vec2 position = player_position();
+    //entity_create(position, id);
 }
