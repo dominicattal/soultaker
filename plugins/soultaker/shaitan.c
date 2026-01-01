@@ -99,7 +99,7 @@ st_export void shaitan_hand_attack_1(GameApi* api, Entity* entity, f32 dt)
         return;
     }
     if (data->shoot_timer > 0.2) {
-        proj = api->projectile_create(entity->position);
+        proj = api->map_create_projectile(entity->position);
         proj->update = firebullet;
         direction = api->vec2_direction(data->target_rad-PI/3);
         proj->direction = direction;
@@ -108,7 +108,7 @@ st_export void shaitan_hand_attack_1(GameApi* api, Entity* entity, f32 dt)
         proj->facing = data->target_rad;
         proj->tex = api->texture_get_id("shaitan_firebullet");
 
-        proj = api->projectile_create(entity->position);
+        proj = api->map_create_projectile(entity->position);
         proj->update = firebullet;
         direction = api->vec2_direction(data->target_rad+PI/3);
         proj->direction = direction;
@@ -134,7 +134,7 @@ st_export void shaitan_hand_attack_2(GameApi* api, Entity* entity, f32 dt)
         return;
     }
     if (data->shoot_timer > 0.2) {
-        proj = api->projectile_create(entity->position);
+        proj = api->map_create_projectile(entity->position);
         proj->update = firebullet;
         direction = api->vec2_direction(data->target_rad-PI/3);
         proj->direction = direction;
@@ -143,7 +143,7 @@ st_export void shaitan_hand_attack_2(GameApi* api, Entity* entity, f32 dt)
         proj->facing = data->target_rad;
         proj->tex = api->texture_get_id("shaitan_firebullet");
 
-        proj = api->projectile_create(entity->position);
+        proj = api->map_create_projectile(entity->position);
         proj->update = firebullet;
         direction = api->vec2_direction(data->target_rad+PI/3);
         proj->direction = direction;
@@ -230,7 +230,7 @@ static void shaitan_attack_1_firestorm(GameApi* api, Entity* entity)
     vec2 direction;
     i32 dir = rand() % 2;
     for (i32 i = 0; i < 5; i++) {
-        proj = api->projectile_create(entity->position);
+        proj = api->map_create_projectile(entity->position);
         proj->speed = 4.5f;
         proj->size = 0.75f;
         proj->lifetime = 2.0f;
@@ -239,7 +239,7 @@ static void shaitan_attack_1_firestorm(GameApi* api, Entity* entity)
         proj->direction = direction;
         proj->update = firestorm;
 
-        proj = api->projectile_create(entity->position);
+        proj = api->map_create_projectile(entity->position);
         proj->speed = 4.5f;
         proj->size = 0.75f;
         proj->lifetime = 7.3f;
@@ -274,7 +274,7 @@ static void shaitan_attack_2_firestorm(GameApi* api, Entity* entity)
     vec2 position = api->game_get_nearest_player_position();
     vec2 direction = api->vec2_sub(position, entity->position);
     i32 tex_id = api->texture_get_id("shaitan_firestorm");
-    proj = api->projectile_create(entity->position);
+    proj = api->map_create_projectile(entity->position);
     proj->speed = 4.5f;
     proj->size = 0.75f;
     proj->lifetime = 2.0f;
@@ -289,7 +289,7 @@ static void shaitan_attack_2_fireball(GameApi* api, Entity* entity)
     vec2 direction;
     i32 tex_id = api->texture_get_id("shaitan_fireball");
     for (i32 i = 0; i < 12; i++) {
-        proj = api->projectile_create(entity->position);
+        proj = api->map_create_projectile(entity->position);
         proj->speed = 4.0f;
         proj->size = 0.6f;
         proj->lifetime = 6.0f;

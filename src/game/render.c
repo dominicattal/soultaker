@@ -279,12 +279,14 @@ static void update_projectile_vertex_data(Map* map)
     i32 i, j;
     Projectile* projectile;
     bool rotate_tex;
+    List* projectiles;
 
+    projectiles = map_list_projectiles(map);
     vb = get_vertex_buffer_swap(SSBO_PROJECTILE);
-    resize_vertex_buffer(vb, PROJECTILE_FLOATS_PER_VERTEX * game_context.projectiles->capacity);
+    resize_vertex_buffer(vb, PROJECTILE_FLOATS_PER_VERTEX * projectiles->capacity);
 
-    for (i = j = 0; i < game_context.projectiles->length; i++) {
-        projectile = list_get(game_context.projectiles, i);
+    for (i = j = 0; i < projectiles->length; i++) {
+        projectile = list_get(projectiles, i);
         if (map_fog_contains(map, projectile->position))
             continue;
         tex = projectile->tex;

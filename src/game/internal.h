@@ -87,6 +87,7 @@ typedef struct MapInfo {
 List* map_list_entities(Map* map);
 List* map_list_tiles(Map* map);
 List* map_list_walls(Map* map);
+List* map_list_projectiles(Map* map);
 
 void map_make_boss(Entity* entity);
 void map_boss_update(Entity* entity);
@@ -129,13 +130,17 @@ void map_fog_clear(Map* map);
 
 void map_handle_trigger(Trigger* trigger, Entity* entity);
 
-Entity* room_create_entity(vec2 position, i32 id);
-Obstacle* room_create_obstacle(vec2 position);
-Parstacle* room_create_parstacle(vec2 position);
-Wall* room_create_wall(vec2 position, f32 height, f32 width, f32 length, u32 minimap_color);
-Trigger* room_create_trigger(vec2 position, f32 radius, TriggerFunc func, TriggerDestroyFunc destroy, void* args);
-Tile* room_set_tilemap_tile(i32 x, i32 z, u32 minimap_color);
-Wall* room_set_tilemap_wall(i32 x, i32 z, f32 height, u32 minimap_color);
+// create object in global map coords
+Projectile*     map_create_projectile(vec2 position);
+
+// create objects in local room coords
+Entity*         room_create_entity(vec2 position, i32 id);
+Obstacle*       room_create_obstacle(vec2 position);
+Parstacle*      room_create_parstacle(vec2 position);
+Wall*           room_create_wall(vec2 position, f32 height, f32 width, f32 length, u32 minimap_color);
+Trigger*        room_create_trigger(vec2 position, f32 radius, TriggerFunc func, TriggerDestroyFunc destroy, void* args);
+Tile*           room_set_tilemap_tile(i32 x, i32 z, u32 minimap_color);
+Wall*           room_set_tilemap_wall(i32 x, i32 z, f32 height, u32 minimap_color);
 
 //**************************************************************************
 // Trigger definitions
@@ -361,13 +366,6 @@ typedef enum {
     PROJECTILE_FLAG_FRIENDLY
 } ProjectileFlagEnum;
 
-// Initialize and cleanup projectiles
-void projectile_init(void);
-void projectile_cleanup(void);
-
-// Destroy all projectiles
-void projectile_clear(void);
-
 // Projectiles call their update and destroy functions. They do
 // not have a create function. They do not have ids mapped to a 
 // function ptr (like entities) because it is not necessary to 
@@ -482,7 +480,6 @@ typedef struct {
     GetterValues values;
     Map* current_map;
     Player player;
-    List* projectiles;
     List* parstacles;
     List* obstacles;
     List* particles;
@@ -570,7 +567,6 @@ typedef struct GameApi {
     bool (*tile_get_flag)(Tile*, TileFlagEnum);
 
     // Projectile
-    Projectile* (*projectile_create)(vec2);
     void (*projectile_set_flag)(Projectile*, ProjectileFlagEnum, bool);
 
     // Trigger
@@ -581,6 +577,7 @@ typedef struct GameApi {
     // Map
     void (*map_make_boss)(Entity*);
     void (*map_unmake_boss)(Entity*);
+    Projectile* (*map_create_projectile)(vec2);
     Entity* (*room_create_entity)(vec2, i32);
     Obstacle* (*room_create_obstacle)(vec2);
     Parstacle* (*room_create_parstacle)(vec2);

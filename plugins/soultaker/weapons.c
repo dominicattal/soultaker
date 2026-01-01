@@ -3,7 +3,7 @@
 st_export void weapon_pointer_attack(GameApi* api, Player* player, vec2 direction, vec2 target)
 {
     vec2 pos = player->entity->position;
-    Projectile* proj = api->projectile_create(pos);
+    Projectile* proj = api->map_create_projectile(pos);
     proj->direction = direction;
     proj->size = 0.5;
     proj->speed = 10;
@@ -16,7 +16,7 @@ st_export void weapon_pointer_attack(GameApi* api, Player* player, vec2 directio
 st_export void weapon_null_pointer_attack(GameApi* api, Player* player, vec2 direction, vec2 target)
 {
     vec2 pos = player->entity->position;
-    Projectile* proj = api->projectile_create(pos);
+    Projectile* proj = api->map_create_projectile(pos);
     proj->direction = direction;
     proj->size = 0.5;
     proj->speed = 10;
