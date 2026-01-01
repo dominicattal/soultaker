@@ -2,19 +2,6 @@
 
 extern GameContext game_context;
 
-void parjicle_init(void)
-{
-    game_context.parjicles = list_create();
-}
-
-void parjicle_clear(void)
-{
-    if (game_context.parjicles == NULL)
-        return;
-    while (game_context.parjicles->length > 0)
-        parjicle_destroy(list_remove(game_context.parjicles, 0));
-}
-
 Parjicle* parjicle_create(vec3 position)
 {
     Parjicle* parjicle = st_malloc(sizeof(Parjicle));
@@ -24,7 +11,6 @@ Parjicle* parjicle_create(vec3 position)
     parjicle->size = 0.1f;
     parjicle->speed = 1.0f;
     parjicle->rotation = 0.0f;
-    list_append(game_context.parjicles, parjicle);
     return parjicle;
 }
 
@@ -47,13 +33,4 @@ void parjicle_set_flag(Parjicle* parjicle, ParjicleFlagEnum flag, u32 val)
 bool parjicle_is_flag_set(Parjicle* parjicle, ParjicleFlagEnum flag)
 {
     return (parjicle->flags >> flag) & 1;
-}
-
-void parjicle_cleanup(void)
-{
-    if (game_context.parjicles == NULL)
-        return;
-    for (i32 i = 0; i < game_context.parjicles->length; i++)
-        parjicle_destroy(list_get(game_context.parjicles, i));
-    list_destroy(game_context.parjicles);
 }

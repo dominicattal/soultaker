@@ -97,6 +97,8 @@ typedef struct Map {
     List* projectiles;
     List* obstacles;
     List* parstacles;
+    List* particles;
+    List* parjicles;
     bool active;
 } Map;
 
@@ -1540,6 +1542,8 @@ static Map* generate_map(i32 id)
     map->projectiles = list_create();
     map->obstacles = list_create();
     map->parstacles = list_create();
+    map->particles = list_create();
+    map->parjicles = list_create();
     map->root = root;
     map->spawn_point = vec2_create(MAP_MAX_WIDTH / 2 + 0.5, MAP_MAX_LENGTH / 2 + 0.5);
     map->active = true;
@@ -2025,8 +2029,6 @@ Map* map_create(i32 id)
         return NULL;
     }
 
-    particle_clear();
-    parjicle_clear();
     game_render_update_obstacles();
     game_render_update_parstacles();
     game_render_update_tiles();
@@ -2095,6 +2097,28 @@ static void destroy_parstacles(Map* map)
     list_destroy(map->parstacles);
 }
 
+static void destroy_particles(Map* map)
+{
+    Particle* particle;
+    i32 i;
+    for (i = 0; i < map->particles->length; i++) {
+        particle = list_get(map->particles, i);
+        particle_destroy(particle);
+    }
+    list_destroy(map->particles);
+}
+
+static void destroy_parjicles(Map* map)
+{
+    Parjicle* parjicle;
+    i32 i;
+    for (i = 0; i < map->parjicles->length; i++) {
+        parjicle = list_get(map->parjicles, i);
+        parjicle_destroy(parjicle);
+    }
+    list_destroy(map->parjicles);
+}
+
 void map_destroy(Map* map)
 {
     i32 i;
@@ -2104,6 +2128,8 @@ void map_destroy(Map* map)
     destroy_projectiles(map);
     destroy_obstacles(map);
     destroy_parstacles(map);
+    destroy_particles(map);
+    destroy_parjicles(map);
     for (i = 0; i < map->tiles->length; i++)
         tile_destroy(list_get(map->tiles, i));
     list_destroy(map->tiles);
@@ -2229,20 +2255,20 @@ static void map_update_objects(Map* map)
             i++;
     }
     i = 0;
-    while (i < game_context.particles->length) {
-        Particle* particle = list_get(game_context.particles, i);
+    while (i < map->particles->length) {
+        Particle* particle = list_get(map->particles, i);
         particle_update(particle, game_context.dt);
         if (particle->lifetime <= 0)
-            particle_destroy(list_remove(game_context.particles, i));
+            particle_destroy(list_remove(map->particles, i));
         else
             i++;
     }
     i = 0;
-    while (i < game_context.parjicles->length) {
-        Parjicle* parjicle = list_get(game_context.parjicles, i);
+    while (i < map->parjicles->length) {
+        Parjicle* parjicle = list_get(map->parjicles, i);
         parjicle_update(parjicle, game_context.dt);
         if (parjicle->lifetime <= 0)
-            parjicle_destroy(list_remove(game_context.parjicles, i));
+            parjicle_destroy(list_remove(map->parjicles, i));
         else
             i++;
     }
@@ -2327,4 +2353,14 @@ List* map_list_obstacles(Map* map)
 List* map_list_parstacles(Map* map)
 {
     return map->parstacles;
+}
+
+List* map_list_particles(Map* map)
+{
+    return map->particles;
+}
+
+List* map_list_parjicles(Map* map)
+{
+    return map->parjicles;
 }

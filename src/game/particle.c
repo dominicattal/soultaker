@@ -2,19 +2,6 @@
 
 extern GameContext game_context;
 
-void particle_init(void)
-{
-    game_context.particles = list_create();
-}
-
-void particle_clear(void)
-{
-    if (game_context.particles == NULL)
-        return;
-    while (game_context.particles->length > 0)
-        particle_destroy(list_remove(game_context.particles, 0));
-}
-
 Particle* particle_create(vec3 position)
 {
     Particle* particle = st_malloc(sizeof(Particle));
@@ -24,7 +11,6 @@ Particle* particle_create(vec3 position)
     particle->color = vec3_create(1.0f, 1.0f, 1.0f);
     particle->lifetime = 10.0f;
     particle->speed = 1.0f;
-    list_append(game_context.particles, particle);
     return particle;
 }
 
@@ -37,13 +23,4 @@ void particle_update(Particle* particle, f32 dt)
 void particle_destroy(Particle* particle)
 {
     st_free(particle);
-}
-
-void particle_cleanup(void)
-{
-    if (game_context.particles != NULL) {
-        for (i32 i = 0; i < game_context.particles->length; i++)
-            particle_destroy(list_get(game_context.particles, i));
-        list_destroy(game_context.particles);
-    }
 }
