@@ -28,7 +28,9 @@ typedef struct MapNode MapNode;
 typedef struct MapInfo MapInfo;
 typedef struct LocalMapGenerationSettings LocalMapGenerationSettings;
 
-typedef void (*TriggerFunc)(GameApi*, Entity*, void*);
+typedef void (*TriggerEnterFunc)(GameApi*, Entity*, void*);
+typedef void (*TriggerStayFunc)(GameApi*, Entity*, void*);
+typedef void (*TriggerLeaveFunc)(GameApi*, Entity*, void*);
 typedef void (*TriggerDestroyFunc)(GameApi*, void*);
 
 //**************************************************************************
@@ -132,7 +134,9 @@ void map_fog_explore(Map* map, vec2 position);
 // clears all the fog
 void map_fog_clear(Map* map);
 
-void map_handle_trigger(Trigger* trigger, Entity* entity);
+void map_handle_trigger_enter(Trigger* trigger, Entity* entity);
+void map_handle_trigger_stay(Trigger* trigger, Entity* entity);
+void map_handle_trigger_leave(Trigger* trigger, Entity* entity);
 
 // gets the orientation of the current map node, where northwest is toward 0, 0 in uv map
 // returns vec2(0,0) if no map node currently bounded
@@ -140,14 +144,14 @@ vec2 map_orientation(void);
 
 // create object in global map coords
 Projectile*     map_create_projectile(vec2 position);
-Trigger*        map_create_trigger(vec2 position, f32 radius, TriggerFunc func, TriggerDestroyFunc destroy, void* args);
+Trigger*        map_create_trigger(vec2 position, f32 radius);
 
 // create objects in local room coords
 Entity*         room_create_entity(vec2 position, i32 id);
 Obstacle*       room_create_obstacle(vec2 position);
 Parstacle*      room_create_parstacle(vec2 position);
 Wall*           room_create_wall(vec2 position, f32 height, f32 width, f32 length, u32 minimap_color);
-Trigger*        room_create_trigger(vec2 position, f32 radius, TriggerFunc func, TriggerDestroyFunc destroy, void* args);
+Trigger*        room_create_trigger(vec2 position, f32 radius);
 Tile*           room_set_tilemap_tile(i32 x, i32 z, u32 minimap_color);
 Wall*           room_set_tilemap_wall(i32 x, i32 z, f32 height, u32 minimap_color);
 
@@ -158,8 +162,12 @@ Wall*           room_set_tilemap_wall(i32 x, i32 z, f32 height, u32 minimap_colo
 typedef struct Trigger {
     void* args;
     MapNode* map_node;
-    TriggerFunc func;
+    TriggerEnterFunc enter;
+    TriggerStayFunc stay;
+    TriggerLeaveFunc leave;
     TriggerDestroyFunc destroy;
+    Bitset* bitset;
+    List* entities;
     vec2 position;
     f32 radius;
     u32 flags;
@@ -173,13 +181,15 @@ typedef enum {
 } TriggerFlagEnum;
 
 // create trigger at position with hitbox radius
-// func -> function to trigger, where args are passed through
-// once trigger is destroyed, it will call it destroy function to 
-// clean up any allocations. if destroy is NULL, just frees data
-Trigger* trigger_create(vec2 position, f32 radius, TriggerFunc func, TriggerDestroyFunc destroy, void* args);
+// must set the enter, stay, leave, and destroy functions. they default to null
+Trigger* trigger_create(vec2 position, f32 radius);
+// if trigger->destroy is NULL, will call free on args
+// otherwise, will run destroy function (without touching args)
+void trigger_destroy(Trigger* trigger);
+// checks entity list to find ones that left
+void trigger_update(Trigger* trigger);
 void trigger_set_flag(Trigger* trigger, TriggerFlagEnum flag, bool val);
 bool trigger_get_flag(Trigger* trigger, TriggerFlagEnum flag);
-void trigger_destroy(Trigger* trigger);
 
 //**************************************************************************
 // Entity, Player definitions
@@ -568,12 +578,12 @@ typedef struct GameApi {
     void (*map_make_boss)(Entity*);
     void (*map_unmake_boss)(Entity*);
     Projectile* (*map_create_projectile)(vec2);
-    Trigger* (*map_create_trigger)(vec2, f32, TriggerFunc, TriggerDestroyFunc, void*);
+    Trigger* (*map_create_trigger)(vec2, f32);
     Entity* (*room_create_entity)(vec2, i32);
     Obstacle* (*room_create_obstacle)(vec2);
     Parstacle* (*room_create_parstacle)(vec2);
     Wall* (*room_create_wall)(vec2, f32, f32, f32, u32);
-    Trigger* (*room_create_trigger)(vec2, f32, TriggerFunc, TriggerDestroyFunc, void*);
+    Trigger* (*room_create_trigger)(vec2, f32);
     Tile* (*room_set_tilemap_tile)(i32, i32, u32);
     Wall* (*room_set_tilemap_wall)(i32, i32, f32, u32);
 
@@ -590,6 +600,9 @@ typedef struct GameApi {
     vec2 (*vec2_sub)(vec2, vec2);
     vec2 (*vec2_normalize)(vec2);
     f32 (*vec2_radians)(vec2);
+
+    // Events
+    void (*event_create_gui_create_notification)(char*);
 
 #ifdef DEBUG_BUILD
     void* (*_st_malloc)(size_t, const char*, int);

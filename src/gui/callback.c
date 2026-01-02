@@ -5,7 +5,8 @@ extern GUIContext gui_context;
 
 void gui_framebuffer_size_callback(i32 width, i32 height)
 {
-    gui_comp_set_size(gui_context.root, width, height);
+    gui_context.root->w = width;
+    gui_context.root->h = height;
 }
 
 static bool gui_cursor_pos_callback_helper(GUIComp* comp, f64 xpos, f64 ypos, i32 position_x, i32 position_y, i32 size_x, i32 size_y)
@@ -13,10 +14,15 @@ static bool gui_cursor_pos_callback_helper(GUIComp* comp, f64 xpos, f64 ypos, i3
     i32 x, y, w, h;
     u8 halign, valign;
     bool hovered, hoverable, child_hovered, in_bounds;
-    gui_comp_get_bbox(comp, &x, &y, &w, &h);
-    gui_comp_get_hovered(comp, &hovered);
-    gui_comp_get_hoverable(comp, &hoverable);
-    gui_comp_get_align(comp, &halign, &valign);
+    
+    x = comp->x;
+    y = comp->y;
+    w = comp->w;
+    h = comp->h;
+    halign = comp->halign;
+    valign = comp->valign;
+    hovered = gui_comp_get_flag(comp, GUI_COMP_FLAG_HOVERED);
+    hoverable = gui_comp_get_flag(comp, GUI_COMP_FLAG_HOVERABLE);
     
     align_comp_position_x(&position_x, halign, size_x, x, w);
     align_comp_position_y(&position_y, valign, size_y, y, h);
@@ -25,7 +31,7 @@ static bool gui_cursor_pos_callback_helper(GUIComp* comp, f64 xpos, f64 ypos, i3
              && ypos >= position_y && ypos <= position_y + h;
 
     child_hovered = false;
-    for (i32 i = 0; i < gui_comp_num_children(comp); i++)
+    for (i32 i = 0; i < comp->num_children; i++)
         if (gui_cursor_pos_callback_helper(comp->children[i], xpos, ypos, position_x, position_y, w, h))
             child_hovered = true;
 
@@ -49,7 +55,7 @@ bool gui_cursor_pos_callback(f64 xpos, f64 ypos)
 
 static bool gui_key_callback_helper(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods)
 {
-    for (i32 i = 0; i < gui_comp_num_children(comp); i++)
+    for (i32 i = 0; i < comp->num_children; i++)
         gui_key_callback_helper(comp->children[i], key, scancode, action, mods);
     gui_comp_key(comp, key, scancode, action, mods);
     return false;
@@ -78,9 +84,13 @@ static bool gui_mouse_button_callback_helper(GUIComp* comp, i32 xpos, i32 ypos, 
     i32 x, y, w, h;
     u8 halign, valign;
     bool clickable, child_clicked, in_bounds;
-    gui_comp_get_bbox(comp, &x, &y, &w, &h);
-    gui_comp_get_clickable(comp, &clickable);
-    gui_comp_get_align(comp, &halign, &valign);
+    x = comp->x;
+    y = comp->y;
+    w = comp->w;
+    h = comp->h;
+    halign = comp->halign;
+    valign = comp->valign;
+    clickable = gui_comp_get_flag(comp, GUI_COMP_FLAG_CLICKABLE);
     
     align_comp_position_x(&position_x, halign, size_x, x, w);
     align_comp_position_y(&position_y, valign, size_y, y, h);
@@ -89,7 +99,7 @@ static bool gui_mouse_button_callback_helper(GUIComp* comp, i32 xpos, i32 ypos, 
              && ypos >= position_y && ypos <= position_y + h;
 
     child_clicked = false;
-    for (i32 i = 0; i < gui_comp_num_children(comp); i++)
+    for (i32 i = 0; i < comp->num_children; i++)
         if (gui_mouse_button_callback_helper(comp->children[i], xpos, ypos, button, action, mods, position_x, position_y, w, h))
             child_clicked = true;
 

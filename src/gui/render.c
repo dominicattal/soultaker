@@ -65,7 +65,6 @@ i32 gui_comp_compute_text_height(GUIComp* comp)
     i32 ascent, descent;    // highest and lowest glyph offsets
     i32 line_gap;           // gap between lines
     i32 adv, lsb, kern;     // advance, left side bearing, kerning
-    u8  ha, va;             // horizontal and vertical alignment
     i32 font_size;          // font_size = ascent - descent
     FontEnum font;          // font
     i32 num_spaces;         // count whitespace for horizontal alignment
@@ -73,19 +72,18 @@ i32 gui_comp_compute_text_height(GUIComp* comp)
     char* text;             // text, equal to comp->text
     i32 location;           // active texture slot of bitmap
     i32 num_lines;
-    i32 cw, ch;
+    i32 cw;
 
     register i32 test_ox;            // glyph origin
     register i32 prev_test_ox;       // edge case
     register i32 left, right, mid;   // pointers for word
     
-    gui_comp_get_text_align(comp, &ha, &va);
-    gui_comp_get_font(comp, &font);
-    gui_comp_get_font_size(comp, &font_size);
-    gui_comp_get_size(comp, &cw, &ch);
+    font = comp->font;
+    font_size = comp->font_size;
+    cw = comp->w;
 
     text = comp->text;
-    length = gui_comp_text_length(comp);
+    length = comp->text_length;
     
     font_info(font, font_size, &ascent, &descent, &line_gap, &location);
     
@@ -183,12 +181,13 @@ static void push_text_data(GUIComp* comp, i32 cx, i32 cy, i32 cw, i32 ch)
     register i32 prev_test_ox;       // edge case
     register i32 left, right, mid;   // pointers for word
     
-    gui_comp_get_text_align(comp, &ha, &va);
-    gui_comp_get_font(comp, &font);
-    gui_comp_get_font_size(comp, &font_size);
+    ha = comp->text_halign;
+    va = comp->text_valign;
+    font = comp->font;
+    font_size = comp->font_size;
 
     text = comp->text;
-    length = gui_comp_text_length(comp);
+    length = comp->text_length;
     
     justify = 0;
     if (ha == ALIGN_JUSTIFY) {
@@ -319,8 +318,12 @@ static void push_comp_data(GUIComp* comp, i32 x, i32 y, i32 w, i32 h)
     vec2 pivot, stretch;
     u8 r, g, b, a;
 
-    gui_comp_get_color(comp, &r, &g, &b, &a);
-    texture_info(gui_comp_tex(comp), &loc, &u, &v, &du, &dv, &pivot, &stretch);
+    r = comp->r;
+    g = comp->g;
+    b = comp->b;
+    a = comp->a;
+
+    texture_info(comp->tex, &loc, &u, &v, &du, &dv, &pivot, &stretch);
 
     quad.x = x; quad.y = y; quad.w = w; quad.h = h;
     quad.r = r; quad.g = g; quad.b = b; quad.a = a;
@@ -335,14 +338,18 @@ static void gui_update_vertex_data_helper(GUIComp* comp, i32 position_x, i32 pos
 {
     i32 x, y, w, h;
     u8 halign, valign;
-    gui_comp_get_bbox(comp, &x, &y, &w, &h);
-    gui_comp_get_align(comp, &halign, &valign);
+    x = comp->x;
+    y = comp->y;
+    w = comp->w;
+    h = comp->h;
+    halign = comp->halign;
+    valign = comp->valign;
     
     align_comp_position_x(&position_x, halign, size_x, x, w);
     align_comp_position_y(&position_y, valign, size_y, y, h);
 
     push_comp_data(comp, position_x, position_y, w, h);
-    for (i32 i = 0; i < gui_comp_num_children(comp); i++)
+    for (i32 i = 0; i < comp->num_children; i++)
         gui_update_vertex_data_helper(comp->children[i], position_x, position_y, w, h);
 }
 

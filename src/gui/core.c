@@ -7,7 +7,7 @@ GUIContext gui_context;
 static void gui_update_comps_helper(GUIComp* comp, f32 dt)
 {
     gui_comp_update(comp, dt);
-    for (i32 i = 0; i < gui_comp_num_children(comp); i++)
+    for (i32 i = 0; i < comp->num_children; i++)
         gui_update_comps_helper(comp->children[i], dt);
 }
 

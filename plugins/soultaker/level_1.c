@@ -94,7 +94,9 @@ st_export void level_1_enemy_1_create(GameApi* api, LevelData* data)
     pos = api->vec2_create(8, 4);
     api->room_create_parstacle(pos);
     args->test = id;
-    trigger = api->room_create_trigger(pos, 0.5f, test, NULL, args);
+    trigger = api->room_create_trigger(pos, 0.5f);
+    trigger->enter = test;
+    trigger->args = args;
     api->trigger_set_flag(trigger, TRIGGER_FLAG_ONCE, true);
 }
 
@@ -129,11 +131,29 @@ static void start_boss(GameApi* api, Entity* entity, void* args)
     api->room_set_tilemap_wall(8, 1, 1.0f, 0xFF0000);
 }
 
+static void enter_test(GameApi* api, Entity* entity, void* args)
+{
+    api->event_create_gui_create_notification("enter");
+}
+
+static void stay_test(GameApi* api, Entity* entity, void* args)
+{
+    api->log_write(DEBUG, "staying");
+}
+
+static void leave_test(GameApi* api, Entity* entity, void* args)
+{
+    api->event_create_gui_create_notification("leave");
+}
+
 st_export void level_1_boss_create(GameApi* api, LevelData* data)
 {
     Trigger* trigger;
     vec2 pos = api->vec2_create(7.5, 7.5);
-    trigger = api->room_create_trigger(pos, 0.5f, start_boss, NULL, NULL);
-    api->trigger_set_flag(trigger, TRIGGER_FLAG_ONCE, true);
+    trigger = api->room_create_trigger(pos, 0.5f);
+    trigger->enter = enter_test;
+    trigger->stay = stay_test;
+    trigger->leave = leave_test;
+    //api->trigger_set_flag(trigger, TRIGGER_FLAG_ONCE, true);
 }
 

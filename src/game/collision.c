@@ -104,6 +104,7 @@ void collide_entity_trigger(Entity* entity, Trigger* trigger)
 {
     f32 ex, ez, er, tx, tz, tr;
     vec2 offset;
+    i32 i;
     ex = entity->position.x;
     ez = entity->position.y;
     er = entity->hitbox_radius;
@@ -113,8 +114,17 @@ void collide_entity_trigger(Entity* entity, Trigger* trigger)
     offset = vec2_create(ex - tx, ez - tz);
     if (vec2_mag(offset) >= er + tr)
         return;
-    map_handle_trigger(trigger, entity);
     trigger_set_flag(trigger, TRIGGER_FLAG_USED, true);
+    for (i = 0; i < trigger->entities->length; i++) {
+        if (entity == list_get(trigger->entities, i)) {
+            bitset_set(trigger->bitset, i);
+            map_handle_trigger_stay(trigger, entity);
+            goto found;
+        }
+    }
+    map_handle_trigger_enter(trigger, entity);
+found:
+    list_append(trigger->entities, entity);
 }
 
 void collide_projectile_wall(Projectile* projectile, Wall* wall)

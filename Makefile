@@ -3,7 +3,7 @@ CFLAGS = -MMD -Wall -Wextra -Werror -Wfatal-errors -Wno-unused-parameter -finlin
 		 -fopenmp -pthread -Wno-unused-function -Iinclude
 CFLAGS_DEV = -g3 -D DEBUG_BUILD
 CFLAGS_RELEASE = -O2 -D RELEASE_BUILD
-LINKER_FLAGS = -Llib -lm -lglfw3dll -lOpenAL32 -lsndfile
+LINKER_FLAGS = -Llib -lm -lglfw3dll
 NAME = st
 DLL_NAME = soultaker
 

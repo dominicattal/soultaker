@@ -1689,11 +1689,24 @@ void map_fog_clear(Map* map)
     game_render_update_parstacles();
 }
 
-void map_handle_trigger(Trigger* trigger, Entity* entity)
+void map_handle_trigger_enter(Trigger* trigger, Entity* entity)
 {
     map_context.current_map_node = trigger->map_node;
-    trigger->func(&game_api, entity, trigger->args);
+    trigger->enter(&game_api, entity, trigger->args);
     map_context.current_map_node = NULL;
+}
+
+void map_handle_trigger_stay(Trigger* trigger, Entity* entity)
+{
+    map_context.current_map_node = trigger->map_node;
+    trigger->stay(&game_api, entity, trigger->args);
+    map_context.current_map_node = NULL;
+}
+
+void map_handle_trigger_leave(Trigger* trigger, Entity* entity)
+{
+    // in loop so dont have to set map node
+    trigger->leave(&game_api, entity, trigger->args);
 }
 
 vec2 map_orientation(void)
@@ -1755,13 +1768,13 @@ Projectile* map_create_projectile(vec2 position)
     return proj;
 }
 
-Trigger* map_create_trigger(vec2 position, f32 radius, TriggerFunc func, TriggerDestroyFunc destroy, void* args)
+Trigger* map_create_trigger(vec2 position, f32 radius)
 {
     Trigger* trigger;
     Map* map = map_context.current_map;
     if (!map->active)
         return NULL;
-    trigger = trigger_create(position, radius, func, destroy, args);
+    trigger = trigger_create(position, radius);
     list_append(map->triggers, trigger);
     return trigger;
 }
@@ -1789,7 +1802,7 @@ Entity* room_create_entity(vec2 position, i32 id)
     return entity;
 }
 
-Trigger* room_create_trigger(vec2 position, f32 radius, TriggerFunc func, TriggerDestroyFunc destroy, void* args)
+Trigger* room_create_trigger(vec2 position, f32 radius)
 {
     Trigger* trigger;
     Map* map = map_context.current_map;
@@ -1806,7 +1819,7 @@ Trigger* room_create_trigger(vec2 position, f32 radius, TriggerFunc func, Trigge
     vec2 new_position;
     new_position.x = node->origin_x + dx;
     new_position.z = node->origin_z + dz;
-    trigger = trigger_create(new_position, radius, func, destroy, args);
+    trigger = trigger_create(new_position, radius);
     trigger->map_node = node;
     list_append(map->triggers, trigger);
     return trigger;
@@ -2286,6 +2299,22 @@ void map_collide_objects(Map* map)
 static void map_update_objects(Map* map)
 {
     i32 i, once, used;
+    // trigger updates MUST be before entity updates since trigger updates
+    // will call functions on entities
+    i = 0;
+    while (i < map->triggers->length) {
+        Trigger* trigger = list_get(map->triggers, i);
+        map_context.current_map_node = trigger->map_node;
+        once = trigger_get_flag(trigger, TRIGGER_FLAG_ONCE);
+        used = trigger_get_flag(trigger, TRIGGER_FLAG_USED);
+        if (once && used)
+            trigger_destroy(list_remove(map->triggers, i));
+        else {
+            trigger_update(trigger);
+            i++;
+        }
+    }
+    map_context.current_map_node = NULL;
     i = 0;
     while (i < map->entities->length) {
         Entity* entity = list_get(map->entities, i);
@@ -2299,16 +2328,6 @@ static void map_update_objects(Map* map)
             i++;
     }
     map_context.current_map_node = NULL;
-    i = 0;
-    while (i < map->triggers->length) {
-        Trigger* trigger = list_get(map->triggers, i);
-        once = trigger_get_flag(trigger, TRIGGER_FLAG_ONCE);
-        used = trigger_get_flag(trigger, TRIGGER_FLAG_USED);
-        if (once && used)
-            trigger_destroy(list_remove(map->triggers, i));
-        else
-            i++;
-    }
     i = 0;
     while (i < map->projectiles->length) {
         Projectile* projectile = list_get(map->projectiles, i);
