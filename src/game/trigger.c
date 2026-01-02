@@ -11,7 +11,7 @@ Trigger* trigger_create(vec2 position, f32 radius)
     trigger->stay = NULL;
     trigger->leave = NULL;
     trigger->destroy = NULL;
-    trigger->args = NULL;
+    trigger->data = NULL;
     trigger->flags = 0;
     return trigger;
 }
@@ -47,9 +47,9 @@ bool trigger_get_flag(Trigger* trigger, TriggerFlagEnum flag)
 void trigger_destroy(Trigger* trigger)
 {
     if (trigger->destroy == NULL)
-        st_free(trigger->args);
+        st_free(trigger->data);
     else
-        trigger->destroy(&game_api, trigger->args);
+        trigger->destroy(&game_api, trigger);
     bitset_destroy(trigger->bitset);
     list_destroy(trigger->entities);
     st_free(trigger);

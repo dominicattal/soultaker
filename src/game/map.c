@@ -1692,21 +1692,21 @@ void map_fog_clear(Map* map)
 void map_handle_trigger_enter(Trigger* trigger, Entity* entity)
 {
     map_context.current_map_node = trigger->map_node;
-    trigger->enter(&game_api, entity, trigger->args);
+    trigger->enter(&game_api, trigger, entity);
     map_context.current_map_node = NULL;
 }
 
 void map_handle_trigger_stay(Trigger* trigger, Entity* entity)
 {
     map_context.current_map_node = trigger->map_node;
-    trigger->stay(&game_api, entity, trigger->args);
+    trigger->stay(&game_api, trigger, entity);
     map_context.current_map_node = NULL;
 }
 
 void map_handle_trigger_leave(Trigger* trigger, Entity* entity)
 {
     // in loop so dont have to set map node
-    trigger->leave(&game_api, entity, trigger->args);
+    trigger->leave(&game_api, trigger, entity);
 }
 
 vec2 map_orientation(void)
@@ -2298,16 +2298,17 @@ void map_collide_objects(Map* map)
 
 static void map_update_objects(Map* map)
 {
-    i32 i, once, used;
+    i32 i, once, used, delete;
     // trigger updates MUST be before entity updates since trigger updates
     // will call functions on entities
     i = 0;
     while (i < map->triggers->length) {
         Trigger* trigger = list_get(map->triggers, i);
         map_context.current_map_node = trigger->map_node;
+        delete = trigger_get_flag(trigger, TRIGGER_FLAG_DELETE);
         once = trigger_get_flag(trigger, TRIGGER_FLAG_ONCE);
         used = trigger_get_flag(trigger, TRIGGER_FLAG_USED);
-        if (once && used)
+        if ((once && used) || delete)
             trigger_destroy(list_remove(map->triggers, i));
         else {
             trigger_update(trigger);
