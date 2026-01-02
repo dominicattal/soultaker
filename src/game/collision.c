@@ -115,15 +115,14 @@ void collide_entity_trigger(Entity* entity, Trigger* trigger)
     if (vec2_mag(offset) >= er + tr)
         return;
     trigger_set_flag(trigger, TRIGGER_FLAG_USED, true);
-    for (i = 0; i < trigger->entities->length; i++) {
+    for (i = 0; i < trigger->bitset->length; i++) {
         if (entity == list_get(trigger->entities, i)) {
             bitset_set(trigger->bitset, i);
             map_handle_trigger_stay(trigger, entity);
-            goto found;
+            return;
         }
     }
     map_handle_trigger_enter(trigger, entity);
-found:
     list_append(trigger->entities, entity);
 }
 
