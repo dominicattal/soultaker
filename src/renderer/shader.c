@@ -14,13 +14,14 @@ static const char* read_file(const char *path)
 {
     FILE* ptr;
     char* content;
+    i32 len;
     ptr = fopen(path, "r");
     fseek(ptr, 0, SEEK_END);
-    i32 len = ftell(ptr);
+    len = ftell(ptr);
     log_assert(len != 0, "File %s is empty", path);
     fseek(ptr, 0, SEEK_SET);
     content = st_calloc(len+1, sizeof(char));
-    fread(content, 1, len, ptr);
+    len = fread(content, 1, len, ptr);
     fclose(ptr);
     content[len] = '\0';
     return content;

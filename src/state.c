@@ -29,7 +29,6 @@ void state_init(void)
     window_init();
     renderer_init();
     gui_init();
-    audio_init();
     game_init();
 }
 
@@ -53,7 +52,6 @@ void state_cleanup(void)
     log_unlock();
     game_cleanup();
     gui_cleanup();
-    audio_cleanup();
     renderer_cleanup();
     window_cleanup();
 #ifdef DEBUG_BUILD

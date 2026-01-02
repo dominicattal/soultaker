@@ -9,6 +9,7 @@
 #include "util/malloc.h"
 #include "util/thread.h"
 #include "util/quadmask.h"
+#include "util/bitset.h"
 #include <pthread.h>
 #include <semaphore.h>
 #include <stdlib.h>

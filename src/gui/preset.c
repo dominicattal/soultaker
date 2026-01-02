@@ -38,7 +38,7 @@ static void update_player_health(GUIComp* comp, f32 dt)
     f32 health = player_health();
     f32 max_health = player_max_health();
     i32 width = (i32)round(STAT_POINT_WIDTH * health / max_health);
-    gui_comp_set_w(current_health, width);
+    current_health->w = width;
 }
 
 static void update_player_mana(GUIComp* comp, f32 dt)
@@ -47,7 +47,7 @@ static void update_player_mana(GUIComp* comp, f32 dt)
     f32 mana = player_mana();
     f32 max_mana = player_max_mana();
     i32 width = (i32)round(STAT_POINT_WIDTH * mana / max_mana);
-    gui_comp_set_w(current_mana, width);
+    current_mana->w = width;
 }
 
 static void update_player_souls(GUIComp* comp, f32 dt)
@@ -56,7 +56,7 @@ static void update_player_souls(GUIComp* comp, f32 dt)
     f32 souls = player_souls();
     f32 max_souls = player_max_souls();
     i32 width = (i32)round(STAT_POINT_WIDTH * souls / max_souls);
-    gui_comp_set_w(current_souls, width);
+    current_souls->w = width;
 }
 
 typedef struct {
@@ -81,8 +81,8 @@ static GUIComp* create_player_health(void)
     GUIComp* hp_text = gui_comp_create(0, 0, STAT_POINT_WIDTH, 20);
     gui_comp_set_text_align(hp_text, ALIGN_CENTER, ALIGN_CENTER);
     gui_comp_set_color(hp_text, 0, 0, 0, 0);
-    gui_comp_set_font_size(hp_text, 16);
-    gui_comp_set_font(hp_text, FONT_MONOSPACE);
+    hp_text->font_size = 16;
+    hp_text->font = FONT_MONOSPACE;
     gui_comp_copy_text(hp_text, 2, "HP");
 
     gui_comp_attach(player_health, current_health);
@@ -104,8 +104,8 @@ static GUIComp* create_player_mana(void)
     gui_comp_set_text_align(mp_text, ALIGN_CENTER, ALIGN_CENTER);
     gui_comp_set_color(mp_text, 0, 0, 0, 0);
     gui_comp_copy_text(mp_text, 2, "MP");
-    gui_comp_set_font_size(mp_text, 16);
-    gui_comp_set_font(mp_text, FONT_MONOSPACE);
+    mp_text->font_size = 16;
+    mp_text->font = FONT_MONOSPACE;
 
     gui_comp_attach(player_mana, current_mana);
     gui_comp_attach(player_mana, mp_text);
@@ -126,8 +126,8 @@ static GUIComp* create_player_souls(void)
     gui_comp_set_text_align(sp_text, ALIGN_CENTER, ALIGN_CENTER);
     gui_comp_set_color(sp_text, 0, 0, 0, 0);
     gui_comp_copy_text(sp_text, 2, "SP");
-    gui_comp_set_font_size(sp_text, 16);
-    gui_comp_set_font(sp_text, FONT_MONOSPACE);
+    sp_text->font = FONT_MONOSPACE;
+    sp_text->font_size = 16;
 
     gui_comp_attach(player_souls, current_souls);
     gui_comp_attach(player_souls, sp_text);
@@ -220,7 +220,7 @@ void gui_update_boss_healthbar(void* boss_ptr, f32 health, f32 max_health)
     gui_comp_set_text(comp_text, strlen(text), text);
 
     f32 health_ratio = health / max_health;
-    gui_comp_set_w(comp_health, round(health_ratio * STAT_POINT_WIDTH));
+    comp_health->w = round(health_ratio * STAT_POINT_WIDTH);
 }
 
 void gui_destroy_boss_healthbar(void* boss_ptr)
@@ -274,7 +274,7 @@ void gui_update_weapon_info(i32 weapon_id)
         return;
 
     i32 tex_id = weapon_get_tex_id(weapon_id);
-    gui_comp_set_tex(comp, tex_id);
+    comp->tex = tex_id;
 }
 
 void gui_create_notification(char* notif)
@@ -284,7 +284,7 @@ void gui_create_notification(char* notif)
         log_write(WARNING, "notification comp is null");
         return;
     }
-    i32 num_notifs = gui_comp_num_children(notif_comp);
+    i32 num_notifs = notif_comp->num_children;
     GUIComp* message = gui_comp_create(0, 40 * num_notifs, 400, 12);
     f32* data = st_malloc(sizeof(f32));
     *data = 1.0f;
@@ -292,7 +292,8 @@ void gui_create_notification(char* notif)
     gui_comp_set_color(message, 255, 255, 255, 125);
     gui_comp_copy_text(message, strlen(notif), notif);
     i32 height = gui_comp_compute_text_height(message);
-    gui_comp_set_h(message, height);
+    log_write(DEBUG, "%d", height);
+    message->h = height;
     gui_comp_attach(notif_comp, message);
 }
 
@@ -303,13 +304,13 @@ static void notification_update(GUIComp* comp, f32 dt)
     i32 i = 0;
     i32 pfx = 0;
     //log_write(DEBUG, "%d", gui_comp_num_children(comp));
-    while (i < gui_comp_num_children(comp)) {
+    while (i < comp->num_children) {
         child = comp->children[i];
         timer = child->data;
         *timer -= dt;
         if (*timer >= 0) {
-            gui_comp_set_y(child, pfx);
-            pfx += gui_comp_height(child) + 10;
+            child->y = pfx;
+            pfx += child->h + 10;
             i++;
             continue;
         }
@@ -324,6 +325,13 @@ static GUIComp* create_notification_manager(void)
     gui_set_event_comp(GUI_COMP_NOTIFICATIONS, notifications);
     gui_comp_set_color(notifications, 0, 0, 0, 0);
     return notifications;
+}
+
+static GUIComp* create_dynamic_button(void)
+{
+    GUIComp* comp = gui_comp_create(20, 550, 100, 100);
+    gui_comp_set_color(comp, 255, 255, 255, 255);
+    return comp;
 }
 
 static void load_preset_game(GUIComp* root)
@@ -350,11 +358,11 @@ static void load_preset_game(GUIComp* root)
 
     GUIComp* textbox = gui_comp_create(0, 50, 400, 50);
     gui_comp_set_color(textbox, 255, 255, 255, 100);
-    gui_comp_set_valign(textbox, ALIGN_BOTTOM);
-    gui_comp_set_font_size(textbox, 16);
-    gui_comp_set_font(textbox, FONT_MONOSPACE);
+    textbox->valign = ALIGN_BOTTOM;
+    textbox->font_size = 16;
+    textbox->font = FONT_MONOSPACE;
     textbox->key = keyfunc;
-    gui_comp_set_clickable(textbox, true);
+    gui_comp_set_flag(textbox, GUI_COMP_FLAG_CLICKABLE, true);
     gui_comp_attach(root, textbox);
 
     GUIComp* weapon_info = gui_comp_create(20, 80, 52, 52);
@@ -373,13 +381,16 @@ static void load_preset_game(GUIComp* root)
     gui_comp_attach(root, comp_fps);
 
     GUIComp* minimap = gui_comp_create(0, 0, 252, 252);
-    gui_comp_set_tex(minimap, texture_get_enum_id(TEX_GAME_MINIMAP_SCENE));
+    minimap->tex = texture_get_enum_id(TEX_GAME_MINIMAP_SCENE);
     gui_comp_set_align(minimap, ALIGN_RIGHT, ALIGN_TOP);
     gui_comp_set_color(minimap, 255, 255, 255, 100);
     gui_comp_attach(root, minimap);
 
     GUIComp* notifications = create_notification_manager();
     gui_comp_attach(root, notifications);
+
+    GUIComp* dynamic_button = create_dynamic_button();
+    gui_comp_attach(root, dynamic_button);
 }
 
 // **************************************************
@@ -441,7 +452,7 @@ static void load_video_settings(GUIComp* root)
 
     GUIComp* right_arrow = gui_comp_create(20, 0, 25, 25);
     right_arrow->click = video_mode_right_arrow_click;
-    gui_comp_set_clickable(right_arrow, true);
+    gui_comp_set_flag(right_arrow, GUI_COMP_FLAG_CLICKABLE, true);
     gui_comp_set_align(right_arrow, ALIGN_RIGHT, ALIGN_CENTER);
     gui_comp_set_color(right_arrow, 0, 0, 255, 255);
     gui_comp_attach(video_mode, right_arrow);
@@ -449,7 +460,7 @@ static void load_video_settings(GUIComp* root)
 
     GUIComp* left_arrow = gui_comp_create(20, 0, 25, 25);
     left_arrow->click = video_mode_left_arrow_click;
-    gui_comp_set_clickable(left_arrow, true);
+    gui_comp_set_flag(left_arrow, GUI_COMP_FLAG_CLICKABLE, true);
     gui_comp_set_align(left_arrow, ALIGN_LEFT, ALIGN_CENTER);
     gui_comp_set_color(left_arrow, 0, 0, 255, 255);
     gui_comp_attach(video_mode, left_arrow);
@@ -462,7 +473,7 @@ static void load_preset_options(GUIComp* root)
     GUIComp* menu = gui_comp_create(45, 50, 100, 30);
     menu->click = menu_onclick;
     const char* menu_text = "Main Menu";
-    gui_comp_set_clickable(menu, true);
+    gui_comp_set_flag(menu, GUI_COMP_FLAG_CLICKABLE, true);
     gui_comp_set_color(menu, 255, 255, 255, 255);
     gui_comp_set_text_align(menu, ALIGN_CENTER, ALIGN_CENTER);
     gui_comp_copy_text(menu, strlen(menu_text), menu_text);
@@ -497,7 +508,7 @@ static void load_preset_runs(GUIComp* root)
     GUIComp* new_run = gui_comp_create(45, 50, 100, 30);
     new_run->click = new_run_onclick;
     const char* new_run_text = "New Run";
-    gui_comp_set_clickable(new_run, true);
+    gui_comp_set_flag(new_run, GUI_COMP_FLAG_CLICKABLE, true);
     gui_comp_set_color(new_run, 255, 255, 255, 255);
     gui_comp_set_text_align(new_run, ALIGN_CENTER, ALIGN_CENTER);
     gui_comp_copy_text(new_run, strlen(new_run_text), new_run_text);
@@ -528,7 +539,7 @@ static void load_preset_main_menu(GUIComp* root)
     GUIComp* play = gui_comp_create(45, 50, 100, 30);
     play->click = play_onclick;
     const char* play_text = "Play";
-    gui_comp_set_clickable(play, true);
+    gui_comp_set_flag(play, GUI_COMP_FLAG_CLICKABLE, true);
     gui_comp_set_color(play, 255, 255, 255, 255);
     gui_comp_set_text_align(play, ALIGN_CENTER, ALIGN_CENTER);
     gui_comp_copy_text(play, strlen(play_text), play_text);
@@ -537,7 +548,7 @@ static void load_preset_main_menu(GUIComp* root)
     GUIComp* options = gui_comp_create(45, 110, 100, 30);
     options->click = options_onclick;
     const char* options_text = "Options";
-    gui_comp_set_clickable(options, true);
+    gui_comp_set_flag(options, GUI_COMP_FLAG_CLICKABLE, true);
     gui_comp_set_color(options, 255, 255, 255, 255);
     gui_comp_set_text_align(options, ALIGN_CENTER, ALIGN_CENTER);
     gui_comp_copy_text(options, strlen(options_text), options_text);
@@ -546,7 +557,7 @@ static void load_preset_main_menu(GUIComp* root)
     GUIComp* exit = gui_comp_create(45, 170, 100, 30);
     exit->click = exit_onclick;
     const char* exit_text = "Exit";
-    gui_comp_set_clickable(exit, true);
+    gui_comp_set_flag(exit, GUI_COMP_FLAG_CLICKABLE, true);
     gui_comp_set_color(exit, 255, 255, 255, 255);
     gui_comp_set_text_align(exit, ALIGN_CENTER, ALIGN_CENTER);
     gui_comp_copy_text(exit, strlen(exit_text), exit_text);

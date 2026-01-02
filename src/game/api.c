@@ -1,4 +1,5 @@
 #include "internal.h"
+#include "../event.h"
 
 #define REGISTER(name) \
     .name = name
@@ -60,6 +61,9 @@ GameApi game_api = {
     REGISTER(vec2_sub),
     REGISTER(vec2_normalize),
     REGISTER(_log_write),
+
+    // event
+    REGISTER(event_create_gui_create_notification),
 
 #ifdef DEBUG_BUILD
     REGISTER(_st_malloc),
