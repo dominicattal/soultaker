@@ -290,7 +290,13 @@ void gui_create_notification(char* notif)
     }
     NotificationManagerData* manager_data = notif_comp->data;
     i32 idx = manager_data->notifications->length;
-    list_append(manager_data->notifications, notif);
+
+    GUIComp* message = gui_comp_create(0, 40 * idx, 400, 30);
+    gui_comp_set_color(message, 255, 0, 0, 255);
+    gui_comp_copy_text(message, strlen(notif), notif);
+    gui_comp_attach(notif_comp, message);
+
+    list_append(manager_data->notifications, message);
 
     log_write(DEBUG, "%p %d", manager_data, idx);
 }
@@ -298,8 +304,6 @@ void gui_create_notification(char* notif)
 static void notification_manager_destroy(GUIComp* comp)
 {
     NotificationManagerData* data = comp->data;
-    while (!list_empty(data->notifications))
-        st_free(list_remove(data->notifications, 0));
     list_destroy(data->notifications);
 }
 

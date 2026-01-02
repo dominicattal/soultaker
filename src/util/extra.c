@@ -27,7 +27,6 @@ char* string_copy(const char* string)
     return copied;
 }
 
-// asprintf would do the same thing
 char* string_create(const char* format, int n, ...)
 {
     char* string = st_malloc((n+1) * sizeof(char));
