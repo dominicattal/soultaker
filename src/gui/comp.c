@@ -46,22 +46,23 @@ void gui_comp_detach(GUIComp* parent, GUIComp* child)
 {
     if (parent != child->parent)
         log_write(WARNING, "specified component does not match child's parent");
-    i32 num_children;
+    i32 num_children, i;
     gui_comp_get_num_children(parent, &num_children);
-    for (i32 i = 0; i < num_children; i++) {
-        if (parent->children[i] == child) {
-            parent->children[i] = parent->children[--num_children];
-            child->parent = NULL;
-            if (num_children == 0) {
-                st_free(parent->children);
-                parent->children = NULL;
-            } else {
-                parent->children = st_realloc(parent->children, num_children * sizeof(GUIComp*));
-            }
-            gui_comp_set_num_children(parent, num_children);
-            return;
-        }
+    for (i = 0; i < num_children; i++)
+        if (parent->children[i] == child)
+            break;
+    log_assert(i != num_children, "child not found in parent");
+    child->parent = NULL;
+    for (; i < num_children - 1; i++)
+        parent->children[i] = parent->children[i+1];
+    num_children--;
+    if (num_children == 0) {
+        st_free(parent->children);
+        parent->children = NULL;
+    } else {
+        parent->children = st_realloc(parent->children, num_children * sizeof(GUIComp*));
     }
+    gui_comp_set_num_children(parent, num_children);
 }
 
 void gui_comp_destroy(GUIComp* comp)
