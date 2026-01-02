@@ -218,8 +218,8 @@ void align_comp_position_y(i32* position_y, u8 valign, i32 size_y, i32 y, i32 h)
 // info1            | info2                | info3
 // 48 - x, y, w, h  | 2  - text_halign     | 21 - length
 // 16 - tex         | 2  - text_valign     | 21 - cursor_pos
-// info2            | 10 - font_size       | 8  - num_children   
-// 32 - rgba        | 4  - font            | 1  - update_children
+// info2            | 10 - font_size       | 8  - num_children  
+// 32 - rgba        | 4  - font            |
 //  1 - is_text     |                      |
 //  1 - hoverable   |                      |
 //  1 - hovered     |                      |
@@ -283,7 +283,6 @@ void align_comp_position_y(i32* position_y, u8 valign, i32 size_y, i32 y, i32 h)
 #define TP_BITS     21
 #define NC_SHIFT    42
 #define NC_BITS     8
-
 
 #define SMASK(BITS)         ((1<<BITS)-1)
 #define GMASK(BITS, SHIFT)  ~((u64)SMASK(BITS)<<SHIFT)
@@ -511,6 +510,10 @@ i32 gui_comp_num_children(GUIComp* comp) {
 }
 i32  gui_comp_tex(GUIComp* comp){
     return (comp->info1 >> TX_SHIFT) & SMASK(TX_BITS);
+}
+i32  gui_comp_height(GUIComp* comp)
+{
+    return (comp->info1 >> H_SHIFT) & SMASK(H_BITS);
 }
 bool gui_comp_is_text(GUIComp* comp) {
     return (comp->info2 >> IT_SHIFT) & SMASK(IT_BITS);

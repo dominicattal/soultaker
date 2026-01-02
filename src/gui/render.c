@@ -55,6 +55,107 @@ static void push_quad_data(Quad* quad)
     gui_context.data_swap.instance_count++;
 }
 
+
+i32 gui_comp_compute_text_height(GUIComp* comp)
+{
+    if (comp->text == NULL)
+        return 0;
+
+    i32 a1, b1, a2, b2;     // glyph bounding box
+    i32 ascent, descent;    // highest and lowest glyph offsets
+    i32 line_gap;           // gap between lines
+    i32 adv, lsb, kern;     // advance, left side bearing, kerning
+    u8  ha, va;             // horizontal and vertical alignment
+    i32 font_size;          // font_size = ascent - descent
+    FontEnum font;          // font
+    i32 num_spaces;         // count whitespace for horizontal alignment
+    i32 length;             // length of text, index in text
+    char* text;             // text, equal to comp->text
+    i32 location;           // active texture slot of bitmap
+    i32 num_lines;
+    i32 cw, ch;
+
+    register i32 test_ox;            // glyph origin
+    register i32 prev_test_ox;       // edge case
+    register i32 left, right, mid;   // pointers for word
+    
+    gui_comp_get_text_align(comp, &ha, &va);
+    gui_comp_get_font(comp, &font);
+    gui_comp_get_font_size(comp, &font_size);
+    gui_comp_get_size(comp, &cw, &ch);
+
+    text = comp->text;
+    length = gui_comp_text_length(comp);
+    
+    font_info(font, font_size, &ascent, &descent, &line_gap, &location);
+    
+    num_lines = 0;
+    left = right = 0;
+
+    while (right < length) {
+        
+        while (right < length && (text[right] == ' ' || text[right] == '\t' || text[right] == '\n'))
+            right++;
+
+        left = right;
+        prev_test_ox = test_ox = 0;
+        num_spaces = 0;
+        while (right < length && text[right] != '\n' && test_ox <= cw) {
+            font_char_hmetrics(font, font_size, text[right], &adv, &lsb);
+            font_char_kern(font, font_size, text[right], text[right+1], &kern);
+            prev_test_ox = test_ox;
+            test_ox += adv + kern;
+            num_spaces += text[right] == ' ';
+            right++;
+        }
+
+        mid = right;
+        if (test_ox > cw) {
+            while (mid > left && text[mid-1] != ' ') {
+                font_char_hmetrics(font, font_size, text[mid-1], &adv, &lsb);
+                font_char_kern(font, font_size, text[mid-1], text[mid], &kern);
+                test_ox -= adv + kern;
+                mid--;
+            }
+            while (mid > left && text[mid-1] == ' ') {
+                font_char_hmetrics(font, font_size, text[mid-1], &adv, &lsb);
+                font_char_kern(font, font_size, text[mid-1], text[mid], &kern);
+                test_ox -= adv + kern;
+                num_spaces -= text[mid-1] == ' ';
+                mid--;
+            }
+        }
+
+        if (mid == left) {
+            if (left == right) {
+                test_ox = cw;
+                right = left + 1;
+            } else {
+                test_ox = prev_test_ox;
+                right = right - 1;
+            }
+        }
+        else {
+            right = mid;
+        }
+
+        if (left == right)
+            right++;
+
+        if (text[right-1] != ' ') {
+            font_char_hmetrics(font, font_size, text[right-1], &adv, &lsb);
+            font_char_bbox(font, font_size, text[right-1], &a1, &b1, &a2, &b2);
+            test_ox -= adv - (a2 + a1);
+        }
+
+        num_lines++;
+    }
+
+    //log_write(DEBUG, "%d", (ascent - descent) * num_lines);
+    //gui_comp_set_text_height(comp, (ascent - descent) * num_lines + line_gap * (num_lines - 1));
+    return (ascent - descent) * num_lines + line_gap * (num_lines - 1);
+}
+
 static void push_text_data(GUIComp* comp, i32 cx, i32 cy, i32 cw, i32 ch)
 {
     if (comp->text == NULL)

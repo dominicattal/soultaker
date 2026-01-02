@@ -277,10 +277,6 @@ void gui_update_weapon_info(i32 weapon_id)
     gui_comp_set_tex(comp, tex_id);
 }
 
-typedef struct {
-    List* notifications;
-} NotificationManagerData;
-
 void gui_create_notification(char* notif)
 {
     GUIComp* notif_comp = gui_get_event_comp(GUI_COMP_NOTIFICATIONS);
@@ -288,34 +284,45 @@ void gui_create_notification(char* notif)
         log_write(WARNING, "notification comp is null");
         return;
     }
-    NotificationManagerData* manager_data = notif_comp->data;
-    i32 idx = manager_data->notifications->length;
-
-    GUIComp* message = gui_comp_create(0, 40 * idx, 400, 30);
-    gui_comp_set_color(message, 255, 0, 0, 255);
+    i32 num_notifs = gui_comp_num_children(notif_comp);
+    GUIComp* message = gui_comp_create(0, 40 * num_notifs, 400, 12);
+    f32* data = st_malloc(sizeof(f32));
+    *data = 1.0f;
+    message->data = data;
+    gui_comp_set_color(message, 255, 255, 255, 125);
     gui_comp_copy_text(message, strlen(notif), notif);
+    i32 height = gui_comp_compute_text_height(message);
+    gui_comp_set_h(message, height);
     gui_comp_attach(notif_comp, message);
-
-    list_append(manager_data->notifications, message);
-
-    log_write(DEBUG, "%p %d", manager_data, idx);
 }
 
-static void notification_manager_destroy(GUIComp* comp)
+static void notification_update(GUIComp* comp, f32 dt)
 {
-    NotificationManagerData* data = comp->data;
-    list_destroy(data->notifications);
+    GUIComp* child;
+    f32* timer;
+    i32 i = 0;
+    i32 pfx = 0;
+    //log_write(DEBUG, "%d", gui_comp_num_children(comp));
+    while (i < gui_comp_num_children(comp)) {
+        child = comp->children[i];
+        timer = child->data;
+        *timer -= dt;
+        if (*timer >= 0) {
+            gui_comp_set_y(child, pfx);
+            pfx += gui_comp_height(child) + 10;
+            i++;
+            continue;
+        }
+        gui_comp_detach_and_destroy(comp, child);
+    }
 }
 
-static GUIComp* create_notifications(void)
+static GUIComp* create_notification_manager(void)
 {
     GUIComp* notifications = gui_comp_create(20, 147, 400, 400);
-    NotificationManagerData* data = st_malloc(sizeof(NotificationManagerData));
-    data->notifications = list_create();
-    notifications->data = data;
-    notifications->destroy = notification_manager_destroy;
+    notifications->update = notification_update;
     gui_set_event_comp(GUI_COMP_NOTIFICATIONS, notifications);
-    gui_comp_set_color(notifications, 255, 255, 255, 100);
+    gui_comp_set_color(notifications, 0, 0, 0, 0);
     return notifications;
 }
 
@@ -371,7 +378,7 @@ static void load_preset_game(GUIComp* root)
     gui_comp_set_color(minimap, 255, 255, 255, 100);
     gui_comp_attach(root, minimap);
 
-    GUIComp* notifications = create_notifications();
+    GUIComp* notifications = create_notification_manager();
     gui_comp_attach(root, notifications);
 }
 
