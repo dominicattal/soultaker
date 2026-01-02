@@ -75,16 +75,17 @@ st_export void level_1_spawn_exit(GameApi* api, LevelData* data, i32 num_exits)
 
 typedef struct {
     i32 test;
-} TestArgs;
+} TestData;
 
-static void test(GameApi* api, Entity* entity, void* args)
+static void test(GameApi* api, Trigger* trigger, Entity* entity)
 {
-    api->log_write(DEBUG, "test %f %f %d", entity->position.x, entity->position.z, ((TestArgs*)args)->test);
+    TestData* data = trigger->data;
+    api->log_write(DEBUG, "test %f %f %d", entity->position.x, entity->position.z, data->test);
 }
 
 st_export void level_1_enemy_1_create(GameApi* api, LevelData* data)
 {
-    TestArgs* args = api->st_malloc(sizeof(TestArgs));
+    TestData* test_data = api->st_malloc(sizeof(TestData));
     Trigger* trigger;
     i32 id = api->entity_get_id("dummy");
     vec2 pos = api->vec2_create(10, 4);
@@ -93,10 +94,10 @@ st_export void level_1_enemy_1_create(GameApi* api, LevelData* data)
     api->room_create_obstacle(pos);
     pos = api->vec2_create(8, 4);
     api->room_create_parstacle(pos);
-    args->test = id;
+    test_data->test = id;
     trigger = api->room_create_trigger(pos, 0.5f);
     trigger->enter = test;
-    trigger->args = args;
+    trigger->data = test_data;
     api->trigger_set_flag(trigger, TRIGGER_FLAG_ONCE, true);
 }
 
@@ -121,7 +122,7 @@ st_export void dummy_boss_destroy(GameApi* api, Entity* entity)
     api->room_set_tilemap_tile(8, 1, 0x00FF00);
 }
 
-static void start_boss(GameApi* api, Entity* entity, void* args)
+static void start_boss(GameApi* api, Trigger* trigger, Entity* entity)
 {
     i32 id = api->entity_get_id("dummy_boss");
     vec2 pos = api->vec2_create(7.5, 3);
@@ -131,19 +132,19 @@ static void start_boss(GameApi* api, Entity* entity, void* args)
     api->room_set_tilemap_wall(8, 1, 1.0f, 0xFF0000);
 }
 
-static void enter_test(GameApi* api, Entity* entity, void* args)
+static void enter_test(GameApi* api, Trigger* trigger, Entity* entity)
 {
     api->event_create_gui_create_notification("enter");
 }
 
-static void stay_test(GameApi* api, Entity* entity, void* args)
+static void stay_test(GameApi* api, Trigger* trigger, Entity* entity)
 {
-    api->log_write(DEBUG, "staying");
 }
 
-static void leave_test(GameApi* api, Entity* entity, void* args)
+static void leave_test(GameApi* api, Trigger* trigger, Entity* entity)
 {
     api->event_create_gui_create_notification("leave");
+    api->trigger_set_flag(trigger, TRIGGER_FLAG_DELETE, true);
 }
 
 st_export void level_1_boss_create(GameApi* api, LevelData* data)

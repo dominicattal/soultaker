@@ -28,10 +28,10 @@ typedef struct MapNode MapNode;
 typedef struct MapInfo MapInfo;
 typedef struct LocalMapGenerationSettings LocalMapGenerationSettings;
 
-typedef void (*TriggerEnterFunc)(GameApi*, Entity*, void*);
-typedef void (*TriggerStayFunc)(GameApi*, Entity*, void*);
-typedef void (*TriggerLeaveFunc)(GameApi*, Entity*, void*);
-typedef void (*TriggerDestroyFunc)(GameApi*, void*);
+typedef void (*TriggerEnterFunc)(GameApi*, Trigger*, Entity*);
+typedef void (*TriggerStayFunc)(GameApi*, Trigger*, Entity*);
+typedef void (*TriggerLeaveFunc)(GameApi*, Trigger*, Entity*);
+typedef void (*TriggerDestroyFunc)(GameApi*, Trigger*);
 
 //**************************************************************************
 // Camera definitions
@@ -160,7 +160,7 @@ Wall*           room_set_tilemap_wall(i32 x, i32 z, f32 height, u32 minimap_colo
 //**************************************************************************
 
 typedef struct Trigger {
-    void* args;
+    void* data;
     MapNode* map_node;
     TriggerEnterFunc enter;
     TriggerStayFunc stay;
@@ -174,10 +174,11 @@ typedef struct Trigger {
 } Trigger;
 
 typedef enum {
+    TRIGGER_FLAG_DELETE,
     TRIGGER_FLAG_USED,
     TRIGGER_FLAG_ONCE,
     TRIGGER_FLAG_FRIENDLY,
-    TRIGGER_FLAG_PLAYER
+    TRIGGER_FLAG_PLAYER,
 } TriggerFlagEnum;
 
 // create trigger at position with hitbox radius
