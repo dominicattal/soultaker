@@ -117,6 +117,9 @@ void gui_comp_update(GUIComp* comp, f32 dt);
 void gui_comp_init(void);
 void gui_comp_cleanup(void);
 
+// calculating the tight bounding box height to render comp text
+i32 gui_comp_compute_text_height(GUIComp* comp);
+
 // create a new gui component with default values
 GUIComp* gui_comp_create(i16 x, i16 y, i16 w, i16 h);
 
@@ -218,6 +221,7 @@ void gui_comp_get_text_pos(GUIComp* comp, i32* tp);
 
 i32  gui_comp_num_children(GUIComp* comp);
 i32  gui_comp_tex(GUIComp* comp);
+i32  gui_comp_height(GUIComp* comp);
 bool gui_comp_is_hoverable(GUIComp* comp);
 bool gui_comp_is_hovered(GUIComp* comp);
 bool gui_comp_is_clickable(GUIComp* comp);
