@@ -1757,6 +1757,15 @@ static void clear_map(void)
     map_context.current_map_node = NULL;
 }
 
+void map_set_interactable(InteractableFuncPtr func_ptr, void* data)
+{
+    InteractableFuncArgs* args = st_malloc(sizeof(InteractableFuncArgs));
+    args->map = map_context.current_map;
+    args->map_node = map_context.current_map_node;
+    args->data = data;
+    event_create_gui_set_interactable(func_ptr, args);
+}
+
 Projectile* map_create_projectile(vec2 position)
 {
     Projectile* proj;
@@ -1779,10 +1788,8 @@ Trigger* map_create_trigger(vec2 position, f32 radius)
     return trigger;
 }
 
-Entity* room_create_entity(vec2 position, i32 id)
+Entity* room_create_entity_explicit(Map* map, MapNode* node, vec2 position, i32 id)
 {
-    Map* map = map_context.current_map;
-    MapNode* node = map_context.current_map_node;
     if (!map->active)
         return NULL;
     log_assert(node != NULL, "fuck");
@@ -1800,6 +1807,13 @@ Entity* room_create_entity(vec2 position, i32 id)
     entity->map_info.current_node = NULL;
     list_append(map->entities, entity);
     return entity;
+}
+
+Entity* room_create_entity(vec2 position, i32 id)
+{
+    Map* map = map_context.current_map;
+    MapNode* node = map_context.current_map_node;
+    return room_create_entity_explicit(map, node, position, id);
 }
 
 Trigger* room_create_trigger(vec2 position, f32 radius)
