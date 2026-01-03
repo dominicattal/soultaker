@@ -327,9 +327,16 @@ static GUIComp* create_notification_manager(void)
     return notifications;
 }
 
-static GUIComp* create_dynamic_button(void)
+static void interactable_click(GUIComp* comp, i32 button, i32 action, i32 mods)
+{
+    log_write(DEBUG, "AAAA");
+}
+
+static GUIComp* create_interactable(void)
 {
     GUIComp* comp = gui_comp_create(20, 550, 100, 100);
+    comp->click = interactable_click;
+    gui_comp_set_flag(comp, GUI_COMP_FLAG_CLICKABLE, true);
     gui_comp_set_color(comp, 255, 255, 255, 255);
     return comp;
 }
@@ -389,8 +396,8 @@ static void load_preset_game(GUIComp* root)
     GUIComp* notifications = create_notification_manager();
     gui_comp_attach(root, notifications);
 
-    GUIComp* dynamic_button = create_dynamic_button();
-    gui_comp_attach(root, dynamic_button);
+    GUIComp* interactable = create_interactable();
+    gui_comp_attach(root, interactable);
 }
 
 // **************************************************

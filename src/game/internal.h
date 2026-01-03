@@ -33,6 +33,8 @@ typedef void (*TriggerStayFunc)(GameApi*, Trigger*, Entity*);
 typedef void (*TriggerLeaveFunc)(GameApi*, Trigger*, Entity*);
 typedef void (*TriggerDestroyFunc)(GameApi*, Trigger*);
 
+typedef void (*InteractableFuncPtr)(GameApi*, void*);
+
 //**************************************************************************
 // Camera definitions
 //**************************************************************************
@@ -142,11 +144,22 @@ void map_handle_trigger_leave(Trigger* trigger, Entity* entity);
 // returns vec2(0,0) if no map node currently bounded
 vec2 map_orientation(void);
 
+typedef struct {
+    Map* map;
+    MapNode* map_node;
+    void* data;
+} InteractableFuncArgs;
+
+void map_set_interactable(InteractableFuncPtr func_ptr, void* data);
+
 // create object in global map coords
 Projectile*     map_create_projectile(vec2 position);
 Trigger*        map_create_trigger(vec2 position, f32 radius);
 
-// create objects in local room coords
+// create objects in local room coords without relying on/modifting global state
+Entity*         room_create_entity_explicit(Map* map, MapNode* node, vec2 position, i32 id);
+
+// create objects in local room coords for use in plugins
 Entity*         room_create_entity(vec2 position, i32 id);
 Obstacle*       room_create_obstacle(vec2 position);
 Parstacle*      room_create_parstacle(vec2 position);

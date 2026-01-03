@@ -36,6 +36,7 @@ void event_create_gui_create_boss_healthbar(void* boss_ptr, f32 health, f32 max_
 void event_create_gui_update_boss_healthbar(void* boss_ptr, f32 health, f32 max_health);
 void event_create_gui_destroy_boss_healthbar(void* boss_ptr);
 void event_create_gui_create_notification(char* notif);
+void event_create_gui_set_interactable(void* func_ptr, void* args);
 
 // Renderer events
 void event_create_renderer_write_texture_units(void);

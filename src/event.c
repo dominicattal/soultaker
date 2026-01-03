@@ -30,6 +30,7 @@ typedef enum {
     GUI_EVENT_DESTROY_BOSS_HEALTHBAR,
     GUI_EVENT_UPDATE_BOSS_HEALTHBAR,
     GUI_EVENT_CREATE_NOTIFICATION,
+    GUI_EVENT_SET_INTERACTABLE,
 
     // Renderer Events
     GUI_EVENT_WRITE_TEXTURE_UNITS
@@ -44,7 +45,8 @@ typedef union {
 typedef struct {
     EventEnum type;
     IntFloat32 arg1, arg2, arg3, arg4;
-    void* ptr;
+    void* ptr1;
+    void* ptr2;
 } Event;
 
 typedef struct {
@@ -101,12 +103,12 @@ static EventQueue* get_event_queue(const char* name)
 static void execute_event(Event event)
 {
     IntFloat32 arg1, arg2, arg3, arg4;
-    void* ptr;
+    void* ptr1;
     arg1 = event.arg1;
     arg2 = event.arg2;
     arg3 = event.arg3;
     arg4 = event.arg4;
-    ptr = event.ptr;
+    ptr1 = event.ptr1;
     switch (event.type) {
         case EVENT_NONE:
             break;
@@ -163,16 +165,18 @@ static void execute_event(Event event)
             gui_update_weapon_info(arg1._int);
             break;
         case GUI_EVENT_CREATE_BOSS_HEALTHBAR:
-            gui_create_boss_healthbar(ptr, arg1._flt, arg2._flt);
+            gui_create_boss_healthbar(ptr1, arg1._flt, arg2._flt);
             break;
         case GUI_EVENT_UPDATE_BOSS_HEALTHBAR:
-            gui_update_boss_healthbar(ptr, arg1._flt, arg2._flt);
+            gui_update_boss_healthbar(ptr1, arg1._flt, arg2._flt);
             break;
         case GUI_EVENT_DESTROY_BOSS_HEALTHBAR:
-            gui_destroy_boss_healthbar(ptr);
+            gui_destroy_boss_healthbar(ptr1);
             break;
         case GUI_EVENT_CREATE_NOTIFICATION:
-            gui_create_notification(ptr);
+            gui_create_notification(ptr1);
+            break;
+        case GUI_EVENT_SET_INTERACTABLE:
             break;
 
         // Renderer
@@ -371,35 +375,35 @@ void event_create_gui_update_weapon_info(i32 weapon_id)
     event_enqueue(queue, event);
 }
 
-void event_create_gui_create_boss_healthbar(void* boss_ptr, f32 health, f32 max_health)
+void event_create_gui_create_boss_healthbar(void* boss_ptr1, f32 health, f32 max_health)
 {
     Event event = (Event) {
         .type = GUI_EVENT_CREATE_BOSS_HEALTHBAR,
         .arg1._flt = health,
         .arg2._flt = max_health,
-        .ptr = boss_ptr
+        .ptr1 = boss_ptr1
     };
     EventQueue* queue = get_event_queue("GUI");
     event_enqueue(queue, event);
 }
 
-void event_create_gui_update_boss_healthbar(void* boss_ptr, f32 health, f32 max_health)
+void event_create_gui_update_boss_healthbar(void* boss_ptr1, f32 health, f32 max_health)
 {
     Event event = (Event) {
         .type = GUI_EVENT_UPDATE_BOSS_HEALTHBAR,
         .arg1._flt = health,
         .arg2._flt = max_health,
-        .ptr = boss_ptr
+        .ptr1 = boss_ptr1
     };
     EventQueue* queue = get_event_queue("GUI");
     event_enqueue(queue, event);
 }
 
-void event_create_gui_destroy_boss_healthbar(void* boss_ptr)
+void event_create_gui_destroy_boss_healthbar(void* boss_ptr1)
 {
     Event event = (Event) {
         .type = GUI_EVENT_DESTROY_BOSS_HEALTHBAR,
-        .ptr = boss_ptr
+        .ptr1 = boss_ptr1
     };
     EventQueue* queue = get_event_queue("GUI");
     event_enqueue(queue, event);
@@ -409,7 +413,18 @@ void event_create_gui_create_notification(char* notif)
 {
     Event event = (Event) {
         .type = GUI_EVENT_CREATE_NOTIFICATION,
-        .ptr = notif
+        .ptr1 = notif
+    };
+    EventQueue* queue = get_event_queue("GUI");
+    event_enqueue(queue, event);
+}
+
+void event_create_gui_set_interactable(void* func_ptr, void* args)
+{
+    Event event = (Event) {
+        .type = GUI_EVENT_SET_INTERACTABLE,
+        .ptr1 = func_ptr,
+        .ptr2 = args
     };
     EventQueue* queue = get_event_queue("GUI");
     event_enqueue(queue, event);
