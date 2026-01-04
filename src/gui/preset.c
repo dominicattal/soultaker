@@ -327,17 +327,48 @@ static GUIComp* create_notification_manager(void)
     return notifications;
 }
 
+typedef struct {
+    InteractableFuncPtr fptr;
+    Map* map;
+    MapNode* map_node;
+    void* data;
+} InteractableData;
+
+void gui_set_interactable(InteractableFuncPtr func_ptr, Map* map, MapNode* map_node, void* data)
+{
+    GUIComp* inter_comp = gui_get_event_comp(GUI_COMP_INTERACTABLE);
+    if (inter_comp == NULL) {
+        log_write(WARNING, "interactable comp is null");
+        return;
+    }
+    inter_comp->a = (func_ptr == NULL) ? 0 : 255;
+    InteractableData* comp_data = inter_comp->data;
+    comp_data->fptr = func_ptr;
+    comp_data->map = map;
+    comp_data->map_node = map_node;
+    comp_data->data = data;
+}
+
 static void interactable_click(GUIComp* comp, i32 button, i32 action, i32 mods)
 {
-    log_write(DEBUG, "AAAA");
+    InteractableData* data = comp->data;
+    if (data == NULL)
+        return;
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+        if (data->fptr != NULL) {
+            event_create_game_interactable_callback(data->fptr, data->map, data->map_node, data->data);
+        }
+    }
 }
 
 static GUIComp* create_interactable(void)
 {
     GUIComp* comp = gui_comp_create(20, 550, 100, 100);
+    comp->data = st_calloc(1, sizeof(InteractableData));
     comp->click = interactable_click;
+    gui_set_event_comp(GUI_COMP_INTERACTABLE, comp);
     gui_comp_set_flag(comp, GUI_COMP_FLAG_CLICKABLE, true);
-    gui_comp_set_color(comp, 255, 255, 255, 255);
+    gui_comp_set_color(comp, 255, 255, 255, 0);
     return comp;
 }
 
@@ -499,7 +530,7 @@ static void load_save(void)
     game_resume_loop();
     game_resume_render();
     i32 id = map_get_id("level_1");
-    event_create_game_map_create(id);
+    event_create_game_change_map(id);
 }
 
 static void new_run_onclick(GUIComp* comp, i32 button, i32 action, i32 mods)

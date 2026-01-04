@@ -122,7 +122,7 @@ st_export void dummy_boss_destroy(GameApi* api, Entity* entity)
     api->room_set_tilemap_tile(8, 1, 0x00FF00);
 }
 
-static void start_boss(GameApi* api, Trigger* trigger, Entity* entity)
+static void start_boss(GameApi* api, void* args)
 {
     i32 id = api->entity_get_id("dummy_boss");
     vec2 pos = api->vec2_create(7.5, 3);
@@ -130,11 +130,14 @@ static void start_boss(GameApi* api, Trigger* trigger, Entity* entity)
     api->room_set_tilemap_wall(6, 1, 1.0f, 0xFF0000);
     api->room_set_tilemap_wall(7, 1, 1.0f, 0xFF0000);
     api->room_set_tilemap_wall(8, 1, 1.0f, 0xFF0000);
+    Trigger* trigger = args;
+    api->trigger_set_flag(trigger, TRIGGER_FLAG_DELETE, true);
+    api->map_set_interactable(NULL, NULL);
 }
 
 static void enter_test(GameApi* api, Trigger* trigger, Entity* entity)
 {
-    api->event_create_gui_create_notification("enter");
+    api->map_set_interactable(start_boss, trigger);
 }
 
 static void stay_test(GameApi* api, Trigger* trigger, Entity* entity)
@@ -143,8 +146,7 @@ static void stay_test(GameApi* api, Trigger* trigger, Entity* entity)
 
 static void leave_test(GameApi* api, Trigger* trigger, Entity* entity)
 {
-    api->event_create_gui_create_notification("leave");
-    api->trigger_set_flag(trigger, TRIGGER_FLAG_DELETE, true);
+    api->map_set_interactable(NULL, NULL);
 }
 
 st_export void level_1_boss_create(GameApi* api, LevelData* data)

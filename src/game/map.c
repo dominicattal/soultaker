@@ -1757,13 +1757,16 @@ static void clear_map(void)
     map_context.current_map_node = NULL;
 }
 
+void map_interactable_callback(InteractableFuncPtr fptr, Map* map, MapNode* map_node, void* data)
+{
+    map_context.current_map = map;
+    map_context.current_map_node = map_node;
+    fptr(&game_api, data);
+}
+
 void map_set_interactable(InteractableFuncPtr func_ptr, void* data)
 {
-    InteractableFuncArgs* args = st_malloc(sizeof(InteractableFuncArgs));
-    args->map = map_context.current_map;
-    args->map_node = map_context.current_map_node;
-    args->data = data;
-    event_create_gui_set_interactable(func_ptr, args);
+    event_create_gui_set_interactable(func_ptr, map_context.current_map, map_context.current_map_node, data);
 }
 
 Projectile* map_create_projectile(vec2 position)
@@ -2102,11 +2105,17 @@ Map* map_create(i32 id)
 {
     Map* map;
     Entity* entity;
+    sem_t signal;
 
     if (id == -1) {
         log_write(WARNING, "Tried to load map with id of -1");
         return NULL;
     }
+
+    sem_init(&signal, 0, 1);
+
+    // send deny syn to gui
+    // receive deny ack from gui
 
     game_render_update_obstacles();
     game_render_update_parstacles();
@@ -2124,6 +2133,9 @@ Map* map_create(i32 id)
     game_context.current_map = map;
 
     log_write(DEBUG, "loaded");
+
+    // send accept syn to gui
+    // receive accept ack from gui
 
     return map;
 }
@@ -2381,6 +2393,16 @@ void map_update(Map* map)
     map_collide_objects(map);
     camera_update();
     map_context.current_map = NULL;
+}
+
+void map_set_active(Map* map)
+{
+    map->active = true;
+}
+
+void map_set_inactive(Map* map)
+{
+    map->active = false;
 }
 
 void map_make_boss(Entity* entity)

@@ -81,6 +81,10 @@ done:
 
 static void _print_pointers(void)
 {
+    if (pointers.length == 0) {
+        puts("No pointers currently allocated");
+        return;
+    }
     char* string = malloc(200 * pointers.length * sizeof(char));
     strncpy(string, "All allocated pointers\n", 24);
     int idx = 23;
