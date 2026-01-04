@@ -3,6 +3,40 @@
 
 #include "util.h"
 
+//**************************************************************************
+// Forward Declarations
+//**************************************************************************
+
+typedef struct GameApi GameApi;
+typedef struct Camera Camera;
+typedef struct Weapon Weapon;
+typedef struct Entity Entity;
+typedef struct Player Player;
+typedef struct Projectile Projectile;
+typedef struct Tile Tile;
+typedef struct Wall Wall;
+typedef struct Barrier Barrier;
+typedef struct Parstacle Parstacle;
+typedef struct Obstacle Obstacle;
+typedef struct Particle Particle;
+typedef struct Parjicle Parjicle;
+typedef struct Trigger Trigger;
+typedef struct Map Map;
+typedef struct MapNode MapNode;
+typedef struct MapInfo MapInfo;
+typedef struct LocalMapGenerationSettings LocalMapGenerationSettings;
+
+typedef void (*TriggerEnterFunc)(GameApi*, Trigger*, Entity*);
+typedef void (*TriggerStayFunc)(GameApi*, Trigger*, Entity*);
+typedef void (*TriggerLeaveFunc)(GameApi*, Trigger*, Entity*);
+typedef void (*TriggerDestroyFunc)(GameApi*, Trigger*);
+
+typedef void (*InteractableFuncPtr)(GameApi*, void*);
+
+//**************************************************************************
+// Core / Thread safe functions
+//**************************************************************************
+
 i32 entity_get_id(const char* name);
 i32 map_get_id(const char* name);
 

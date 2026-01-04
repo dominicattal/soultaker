@@ -6,36 +6,6 @@
 #include "../util.h"
 
 //**************************************************************************
-// Forward Declarations
-//**************************************************************************
-
-typedef struct GameApi GameApi;
-typedef struct Camera Camera;
-typedef struct Weapon Weapon;
-typedef struct Entity Entity;
-typedef struct Player Player;
-typedef struct Projectile Projectile;
-typedef struct Tile Tile;
-typedef struct Wall Wall;
-typedef struct Barrier Barrier;
-typedef struct Parstacle Parstacle;
-typedef struct Obstacle Obstacle;
-typedef struct Particle Particle;
-typedef struct Parjicle Parjicle;
-typedef struct Trigger Trigger;
-typedef struct Map Map;
-typedef struct MapNode MapNode;
-typedef struct MapInfo MapInfo;
-typedef struct LocalMapGenerationSettings LocalMapGenerationSettings;
-
-typedef void (*TriggerEnterFunc)(GameApi*, Trigger*, Entity*);
-typedef void (*TriggerStayFunc)(GameApi*, Trigger*, Entity*);
-typedef void (*TriggerLeaveFunc)(GameApi*, Trigger*, Entity*);
-typedef void (*TriggerDestroyFunc)(GameApi*, Trigger*);
-
-typedef void (*InteractableFuncPtr)(GameApi*, void*);
-
-//**************************************************************************
 // Camera definitions
 //**************************************************************************
 
@@ -104,6 +74,8 @@ void map_unmake_boss(Entity* entity);
 void map_init(void);
 Map* map_create(i32 id);
 void map_update(Map* map);
+void map_set_active(Map* map);
+void map_set_inactive(Map* map);
 void map_destroy(Map* map);
 void map_cleanup(void);
 
@@ -144,12 +116,7 @@ void map_handle_trigger_leave(Trigger* trigger, Entity* entity);
 // returns vec2(0,0) if no map node currently bounded
 vec2 map_orientation(void);
 
-typedef struct {
-    Map* map;
-    MapNode* map_node;
-    void* data;
-} InteractableFuncArgs;
-
+void map_interactable_callback(InteractableFuncPtr fptr, Map* map, MapNode* map_node, void* data);
 void map_set_interactable(InteractableFuncPtr func_ptr, void* data);
 
 // create object in global map coords
@@ -542,6 +509,8 @@ void game_render_update_walls(void);
 
 void game_update_vertex_data(void);
 
+void game_signal_change_map(i32 id);
+
 //**************************************************************************
 // Collision functions
 //**************************************************************************
@@ -588,6 +557,7 @@ typedef struct GameApi {
     bool (*trigger_get_flag)(Trigger*, TriggerFlagEnum);
 
     // Map
+    void (*map_set_interactable)(InteractableFuncPtr, void*);
     vec2 (*map_orientation)(void);
     void (*map_make_boss)(Entity*);
     void (*map_unmake_boss)(Entity*);
