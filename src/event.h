@@ -40,7 +40,7 @@ void event_create_gui_mouse_button_callback(i32 button, i32 action, i32 mods);
 void event_create_gui_key_callback(i32 key, i32 scancode, i32 action, i32 mods);
 void event_create_gui_char_callback(i32 codepoint);
 void event_create_gui_update_weapon_info(i32 weapon_id);
-void event_create_gui_create_boss_healthbar(void* boss_ptr, f32 health, f32 max_health);
+void event_create_gui_create_boss_healthbar(char* name, void* boss_ptr, f32 health, f32 max_health);
 void event_create_gui_update_boss_healthbar(void* boss_ptr, f32 health, f32 max_health);
 void event_create_gui_destroy_boss_healthbar(void* boss_ptr);
 void event_create_gui_create_notification(char* notif);

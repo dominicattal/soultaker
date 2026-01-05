@@ -67,7 +67,7 @@ List* map_list_parstacles(Map* map);
 List* map_list_particles(Map* map);
 List* map_list_parjicles(Map* map);
 
-void map_make_boss(Entity* entity);
+void map_make_boss(char* name, Entity* entity);
 void map_boss_update(Entity* entity);
 void map_unmake_boss(Entity* entity);
 
@@ -562,7 +562,7 @@ typedef struct GameApi {
     void* (*map_get_data)(void);
     void (*map_set_interactable)(const char*, InteractableFuncPtr);
     vec2 (*map_orientation)(void);
-    void (*map_make_boss)(Entity*);
+    void (*map_make_boss)(char*, Entity*);
     void (*map_unmake_boss)(Entity*);
     Projectile* (*map_create_projectile)(vec2);
     Trigger* (*map_create_trigger)(vec2, f32);

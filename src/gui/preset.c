@@ -144,7 +144,7 @@ typedef struct {
     List* boss_healths;
 } BossHealthManagerData;
 
-void gui_create_boss_healthbar(void* boss_ptr, f32 health, f32 max_health)
+void gui_create_boss_healthbar(char* name, void* boss_ptr, f32 health, f32 max_health)
 {
     GUIComp* boss_health_manager = gui_get_event_comp(GUI_COMP_BOSS_HEALTH);
     if (boss_health_manager == NULL)
@@ -178,8 +178,7 @@ void gui_create_boss_healthbar(void* boss_ptr, f32 health, f32 max_health)
     gui_comp_set_align(comp_name, ALIGN_RIGHT, ALIGN_TOP);
     gui_comp_set_color(comp_name, 255, 255, 255, 255);
     gui_comp_set_text_align(comp_name, ALIGN_CENTER, ALIGN_CENTER);
-    const char* string = "Shaitan the Advisor";
-    gui_comp_copy_text(comp_name, strlen(string), string);
+    gui_comp_copy_text(comp_name, strlen(name), name);
 
     gui_comp_attach(healthbar, comp_max_health);
     gui_comp_attach(healthbar, comp_health);

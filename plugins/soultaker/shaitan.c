@@ -346,7 +346,7 @@ st_export void shaitan_the_advisor_create(GameApi* api, Entity* entity)
     entity->health = 100;
     entity->max_health = 100;
     entity->state = api->entity_get_state_id(entity, "grow");
-    api->map_make_boss(entity);
+    api->map_make_boss("Shaitan the Advisor", entity);
 }
 
 st_export void shaitan_the_advisor_destroy(GameApi* api, Entity* entity)

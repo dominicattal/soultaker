@@ -112,7 +112,7 @@ st_export void dummy_boss_create(GameApi* api, Entity* entity)
     entity->hitbox_radius = 0.5f;
     entity->health = 1;
     entity->max_health = 1;
-    api->map_make_boss(entity);
+    api->map_make_boss("dummy boss", entity);
 }
 
 st_export void dummy_boss_destroy(GameApi* api, Entity* entity)

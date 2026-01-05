@@ -77,6 +77,7 @@ void state_loop(void)
 
 void state_cleanup(void)
 {
+    // add signals so game doesnt cleanup b4 gui finishes with it
     log_unlock();
     game_cleanup();
     gui_cleanup();

@@ -2414,7 +2414,7 @@ void map_set_inactive(Map* map)
     map->active = false;
 }
 
-void map_make_boss(Entity* entity)
+void map_make_boss(char* name, Entity* entity)
 {
     Map* map = map_context.current_map;
     if (!map->active)
@@ -2422,7 +2422,7 @@ void map_make_boss(Entity* entity)
     list_append(map->bosses, entity);
     log_assert(!entity_get_flag(entity, ENTITY_FLAG_BOSS), "Entity is already boss");
     entity_set_flag(entity, ENTITY_FLAG_BOSS, 1);
-    event_create_gui_create_boss_healthbar(entity, entity->health, entity->max_health);
+    event_create_gui_create_boss_healthbar(name, entity, entity->health, entity->max_health);
     pthread_mutex_lock(&game_context.getter_mutex);
     game_context.values.num_bosses = 1;
     game_context.values.boss_health = entity->health;
