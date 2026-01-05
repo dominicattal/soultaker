@@ -116,8 +116,10 @@ void map_handle_trigger_leave(Trigger* trigger, Entity* entity);
 // returns vec2(0,0) if no map node currently bounded
 vec2 map_orientation(void);
 
-void map_interactable_callback(InteractableFuncPtr fptr, Map* map, MapNode* map_node, void* data);
-void map_set_interactable(InteractableFuncPtr func_ptr, void* data);
+void map_interactable_callback(InteractableFuncPtr fptr, Map* map, MapNode* map_node);
+void map_set_interactable(InteractableFuncPtr func_ptr);
+// get global data
+void* map_get_data(void);
 
 // create object in global map coords
 Projectile*     map_create_projectile(vec2 position);
@@ -557,7 +559,8 @@ typedef struct GameApi {
     bool (*trigger_get_flag)(Trigger*, TriggerFlagEnum);
 
     // Map
-    void (*map_set_interactable)(InteractableFuncPtr, void*);
+    void* (*map_get_data)(void);
+    void (*map_set_interactable)(InteractableFuncPtr);
     vec2 (*map_orientation)(void);
     void (*map_make_boss)(Entity*);
     void (*map_unmake_boss)(Entity*);
