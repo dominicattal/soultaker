@@ -108,7 +108,7 @@ void gui_create_boss_healthbar(void* boss_ptr, f32 health, f32 max_health);
 void gui_update_boss_healthbar(void* boss_ptr, f32 health, f32 max_health);
 void gui_destroy_boss_healthbar(void* boss_ptr);
 void gui_create_notification(char* notif);
-void gui_set_interactable(InteractableFuncPtr func_ptr, Map* map, MapNode* map_node);
+void gui_set_interactable(const char* desc, InteractableFuncPtr func_ptr, Map* map, MapNode* map_node);
 
 void gui_framebuffer_size_callback(i32 width, i32 height);
 bool gui_cursor_pos_callback(f64 xpos, f64 ypos);
@@ -117,6 +117,7 @@ bool gui_mouse_button_callback(i32 button, i32 action, i32 mods);
 bool gui_char_callback(u32 codepoint);
 
 void gui_preset_load(GUIPreset preset);
+void gui_reset_and_change_map(i32 id);
 
 // returns response from parsing command
 char* gui_command_parse(char* command);

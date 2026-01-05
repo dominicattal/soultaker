@@ -333,13 +333,17 @@ typedef struct {
     MapNode* map_node;
 } InteractableData;
 
-void gui_set_interactable(InteractableFuncPtr func_ptr, Map* map, MapNode* map_node)
+void gui_set_interactable(const char* desc, InteractableFuncPtr func_ptr, Map* map, MapNode* map_node)
 {
     GUIComp* inter_comp = gui_get_event_comp(GUI_COMP_INTERACTABLE);
     if (inter_comp == NULL) {
         log_write(WARNING, "interactable comp is null");
         return;
     }
+    if (desc != NULL)
+        gui_comp_copy_text(inter_comp, strlen(desc), desc);
+    else
+        gui_comp_remove_text(inter_comp);
     inter_comp->a = (func_ptr == NULL) ? 0 : 255;
     InteractableData* comp_data = inter_comp->data;
     comp_data->fptr = func_ptr;
@@ -623,4 +627,10 @@ void gui_preset_load(GUIPreset preset)
         default:
             break;
     }
+}
+
+void gui_reset_and_change_map(i32 id)
+{
+    gui_preset_load(GUI_PRESET_GAME);
+    event_create_game_change_map(id);
 }

@@ -16,7 +16,8 @@
 void event_queue_flush(void);
 
 // Game events
-void event_create_game_change_map(i32 id);
+void event_create_game_signal_change_map(i32 map_id);
+void event_create_game_change_map(i32 map_id);
 void event_create_game_camera_update_direction(vec2 mag);
 void event_create_game_camera_update_rotation(f32 mag);
 void event_create_game_camera_update_tilt(f32 mag);
@@ -39,9 +40,10 @@ void event_create_gui_create_boss_healthbar(void* boss_ptr, f32 health, f32 max_
 void event_create_gui_update_boss_healthbar(void* boss_ptr, f32 health, f32 max_health);
 void event_create_gui_destroy_boss_healthbar(void* boss_ptr);
 void event_create_gui_create_notification(char* notif);
+void event_create_gui_reset_and_change_map(i32 map_id);
 
 // if func_ptr is NULL, interactle gui comp will be cleared instead
-void event_create_gui_set_interactable(InteractableFuncPtr func_ptr, Map* map, MapNode* map_node);
+void event_create_gui_set_interactable(const char* desc, InteractableFuncPtr func_ptr, Map* map, MapNode* map_node);
 
 // Renderer events
 void event_create_renderer_write_texture_units(void);
