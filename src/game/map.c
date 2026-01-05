@@ -81,6 +81,7 @@ typedef struct {
 } Roomset;
 
 typedef struct Map {
+    // x is width, z is length
     i32 width, length;
     vec2 spawn_point;
     Roomset* roomset;
@@ -1482,6 +1483,23 @@ static void generate_map_helper(Map* map, Quadmask* qm, Palette* palette, Roomse
         generate_map_helper(map, qm, palette, roomset, node->children[i]);
 }
 
+static void fill_map(Map* map, Quadmask* qm, Palette* palette)
+{
+    i32 x, z;
+    TileColor* tile_color;
+
+    tile_color = palette_get(palette, 0);
+    if (tile_color == NULL)
+        return;
+
+    for (x = 0; x < map->width; x++) {
+        for (z = 0; z < map->length; z++) {
+            if (!quadmask_isset(qm, x, z))
+                place_tile(map, tile_color, x, z);
+        }
+    }
+}
+
 static Map* generate_map(i32 id)
 {
     JsonValue* value;
@@ -1557,6 +1575,7 @@ static Map* generate_map(i32 id)
 
     map_context.current_map = map;
     generate_map_helper(map, qm, palette, roomset, root);
+    fill_map(map, qm, palette);
     map_context.current_map = NULL;
 
     palette_destroy(palette);
