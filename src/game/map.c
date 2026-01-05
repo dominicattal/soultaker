@@ -1764,9 +1764,12 @@ void map_interactable_callback(InteractableFuncPtr fptr, Map* map, MapNode* map_
     fptr(&game_api);
 }
 
-void map_set_interactable(InteractableFuncPtr func_ptr)
+void map_set_interactable(const char* desc, InteractableFuncPtr func_ptr)
 {
-    event_create_gui_set_interactable(func_ptr, map_context.current_map, map_context.current_map_node);
+    log_assert(map_context.current_map != NULL, "");
+    if (!map_context.current_map->active)
+        return;
+    event_create_gui_set_interactable(desc, func_ptr, map_context.current_map, map_context.current_map_node);
 }
 
 void* map_get_data(void)

@@ -8,7 +8,8 @@ typedef enum {
     EVENT_NONE,
 
     // Game Events
-    GAME_EVENT_CHANGE_MAP,
+    GAME_EVENT_SIGNAL_MAP_CHANGE,
+    GAME_EVENT_MAP_CHANGE,
     GAME_EVENT_CAMERA_UPDATE_DIRECTION,
     GAME_EVENT_CAMERA_UPDATE_ROTATE,
     GAME_EVENT_CAMERA_UPDATE_TILT,
@@ -32,6 +33,7 @@ typedef enum {
     GUI_EVENT_UPDATE_BOSS_HEALTHBAR,
     GUI_EVENT_CREATE_NOTIFICATION,
     GUI_EVENT_SET_INTERACTABLE,
+    GUI_EVENT_RESET_AND_CHANGE_MAP,
 
     // Renderer Events
     GUI_EVENT_WRITE_TEXTURE_UNITS
@@ -49,6 +51,7 @@ typedef struct {
     void* ptr1;
     void* ptr2;
     void* ptr3;
+    void* ptr4;
 } Event;
 
 typedef struct {
@@ -108,6 +111,7 @@ static void execute_event(Event event)
     void* ptr1;
     void* ptr2;
     void* ptr3;
+    void* ptr4;
     arg1 = event.arg1;
     arg2 = event.arg2;
     arg3 = event.arg3;
@@ -115,14 +119,17 @@ static void execute_event(Event event)
     ptr1 = event.ptr1;
     ptr2 = event.ptr2;
     ptr3 = event.ptr3;
+    ptr4 = event.ptr4;
     switch (event.type) {
         case EVENT_NONE:
             break;
 
         // Game events
-        case GAME_EVENT_CHANGE_MAP:
-            //map_create(arg1._int);
+        case GAME_EVENT_SIGNAL_MAP_CHANGE:
             game_signal_change_map(arg1._int);
+            break;
+        case GAME_EVENT_MAP_CHANGE:
+            map_create(arg1._int);
             break;
         case GAME_EVENT_CAMERA_UPDATE_DIRECTION:
             camera_update_direction(vec2_create(arg1._flt, arg2._flt));
@@ -187,7 +194,10 @@ static void execute_event(Event event)
             gui_create_notification(ptr1);
             break;
         case GUI_EVENT_SET_INTERACTABLE:
-            gui_set_interactable(ptr1, ptr2, ptr3);
+            gui_set_interactable(ptr1, ptr2, ptr3, ptr4);
+            break;
+        case GUI_EVENT_RESET_AND_CHANGE_MAP:
+            gui_reset_and_change_map(arg1._int);
             break;
 
         // Renderer
@@ -217,10 +227,20 @@ void event_queue_flush(void)
 // Game Events
 //**************************************************************************
 
+void event_create_game_signal_change_map(i32 map_id)
+{
+    Event event = (Event) {
+        .type = GAME_EVENT_SIGNAL_MAP_CHANGE,
+        .arg1._int = map_id
+    };
+    EventQueue* queue = get_event_queue("Game");
+    event_enqueue(queue, event);
+}
+
 void event_create_game_change_map(i32 map_id)
 {
     Event event = (Event) {
-        .type = GAME_EVENT_CHANGE_MAP,
+        .type = GAME_EVENT_MAP_CHANGE,
         .arg1._int = map_id
     };
     EventQueue* queue = get_event_queue("Game");
@@ -442,13 +462,24 @@ void event_create_gui_create_notification(char* notif)
     event_enqueue(queue, event);
 }
 
-void event_create_gui_set_interactable(InteractableFuncPtr func_ptr, Map* map, MapNode* map_node)
+void event_create_gui_set_interactable(const char* desc, InteractableFuncPtr func_ptr, Map* map, MapNode* map_node)
 {
     Event event = (Event) {
         .type = GUI_EVENT_SET_INTERACTABLE,
-        .ptr1 = func_ptr,
-        .ptr2 = map,
-        .ptr3 = map_node,
+        .ptr1 = (void*)desc, 
+        .ptr2 = func_ptr,
+        .ptr3 = map,
+        .ptr4 = map_node,
+    };
+    EventQueue* queue = get_event_queue("GUI");
+    event_enqueue(queue, event);
+}
+
+void event_create_gui_reset_and_change_map(i32 map_id)
+{
+    Event event = (Event) {
+        .type = GUI_EVENT_RESET_AND_CHANGE_MAP,
+        .arg1._int = map_id
     };
     EventQueue* queue = get_event_queue("GUI");
     event_enqueue(queue, event);

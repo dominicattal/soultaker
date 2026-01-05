@@ -45,6 +45,7 @@ void game_signal_change_map(i32 id)
 {
     log_assert(game_context.current_map != NULL, "should not have happened");
     map_set_inactive(game_context.current_map);
+    event_create_gui_reset_and_change_map(id);
 }
 
 void game_halt_loop(void)
