@@ -55,46 +55,47 @@ typedef struct {
 } Event;
 
 typedef struct {
-    Event buffer[EVENT_QUEUE_CAPACITY+1];
-    i32 head, tail;
-} EventQueue;
+    i32 length, capacity;
+    Event* buffer;
+} EventList;
 
 typedef struct {
-    EventQueue queues[NUM_THREADS][NUM_THREADS];
+    EventList queues[NUM_THREADS][NUM_THREADS];
 } EventContext;
 
 static EventContext event_context;
 
-static bool event_queue_full(EventQueue* queue)
+void event_init(void)
 {
-    return queue->head == ((queue->tail + 1) % (EVENT_QUEUE_CAPACITY+1));
-}
-
-static bool event_queue_empty(EventQueue* queue)
-{
-    return queue->head == queue->tail;
-}
-
-static void event_enqueue(EventQueue* queue, Event event)
-{
-    if (event_queue_full(queue)) {
-        log_write(WARNING, "Event queue is full, dropping event %d %d %d", event.type, queue->head, queue->tail);
-        return;
+    EventList* list;
+    for (i32 i = 0; i < NUM_THREADS; i++) {
+        for (i32 j = 0; j < NUM_THREADS; j++) {
+            list = &event_context.queues[i][j];
+            list->length = 0;
+            list->capacity = EVENT_QUEUE_CAPACITY;
+            list->buffer = st_malloc(list->capacity * sizeof(Event));
+        }
     }
-    queue->buffer[queue->tail] = event;
-    queue->tail = (queue->tail + 1) % (EVENT_QUEUE_CAPACITY+1);
 }
 
-static Event event_dequeue(EventQueue* queue)
+void event_cleanup(void)
 {
-    if (event_queue_empty(queue))
-        return (Event) { .type = EVENT_NONE };
-    Event event = queue->buffer[queue->head];
-    queue->head = (queue->head + 1) % (EVENT_QUEUE_CAPACITY+1);
-    return event;
+    for (i32 i = 0; i < NUM_THREADS; i++)
+        for (i32 j = 0; j < NUM_THREADS; j++)
+            st_free(event_context.queues[i][j].buffer);
 }
 
-static EventQueue* get_event_queue(const char* name)
+static void event_enqueue(EventList* list, Event event)
+{
+    if (list->length == list->capacity) {
+        list->capacity += EVENT_QUEUE_CAPACITY;
+        log_write(WARNING, "event queue full, resizing to %d", list->capacity);
+        list->buffer = st_realloc(list->buffer, list->capacity * sizeof(Event));
+    }
+    list->buffer[list->length++] = event;
+}
+
+static EventList* get_event_list(const char* name)
 {
     i32 thread_self_id = thread_get_self_id();
     if (thread_self_id == -1)
@@ -209,16 +210,17 @@ static void execute_event(Event event)
 
 void event_queue_flush(void)
 {
-    EventQueue* queue;
-    Event event;
-    i32 tail, id, i;
+    EventList* list;
+    i32 id, i, j;
     id = thread_get_self_id();
     for (i = 0; i < NUM_THREADS; i++) {
-        queue = &event_context.queues[id][i];
-        tail = queue->tail;
-        while (queue->head != tail) {
-            event = event_dequeue(queue);
-            execute_event(event);
+        list = &event_context.queues[id][i];
+        for (j = 0; j < list->length; j++)
+            execute_event(list->buffer[j]);
+        list->length = 0;
+        if (list->capacity > EVENT_QUEUE_CAPACITY) {
+            list->capacity = EVENT_QUEUE_CAPACITY;
+            list->buffer = realloc(list->buffer, list->capacity * sizeof(Event));
         }
     }
 }
@@ -233,8 +235,8 @@ void event_create_game_signal_change_map(i32 map_id)
         .type = GAME_EVENT_SIGNAL_MAP_CHANGE,
         .arg1._int = map_id
     };
-    EventQueue* queue = get_event_queue("Game");
-    event_enqueue(queue, event);
+    EventList* list = get_event_list("Game");
+    event_enqueue(list, event);
 }
 
 void event_create_game_change_map(i32 map_id)
@@ -243,8 +245,8 @@ void event_create_game_change_map(i32 map_id)
         .type = GAME_EVENT_MAP_CHANGE,
         .arg1._int = map_id
     };
-    EventQueue* queue = get_event_queue("Game");
-    event_enqueue(queue, event);
+    EventList* list = get_event_list("Game");
+    event_enqueue(list, event);
 }
 
 void event_create_game_camera_update_direction(vec2 mag)
@@ -254,8 +256,8 @@ void event_create_game_camera_update_direction(vec2 mag)
         .arg1._flt = mag.x,
         .arg2._flt = mag.y
     };
-    EventQueue* queue = get_event_queue("Game");
-    event_enqueue(queue, event);
+    EventList* list = get_event_list("Game");
+    event_enqueue(list, event);
 }
 
 void event_create_game_camera_update_rotation(f32 mag)
@@ -264,8 +266,8 @@ void event_create_game_camera_update_rotation(f32 mag)
         .type = GAME_EVENT_CAMERA_UPDATE_ROTATE,
         .arg1._flt = mag,
     };
-    EventQueue* queue = get_event_queue("Game");
-    event_enqueue(queue, event);
+    EventList* list = get_event_list("Game");
+    event_enqueue(list, event);
 }
 
 void event_create_game_camera_update_tilt(f32 mag)
@@ -274,8 +276,8 @@ void event_create_game_camera_update_tilt(f32 mag)
         .type = GAME_EVENT_CAMERA_UPDATE_TILT,
         .arg1._flt = mag,
     };
-    EventQueue* queue = get_event_queue("Game");
-    event_enqueue(queue, event);
+    EventList* list = get_event_list("Game");
+    event_enqueue(list, event);
 }
 
 void event_create_game_swap_weapons(void)
@@ -283,8 +285,8 @@ void event_create_game_swap_weapons(void)
     Event event = (Event) {
         .type = GAME_EVENT_SWAP_WEAPONS
     };
-    EventQueue* queue = get_event_queue("Game");
-    event_enqueue(queue, event);
+    EventList* list = get_event_list("Game");
+    event_enqueue(list, event);
 }
 
 void event_create_game_summon(i32 id)
@@ -293,8 +295,8 @@ void event_create_game_summon(i32 id)
         .type = GAME_EVENT_SUMMON,
         .arg1._int = id
     };
-    EventQueue* queue = get_event_queue("Game");
-    event_enqueue(queue, event);
+    EventList* list = get_event_list("Game");
+    event_enqueue(list, event);
 }
 
 void event_create_game_respawn(void)
@@ -302,8 +304,8 @@ void event_create_game_respawn(void)
     Event event = (Event) {
         .type = GAME_EVENT_RESPAWN,
     };
-    EventQueue* queue = get_event_queue("Game");
-    event_enqueue(queue, event);
+    EventList* list = get_event_list("Game");
+    event_enqueue(list, event);
 }
 
 void event_create_game_set_player_position(vec2 position)
@@ -313,8 +315,8 @@ void event_create_game_set_player_position(vec2 position)
         .arg1._flt = position.x,
         .arg2._flt = position.z
     };
-    EventQueue* queue = get_event_queue("Game");
-    event_enqueue(queue, event);
+    EventList* list = get_event_list("Game");
+    event_enqueue(list, event);
 }
 
 void event_create_game_defog(void)
@@ -322,8 +324,8 @@ void event_create_game_defog(void)
     Event event = (Event) {
         .type = GAME_EVENT_DEFOG
     };
-    EventQueue* queue = get_event_queue("Game");
-    event_enqueue(queue, event);
+    EventList* list = get_event_list("Game");
+    event_enqueue(list, event);
 }
 
 void event_create_game_framebuffer_size_callback(void)
@@ -331,8 +333,8 @@ void event_create_game_framebuffer_size_callback(void)
     Event event = (Event) {
         .type = GAME_EVENT_FRAMEBUFFER_SIZE_CALLBACK
     };
-    EventQueue* queue = get_event_queue("Game");
-    event_enqueue(queue, event);
+    EventList* list = get_event_list("Game");
+    event_enqueue(list, event);
 }
 
 void event_create_game_interactable_callback(InteractableFuncPtr func_ptr, Map* map, MapNode* map_node)
@@ -343,8 +345,8 @@ void event_create_game_interactable_callback(InteractableFuncPtr func_ptr, Map* 
         .ptr2 = map,
         .ptr3 = map_node,
     };
-    EventQueue* queue = get_event_queue("Game");
-    event_enqueue(queue, event);
+    EventList* list = get_event_list("Game");
+    event_enqueue(list, event);
 }
 
 //**************************************************************************
@@ -358,8 +360,8 @@ void event_create_gui_framebuffer_size_callback(u32 width, u32 height)
         .arg1._int = width,
         .arg2._int = height
     };
-    EventQueue* queue = get_event_queue("GUI");
-    event_enqueue(queue, event);
+    EventList* list = get_event_list("GUI");
+    event_enqueue(list, event);
 }
 
 void event_create_gui_cursor_pos_callback(i32 xpos, i32 ypos)
@@ -369,8 +371,8 @@ void event_create_gui_cursor_pos_callback(i32 xpos, i32 ypos)
         .arg1._int = xpos,
         .arg2._int = ypos
     };
-    EventQueue* queue = get_event_queue("GUI");
-    event_enqueue(queue, event);
+    EventList* list = get_event_list("GUI");
+    event_enqueue(list, event);
 }
 
 void event_create_gui_mouse_button_callback(i32 button, i32 action, i32 mods)
@@ -381,8 +383,8 @@ void event_create_gui_mouse_button_callback(i32 button, i32 action, i32 mods)
         .arg2._int = action,
         .arg3._int = mods
     };
-    EventQueue* queue = get_event_queue("GUI");
-    event_enqueue(queue, event);
+    EventList* list = get_event_list("GUI");
+    event_enqueue(list, event);
 }
 
 void event_create_gui_key_callback(i32 key, i32 scancode, i32 action, i32 mods)
@@ -394,8 +396,8 @@ void event_create_gui_key_callback(i32 key, i32 scancode, i32 action, i32 mods)
         .arg3._int = action,
         .arg4._int = mods
     };
-    EventQueue* queue = get_event_queue("GUI");
-    event_enqueue(queue, event);
+    EventList* list = get_event_list("GUI");
+    event_enqueue(list, event);
 }
 
 void event_create_gui_char_callback(i32 codepoint)
@@ -404,8 +406,8 @@ void event_create_gui_char_callback(i32 codepoint)
         .type = GUI_EVENT_CHAR_CALLBACK,
         .arg1._int = codepoint
     };
-    EventQueue* queue = get_event_queue("GUI");
-    event_enqueue(queue, event);
+    EventList* list = get_event_list("GUI");
+    event_enqueue(list, event);
 }
 
 void event_create_gui_update_weapon_info(i32 weapon_id)
@@ -414,8 +416,8 @@ void event_create_gui_update_weapon_info(i32 weapon_id)
         .type = GUI_EVENT_UPDATE_WEAPON_INFO,
         .arg1._int = weapon_id
     };
-    EventQueue* queue = get_event_queue("GUI");
-    event_enqueue(queue, event);
+    EventList* list = get_event_list("GUI");
+    event_enqueue(list, event);
 }
 
 void event_create_gui_create_boss_healthbar(void* boss_ptr1, f32 health, f32 max_health)
@@ -426,8 +428,8 @@ void event_create_gui_create_boss_healthbar(void* boss_ptr1, f32 health, f32 max
         .arg2._flt = max_health,
         .ptr1 = boss_ptr1
     };
-    EventQueue* queue = get_event_queue("GUI");
-    event_enqueue(queue, event);
+    EventList* list = get_event_list("GUI");
+    event_enqueue(list, event);
 }
 
 void event_create_gui_update_boss_healthbar(void* boss_ptr1, f32 health, f32 max_health)
@@ -438,8 +440,8 @@ void event_create_gui_update_boss_healthbar(void* boss_ptr1, f32 health, f32 max
         .arg2._flt = max_health,
         .ptr1 = boss_ptr1
     };
-    EventQueue* queue = get_event_queue("GUI");
-    event_enqueue(queue, event);
+    EventList* list = get_event_list("GUI");
+    event_enqueue(list, event);
 }
 
 void event_create_gui_destroy_boss_healthbar(void* boss_ptr1)
@@ -448,8 +450,8 @@ void event_create_gui_destroy_boss_healthbar(void* boss_ptr1)
         .type = GUI_EVENT_DESTROY_BOSS_HEALTHBAR,
         .ptr1 = boss_ptr1
     };
-    EventQueue* queue = get_event_queue("GUI");
-    event_enqueue(queue, event);
+    EventList* list = get_event_list("GUI");
+    event_enqueue(list, event);
 }
 
 void event_create_gui_create_notification(char* notif)
@@ -458,8 +460,8 @@ void event_create_gui_create_notification(char* notif)
         .type = GUI_EVENT_CREATE_NOTIFICATION,
         .ptr1 = notif
     };
-    EventQueue* queue = get_event_queue("GUI");
-    event_enqueue(queue, event);
+    EventList* list = get_event_list("GUI");
+    event_enqueue(list, event);
 }
 
 void event_create_gui_set_interactable(const char* desc, InteractableFuncPtr func_ptr, Map* map, MapNode* map_node)
@@ -471,8 +473,8 @@ void event_create_gui_set_interactable(const char* desc, InteractableFuncPtr fun
         .ptr3 = map,
         .ptr4 = map_node,
     };
-    EventQueue* queue = get_event_queue("GUI");
-    event_enqueue(queue, event);
+    EventList* list = get_event_list("GUI");
+    event_enqueue(list, event);
 }
 
 void event_create_gui_reset_and_change_map(i32 map_id)
@@ -481,8 +483,8 @@ void event_create_gui_reset_and_change_map(i32 map_id)
         .type = GUI_EVENT_RESET_AND_CHANGE_MAP,
         .arg1._int = map_id
     };
-    EventQueue* queue = get_event_queue("GUI");
-    event_enqueue(queue, event);
+    EventList* list = get_event_list("GUI");
+    event_enqueue(list, event);
 }
 
 //**************************************************************************
@@ -494,6 +496,6 @@ void event_create_renderer_write_texture_units(void)
     Event event = (Event) {
         .type = GUI_EVENT_WRITE_TEXTURE_UNITS,
     };
-    EventQueue* queue = get_event_queue("Main");
-    event_enqueue(queue, event);
+    EventList* list = get_event_list("Main");
+    event_enqueue(list, event);
 }

@@ -1,4 +1,5 @@
 #include "state.h"
+#include "event.h"
 #include "window.h"
 #include "renderer.h"
 #include "game.h"
@@ -26,6 +27,7 @@ void state_init(void)
     state_context.lib = LoadLibrary("plugins/soultaker.dll");
     log_assert(state_context.lib, "Could not load library");
 
+    event_init();
     window_init();
     renderer_init();
     gui_init();
@@ -54,6 +56,7 @@ void state_cleanup(void)
     gui_cleanup();
     renderer_cleanup();
     window_cleanup();
+    event_cleanup();
 #ifdef DEBUG_BUILD
     print_heap_info();
 #endif
