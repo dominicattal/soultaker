@@ -11,6 +11,10 @@
 // any other thread and may flush their own event queue
 // when they want. 
 
+// init all event related things
+void event_init(void);
+void event_cleanup(void);
+
 // Flush all of the events in the calling
 // thread's event queue.
 void event_queue_flush(void);
