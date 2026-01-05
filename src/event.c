@@ -220,7 +220,7 @@ void event_queue_flush(void)
         list->length = 0;
         if (list->capacity > EVENT_QUEUE_CAPACITY) {
             list->capacity = EVENT_QUEUE_CAPACITY;
-            list->buffer = realloc(list->buffer, list->capacity * sizeof(Event));
+            list->buffer = st_realloc(list->buffer, list->capacity * sizeof(Event));
         }
     }
 }
