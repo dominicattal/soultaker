@@ -3,7 +3,12 @@ CFLAGS = -MMD -Wall -Wextra -Werror -Wfatal-errors -Wno-unused-parameter -finlin
 		 -fopenmp -pthread -Wno-unused-function -Iinclude
 CFLAGS_DEV = -g3 -D DEBUG_BUILD
 CFLAGS_RELEASE = -O2 -D RELEASE_BUILD
-LINKER_FLAGS = -Llib -lm -lglfw3dll
+LINKER_FLAGS = -lm
+ifeq ($(OS), Windows_NT)
+	LINKER_FLAGS += -Llib -lglfw3dll
+else
+	LINKER_FLAGS += -lglfw3
+endif
 NAME = st
 DLL_NAME = soultaker
 
@@ -30,12 +35,12 @@ dev-src: $(OBJS_DEV)
 dev-dll: $(PLUGIN_OBJS_DEV)
 	@mkdir -p bin/dev
 	@mkdir -p bin/dev/plugins
-	@$(CC) -shared $(CFLAGS) $(CFLAGS_DEV) $(PLUGIN_OBJS_DEV) $(LINKER_FLAGS) -o bin/dev/plugins/$(DLL_NAME).dll
+	@$(CC) -shared $(PLUGIN_OBJS_DEV) $(LINKER_FLAGS) -o bin/dev/plugins/$(DLL_NAME).dll
 
 build/dev/%.o: %.c
 	@mkdir -p $(shell dirname $@)
 	@echo $<
-	@$(CC) $(CFLAGS) $(CFLAGS_DEV) $(LINKER_FLAGS) -c -o $@ $<
+	@$(CC) $(CFLAGS) $(CFLAGS_DEV) $(LINKER_FLAGS) -fpic -c -o $@ $<
 
 release: build release-src release-dll
 

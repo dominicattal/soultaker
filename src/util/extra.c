@@ -1,6 +1,5 @@
 #include "extra.h"
 #include "malloc.h"
-#include <Windows.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,10 +7,21 @@
 #include <sys/stat.h>
 #include <glfw.h>
 
+#ifdef _WIN32
+#include <windows.h>
 void sleep(i32 msec)
 {
     Sleep(msec);
 }
+#else
+#define sleep sleep_orig
+#include <unistd.h>
+#undef sleep
+void sleep(i32 msec)
+{
+    usleep(1000*msec);
+}
+#endif
 
 f64 get_time(void)
 {
@@ -42,6 +52,16 @@ char* string_create(const char* format, int n, ...)
 void string_free(char* string)
 {
     st_free(string);
+}
+
+i32 maxi(i32 x, i32 y)
+{
+    return (x > y) ? x : y;
+}
+
+i32 mini(i32 x, i32 y)
+{
+    return (x < y) ? x : y;
 }
 
 f32 maxf(f32 x, f32 y)

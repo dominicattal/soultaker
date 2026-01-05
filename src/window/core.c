@@ -11,14 +11,16 @@ void window_init(void)
     glfwSetErrorCallback(window_error_callback);
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     window_context.handle = glfwCreateWindow(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, "program", NULL, NULL);
     window_context.resolution.x = DEFAULT_WINDOW_WIDTH;
     window_context.resolution.y = DEFAULT_WINDOW_HEIGHT;
     glfwGetWindowSize(window_context.handle, &window_context.width, &window_context.height);
-    glfwGetWindowPos(window_context.handle, &window_context.xpos, &window_context.ypos);
+    //glfwGetWindowPos(window_context.handle, &window_context.xpos, &window_context.ypos);
+    window_context.xpos = DEFAULT_WINDOW_WIDTH;
+    window_context.ypos = DEFAULT_WINDOW_HEIGHT;
     glfwGetCursorPos(window_context.handle, &window_context.cursor.x, &window_context.cursor.y);
     glfwSetWindowAspectRatio(window_context.handle, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT);
     
@@ -31,6 +33,7 @@ void window_init(void)
     glfwSetInputMode(window_context.handle, GLFW_LOCK_KEY_MODS, GLFW_TRUE);
     window_context.cursor.hidden = false;
     gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+    log_write(DEBUG, "%p", glfwGetCurrentContext());
     glViewport(0, 0, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT);
     //glfwSwapInterval(1);
     

@@ -1,4 +1,4 @@
-#version 460
+#version 430
 
 out flat int Location;
 out vec2 TexCoord;

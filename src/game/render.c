@@ -806,22 +806,22 @@ void game_render_init(void)
     }
 
     render_context.buffers[VBO_TILE].target = GL_ARRAY_BUFFER;
-    render_context.buffers[VBO_TILE].usage = GL_STATIC_DRAW;
+    render_context.buffers[VBO_TILE].usage = GL_DYNAMIC_DRAW;
     render_context.buffers[VBO_WALL].target = GL_ARRAY_BUFFER;
-    render_context.buffers[VBO_WALL].usage = GL_STATIC_DRAW;
+    render_context.buffers[VBO_WALL].usage = GL_DYNAMIC_DRAW;
     render_context.buffers[VBO_TILE_MINIMAP].target = GL_ARRAY_BUFFER;
-    render_context.buffers[VBO_TILE_MINIMAP].usage = GL_STATIC_DRAW;
+    render_context.buffers[VBO_TILE_MINIMAP].usage = GL_DYNAMIC_DRAW;
     render_context.buffers[VBO_WALL_MINIMAP].target = GL_ARRAY_BUFFER;
-    render_context.buffers[VBO_WALL_MINIMAP].usage = GL_STATIC_DRAW;
+    render_context.buffers[VBO_WALL_MINIMAP].usage = GL_DYNAMIC_DRAW;
 
     glGenBuffers(1, &render_context.matrices_ubo);
     glBindBuffer(GL_UNIFORM_BUFFER, render_context.matrices_ubo);
-    glBufferData(GL_UNIFORM_BUFFER, 35 * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
+    glBufferData(GL_UNIFORM_BUFFER, 35 * sizeof(GLfloat), NULL, GL_DYNAMIC_DRAW);
     glBindBufferBase(GL_UNIFORM_BUFFER, UBO_INDEX_MATRICES, render_context.matrices_ubo);
 
     glGenBuffers(1, &render_context.minimap_ubo);
     glBindBuffer(GL_UNIFORM_BUFFER, render_context.minimap_ubo);
-    glBufferData(GL_UNIFORM_BUFFER, 5 * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
+    glBufferData(GL_UNIFORM_BUFFER, 5 * sizeof(GLfloat), NULL, GL_DYNAMIC_DRAW);
     glBindBufferBase(GL_UNIFORM_BUFFER, UBO_INDEX_MINIMAP, render_context.minimap_ubo);
 
     f32 quad_data[] = {

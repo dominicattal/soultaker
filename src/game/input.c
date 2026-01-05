@@ -4,7 +4,7 @@
 
 extern GameContext game_context;
 
-void game_process_input(f32 dt)
+void game_process_input()
 {
     if (game_context.halt_game_loop)
         return;

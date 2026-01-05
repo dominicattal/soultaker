@@ -15,17 +15,43 @@
     #define BUILD_INFO "RELEASE"
 #endif
 
+#ifdef _WIN32
+#include <windows.h>
+const char* pathname = "plugins/soultaker.dll";
+const int flags = 0;
+void* dlopen(const char* path, i32 flags)
+{
+    return LoadLibrary(path);
+}
+void* dlsym(void* handle, const char* symbol)
+{
+    return GetProcAddress(handle, symbol);
+}
+char* dlerror(void)
+{
+    return "could not load library";
+}
+int dlclose(void* handle)
+{
+    return FreeLibrary(handle);
+}
+#else
+#include <dlfcn.h>
+const char* pathname = "bin/dev/plugins/soultaker.dll";
+const int flags = RTLD_NOW;
+#endif
+
 struct {
-    HMODULE lib;
-    f32 dt;
+    void* handle;
 } state_context;
 
 void state_init(void)
 {
     thread_link("Main");
 
-    state_context.lib = LoadLibrary("plugins/soultaker.dll");
-    log_assert(state_context.lib, "Could not load library");
+    state_context.handle = dlopen(pathname, flags);
+    if (!state_context.handle)
+        log_write(FATAL, dlerror());
 
     event_init();
     window_init();
@@ -36,16 +62,16 @@ void state_init(void)
 
 void state_loop(void)
 {
-    f64 start, end;
-    start = get_time();
+    //f64 start, end, dt;
+    //start = get_time();
     while (!window_closed())
     {
         window_update();
-        game_process_input(state_context.dt);
+        game_process_input();
         renderer_render();
-        end = get_time();
-        state_context.dt = end - start;
-        start = end;
+        //end = get_time();
+        //dt = end - start;
+        //start = end;
     }
 }
 
@@ -62,15 +88,10 @@ void state_cleanup(void)
 #endif
     log_cleanup();
 
-    FreeLibrary(state_context.lib);
-}
-
-f32 state_get_dt(void)
-{
-    return state_context.dt;
+    dlclose(state_context.handle);
 }
 
 void* state_load_function(const char* name)
 {
-    return GetProcAddress(state_context.lib, name);
+    return dlsym(state_context.handle, name);
 }
