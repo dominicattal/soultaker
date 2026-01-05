@@ -49,7 +49,6 @@ typedef struct {
     void* ptr1;
     void* ptr2;
     void* ptr3;
-    void* ptr4;
 } Event;
 
 typedef struct {
@@ -109,7 +108,6 @@ static void execute_event(Event event)
     void* ptr1;
     void* ptr2;
     void* ptr3;
-    void* ptr4;
     arg1 = event.arg1;
     arg2 = event.arg2;
     arg3 = event.arg3;
@@ -117,7 +115,6 @@ static void execute_event(Event event)
     ptr1 = event.ptr1;
     ptr2 = event.ptr2;
     ptr3 = event.ptr3;
-    ptr4 = event.ptr4;
     switch (event.type) {
         case EVENT_NONE:
             break;
@@ -155,7 +152,7 @@ static void execute_event(Event event)
             game_framebuffer_size_callback();
             break;
         case GAME_EVENT_INTERACTABLE_CALLBACK:
-            map_interactable_callback(ptr1, ptr2, ptr3, ptr4);
+            map_interactable_callback(ptr1, ptr2, ptr3);
             break;
 
         // Gui 
@@ -190,7 +187,7 @@ static void execute_event(Event event)
             gui_create_notification(ptr1);
             break;
         case GUI_EVENT_SET_INTERACTABLE:
-            gui_set_interactable(ptr1, ptr2, ptr3, ptr4);
+            gui_set_interactable(ptr1, ptr2, ptr3);
             break;
 
         // Renderer
@@ -318,14 +315,13 @@ void event_create_game_framebuffer_size_callback(void)
     event_enqueue(queue, event);
 }
 
-void event_create_game_interactable_callback(InteractableFuncPtr func_ptr, Map* map, MapNode* map_node, void* data)
+void event_create_game_interactable_callback(InteractableFuncPtr func_ptr, Map* map, MapNode* map_node)
 {
     Event event = (Event) {
         .type = GAME_EVENT_INTERACTABLE_CALLBACK,
         .ptr1 = func_ptr,
         .ptr2 = map,
         .ptr3 = map_node,
-        .ptr4 = data
     };
     EventQueue* queue = get_event_queue("Game");
     event_enqueue(queue, event);
@@ -446,14 +442,13 @@ void event_create_gui_create_notification(char* notif)
     event_enqueue(queue, event);
 }
 
-void event_create_gui_set_interactable(InteractableFuncPtr func_ptr, Map* map, MapNode* map_node, void* data)
+void event_create_gui_set_interactable(InteractableFuncPtr func_ptr, Map* map, MapNode* map_node)
 {
     Event event = (Event) {
         .type = GUI_EVENT_SET_INTERACTABLE,
         .ptr1 = func_ptr,
         .ptr2 = map,
         .ptr3 = map_node,
-        .ptr4 = data
     };
     EventQueue* queue = get_event_queue("GUI");
     event_enqueue(queue, event);

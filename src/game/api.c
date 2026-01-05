@@ -34,6 +34,7 @@ GameApi game_api = {
     REGISTER(trigger_get_flag),
 
     // Map
+    REGISTER(map_get_data),
     REGISTER(map_set_interactable),
     REGISTER(map_orientation),
     REGISTER(map_create_projectile),

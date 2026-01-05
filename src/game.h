@@ -31,7 +31,7 @@ typedef void (*TriggerStayFunc)(GameApi*, Trigger*, Entity*);
 typedef void (*TriggerLeaveFunc)(GameApi*, Trigger*, Entity*);
 typedef void (*TriggerDestroyFunc)(GameApi*, Trigger*);
 
-typedef void (*InteractableFuncPtr)(GameApi*, void*);
+typedef void (*InteractableFuncPtr)(GameApi*);
 
 //**************************************************************************
 // Core / Thread safe functions

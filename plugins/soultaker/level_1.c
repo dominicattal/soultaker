@@ -4,6 +4,7 @@
 typedef struct {
     i32 num_branches;
     i32 global_int;
+    Trigger* boss_trigger;
 } LevelData;
 
 st_export void* level_1_init(GameApi* api)
@@ -122,22 +123,22 @@ st_export void dummy_boss_destroy(GameApi* api, Entity* entity)
     api->room_set_tilemap_tile(8, 1, 0x00FF00);
 }
 
-static void start_boss(GameApi* api, void* args)
+static void start_boss(GameApi* api)
 {
     i32 id = api->entity_get_id("dummy_boss");
     vec2 pos = api->vec2_create(7.5, 3);
+    LevelData* data = api->map_get_data();
     api->room_create_entity(pos, id);
     api->room_set_tilemap_wall(6, 1, 1.0f, 0xFF0000);
     api->room_set_tilemap_wall(7, 1, 1.0f, 0xFF0000);
     api->room_set_tilemap_wall(8, 1, 1.0f, 0xFF0000);
-    Trigger* trigger = args;
-    api->trigger_set_flag(trigger, TRIGGER_FLAG_DELETE, true);
-    api->map_set_interactable(NULL, NULL);
+    api->trigger_set_flag(data->boss_trigger, TRIGGER_FLAG_DELETE, true);
+    api->map_set_interactable(NULL);
 }
 
 static void enter_test(GameApi* api, Trigger* trigger, Entity* entity)
 {
-    api->map_set_interactable(start_boss, trigger);
+    api->map_set_interactable(start_boss);
 }
 
 static void stay_test(GameApi* api, Trigger* trigger, Entity* entity)
@@ -146,7 +147,7 @@ static void stay_test(GameApi* api, Trigger* trigger, Entity* entity)
 
 static void leave_test(GameApi* api, Trigger* trigger, Entity* entity)
 {
-    api->map_set_interactable(NULL, NULL);
+    api->map_set_interactable(NULL);
 }
 
 st_export void level_1_boss_create(GameApi* api, LevelData* data)
@@ -157,6 +158,7 @@ st_export void level_1_boss_create(GameApi* api, LevelData* data)
     trigger->enter = enter_test;
     trigger->stay = stay_test;
     trigger->leave = leave_test;
+    data->boss_trigger = trigger;
     //api->trigger_set_flag(trigger, TRIGGER_FLAG_ONCE, true);
 }
 

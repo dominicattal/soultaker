@@ -1757,16 +1757,22 @@ static void clear_map(void)
     map_context.current_map_node = NULL;
 }
 
-void map_interactable_callback(InteractableFuncPtr fptr, Map* map, MapNode* map_node, void* data)
+void map_interactable_callback(InteractableFuncPtr fptr, Map* map, MapNode* map_node)
 {
     map_context.current_map = map;
     map_context.current_map_node = map_node;
-    fptr(&game_api, data);
+    fptr(&game_api);
 }
 
-void map_set_interactable(InteractableFuncPtr func_ptr, void* data)
+void map_set_interactable(InteractableFuncPtr func_ptr)
 {
-    event_create_gui_set_interactable(func_ptr, map_context.current_map, map_context.current_map_node, data);
+    event_create_gui_set_interactable(func_ptr, map_context.current_map, map_context.current_map_node);
+}
+
+void* map_get_data(void)
+{
+    log_assert(map_context.current_map != NULL, "");
+    return map_context.current_map->roomset->data;
 }
 
 Projectile* map_create_projectile(vec2 position)

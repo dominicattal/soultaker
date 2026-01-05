@@ -331,10 +331,9 @@ typedef struct {
     InteractableFuncPtr fptr;
     Map* map;
     MapNode* map_node;
-    void* data;
 } InteractableData;
 
-void gui_set_interactable(InteractableFuncPtr func_ptr, Map* map, MapNode* map_node, void* data)
+void gui_set_interactable(InteractableFuncPtr func_ptr, Map* map, MapNode* map_node)
 {
     GUIComp* inter_comp = gui_get_event_comp(GUI_COMP_INTERACTABLE);
     if (inter_comp == NULL) {
@@ -346,7 +345,6 @@ void gui_set_interactable(InteractableFuncPtr func_ptr, Map* map, MapNode* map_n
     comp_data->fptr = func_ptr;
     comp_data->map = map;
     comp_data->map_node = map_node;
-    comp_data->data = data;
 }
 
 static void interactable_click(GUIComp* comp, i32 button, i32 action, i32 mods)
@@ -356,7 +354,7 @@ static void interactable_click(GUIComp* comp, i32 button, i32 action, i32 mods)
         return;
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
         if (data->fptr != NULL) {
-            event_create_game_interactable_callback(data->fptr, data->map, data->map_node, data->data);
+            event_create_game_interactable_callback(data->fptr, data->map, data->map_node);
         }
     }
 }
