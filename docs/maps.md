@@ -36,6 +36,11 @@ There is no hard limit to the size of a map.
     "init": "map_name_init",
     "cleanup": "map_name_cleanup",
     "palette": {
+        "clear_tile": {
+            "color": "000000",
+            "type": "tile",
+            "tex": "clear_tile_tex"
+        },
         "tile_name": {
             "color": "FF0000",
             "type": "tile",
@@ -90,7 +95,7 @@ The ```generate_cleanup``` field is a function name that is called after generat
 The first ```generate``` field is a function name that determines whether a room should be loaded or not. You can use the data in the ```LocalMapGenerationSettings``` struct and the data in your own struct passed from ```generate_init``` to make this decision.
 These fields are all optional.
 
-The ```palette``` field contains zero or more colors (formatted as shown above) that correspond to a unit on the map, where a unit is a tile or a wall. Tiles require the ```tex``` field and walls require the ```side_tex``` and ```top_tex``` fields, where the values in these fields are texture names described in the textures.json config file. The ```collide``` field is optional and contains a collision function for that tile. The ```create``` field is optional and contains a create function for when the tile is first made, which is how you set flags for the tile. The ```height``` specifies the height if the tile is a wall; otherwise, this value will be ignored.
+The ```palette``` field contains zero or more colors (formatted as shown above) that correspond to a unit on the map, where a unit is a tile or a wall. Tiles require the ```tex``` field and walls require the ```side_tex``` and ```top_tex``` fields, where the values in these fields are texture names described in the textures.json config file. The ```collide``` field is optional and contains a collision function for that tile. The ```create``` field is optional and contains a create function for when the tile is first made, which is how you set flags for the tile. The ```height``` specifies the height if the tile is a wall; otherwise, this value will be ignored. When ```color``` is "000000", that tile will replace every unfilled tile with that tile.
 
 The ```create``` field described in each room are function names that are called when that room is loaded in, which is used to populate rooms with enemies, obstacles, or more walls. This field is optional.
 
