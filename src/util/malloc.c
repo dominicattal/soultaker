@@ -3,8 +3,6 @@
 #include <pthread.h>
 #include <string.h>
 
-static size_t heap_size;
-
 #ifdef TRACK_POINTERS
 
 typedef struct {
@@ -111,6 +109,10 @@ static void _print_pointers(void)
 
 #endif
 
+#ifdef DEBUG_BUILD
+
+static size_t heap_size;
+
 void* _st_malloc(size_t size, const char* file, int line)
 {
     if (size == 0)
@@ -184,3 +186,5 @@ void print_heap_info(void)
     print_pointers();
     log_write(DEBUG, "Current heap size: %lld", heap_size);
 }
+
+#endif

@@ -17,6 +17,7 @@ Wall* wall_create(vec2 position, f32 height, u32 minimap_color)
     wall->height = height;
     wall->top_tex = texture_get_id("wall_1");
     wall->side_tex = texture_get_id("wall_2");
+    wall->flags = 0;
     wall_set_flag(wall, WALL_FLAG_ACTIVE, true);
     return wall;
 }

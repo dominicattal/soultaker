@@ -104,7 +104,7 @@ bool gui_event_comp_equal(GUIEventCompEnum type, GUIComp* comp);
 
 // events
 void gui_update_weapon_info(i32 weapon_id);
-void gui_create_boss_healthbar(void* boss_ptr, f32 health, f32 max_health);
+void gui_create_boss_healthbar(char* name, void* boss_ptr, f32 health, f32 max_health);
 void gui_update_boss_healthbar(void* boss_ptr, f32 health, f32 max_health);
 void gui_destroy_boss_healthbar(void* boss_ptr);
 void gui_create_notification(char* notif);

@@ -33,7 +33,6 @@ void window_init(void)
     glfwSetInputMode(window_context.handle, GLFW_LOCK_KEY_MODS, GLFW_TRUE);
     window_context.cursor.hidden = false;
     gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
-    log_write(DEBUG, "%p", glfwGetCurrentContext());
     glViewport(0, 0, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT);
     //glfwSwapInterval(1);
     
