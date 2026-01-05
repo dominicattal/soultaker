@@ -1,4 +1,4 @@
-#version 460 core
+#version 430 core
 
 out flat float height;
 out vec2 ShadowCoords;

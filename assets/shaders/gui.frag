@@ -1,4 +1,4 @@
-#version 460 core
+#version 430
 
 uniform sampler2D textures[16];
 

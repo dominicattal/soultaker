@@ -1,4 +1,4 @@
-#version 460
+#version 430
 
 #define PI 3.141592653589
 

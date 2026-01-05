@@ -4,7 +4,7 @@
 #include "../api.h"
 #include <json.h>
 #include <math.h>
-#include <windows.h>
+#include <string.h>
 #include <stb_image.h>
 
 // Think of the map like a tree with rooms as nodes.
@@ -1337,10 +1337,10 @@ static void load_room(LoadArgs* args)
             dz = calculate_room_dz(room, orientation, u, v);
             map_x = origin_x + dx;
             map_z = origin_z + dz;
-            node->x1 = min(node->x1, map_x);
-            node->x2 = max(node->x2, map_x);
-            node->z1 = min(node->z1, map_z);
-            node->z2 = max(node->z2, map_z);
+            node->x1 = mini(node->x1, map_x);
+            node->x2 = maxi(node->x2, map_x);
+            node->z1 = mini(node->z1, map_z);
+            node->z2 = maxi(node->z2, map_z);
             color = roomset_get_color(roomset, u, v);
             if (color_is_preset(color))
                 continue;

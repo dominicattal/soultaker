@@ -4,7 +4,11 @@
 #include "util.h"
 #include "game/internal.h"
 
+#ifdef _WIN32
 #define st_export __declspec(dllexport)
+#else
+#define st_export
+#endif
 
 typedef struct GameApi GameApi;
 

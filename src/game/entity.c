@@ -2,8 +2,8 @@
 #include "../state.h"
 #include "../api.h"
 #include "../event.h"
-#include <windows.h>
 #include <json.h>
+#include <string.h>
 #include <math.h>
 
 #define DEFAULT_FRAME_LENGTH 0.5

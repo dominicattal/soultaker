@@ -37,9 +37,6 @@
     GEN(GL_ATOMIC_COUNTER_BUFFER_BINDING) \
     GEN(GL_DISPATCH_INDIRECT_BUFFER_BINDING) \
     GEN(GL_SHADER_STORAGE_BUFFER_BINDING) \
-    GEN(GL_TEXTURE_BUFFER_BINDING) \
-    GEN(GL_QUERY_BUFFER_BINDING) \
-    GEN(GL_PARAMETER_BUFFER_BINDING) \
     GEN(GL_CURRENT_PROGRAM)
 
 const GLint query_ints[] = {
@@ -209,8 +206,8 @@ void renderer_list_context_flags(void)
     glGetIntegerv(GL_CONTEXT_FLAGS, &mask);
     printf("%sGL_CONTEXT_FLAG_FORWARD_COMPATIBLE\n", (mask & GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT) ? "" : "NOT ");
     printf("%sGL_CONTEXT_FLAG_DEBUG\n", (mask & GL_CONTEXT_FLAG_DEBUG_BIT) ? "" : "NOT ");
-    printf("%sGL_CONTEXT_FLAG_ROBUST_ACCESS\n", (mask & GL_CONTEXT_FLAG_ROBUST_ACCESS_BIT) ? "" : "NOT ");
-    printf("%sGL_CONTEXT_FLAG_NO_ERROR\n", (mask & GL_CONTEXT_FLAG_NO_ERROR_BIT) ? "" : "NOT ");
+    //printf("%sGL_CONTEXT_FLAG_ROBUST_ACCESS\n", (mask & GL_CONTEXT_FLAG_ROBUST_ACCESS_BIT) ? "" : "NOT ");
+    //printf("%sGL_CONTEXT_FLAG_NO_ERROR\n", (mask & GL_CONTEXT_FLAG_NO_ERROR_BIT) ? "" : "NOT ");
 }
 
 void renderer_print_state(void)

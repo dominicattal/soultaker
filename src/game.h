@@ -53,7 +53,7 @@ void game_resume_render(void);
 
 void game_init(void);
 void game_cleanup(void);
-void game_process_input(f32 dt);
+void game_process_input();
 void game_render(void);
 void game_load_starting_area(void);
 
