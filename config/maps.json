@@ -55,11 +55,6 @@
         "generate": "level_1_generate",
         "branch": "level_1_branch",
         "palette": {
-            "clear_tile": {
-                "color": "000000",
-                "type": "tile",
-                "tex": "level_1_floor_1"
-            },
             "floor_1": {
                 "color": "FF9E3D",
                 "type": "tile",

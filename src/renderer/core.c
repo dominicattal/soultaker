@@ -82,6 +82,7 @@ void renderer_render(void)
 
     game_render();
     gui_render();
+    glFlush();
     event_queue_flush();
 }
 

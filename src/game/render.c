@@ -613,6 +613,10 @@ void game_update_vertex_data(void)
     VertexBuffer* vb;
     RenderData* tmp;
 
+    map = game_context.current_map;
+    if (map == NULL)
+        return;
+
     vb = get_vertex_buffer_swap(SSBO_ENTITY);
     vb->update = true;
     vb = get_vertex_buffer_swap(SSBO_PROJECTILE);
@@ -621,8 +625,6 @@ void game_update_vertex_data(void)
     vb->update = true;
     vb = get_vertex_buffer_swap(SSBO_PARJICLE);
     vb->update = true;
-
-    map = game_context.current_map;
 
     if (is_vertex_buffer_update(SSBO_ENTITY)) {
         update_entity_vertex_data(map);

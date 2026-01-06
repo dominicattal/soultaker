@@ -146,6 +146,7 @@ i32 gui_comp_compute_text_height(GUIComp* comp);
 GUIComp* gui_comp_create(i16 x, i16 y, i16 w, i16 h);
 
 void gui_comp_set_flag(GUIComp* comp, GUICompFlagEnum flag, bool val);
+void gui_comp_toggle_flag(GUIComp* comp, GUICompFlagEnum flag);
 bool gui_comp_get_flag(GUIComp* comp, GUICompFlagEnum flag);
 
 // attach a component to another component. the child component's alignment 
