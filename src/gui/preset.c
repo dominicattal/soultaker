@@ -43,7 +43,7 @@ static GUIComp* create_help_screen(void)
     gui_comp_set_color(help, 255, 255, 255, 255);
     GUIComp* exit = gui_comp_create(0, 350, 200, 75);
     char* string = "Exit";
-    gui_comp_copy_text(exit, strlen(string), string);
+    gui_comp_copy_text(exit, string);
     gui_comp_set_text_align(exit, ALIGN_CENTER, ALIGN_CENTER);
     gui_comp_set_color(exit, 255, 0, 255, 255);
     gui_comp_set_flag(exit, GUI_COMP_FLAG_CLICKABLE, true);
@@ -63,7 +63,7 @@ static GUIComp* create_help_screen(void)
     gui_comp_attach(help, options);
     string = "Continue";
     GUIComp* continue1 = gui_comp_create(0, 50, 200, 75);
-    gui_comp_copy_text(continue1, strlen(string), string);
+    gui_comp_copy_text(continue1, string);
     gui_comp_set_flag(continue1, GUI_COMP_FLAG_CLICKABLE, true);
     gui_comp_set_text_align(continue1, ALIGN_CENTER, ALIGN_CENTER);
     continue1->click = help_screen_continue_click;
@@ -82,7 +82,7 @@ static void keyfunc(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods)
             game_resume_input();
             if (comp->text != NULL) {
                 message = gui_command_parse(comp->text);
-                gui_comp_set_text(comp, strlen(message), message);
+                gui_comp_set_text(comp, message);
             }
             gui_set_event_comp(GUI_COMP_TYPING, NULL);
             gui_comp_set_color(comp, 255, 255, 255, 100);
@@ -131,8 +131,8 @@ typedef struct {
 
 static void update_fps(GUIComp* comp, f32 dt)
 {
-    char* string = string_create("%.5f", 10, 1000 * game_get_dt());
-    gui_comp_set_text(comp, strlen(string), string);
+    char* string = string_create("%.5f", 1000 * game_get_dt());
+    gui_comp_set_text(comp, string);
 }
 
 static GUIComp* create_player_health(void)
@@ -149,7 +149,7 @@ static GUIComp* create_player_health(void)
     gui_comp_set_color(hp_text, 0, 0, 0, 0);
     hp_text->font_size = 16;
     hp_text->font = FONT_MONOSPACE;
-    gui_comp_copy_text(hp_text, 2, "HP");
+    gui_comp_copy_text(hp_text, "HP");
 
     gui_comp_attach(player_health, current_health);
     gui_comp_attach(player_health, hp_text);
@@ -169,7 +169,7 @@ static GUIComp* create_player_mana(void)
     GUIComp* mp_text = gui_comp_create(0, 0, STAT_POINT_WIDTH, 20);
     gui_comp_set_text_align(mp_text, ALIGN_CENTER, ALIGN_CENTER);
     gui_comp_set_color(mp_text, 0, 0, 0, 0);
-    gui_comp_copy_text(mp_text, 2, "MP");
+    gui_comp_copy_text(mp_text, "MP");
     mp_text->font_size = 16;
     mp_text->font = FONT_MONOSPACE;
 
@@ -191,7 +191,7 @@ static GUIComp* create_player_souls(void)
     GUIComp* sp_text = gui_comp_create(0, 0, STAT_POINT_WIDTH, 20);
     gui_comp_set_text_align(sp_text, ALIGN_CENTER, ALIGN_CENTER);
     gui_comp_set_color(sp_text, 0, 0, 0, 0);
-    gui_comp_copy_text(sp_text, 2, "SP");
+    gui_comp_copy_text(sp_text, "SP");
     sp_text->font = FONT_MONOSPACE;
     sp_text->font_size = 16;
 
@@ -237,14 +237,14 @@ void gui_create_boss_healthbar(char* name, void* boss_ptr, f32 health, f32 max_h
     gui_comp_set_align(comp_text, ALIGN_RIGHT, ALIGN_TOP);
     gui_comp_set_color(comp_text, 0, 0, 0, 0);
     gui_comp_set_text_align(comp_text, ALIGN_CENTER, ALIGN_CENTER);
-    char* text = string_create("%.0f/%.0f", 100, health, max_health);
-    gui_comp_set_text(comp_text, strlen(text), text);
+    char* text = string_create("%.0f/%.0f", health, max_health);
+    gui_comp_set_text(comp_text, text);
 
     GUIComp* comp_name = gui_comp_create(0, 0, STAT_POINT_WIDTH, 20);
     gui_comp_set_align(comp_name, ALIGN_RIGHT, ALIGN_TOP);
     gui_comp_set_color(comp_name, 255, 255, 255, 255);
     gui_comp_set_text_align(comp_name, ALIGN_CENTER, ALIGN_CENTER);
-    gui_comp_copy_text(comp_name, strlen(name), name);
+    gui_comp_copy_text(comp_name, name);
 
     gui_comp_attach(healthbar, comp_max_health);
     gui_comp_attach(healthbar, comp_health);
@@ -281,8 +281,8 @@ void gui_update_boss_healthbar(void* boss_ptr, f32 health, f32 max_health)
     GUIComp* comp_health = healthbar->children[1];
     GUIComp* comp_text = healthbar->children[2];
 
-    char* text = string_create("%.0f/%.0f", 100, health, max_health);
-    gui_comp_set_text(comp_text, strlen(text), text);
+    char* text = string_create("%.0f/%.0f", health, max_health);
+    gui_comp_set_text(comp_text, text);
 
     f32 health_ratio = health / max_health;
     comp_health->w = round(health_ratio * STAT_POINT_WIDTH);
@@ -355,7 +355,7 @@ void gui_create_notification(char* notif)
     *data = 1.0f;
     message->data = data;
     gui_comp_set_color(message, 255, 255, 255, 125);
-    gui_comp_copy_text(message, strlen(notif), notif);
+    gui_comp_copy_text(message, notif);
     i32 height = gui_comp_compute_text_height(message);
     log_write(DEBUG, "%d", height);
     message->h = height;
@@ -406,7 +406,7 @@ void gui_set_interactable(const char* desc, InteractableFuncPtr func_ptr, Map* m
         return;
     }
     if (desc != NULL)
-        gui_comp_copy_text(inter_comp, strlen(desc), desc);
+        gui_comp_copy_text(inter_comp, desc);
     else
         gui_comp_remove_text(inter_comp);
     inter_comp->a = (func_ptr == NULL) ? 0 : 255;
@@ -529,7 +529,7 @@ static void video_mode_right_arrow_click(GUIComp* comp, i32 button, i32 action, 
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
         if (data->current_mode+1 < num_modes) {
             mode = video_modes[++data->current_mode];
-            gui_comp_copy_text(comp->parent, strlen(mode), mode);
+            gui_comp_copy_text(comp->parent, mode);
         }
     }
 }
@@ -541,7 +541,7 @@ static void video_mode_left_arrow_click(GUIComp* comp, i32 button, i32 action, i
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
         if (data->current_mode-1 >= 0) {
             mode = video_modes[--data->current_mode];
-            gui_comp_copy_text(comp->parent, strlen(mode), mode);
+            gui_comp_copy_text(comp->parent, mode);
         }
     }
 }
@@ -552,7 +552,7 @@ static void load_video_settings(GUIComp* root)
     const char* video_mode_text = "Windowed";
     gui_comp_set_color(video_mode, 0, 255, 0, 255);
     gui_comp_set_text_align(video_mode, ALIGN_CENTER, ALIGN_CENTER);
-    gui_comp_copy_text(video_mode, strlen(video_mode_text), video_mode_text);
+    gui_comp_copy_text(video_mode, video_mode_text);
     gui_comp_attach(root, video_mode);
     VideoSettingsData* data = st_malloc(sizeof(VideoSettingsData));
     data->current_mode = 0;
@@ -584,7 +584,7 @@ static void load_preset_options(GUIComp* root)
     gui_comp_set_flag(menu, GUI_COMP_FLAG_CLICKABLE, true);
     gui_comp_set_color(menu, 255, 255, 255, 255);
     gui_comp_set_text_align(menu, ALIGN_CENTER, ALIGN_CENTER);
-    gui_comp_copy_text(menu, strlen(menu_text), menu_text);
+    gui_comp_copy_text(menu, menu_text);
     gui_comp_attach(root, menu);
 
     GUIComp* settings = gui_comp_create(45, 110, 500, 500);
@@ -619,7 +619,7 @@ static void load_preset_runs(GUIComp* root)
     gui_comp_set_flag(new_run, GUI_COMP_FLAG_CLICKABLE, true);
     gui_comp_set_color(new_run, 255, 255, 255, 255);
     gui_comp_set_text_align(new_run, ALIGN_CENTER, ALIGN_CENTER);
-    gui_comp_copy_text(new_run, strlen(new_run_text), new_run_text);
+    gui_comp_copy_text(new_run, new_run_text);
     gui_comp_attach(root, new_run);
 }
 
@@ -650,7 +650,7 @@ static void load_preset_main_menu(GUIComp* root)
     gui_comp_set_flag(play, GUI_COMP_FLAG_CLICKABLE, true);
     gui_comp_set_color(play, 255, 255, 255, 255);
     gui_comp_set_text_align(play, ALIGN_CENTER, ALIGN_CENTER);
-    gui_comp_copy_text(play, strlen(play_text), play_text);
+    gui_comp_copy_text(play, play_text);
     gui_comp_attach(root, play);
 
     GUIComp* options = gui_comp_create(45, 110, 100, 30);
@@ -659,7 +659,7 @@ static void load_preset_main_menu(GUIComp* root)
     gui_comp_set_flag(options, GUI_COMP_FLAG_CLICKABLE, true);
     gui_comp_set_color(options, 255, 255, 255, 255);
     gui_comp_set_text_align(options, ALIGN_CENTER, ALIGN_CENTER);
-    gui_comp_copy_text(options, strlen(options_text), options_text);
+    gui_comp_copy_text(options, options_text);
     gui_comp_attach(root, options);
     
     GUIComp* exit = gui_comp_create(45, 170, 100, 30);
@@ -668,7 +668,7 @@ static void load_preset_main_menu(GUIComp* root)
     gui_comp_set_flag(exit, GUI_COMP_FLAG_CLICKABLE, true);
     gui_comp_set_color(exit, 255, 255, 255, 255);
     gui_comp_set_text_align(exit, ALIGN_CENTER, ALIGN_CENTER);
-    gui_comp_copy_text(exit, strlen(exit_text), exit_text);
+    gui_comp_copy_text(exit, exit_text);
     gui_comp_attach(root, exit);
 }
 

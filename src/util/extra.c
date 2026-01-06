@@ -30,22 +30,47 @@ f64 get_time(void)
 
 char* string_copy(const char* string)
 {
-    int n = strlen(string);
+    i32 n = strlen(string);
     char* copied = st_malloc((n+1) * sizeof(char));
     strncpy(copied, string, n+1);
     copied[n] = '\0';
     return copied;
 }
 
-char* string_create(const char* format, int n, ...)
+char* string_copy_len(const char* string, i32* len)
 {
-    char* string = st_malloc((n+1) * sizeof(char));
+    i32 n = strlen(string);
+    char* copied = st_malloc((n+1) * sizeof(char));
+    strncpy(copied, string, n+1);
+    copied[n] = '\0';
+    *len = n;
+    return copied;
+}
+
+char* string_create(const char* fmt, ...)
+{
+    i32 n;
     va_list args;
-    va_start(args, n);
-    vsnprintf(&string[0], n, format, args);
+    char* string;
+    va_start(args, fmt);
+    n = vsnprintf(NULL, 0, fmt, args);
+    string = st_malloc((n+1) * sizeof(char));
+    vsnprintf(string, n+1, fmt, args);
     va_end(args);
-    i32 len = strlen(string);
-    string = st_realloc(string, (len+1) * sizeof(char));
+    return string;
+}
+
+char* string_create_len(const char* fmt, i32* len, ...)
+{
+    i32 n;
+    va_list args;
+    char* string;
+    va_start(args, len);
+    n = vsnprintf(NULL, 0, fmt, args);
+    string = st_malloc((n+1) * sizeof(char));
+    vsnprintf(string, n+1, fmt, args);
+    va_end(args);
+    *len = n;
     return string;
 }
 

@@ -1243,6 +1243,7 @@ static bool pregenerate_map_helper(GlobalMapGenerationSettings* global_settings,
                     if (pregenerate_map_helper(global_settings, local_settings, child)) {
                         local_settings.num_rooms_loaded++;
                         if (roomset->branch(&game_api, roomset->data, &local_settings)) {
+                            // reset female alternates too
                             male_idx = 0;
                             continue;
                         }

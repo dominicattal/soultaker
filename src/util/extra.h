@@ -9,9 +9,15 @@ f64  get_time(void);
 // create a copy of string on the heap
 char* string_copy(const char* string);
 
+// string_copy, but return the length of the string in len
+char* string_copy_len(const char* string, i32* len);
+
 // create a string with the format that is 
 // at most n characters long
-char* string_create(const char* format, int n, ...);
+char* string_create(const char* fmt, ...);
+
+// string_create, but return the length of the string
+char* string_create_len(const char* fmt, i32* len, ...);
 
 // free a string created by string_copy or string_create
 void  string_free(char* string);

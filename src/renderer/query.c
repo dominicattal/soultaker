@@ -142,7 +142,7 @@ void renderer_write_texture_unit(i32 unit)
         log_write(DEBUG, "unit %d failed to get pixels", unit);
         return;
     }
-    char* path = string_create("data/unit%d.png", 100, unit);
+    char* path = string_create("data/unit%d.png", unit);
     stbi_write_png(path, w, h, c, pixels, 0);
     string_free(path);
     st_free(pixels);
@@ -152,9 +152,9 @@ void renderer_write_texture_unit(i32 unit)
 
 void renderer_write_texture_units(void)
 {
-    i32 i, w, h, fmt, c, n;
+    i32 i, w, h, fmt, c;
     i32 max_image_units = renderer_get_max_image_units();
-    char* summary = string_create("summary", 10);
+    char* summary = string_create("summary");
     char* line;
     char* tmp;
     log_write(DEBUG, "max_image_units=%d", max_image_units);
@@ -168,12 +168,11 @@ void renderer_write_texture_units(void)
         u8* pixels = get_pixels(w, h, fmt, &c);
         if (pixels == NULL)
             continue;
-        char* path = string_create("data/unit%d.png", 100, i);
+        char* path = string_create("data/unit%d.png", i);
         stbi_write_png(path, w, h, c, pixels, 0);
-        line = string_create("unit=%-2d w=%-4d h=%-4d fmt=0x%x", 100, i, w, h, fmt);
+        line = string_create("unit=%-2d w=%-4d h=%-4d fmt=0x%x", i, w, h, fmt);
         tmp = summary;
-        n = strlen(line) + strlen(tmp) + 1;
-        summary = string_create("%s\n%s", n, summary, line);
+        summary = string_create("%s\n%s", summary, line);
 
         string_free(path);
         string_free(tmp);
