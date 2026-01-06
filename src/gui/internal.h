@@ -170,11 +170,11 @@ void gui_comp_destroy_children(GUIComp* comp);
 
 // sets the comp's text and length. text becomes owned by the comp, so
 // it should no longer be altered. text must be on the heap.
-void gui_comp_set_text(GUIComp* comp, i32 length, char* text);
+void gui_comp_set_text(GUIComp* comp, char* text);
 
 // copies length characters from string text. text does not become owned by
 // the comp, so it should be deallocated properly. text does not have to be on heap.
-void gui_comp_copy_text(GUIComp* comp, i32 length, const char* text);
+void gui_comp_copy_text(GUIComp* comp, const char* text);
 
 // removes the comp's current text, freeing it and setting it to NULL
 void gui_comp_remove_text(GUIComp* comp);

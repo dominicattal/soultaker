@@ -87,7 +87,7 @@ static void _throw_entity_error(EntityError error, i32 line)
             break;
     }
 
-    char* error_string = string_create("%s:%d\nentity: %s\nstate: %s\nfunction: %s\n%s", 1024, __FILE__, line, name, state, func, message);
+    char* error_string = string_create("%s:%d\nentity: %s\nstate: %s\nfunction: %s\n%s", __FILE__, line, name, state, func, message);
     log_write(FATAL, error_string);
 }
 

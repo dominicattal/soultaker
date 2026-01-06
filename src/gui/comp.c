@@ -116,30 +116,27 @@ void gui_comp_detach_and_destroy(GUIComp* parent, GUIComp* child)
     gui_comp_destroy(child);
 }
 
-void gui_comp_set_text(GUIComp* comp, i32 length, char* text)
+void gui_comp_set_text(GUIComp* comp, char* text)
 {
-    comp->text_length = length;
     string_free(comp->text);
-    if (length == 0) {
+    if (text == NULL) {
         comp->text = NULL;
+        comp->text_length = 0;
         return;
     }
     comp->text = text;
+    comp->text_length = strlen(text);
 }
 
-void gui_comp_copy_text(GUIComp* comp, i32 length, const char* text)
+void gui_comp_copy_text(GUIComp* comp, const char* text)
 {
-    comp->text_length = length;
     string_free(comp->text);
-    if (length == 0) {
+    if (text == NULL) {
         comp->text = NULL;
+        comp->text_length = 0;
         return;
     }
-
-    char* new_text = st_malloc((length+1) * sizeof(char));
-    strncpy(new_text, text, length + 1);
-    new_text[length] = '\0';
-    comp->text = new_text;
+    comp->text = string_copy_len(text, &comp->text_length);
 }
 
 void gui_comp_remove_text(GUIComp* comp)

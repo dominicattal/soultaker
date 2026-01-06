@@ -59,19 +59,17 @@ static char* state_string(CommandState state)
             message = string_copy("Must provide preset name");
             break;
         case CS_PRESETFIN:
-            message = string_create("Successfully loaded preset %s", 
-                    MAX_STRING_LENGTH, command_context.arg_string);
+            message = string_create("Successfully loaded preset %s", command_context.arg_string);
             break;
         case CS_POSITIONFIN:
             vec2 position = player_position();
-            message = string_create("%.2f %.2f", MAX_STRING_LENGTH, position.x, position.y);
+            message = string_create("%.2f %.2f", position.x, position.y);
             break;
         case CS_SUMMON:
             message = string_copy("Must provide entity name");
             break;
         case CS_SUMMONFIN:
-            message = string_create("Successfully summoned %s", 
-                    MAX_STRING_LENGTH, command_context.arg_string);
+            message = string_create("Successfully summoned %s", command_context.arg_string);
             break;
         case CS_RESPAWNFIN:
             message = string_copy("Respawned");
