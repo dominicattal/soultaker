@@ -2415,6 +2415,8 @@ static void map_update_objects(Map* map)
 
 void map_update(Map* map)
 {
+    if (map == NULL)
+        return;
     map_context.current_map = map;
     map_update_objects(map);
     map_collide_tilemap(map);

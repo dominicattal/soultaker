@@ -83,14 +83,16 @@ static bool gui_mouse_button_callback_helper(GUIComp* comp, i32 xpos, i32 ypos, 
 {
     i32 x, y, w, h;
     u8 halign, valign;
-    bool clickable, child_clicked, in_bounds;
+    bool child_clicked, in_bounds;
     x = comp->x;
     y = comp->y;
     w = comp->w;
     h = comp->h;
     halign = comp->halign;
     valign = comp->valign;
-    clickable = gui_comp_get_flag(comp, GUI_COMP_FLAG_CLICKABLE);
+
+    if (!gui_comp_get_flag(comp, GUI_COMP_FLAG_CLICKABLE))
+        return false;
     
     align_comp_position_x(&position_x, halign, size_x, x, w);
     align_comp_position_y(&position_y, valign, size_y, y, h);
@@ -102,9 +104,6 @@ static bool gui_mouse_button_callback_helper(GUIComp* comp, i32 xpos, i32 ypos, 
     for (i32 i = 0; i < comp->num_children; i++)
         if (gui_mouse_button_callback_helper(comp->children[i], xpos, ypos, button, action, mods, position_x, position_y, w, h))
             child_clicked = true;
-
-    if (!clickable)
-        return false;
     
     if (!child_clicked && in_bounds)
         gui_comp_click(comp, button, action, mods);

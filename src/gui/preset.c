@@ -1,4 +1,5 @@
 #include "internal.h"
+#include "../state.h"
 #include "../game.h"
 #include "../state.h"
 #include "../window.h"
@@ -7,6 +8,71 @@
 #include <string.h>
 
 // **************************************************
+
+static void help_screen_toggle(GUIComp* comp)
+{
+    gui_comp_toggle_flag(comp, GUI_COMP_FLAG_VISIBLE);
+    gui_comp_toggle_flag(comp, GUI_COMP_FLAG_CLICKABLE);
+}
+
+static void help_screen_key(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods)
+{
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+        help_screen_toggle(comp);
+}
+
+static void help_screen_exit_click(GUIComp* comp, i32 button, i32 action, i32 mods)
+{
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+        window_close();
+}
+
+static void help_screen_continue_click(GUIComp* comp, i32 button, i32 action, i32 mods)
+{
+    log_assert(comp->parent, "wtf happened");
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+        help_screen_toggle(comp->parent);
+}
+
+static GUIComp* create_help_screen(void)
+{
+    GUIComp* help = gui_comp_create(0, 0, 400, 475);
+    help->key = help_screen_key;
+    gui_comp_set_flag(help, GUI_COMP_FLAG_VISIBLE, false);
+    gui_comp_set_align(help, ALIGN_CENTER, ALIGN_CENTER);
+    gui_comp_set_color(help, 255, 255, 255, 255);
+    GUIComp* exit = gui_comp_create(0, 350, 200, 75);
+    char* string = "Exit";
+    gui_comp_copy_text(exit, strlen(string), string);
+    gui_comp_set_text_align(exit, ALIGN_CENTER, ALIGN_CENTER);
+    gui_comp_set_color(exit, 255, 0, 255, 255);
+    gui_comp_set_flag(exit, GUI_COMP_FLAG_CLICKABLE, true);
+    exit->font_size = 32;
+    exit->halign = ALIGN_CENTER;
+    exit->click = help_screen_exit_click;
+    gui_comp_attach(help, exit);
+    GUIComp* main_menu = gui_comp_create(0, 250, 200, 75);
+    main_menu->halign = ALIGN_CENTER;
+    main_menu->font_size = 32;
+    gui_comp_set_color(main_menu, 255, 0, 255, 255);
+    gui_comp_attach(help, main_menu);
+    GUIComp* options = gui_comp_create(0, 150, 200, 75);
+    options->halign = ALIGN_CENTER;
+    options->font_size = 32;
+    gui_comp_set_color(options, 255, 0, 255, 255);
+    gui_comp_attach(help, options);
+    string = "Continue";
+    GUIComp* continue1 = gui_comp_create(0, 50, 200, 75);
+    gui_comp_copy_text(continue1, strlen(string), string);
+    gui_comp_set_flag(continue1, GUI_COMP_FLAG_CLICKABLE, true);
+    gui_comp_set_text_align(continue1, ALIGN_CENTER, ALIGN_CENTER);
+    continue1->click = help_screen_continue_click;
+    continue1->halign = ALIGN_CENTER;
+    continue1->font_size = 32;
+    gui_comp_set_color(continue1, 255, 0, 255, 255);
+    gui_comp_attach(help, continue1);
+    return help;
+}
 
 static void keyfunc(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods)
 {
@@ -430,6 +496,9 @@ static void load_preset_game(GUIComp* root)
 
     GUIComp* interactable = create_interactable();
     gui_comp_attach(root, interactable);
+
+    GUIComp* help = create_help_screen();
+    gui_comp_attach(root, help);
 }
 
 // **************************************************

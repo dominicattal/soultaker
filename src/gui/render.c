@@ -344,6 +344,9 @@ static void gui_update_vertex_data_helper(GUIComp* comp, i32 position_x, i32 pos
     h = comp->h;
     halign = comp->halign;
     valign = comp->valign;
+
+    if (!gui_comp_get_flag(comp, GUI_COMP_FLAG_VISIBLE))
+        return;
     
     align_comp_position_x(&position_x, halign, size_x, x, w);
     align_comp_position_y(&position_y, valign, size_y, y, h);
