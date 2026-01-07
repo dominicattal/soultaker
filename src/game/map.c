@@ -19,16 +19,24 @@
 #define GRAY    0x808080
 #define BLACK   0x000000
 
-typedef void (*RoomCreateFuncPtr)(GameApi*, void*);
-typedef void (*RoomEnterFuncPtr)(GameApi*, void*, i32);
-typedef void (*RoomExitFuncPtr)(GameApi*, void*, i32);
-typedef void (*TileCreateFuncPtr)(GameApi*, Tile*);
+// function called when room in generated. used to create game objects in that room
+typedef void (*RoomCreateFuncPtr)(GameApi*);
+// function called when player enters a room. i32 arg is the number of times that player entered
+typedef void (*RoomEnterFuncPtr)(GameApi*, i32);
+// functionc alled when player exits a room.
+typedef void (*RoomExitFuncPtr)(GameApi*, i32);
+// create data for map that persists while map is in memory
+// this data can be queried with map_get_data()
 typedef void* (*RoomsetInitFuncPtr)(GameApi*);
+// last function called before map is destroyed, used to cleanup allocations
+// in RoomsetInitFuncPtr. void* arg is the data
+typedef void (*RoomsetCleanupFuncPtr)(GameApi*, void*);
 // true if at end of branch, false otherwise
 typedef bool (*RoomsetGenerateFuncPtr)(GameApi*, LocalMapGenerationSettings*);
 // true if should create branch, false otherwise
-typedef bool (*RoomsetBranchFuncPtr)(GameApi*, void*, LocalMapGenerationSettings*);
-typedef void (*RoomsetCleanupFuncPtr)(GameApi*, void*);
+typedef bool (*RoomsetBranchFuncPtr)(GameApi*, LocalMapGenerationSettings*);
+// function called when a tile is made
+typedef void (*TileCreateFuncPtr)(GameApi*, Tile*);
 
 typedef struct {
     const char* name;
@@ -1242,7 +1250,7 @@ static bool pregenerate_map_helper(GlobalMapGenerationSettings* global_settings,
                     local_settings.male_z = origin_z + dz;
                     if (pregenerate_map_helper(global_settings, local_settings, child)) {
                         local_settings.num_rooms_loaded++;
-                        if (roomset->branch(&game_api, roomset->data, &local_settings)) {
+                        if (roomset->branch(&game_api, &local_settings)) {
                             // reset female alternates too
                             male_idx = 0;
                             continue;
@@ -1358,7 +1366,7 @@ static void load_room(LoadArgs* args)
     }
     if (room->create != NULL) {
         map_context.current_map_node = node;
-        room->create(&game_api, map->roomset->data);
+        room->create(&game_api);
         map_context.current_map_node = NULL;
     }
 }
@@ -1569,14 +1577,16 @@ static Map* generate_map(i32 id)
     map->spawn_point = vec2_create(MAP_MAX_WIDTH / 2 + 0.5, MAP_MAX_LENGTH / 2 + 0.5);
     map->active = true;
 
+    map_context.current_map = map;
+
     if (!pregenerate_map_helper(&global_settings, local_settings, root))
         throw_map_error(ERROR_GENERIC);
 
     quadmask_clear(qm);
 
-    map_context.current_map = map;
     generate_map_helper(map, qm, palette, roomset, root);
     fill_map(map, qm, palette);
+
     map_context.current_map = NULL;
 
     palette_destroy(palette);
@@ -1650,7 +1660,7 @@ static void current_map_node_exit(Map* map, MapNode* node)
         return;
     if (node->room->exit == NULL)
         return;
-    node->room->exit(&game_api, map->roomset->data, node->num_exits++);
+    node->room->exit(&game_api, node->num_exits++);
 }
 
 static void current_map_node_enter(Map* map, MapNode* node)
@@ -1661,7 +1671,7 @@ static void current_map_node_enter(Map* map, MapNode* node)
         return;
     if (node->room->enter == NULL)
         return;
-    node->room->enter(&game_api, map->roomset->data, node->num_enters++);
+    node->room->enter(&game_api, node->num_enters++);
 }
 
 void map_fog_explore(Map* map, vec2 position)
@@ -1725,7 +1735,7 @@ void map_handle_trigger_stay(Trigger* trigger, Entity* entity)
 
 void map_handle_trigger_leave(Trigger* trigger, Entity* entity)
 {
-    // in loop so dont have to set map node
+    // in update loop so dont have to set map node
     trigger->leave(&game_api, trigger, entity);
 }
 
@@ -2134,17 +2144,11 @@ Map* map_create(i32 id)
 {
     Map* map;
     Entity* entity;
-    sem_t signal;
 
     if (id == -1) {
         log_write(WARNING, "Tried to load map with id of -1");
         return NULL;
     }
-
-    sem_init(&signal, 0, 1);
-
-    // send deny syn to gui
-    // receive deny ack from gui
 
     game_render_update_obstacles();
     game_render_update_parstacles();
@@ -2162,9 +2166,6 @@ Map* map_create(i32 id)
     game_context.current_map = map;
 
     log_write(DEBUG, "loaded");
-
-    // send accept syn to gui
-    // receive accept ack from gui
 
     return map;
 }
