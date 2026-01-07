@@ -26,7 +26,6 @@ static void help_screen_exit_click(GUIComp* comp, i32 button, i32 action, i32 mo
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
         window_close();
 }
-
 static void help_screen_continue_click(GUIComp* comp, i32 button, i32 action, i32 mods)
 {
     log_assert(comp->parent, "wtf happened");
@@ -428,11 +427,24 @@ static void interactable_click(GUIComp* comp, i32 button, i32 action, i32 mods)
     }
 }
 
+static void interactable_control(GUIComp* comp, ControlEnum ctrl, i32 action)
+{
+    InteractableData* data = comp->data;
+    if (data == NULL)
+        return;
+    if (ctrl == CTRL_INTERACT && action == GLFW_PRESS) {
+        if (data->fptr != NULL) {
+            event_create_game_interactable_callback(data->fptr, data->map, data->map_node);
+        }
+    }
+}
+
 static GUIComp* create_interactable(void)
 {
     GUIComp* comp = gui_comp_create(20, 550, 100, 100);
     comp->data = st_calloc(1, sizeof(InteractableData));
     comp->click = interactable_click;
+    comp->control = interactable_control;
     gui_set_event_comp(GUI_COMP_INTERACTABLE, comp);
     gui_comp_set_flag(comp, GUI_COMP_FLAG_CLICKABLE, true);
     gui_comp_set_color(comp, 255, 255, 255, 0);

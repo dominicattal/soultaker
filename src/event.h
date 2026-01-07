@@ -5,6 +5,7 @@
 #include "gui.h"
 #include "renderer.h"
 #include "util.h"
+#include "window.h"
 
 // Events provide a thread-safe way of communicating
 // between threads. Each thread may enqueue an event in
@@ -38,6 +39,7 @@ void event_create_gui_framebuffer_size_callback(u32 width, u32 height);
 void event_create_gui_cursor_pos_callback(i32 xpos, i32 ypos);
 void event_create_gui_mouse_button_callback(i32 button, i32 action, i32 mods);
 void event_create_gui_key_callback(i32 key, i32 scancode, i32 action, i32 mods);
+void event_create_gui_control_callback(ControlEnum ctrl, i32 action);
 void event_create_gui_char_callback(i32 codepoint);
 void event_create_gui_update_weapon_info(i32 weapon_id);
 void event_create_gui_create_boss_healthbar(char* name, void* boss_ptr, f32 health, f32 max_health);

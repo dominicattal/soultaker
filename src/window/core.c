@@ -6,6 +6,24 @@
 
 WindowContext window_context;
 
+static void init_controls(void)
+{
+    for (i32 i = 0; i < NUM_CONTROLS; i++) {
+        window_context.controls[i].ctrl_enum = i;
+        window_context.controls[i].glfw_enum = GLFW_ENUM_UNBOUND;
+        window_context.controls[i].mods = 0;
+        window_context.control_idx_map[i] = i;
+    }
+
+    window_set_control_binding(CTRL_INTERACT, GLFW_KEY_F, 0);
+    window_set_control_binding(CTRL_TEST1, GLFW_KEY_F, 0);
+    window_set_control_binding(CTRL_TEST2, GLFW_KEY_0, 0);
+    window_set_control_binding(CTRL_TEST3, GLFW_MOUSE_BUTTON_LEFT, 0);
+    window_set_control_binding(CTRL_TEST4, GLFW_MOUSE_BUTTON_RIGHT, 0);
+    window_set_control_binding(CTRL_TEST5, GLFW_MOUSE_BUTTON_5, 0);
+    window_set_control_binding(CTRL_TEST6, GLFW_MOUSE_BUTTON_5, 1);
+}
+
 void window_init(void)
 {
     glfwSetErrorCallback(window_error_callback);
@@ -47,6 +65,9 @@ void window_init(void)
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(GLint), &window_context.width);
     glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLint), sizeof(GLint), &window_context.height);
     glBufferSubData(GL_UNIFORM_BUFFER, 2 * sizeof(GLint), sizeof(GLfloat), &aspect_ratio);
+
+    init_controls();
+
 }
 
 void window_update(void)

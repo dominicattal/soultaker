@@ -129,3 +129,16 @@ bool gui_char_callback(u32 codepoint)
     return comp_found;
 }
 
+static void gui_control_callback_helper(GUIComp* comp, ControlEnum ctrl, i32 action)
+{
+    for (i32 i = 0; i < comp->num_children; i++)
+        gui_control_callback_helper(comp->children[i], ctrl, action);
+    gui_comp_control(comp, ctrl, action);
+}
+
+void gui_control_callback(ControlEnum ctrl, i32 action)
+{
+    if (gui_get_event_comp(GUI_COMP_TYPING) != NULL)
+        return;
+    gui_control_callback_helper(gui_context.root, ctrl, action);
+}
