@@ -119,7 +119,8 @@ vec2 map_orientation(void);
 
 void map_interactable_callback(InteractableFuncPtr fptr, Map* map, MapNode* map_node);
 void map_set_interactable(const char* desc, InteractableFuncPtr func_ptr);
-// get global data
+
+// get global data that is created on map generation
 void* map_get_data(void);
 
 // create object in global map coords

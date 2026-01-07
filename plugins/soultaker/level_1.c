@@ -45,9 +45,9 @@ st_export bool level_1_generate(GameApi* api, LocalMapGenerationSettings* settin
     return true;
 }
 
-st_export bool level_1_branch(GameApi* api, void* data, LocalMapGenerationSettings* settings)
+st_export bool level_1_branch(GameApi* api, LocalMapGenerationSettings* settings)
 {
-    LevelData* gdata = data;
+    LevelData* gdata = api->map_get_data();
     if (gdata->num_branches == 3)
         return false;
     int roll = rand() % 10;
@@ -61,11 +61,11 @@ st_export bool level_1_branch(GameApi* api, void* data, LocalMapGenerationSettin
     return false;
 }
 
-st_export void level_1_spawn_create(GameApi* api, LevelData* data)
+st_export void level_1_spawn_create(GameApi* api)
 {
 }
 
-st_export void level_1_spawn_exit(GameApi* api, LevelData* data, i32 num_exits)
+st_export void level_1_spawn_exit(GameApi* api, i32 num_exits)
 {
     api->log_write(DEBUG, "%d", num_exits);
     if (num_exits > 0) return;
@@ -84,7 +84,7 @@ static void test(GameApi* api, Trigger* trigger, Entity* entity)
     api->log_write(DEBUG, "test %f %f %d", entity->position.x, entity->position.z, data->test);
 }
 
-st_export void level_1_enemy_1_create(GameApi* api, LevelData* data)
+st_export void level_1_enemy_1_create(GameApi* api)
 {
     TestData* test_data = api->st_malloc(sizeof(TestData));
     Trigger* trigger;
@@ -102,7 +102,7 @@ st_export void level_1_enemy_1_create(GameApi* api, LevelData* data)
     api->trigger_set_flag(trigger, TRIGGER_FLAG_ONCE, true);
 }
 
-st_export void level_1_enemy_2_create(GameApi* api, LevelData* data)
+st_export void level_1_enemy_2_create(GameApi* api)
 {
 }
 
@@ -150,9 +150,10 @@ static void leave_test(GameApi* api, Trigger* trigger, Entity* entity)
     api->map_set_interactable(NULL, NULL);
 }
 
-st_export void level_1_boss_create(GameApi* api, LevelData* data)
+st_export void level_1_boss_create(GameApi* api)
 {
     Trigger* trigger;
+    LevelData* data = api->map_get_data();
     vec2 pos = api->vec2_create(7.5, 7.5);
     trigger = api->room_create_trigger(pos, 0.5f);
     trigger->enter = enter_test;

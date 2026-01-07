@@ -2,6 +2,7 @@
 #define GAME_H
 
 #include "util.h"
+#include "window.h"
 
 //**************************************************************************
 // Forward Declarations
@@ -69,7 +70,6 @@ f32 player_max_health(void);
 f32 player_max_mana(void);
 f32 player_max_souls(void);
 
-#include "window.h"
 void game_key_callback(i32 key, i32 scancode, i32 action, i32 mods);
 void game_mouse_button_callback(i32 button, i32 action, i32 mods);
 void game_control_callback(ControlEnum ctrl, i32 action);
