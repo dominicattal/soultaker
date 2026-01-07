@@ -211,6 +211,13 @@ void gui_comp_key(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods)
     ((GUIKeyFPtr)(comp->key))(comp, key, scancode, action, mods);
 }
 
+void gui_comp_control(GUIComp* comp, ControlEnum ctrl, i32 action)
+{
+    if (comp->control == NULL)
+        return;
+    ((GUIControlFPtr)(comp->control))(comp, ctrl, action);
+}
+
 void gui_comp_update(GUIComp* comp, f32 dt)
 {
    if (comp->update == NULL)

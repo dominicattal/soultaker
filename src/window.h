@@ -3,6 +3,19 @@
 
 #include "util.h"
 
+typedef enum {
+    CTRL_INTERACT = 0,
+    CTRL_TEST1,
+    CTRL_TEST2,
+    CTRL_TEST3,
+    CTRL_TEST4,
+    CTRL_TEST5,
+    CTRL_TEST6,
+    NUM_CONTROLS
+} ControlEnum;
+
+typedef void (*ControlCallbackFuncPtr)(void);
+
 void window_init(void);
 void window_update(void);
 void window_close(void);

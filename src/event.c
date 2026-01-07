@@ -26,6 +26,7 @@ typedef enum {
     GUI_EVENT_CURSOR_POS_CALLBACK,
     GUI_EVENT_MOUSE_BUTTON_CALLBACK,
     GUI_EVENT_KEY_CALLBACK,
+    GUI_EVENT_CONTROL_CALLBACK,
     GUI_EVENT_CHAR_CALLBACK,
     GUI_EVENT_UPDATE_WEAPON_INFO,
     GUI_EVENT_CREATE_BOSS_HEALTHBAR,
@@ -161,6 +162,9 @@ static void execute_event(Event event)
             break;
         case GUI_EVENT_KEY_CALLBACK:
             gui_key_callback(arg1._int, arg2._int, arg3._int, arg4._int);
+            break;
+        case GUI_EVENT_CONTROL_CALLBACK:
+            gui_control_callback(arg1._int, arg2._int);
             break;
         case GUI_EVENT_FRAMEBUFFER_SIZE_CALLBACK:
             gui_framebuffer_size_callback(arg1._int, arg2._int);
@@ -384,6 +388,17 @@ void event_create_gui_key_callback(i32 key, i32 scancode, i32 action, i32 mods)
         .arg2._int = scancode,
         .arg3._int = action,
         .arg4._int = mods
+    };
+    EventList* list = get_event_list("GUI");
+    event_enqueue(list, event);
+}
+
+void event_create_gui_control_callback(ControlEnum ctrl, i32 action)
+{
+    Event event = (Event) {
+        .type = GUI_EVENT_CONTROL_CALLBACK,
+        .arg1._int = ctrl,
+        .arg2._int = action
     };
     EventList* list = get_event_list("GUI");
     event_enqueue(list, event);

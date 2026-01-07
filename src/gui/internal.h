@@ -50,6 +50,7 @@ typedef void (*GUIHoverFPtr)(GUIComp* comp, bool status);
 typedef void (*GUIClickFPtr)(GUIComp* comp, i32 button, i32 action, i32 mods);
 typedef void (*GUIKeyFPtr)(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods);
 typedef void (*GUIUpdateFPtr)(GUIComp* comp, f32 dt);
+typedef void (*GUIControlFPtr)(GUIComp* comp, ControlEnum ctrl, i32 action);
 typedef void (*GUICompDestroyFPtr)(GUIComp* comp);
 
 typedef struct GUIComp {
@@ -59,6 +60,7 @@ typedef struct GUIComp {
     GUIKeyFPtr key;
     GUICompDestroyFPtr destroy;
     GUIEventCompEnum event_id;
+    GUIControlFPtr control;
     void* data;
     char* text;
     GUIComp* parent;
@@ -115,6 +117,7 @@ bool gui_cursor_pos_callback(f64 xpos, f64 ypos);
 bool gui_key_callback(i32 key, i32 scancode, i32 action, i32 mods);
 bool gui_mouse_button_callback(i32 button, i32 action, i32 mods);
 bool gui_char_callback(u32 codepoint);
+void gui_control_callback(ControlEnum ctrl, i32 action);
 
 void gui_preset_load(GUIPreset preset);
 void gui_reset_and_change_map(i32 id);
@@ -134,6 +137,7 @@ void align_comp_position_y(i32* position_y, u8 valign, i32 size_y, i32 y, i32 h)
 void gui_comp_hover(GUIComp* comp, bool status);
 void gui_comp_click(GUIComp* comp, i32 button, i32 action, i32 mods);
 void gui_comp_key(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods);
+void gui_comp_control(GUIComp* comp, ControlEnum ctrl, i32 action);
 void gui_comp_update(GUIComp* comp, f32 dt);
 
 void gui_comp_init(void);
