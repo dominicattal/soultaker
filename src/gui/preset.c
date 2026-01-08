@@ -479,6 +479,8 @@ static void load_preset_game(GUIComp* root)
     textbox->font_size = 16;
     textbox->font = FONT_MONOSPACE;
     textbox->key = keyfunc;
+    textbox->font_size = 14;
+    textbox->font = FONT_SOULTAKER;
     gui_comp_set_flag(textbox, GUI_COMP_FLAG_CLICKABLE, true);
     gui_comp_attach(root, textbox);
 

@@ -32,6 +32,7 @@ typedef enum {
 typedef enum {
     FONT_MONOSPACE,
     FONT_MOJANGLES,
+    FONT_SOULTAKER,
     NUM_FONTS
 } FontEnum;
 
