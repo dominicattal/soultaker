@@ -147,7 +147,7 @@ static GUIComp* create_player_health(void)
     gui_comp_set_text_align(hp_text, ALIGN_CENTER, ALIGN_CENTER);
     gui_comp_set_color(hp_text, 0, 0, 0, 0);
     hp_text->font_size = 16;
-    hp_text->font = FONT_MONOSPACE;
+    hp_text->font = FONT_CONSOLA;
     gui_comp_copy_text(hp_text, "HP");
 
     gui_comp_attach(player_health, current_health);
@@ -170,7 +170,7 @@ static GUIComp* create_player_mana(void)
     gui_comp_set_color(mp_text, 0, 0, 0, 0);
     gui_comp_copy_text(mp_text, "MP");
     mp_text->font_size = 16;
-    mp_text->font = FONT_MONOSPACE;
+    mp_text->font = FONT_CONSOLA;
 
     gui_comp_attach(player_mana, current_mana);
     gui_comp_attach(player_mana, mp_text);
@@ -191,7 +191,7 @@ static GUIComp* create_player_souls(void)
     gui_comp_set_text_align(sp_text, ALIGN_CENTER, ALIGN_CENTER);
     gui_comp_set_color(sp_text, 0, 0, 0, 0);
     gui_comp_copy_text(sp_text, "SP");
-    sp_text->font = FONT_MONOSPACE;
+    sp_text->font = FONT_CONSOLA;
     sp_text->font_size = 16;
 
     gui_comp_attach(player_souls, current_souls);
@@ -477,7 +477,7 @@ static void load_preset_game(GUIComp* root)
     gui_comp_set_color(textbox, 255, 255, 255, 100);
     textbox->valign = ALIGN_BOTTOM;
     textbox->font_size = 16;
-    textbox->font = FONT_MONOSPACE;
+    textbox->font = FONT_CONSOLA;
     textbox->key = keyfunc;
     textbox->font_size = 14;
     textbox->font = FONT_SOULTAKER;

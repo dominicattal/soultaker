@@ -162,8 +162,9 @@ static void create_font_textures(i32* tex_unit_location)
     bitmap = st_calloc(BITMAP_WIDTH * BITMAP_HEIGHT, sizeof(unsigned char));
     stbtt_PackBegin(&spc, bitmap, BITMAP_WIDTH, BITMAP_HEIGHT, 0, 1, NULL);
 
-    load_font(&spc, FONT_MOJANGLES, 16, "assets/fonts/mojangles.ttf");
-    load_font(&spc, FONT_MONOSPACE, 16, "assets/fonts/consola.ttf");
+    load_font(&spc, FONT_CONSOLA, 16, "assets/fonts/consola.ttf");
+    load_font(&spc, FONT_NOVEMBER, 16, "assets/fonts/november.regular.ttf");
+    load_font(&spc, FONT_7_12, 12, "assets/fonts/7-12-serif.regular.ttf");
     load_font(&spc, FONT_SOULTAKER, 14, "assets/fonts/soultaker.ttf");
 
     stbtt_PackEnd(&spc);
