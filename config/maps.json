@@ -42,7 +42,7 @@
                         "default": "floor_1",
                         "location": [15, 30],
                         "bounding_box": [15, 29, 15, 29],
-                        "origin": [0, 0]
+                        "origin": [15, 29]
                     }
                 ]
             }
@@ -112,31 +112,31 @@
                         "default": "floor_1",
                         "location": [7, 7],
                         "bounding_box": [16, 1, 16, 1],
-                        "origin": [0, 0]
+                        "origin": [16, 1]
                     },
                     {
                         "type": "male",
                         "location": [7, 0],
                         "bounding_box": [16, 0, 18, 1],
-                        "origin": [1, 0]
+                        "origin": [17, 0]
                     },
                     {
                         "type": "male",
                         "location": [0, 7],
                         "bounding_box": [15, 3, 16, 5],
-                        "origin": [0, 1]
+                        "origin": [15, 4]
                     },
                     {
                         "type": "male",
                         "location": [7, 14],
                         "bounding_box": [16, 1, 18, 2],
-                        "origin": [1, 1]
+                        "origin": [17, 2]
                     },
                     {
                         "type": "male",
                         "location": [14, 7],
                         "bounding_box": [16, 3, 17, 5],
-                        "origin": [1, 1]
+                        "origin": [17, 4]
                     }
                 ] 
             },
@@ -148,80 +148,80 @@
                     {
                         "type": "female",
                         "default": "wall_2",
-                        "location": [7, 1],
+                        "location": [48, 1],
                         "bounding_box": [63, 1, 65, 1],
-                        "origin": [1, 0]
+                        "origin": [64, 1]
                     },
                     {
                         "type": "female",
                         "default": "wall_2",
-                        "location": [1, 7],
+                        "location": [42, 7],
                         "bounding_box": [63, 3, 63, 5],
-                        "origin": [0, 1]
+                        "origin": [63, 4]
                     },
                     {
                         "type": "female",
                         "default": "wall_2",
-                        "location": [13, 1],
+                        "location": [54, 1],
                         "bounding_box": [63, 1, 65, 1],
-                        "origin": [1, 0]
+                        "origin": [64, 1]
                     },
                     {
                         "type": "female",
                         "default": "wall_2",
-                        "location": [19, 7],
+                        "location": [60, 7],
                         "bounding_box": [63, 3, 63, 5],
-                        "origin": [0, 1]
+                        "origin": [63, 4]
                     },
                     {
                         "type": "female",
                         "default": "wall_2",
-                        "location": [13, 13],
+                        "location": [54, 13],
                         "bounding_box": [63, 1, 65, 1],
-                        "origin": [1, 0]
+                        "origin": [64, 1]
                     },
                     {
                         "type": "female",
                         "default": "wall_2",
-                        "location": [7, 13],
+                        "location": [48, 13],
                         "bounding_box": [63, 1, 65, 1],
-                        "origin": [1, 0]
+                        "origin": [64, 1]
                     },
                     {
                         "type": "male",
-                        "location": [7, 0],
+                        "location": [48, 0],
                         "bounding_box": [63, 0, 65, 1],
-                        "origin": [1, 0]
+                        "origin": [64, 0]
                     },
                     {
                         "type": "male",
-                        "location": [13, 0],
+                        "location": [54, 0],
                         "bounding_box": [63, 0, 65, 1],
-                        "origin": [1, 0]
+                        "origin": [64, 0]
                     },
                     {
                         "type": "male",
-                        "location": [0, 7],
+                        "location": [41, 7],
                         "bounding_box": [62, 3, 63, 5],
-                        "origin": [0, 1]
+                        "origin": [62, 4]
                     },
                     {
                         "type": "male",
-                        "location": [7, 14],
+                        "location": [48, 14],
                         "bounding_box": [63, 1, 65, 2],
-                        "origin": [1, 1]
+                        "origin": [64, 2]
                     },
                     {
                         "type": "male",
-                        "location": [13, 14],
+                        "location": [54, 14],
                         "bounding_box": [63, 1, 65, 2],
-                        "origin": [1, 1]
+                        "origin": [64, 2]
                     },
                     {
                         "type": "male",
-                        "location": [20, 7],
+                        "location": [61, 7],
                         "bounding_box": [63, 3, 64, 5],
-                        "origin": [1, 1]
+                        "origin": [64, 4]
                     }
                 ]
             },
@@ -233,54 +233,54 @@
                     {
                         "type": "female",
                         "default": "wall_3",
-                        "location": [7, 1],
+                        "location": [7, 46],
                         "bounding_box": [16, 46, 18, 46],
-                        "origin": [1, 0]
+                        "origin": [17, 46]
                     },
                     {
                         "type": "female",
                         "default": "wall_3",
-                        "location": [1, 7],
+                        "location": [1, 52],
                         "bounding_box": [16, 48, 16, 50],
-                        "origin": [0, 1]
+                        "origin": [16, 49]
                     },
                     {
                         "type": "female",
                         "default": "wall_3",
-                        "location": [7, 13],
+                        "location": [7, 58],
                         "bounding_box": [16, 46, 18, 46],
-                        "origin": [1, 0]
+                        "origin": [17, 46]
                     },
                     {
                         "type": "female",
                         "default": "wall_3",
-                        "location": [13, 7],
+                        "location": [13, 52],
                         "bounding_box": [16, 48, 16, 50],
-                        "origin": [0, 1]
+                        "origin": [16, 49]
                     },
                     {
                         "type": "male",
-                        "location": [7, 0],
+                        "location": [7, 45],
                         "bounding_box": [16, 45, 18, 46],
-                        "origin": [1, 0]
+                        "origin": [17, 45]
                     },
                     {
                         "type": "male",
-                        "location": [0, 7],
+                        "location": [0, 52],
                         "bounding_box": [15, 48, 16, 50],
-                        "origin": [0, 1]
+                        "origin": [15, 49]
                     },
                     {
                         "type": "male",
-                        "location": [7, 14],
+                        "location": [7, 59],
                         "bounding_box": [16, 46, 18, 47],
-                        "origin": [1, 1]
+                        "origin": [17, 47]
                     },
                     {
                         "type": "male",
-                        "location": [14, 7],
+                        "location": [14, 52],
                         "bounding_box": [16, 48, 17, 50],
-                        "origin": [1, 1]
+                        "origin": [17, 49]
                     }
                 ]
             },
@@ -292,9 +292,110 @@
                     {
                         "type": "female",
                         "default": "wall_4",
-                        "location": [7, 1],
+                        "location": [54, 46],
                         "bounding_box": [63, 46, 65, 46],
-                        "origin": [1, 0]
+                        "origin": [64, 46]
+                    }
+                ]
+            }
+        }
+    },
+    "outpost1": {
+        "path": "assets/maps/outpost1.png",
+        "init": "outpost1_init",
+        "cleanup": "outpost1_cleanup",
+        "generate": "outpost1_generate",
+        "branch": "outpost1_branch",
+        "palette": {
+            "floor1": {
+                "color": "8E4747",
+                "type": "tile",
+                "tex": "outpost1_floor1"
+            },
+            "wall1": {
+                "color": "683434",
+                "type": "wall",
+                "side_tex": "outpost1_wall1_side",
+                "top_tex": "outpost1_wall1_top"
+            }
+        },
+        "rooms": {
+            "spawn": {
+                "bounding_box": [0, 0, 18, 18],
+                "create": "outpost1_spawn_create",
+                "type": "spawn",
+                "alternates": [
+                    {
+                        "type": "female",
+                        "default": "floor1",
+                        "location": [9, 9],
+                        "bounding_box": [7, 6, 7, 6],
+                        "origin": [7, 6]
+                    },
+                    {
+                        "type": "male",
+                        "location": [18, 9],
+                        "bounding_box": [19, 1, 20, 5],
+                        "origin": [20, 3]
+                    }
+                ]
+            },
+            "big_room": {
+                "bounding_box": [0, 21, 28, 49],
+                "create": "outpost1_big_room_create",
+                "type": "enemy",
+                "alternates": [
+                    {
+                        "type": "female",
+                        "default": "wall1",
+                        "location": [14, 22],
+                        "bounding_box": [21, 1, 25, 1],
+                        "origin": [23, 1]
+                    },
+                    {
+                        "type": "female",
+                        "default": "wall1",
+                        "location": [1, 35],
+                        "bounding_box": [19, 1, 19, 5],
+                        "origin": [19, 3]
+                    },
+                    {
+                        "type": "female",
+                        "default": "wall1",
+                        "location": [14, 48],
+                        "bounding_box": [21, 1, 25, 1],
+                        "origin": [23, 1]
+                    },
+                    {
+                        "type": "female",
+                        "default": "wall1",
+                        "location": [27, 35],
+                        "bounding_box": [19, 1, 19, 5],
+                        "origin": [19, 3]
+                    },
+                    {
+                        "type": "male",
+                        "location": [14, 21],
+                        "bounding_box": [21, 0, 25, 1],
+                        "origin": [23, 0]
+                    },
+                    {
+                        "type": "male",
+                        "location": [0, 35],
+                        "bounding_box": [18, 1, 19, 5],
+                        "origin": [18, 3]
+                    },
+                    {
+                        "type": "male",
+                        "location": [14, 49],
+                        "bounding_box": [21, 1, 25, 2],
+                        "origin": [23, 2]
+                    },
+                    {
+                        "type": "male",
+                        "location": [28, 35],
+                        "bounding_box": [19, 1, 20, 5],
+                        "origin": [20, 3]
                     }
                 ]
             }

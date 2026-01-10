@@ -58,12 +58,26 @@ There is no hard limit to the size of a map.
     },
     "rooms" {
         "spawn_room": {
-            "spawn_point": [x, y],
-            "location": [x, y, w, h],
+            "bounding_box": [u1, v1, u2, v2],
             "create": "map_name_spawn_room_create",
             "enter": "map_name_spawn_room_enter",
             "exit": "map_name_spawn_room_exit",
             "type": "spawn",
+            "alternates": [
+                {
+                    "type": "female",
+                    "default": "tile_name",
+                    "location": [u, v],
+                    "bounding_box": [u1, v1, u2, v2],
+                    "origin": [u, v]
+                },
+                {
+                    "type": "male",
+                    "location": [u, v],
+                    "bounding_box": [u1, v1, u2, v2],
+                    "origin": [u, v]
+                }
+            ]
         },
         "enemy_room_1": {
             "location": [x, y, w, h],
@@ -103,6 +117,6 @@ The ```enter``` field is the name of the function to call when a player enters t
 
 The ```exit``` field is the name of the function to call when a player exits the room.
 
-The ```location``` field described in each room are UV coordinates that encompasses the room in the image file described in the "path" field.
+The ```bounding_box``` field described in each room are UV coordinates that encompasses the room in the image file described in the "path" field.
 
-The ```type``` field described in each room specifies how the generation should treat that room. For example, the generation algorithm might not put 3 enemy rooms next to each other, or it might not make more than one treasure room in a whole map, or it might make the boss room 10 rooms away from the spawn room. Each map requires a spawn room, but every other room is optional. In this way, the room's type is more like a suggestion for the generation algorithm; there is nothing stopping a spawn room from containing a boss or some treasure. There may be only one spawn room, and spawn rooms must contain a ```spawn_point``` field that specifies where the player should spawn relative to the bottom-left corner of the bounding box described in ```location```.
+The ```type``` field described in each room specifies how the generation should treat that room. For example, the generation algorithm might not put 3 enemy rooms next to each other, or it might not make more than one treasure room in a whole map, or it might make the boss room 10 rooms away from the spawn room. Each map requires a spawn room, but every other room is optional. In this way, the room's type is more like a suggestion for the generation algorithm; there is nothing stopping a spawn room from containing a boss or some treasure. There may be only one spawn room, and the player spawn point is the location of the female alternate.

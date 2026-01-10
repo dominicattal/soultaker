@@ -14,7 +14,7 @@ void* game_loop(void* vargp)
     game_context.time = 0;
     game_resume_loop();
     game_resume_render();
-    map_create(map_get_id("level_1"));
+    map_create(map_get_id("outpost1"));
     while (!game_context.kill_thread)
     {
         if (game_context.halt_game_loop) {
