@@ -32,7 +32,7 @@ st_export bool level_1_generate(GameApi* api, LocalMapGenerationSettings* settin
     if (strcmp(settings->current_branch, "main") == 0) {
         if (strcmp(settings->current_room_type, "spawn") == 0) {
             settings->current_room_type = "enemy";
-            settings->num_rooms_left = 1;
+            settings->num_rooms_left = 5;
             return false;
         }
         if (strcmp(settings->current_room_type, "enemy") == 0) {

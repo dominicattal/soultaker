@@ -13,8 +13,8 @@
 // or a boss room.
 
 #define DEFAULT_WALL_HEIGHT 1.5f
-#define MAP_MAX_WIDTH   512
-#define MAP_MAX_LENGTH  512
+#define MAP_MAX_WIDTH   100
+#define MAP_MAX_LENGTH  100
 #define WHITE   0xFFFFFF
 #define GRAY    0x808080
 #define BLACK   0x000000
@@ -553,8 +553,8 @@ static bool verify_room_alternate_list(VerifyRoomAltArgs* args)
     // check if alternate does not match data
     for (i = 0; i < list->length; i++) {
         alternate = list_get(list, i);
-        u = room->u1 + alternate->loc_u;
-        v = room->v1 + alternate->loc_v;
+        u = alternate->loc_u;
+        v = alternate->loc_v;
         idx = v * width + u;
         if (idx < 0 || idx >= width * length) {
             log_write(CRITICAL, "%s alternate location (%d %d) out of bounds", string, u, v);
@@ -574,13 +574,13 @@ static bool verify_room_alternate_list(VerifyRoomAltArgs* args)
                 continue;
             for (i = 0; i < list->length; i++) {
                 alternate = list_get(list, i);
-                if (alternate->loc_u != u-room->u1)
+                if (alternate->loc_u != u)
                     continue;
-                if (alternate->loc_v != v-room->v1)
+                if (alternate->loc_v != v)
                     continue;
                 goto found;
             }
-            log_write(CRITICAL, "%s alternate not found for %d %d (%d %d)", string, u, v, u-room->u1, v-room->v1);
+            log_write(CRITICAL, "%s alternate not found for %d %d", string, u, v);
             return false;
             found:
         }
@@ -933,16 +933,16 @@ static f32 calculate_room_fdz(Room* room, Orientation orientation, f32 u, f32 v)
 static i32 calculate_alternate_dx(Room* room, Alternate* alternate, i32 orientation, i32 u, i32 v)
 {
     i32 ru, rv;
-    ru = room->u1 + u - alternate->u1 + alternate->loc_u - alternate->origin_u;
-    rv = room->v1 + v - alternate->v1 + alternate->loc_v - alternate->origin_v;
+    ru = u + alternate->loc_u - alternate->origin_u;
+    rv = v + alternate->loc_v - alternate->origin_v;
     return calculate_room_dx(room, orientation, ru, rv);
 }
 
 static i32 calculate_alternate_dz(Room* room, Alternate* alternate, i32 orientation, i32 u, i32 v)
 {
     i32 ru, rv;
-    ru = room->u1 + u - alternate->u1 + alternate->loc_u - alternate->origin_u;
-    rv = room->v1 + v - alternate->v1 + alternate->loc_v - alternate->origin_v;
+    ru = u + alternate->loc_u - alternate->origin_u;
+    rv = v + alternate->loc_v - alternate->origin_v;
     return calculate_room_dz(room, orientation, ru, rv);
 }
 
@@ -1033,7 +1033,7 @@ static void preload_room(PreloadArgs* args)
     }
 }
 
-static void preload_room_alternate(PreloadArgs* args)
+static Quadmask* preload_room_alternate(PreloadArgs* args)
 {
     Quadmask* qm = args->qm;
     Roomset* roomset = args->roomset;
@@ -1042,8 +1042,10 @@ static void preload_room_alternate(PreloadArgs* args)
     i32 origin_x = args->origin_x;
     i32 origin_z = args->origin_z;
     i32 orientation = args->orientation;
+    Quadmask* alt_qm;
     u32 color;
     i32 u, v, dx, dz, map_x, map_z;
+    alt_qm = quadmask_create( alternate->v2-alternate->v1+1, alternate->u2-alternate->u1+1);
     for (v = alternate->v1; v <= alternate->v2; v++) {
         for (u = alternate->u1; u <= alternate->u2; u++) {
             dx = calculate_alternate_dx(room, alternate, orientation, u, v);
@@ -1051,11 +1053,15 @@ static void preload_room_alternate(PreloadArgs* args)
             color = roomset_get_color(roomset, u, v);
             map_x = origin_x + dx;
             map_z = origin_z + dz;
-            quadmask_unset(qm, map_x, map_z);
-            if (!color_is_preset(color))
-                quadmask_set(qm, map_x, map_z);
+            if (quadmask_isset(qm, map_x, map_z))
+                quadmask_set(alt_qm, v-alternate->v1, u-alternate->u1);
+            //quadmask_unset(qm, map_x, map_z);
+            if (color_is_preset(color))
+                continue;
+            quadmask_set(qm, map_x, map_z);
         }
     }
+    return alt_qm;
 }
 
 static void unpreload_room(PreloadArgs* args)
@@ -1082,30 +1088,24 @@ static void unpreload_room(PreloadArgs* args)
     }
 }
 
-static void unpreload_room_alternate(PreloadArgs* args)
+static void unpreload_room_alternate(PreloadArgs* args, Quadmask* alt_qm)
 {
     Quadmask* qm = args->qm;
-    Roomset* roomset = args->roomset;
     Room* room = args->room;
     Alternate* alternate = args->alternate;
     i32 origin_x = args->origin_x;
     i32 origin_z = args->origin_z;
     i32 orientation = args->orientation;
-    i32 u, v, ru, rv, dx, dz, map_x, map_z;
-    u32 color;
+    i32 u, v, dx, dz, map_x, map_z;
     for (v = alternate->v1; v <= alternate->v2; v++) {
         for (u = alternate->u1; u <= alternate->u2; u++) {
             dx = calculate_alternate_dx(room, alternate, orientation, u, v);
             dz = calculate_alternate_dz(room, alternate, orientation, u, v);
-            ru = room->u1 + dx;
-            rv = room->v1 + dz;
             map_x = origin_x + dx;
             map_z = origin_z + dz;
             quadmask_unset(qm, map_x, map_z);
-            color = roomset_get_color(roomset, ru, rv);
-            if (color_is_preset(color))
-                continue;
-            quadmask_set(qm, map_x, map_z);
+            if (quadmask_isset(alt_qm, v-alternate->v1, u-alternate->u1))
+                quadmask_set(qm, map_x, map_z);
         }
     }
 }
@@ -1163,6 +1163,8 @@ static bool pregenerate_map_helper(GlobalMapGenerationSettings* global_settings,
 {
     PreloadArgs args;
     Quadmask* qm = global_settings->qm;
+    Quadmask* fem_qm = NULL;
+    Quadmask* male_qm = NULL;
     Roomset* roomset = global_settings->roomset;
     i32 male_x = local_settings.male_x;
     i32 male_z = local_settings.male_z;
@@ -1206,8 +1208,8 @@ static bool pregenerate_map_helper(GlobalMapGenerationSettings* global_settings,
             initial_orientation = rand() % NUM_ORIENTATIONS;
             for (orientation_iter = 0; orientation_iter < NUM_ORIENTATIONS; orientation_iter++) {
                 orientation = (initial_orientation + orientation_iter) % NUM_ORIENTATIONS;
-                u = room->u1 + female_alternate->loc_u;
-                v = room->v1 + female_alternate->loc_v;
+                u = female_alternate->loc_u;
+                v = female_alternate->loc_v;
                 dx = calculate_room_dx(room, orientation, u, v);
                 dz = calculate_room_dz(room, orientation, u, v);
                 origin_x = male_x - dx;
@@ -1220,7 +1222,7 @@ static bool pregenerate_map_helper(GlobalMapGenerationSettings* global_settings,
                 if (!can_preload_room_alternate(&args))
                     continue;
                 preload_room(&args);
-                preload_room_alternate(&args);
+                fem_qm = preload_room_alternate(&args);
                 local_settings.num_rooms_left--;
                 child = map_node_create();
                 child->room = room;
@@ -1241,9 +1243,9 @@ static bool pregenerate_map_helper(GlobalMapGenerationSettings* global_settings,
                     if (!can_preload_room_alternate(&args))
                         continue;
                     list_append(child->male_alternates, male_alternate);
-                    preload_room_alternate(&args);
-                    u = room->u1 + male_alternate->loc_u;
-                    v = room->v1 + male_alternate->loc_v;
+                    male_qm = preload_room_alternate(&args);
+                    u = male_alternate->loc_u;
+                    v = male_alternate->loc_v;
                     dx = calculate_room_dx(room, orientation, u, v);
                     dz = calculate_room_dz(room, orientation, u, v);
                     local_settings.male_x = origin_x + dx;
@@ -1252,12 +1254,16 @@ static bool pregenerate_map_helper(GlobalMapGenerationSettings* global_settings,
                         local_settings.num_rooms_loaded++;
                         if (roomset->branch(&game_api, &local_settings)) {
                             // reset female alternates too
+                            quadmask_destroy(male_qm);
+                            male_qm = NULL;
                             male_idx = 0;
                             continue;
                         }
                         goto success;
                     } else {
-                        unpreload_room_alternate(&args);
+                        unpreload_room_alternate(&args, male_qm);
+                        quadmask_destroy(male_qm);
+                        male_qm = NULL;
                         list_idx = list_search(child->male_alternates, male_alternate);
                         list_remove(child->male_alternates, list_idx);
                     }
@@ -1271,7 +1277,9 @@ no_path:
                 map_node_destroy(child);
                 local_settings.num_rooms_left++;
                 args.alternate = female_alternate;
-                unpreload_room_alternate(&args);
+                unpreload_room_alternate(&args, fem_qm);
+                quadmask_destroy(fem_qm);
+                fem_qm = NULL;
                 unpreload_room(&args);
             }
         }
@@ -1283,6 +1291,10 @@ success:
     list_destroy(male_alternates);
     list_destroy(female_alternates);
     list_destroy(rooms);
+    if (fem_qm != NULL)
+        quadmask_destroy(fem_qm);
+    if (male_qm != NULL)
+        quadmask_destroy(male_qm);
     return true;
 }
 
@@ -1420,8 +1432,8 @@ static void load_room_alternate_default(LoadArgs* args)
     i32 u, v, dx, dz, map_x, map_z;
     TileColor* tile_color;
     
-    u = room->u1 + alternate->loc_u;
-    v = room->v1 + alternate->loc_v;
+    u = alternate->loc_u;
+    v = alternate->loc_v;
     dx = calculate_room_dx(room, orientation, u, v);
     dz = calculate_room_dz(room, orientation, u, v);
     map_x = origin_x + dx;

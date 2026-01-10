@@ -96,5 +96,14 @@
             "shaitan_bars_top": [26, 34, 8, 4],
             "shaitan_bars_side": [89, 26, 8, 16]
         }
+    },
+    "outpost1": {
+        "spritesheet": true,
+        "path": "assets/textures/outpost1.png",
+        "textures": {
+            "outpost1_floor1": [0, 43, 8, 8],
+            "outpost1_wall1_side": [8, 43, 8, 16],
+            "outpost1_wall1_top": [16, 43, 8, 8]
+        }
     }
 }
