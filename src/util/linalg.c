@@ -44,6 +44,14 @@ vec2 vec2_rotate(vec2 vec, f32 rad)
     };
 }
 
+vec2 vec2_rotate180(vec2 vec)
+{
+    return (vec2) { 
+        .x = -vec.x,
+        .y = -vec.y
+    };
+}
+
 f32 vec2_radians(vec2 vec)
 {
     return atan(vec.y / vec.x) + ((vec.x < 0) ? PI : 0);
@@ -69,6 +77,11 @@ f32 vec2_dot(vec2 v1, vec2 v2)
 bool vec2_equal(vec2 v1, vec2 v2)
 {
     return v1.x == v2.x && v1.y == v2.y;
+}
+
+void vec2_print(vec2 vec)
+{
+    printf("(%.5f,%.5f)\n", vec.x, vec.y);
 }
 
 vec3 vec3_create(f32 x, f32 y, f32 z)

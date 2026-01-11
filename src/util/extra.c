@@ -1,6 +1,7 @@
 #include "extra.h"
 #include "malloc.h"
 #include <stdio.h>
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
@@ -97,4 +98,35 @@ f32 maxf(f32 x, f32 y)
 f32 minf(f32 x, f32 y)
 {
     return (x < y) ? x : y;
+}
+
+f32 lerp(f32 low, f32 high, f32 max_t, f32 t)
+{
+    if (t < 0) return low;
+    if (t > max_t) return high;
+    return low + (high - low) * t / max_t;
+}
+
+f32 randf(void)
+{
+    return (f32)(rand()) / RAND_MAX;
+}
+
+f32 randf_range(f32 low, f32 high)
+{
+    return (f32)(rand()) / RAND_MAX * (high-low) + low;
+}
+
+f32 guass_dist(f32 mean, f32 std)
+{
+    f32 u1, u2, z;
+    u1 = randf() + EPSILON;
+    u2 = randf();
+    z = sqrt(-2 * log(u1)) * cos(2 * PI * u2);
+    return z * std + mean;
+}
+
+f64 gmodf(f64 x, f64 m)
+{
+    return x - m * floor(x / m);
 }

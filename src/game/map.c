@@ -13,8 +13,8 @@
 // or a boss room.
 
 #define DEFAULT_WALL_HEIGHT 1.5f
-#define MAP_MAX_WIDTH   100
-#define MAP_MAX_LENGTH  100
+#define MAP_MAX_WIDTH   10000
+#define MAP_MAX_LENGTH  10000
 #define WHITE   0xFFFFFF
 #define GRAY    0x808080
 #define BLACK   0x000000
@@ -1000,7 +1000,7 @@ static bool can_preload_room_alternate(PreloadArgs* args)
             room_in_bounds = dx >= 0 && dx <= room->u2-room->u1 && dz >= 0 && dz <= room->v2-room->v1;
             if (!room_in_bounds)
                 return false;
-            room_color = roomset_get_color(roomset, room->u1+dx, room->v1+dz);
+            room_color = roomset_get_color(roomset, u, v);
             if (room_color != WHITE)
                 continue;
             return false;

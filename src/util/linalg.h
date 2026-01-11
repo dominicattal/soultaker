@@ -4,17 +4,17 @@
 #include "type.h"
 
 typedef struct {
-    f32 x;
-    union { f32 y, z; };
+    f64 x;
+    union { f64 y, z; };
 } vec2;
 
 typedef struct {
-    f32 x, y, z;
+    f64 x, y, z;
 } vec3;
 
 typedef struct {
     vec3 normal;
-    f32 distance;
+    f64 distance;
 } Plane;
 
 typedef struct {
@@ -32,7 +32,7 @@ typedef struct {
 
 typedef struct {
     vec3 origin;
-    f32 radius;
+    f64 radius;
 } Sphere;
 
 typedef struct {
@@ -58,11 +58,13 @@ vec2 vec2_normalize(vec2 vec);
 vec2 vec2_scale(vec2 vec, f32 scale);
 vec2 vec2_direction(f32 rad);
 vec2 vec2_rotate(vec2 vec, f32 rad);
+vec2 vec2_rotate180(vec2 vec2);
 f32  vec2_radians(vec2 vec);
 f32  vec2_mag(vec2 vec);
 f32  vec2_distance(vec2 v1, vec2 v2);
 f32  vec2_dot(vec2 v1, vec2 v2);
 bool vec2_equal(vec2 v1, vec2 v2);
+void vec2_print(vec2 vec);
 
 vec3 vec3_create(f32 x, f32 y, f32 z);
 vec3 vec3_add(vec3 v1, vec3 v2);

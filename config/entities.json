@@ -195,5 +195,35 @@
                 "down": [ "dummy" ]
             }
         }
+    },
+    "outpost1_knight": {
+        "create": "outpost1_knight_create",
+        "destroy": "outpost1_knight_destroy",
+        "states": {
+            "idle": {
+                "frames": 1,
+                "update": "outpost1_knight_idle_update",
+                "left": [ "outpost1_knight" ],
+                "right": [ "outpost1_knight" ],
+                "up": [ "outpost1_knight" ],
+                "down": [ "outpost1_knight" ]
+            },
+            "wander": {
+                "frames": 1,
+                "update": "outpost1_knight_wander_update",
+                "left": [ "outpost1_knight" ],
+                "right": [ "outpost1_knight" ],
+                "up": [ "outpost1_knight" ],
+                "down": [ "outpost1_knight" ]
+            },
+            "attack": {
+                "frames": 1,
+                "update": "outpost1_knight_attack_update",
+                "left": [ "outpost1_knight" ],
+                "right": [ "outpost1_knight" ],
+                "up": [ "outpost1_knight" ],
+                "down": [ "outpost1_knight" ]
+            }
+        }
     }
 }

@@ -27,4 +27,10 @@ i32 mini(i32 x, i32 y);
 f32 maxf(f32 x, f32 y);
 f32 minf(f32 x, f32 y);
 
+f32 lerp(f32 low, f32 high, f32 max_t, f32 t);
+f32 randf(void);
+f32 randf_range(f32 low, f32 high);
+f32 guass_dist(f32 mean, f32 std);
+f64 gmodf(f64 x, f64 m);
+
 #endif

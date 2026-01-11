@@ -120,15 +120,16 @@ static void orthographic(f32 m[16], f32 ar, f32 zoom)
 static void update_view_matrix(void)
 {
     RenderCamera* cam = &render_context.camera;
-    vec2 pos = cam->target;
+    f32 center_x = (f32)cam->target.x;
+    f32 center_z = (f32)cam->target.z;
     view(cam->view, cam->right, cam->up, cam->facing, cam->position);
     glBindBuffer(GL_UNIFORM_BUFFER, render_context.matrices_ubo);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, 16 * sizeof(GLfloat), &cam->view[0]);
     glBufferSubData(GL_UNIFORM_BUFFER, 33 * sizeof(GLfloat), sizeof(GLfloat), &cam->pitch);
     glBufferSubData(GL_UNIFORM_BUFFER, 34 * sizeof(GLfloat), sizeof(GLfloat), &cam->yaw);
     glBindBuffer(GL_UNIFORM_BUFFER, render_context.minimap_ubo);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(GLfloat), &pos.x);
-    glBufferSubData(GL_UNIFORM_BUFFER, 1 * sizeof(GLfloat), sizeof(GLfloat), &pos.z);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(GLfloat), &center_x);
+    glBufferSubData(GL_UNIFORM_BUFFER, 1 * sizeof(GLfloat), sizeof(GLfloat), &center_z);
     glBufferSubData(GL_UNIFORM_BUFFER, 2 * sizeof(GLfloat), sizeof(GLfloat), &cam->yaw);
 }
 
