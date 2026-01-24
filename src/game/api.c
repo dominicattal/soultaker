@@ -11,6 +11,7 @@ GameApi game_api = {
 
     // Entity
     REGISTER(entity_create),
+    REGISTER(entity_get_flag),
     REGISTER(entity_get_id),
     REGISTER(entity_get_state_id),
     REGISTER(entity_set_flag),

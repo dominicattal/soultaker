@@ -17,6 +17,7 @@ void collide_entity_wall(Entity* entity, Wall* wall)
     if (!(ex + er > wx && ex - er < wx + sx
        && ez + er > wz && ez - er < wz + sz))
         return;
+    entity_set_flag(entity, ENTITY_FLAG_HIT_WALL, true);
     ex = entity->prev_position.x;
     ez = entity->prev_position.z;
     dx = entity->position.x - entity->prev_position.x;

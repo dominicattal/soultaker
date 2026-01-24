@@ -41,7 +41,7 @@ void player_reset(Entity* entity)
     entity->size = 1.0;
     entity->speed = 20;
     entity->frame_speed = 2;
-    entity->health = entity->max_health = 100;
+    entity->health = entity->max_health = 100000;
     entity_set_flag(entity, ENTITY_FLAG_FRIENDLY, 1);
     game_context.player.weapon.id = weapon_get_id("pointer");
     game_context.player.swap_out.id = weapon_get_id("null_pointer");

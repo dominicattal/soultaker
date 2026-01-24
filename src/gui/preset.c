@@ -356,7 +356,6 @@ void gui_create_notification(char* notif)
     gui_comp_set_color(message, 255, 255, 255, 125);
     gui_comp_copy_text(message, notif);
     i32 height = gui_comp_compute_text_height(message);
-    log_write(DEBUG, "%d", height);
     message->h = height;
     gui_comp_attach(notif_comp, message);
 }

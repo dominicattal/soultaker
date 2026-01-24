@@ -422,6 +422,7 @@ static void handle_lava(Entity* entity, f32 dt)
 
 void entity_update(Entity* entity, f32 dt)
 {
+    log_assert(entity->speed != 0, "Entity speed cannot be 0 since some calculations need to divide by it, set direction = vec2(0,0) instead");
     EntityState state = entity_context.infos[entity->id].states[entity->state];
     f32 frame_length = state.frame_lengths[entity->frame];
     i32 num_frames = state.num_frames;
@@ -442,6 +443,8 @@ void entity_update(Entity* entity, f32 dt)
     update = entity_context.infos[entity->id].states[entity->state].update;
     if (update != NULL)
         update(&game_api, entity, dt);
+
+    entity_set_flag(entity, ENTITY_FLAG_HIT_WALL, false);
 }
 
 void entity_damage(Entity* entity, f32 damage)

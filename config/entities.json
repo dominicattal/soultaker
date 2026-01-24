@@ -225,5 +225,43 @@
                 "down": [ "outpost1_knight" ]
             }
         }
+    },
+    "outpost1_archer": {
+        "create": "outpost1_archer_create",
+        "destroy": "outpost1_archer_destroy",
+        "states": {
+            "idle": {
+                "frames": 1,
+                "update": "outpost1_archer_idle_update",
+                "left": [ "outpost1_archer" ],
+                "right": [ "outpost1_archer" ],
+                "up": [ "outpost1_archer" ],
+                "down": [ "outpost1_archer" ]
+            },
+            "wander": {
+                "frames": 1,
+                "update": "outpost1_archer_wander_update",
+                "left": [ "outpost1_archer" ],
+                "right": [ "outpost1_archer" ],
+                "up": [ "outpost1_archer" ],
+                "down": [ "outpost1_archer" ]
+            },
+            "attack": {
+                "frames": 1,
+                "update": "outpost1_archer_attack_update",
+                "left": [ "outpost1_archer" ],
+                "right": [ "outpost1_archer" ],
+                "up": [ "outpost1_archer" ],
+                "down": [ "outpost1_archer" ]
+            },
+            "reposition": {
+                "frames": 1,
+                "update": "outpost1_archer_reposition_update",
+                "left": [ "outpost1_archer" ],
+                "right": [ "outpost1_archer" ],
+                "up": [ "outpost1_archer" ],
+                "down": [ "outpost1_archer" ]
+            }
+        }
     }
 }

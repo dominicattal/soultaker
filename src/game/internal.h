@@ -232,7 +232,8 @@ typedef enum {
     ENTITY_FLAG_IN_LAVA,
     ENTITY_FLAG_INVULNERABLE,
     ENTITY_FLAG_MOVING,
-    ENTITY_FLAG_BOSS
+    ENTITY_FLAG_BOSS,
+    ENTITY_FLAG_HIT_WALL
 } EntityFlagEnum;
 
 // Initalize and cleanup entity info
@@ -540,6 +541,7 @@ typedef struct GameApi {
     Entity* (*entity_create)(vec2, i32);
     i32 (*entity_get_id)(const char*);
     i32 (*entity_get_state_id)(Entity*, const char*);
+    bool (*entity_get_flag)(Entity*, EntityFlagEnum);
     void (*entity_set_flag)(Entity*, EntityFlagEnum, bool);
     void (*entity_set_state)(Entity*, const char*);
 

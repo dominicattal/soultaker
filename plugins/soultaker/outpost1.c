@@ -25,6 +25,7 @@ st_export bool outpost1_generate(GameApi* api, LocalMapGenerationSettings* setti
     if (strcmp(settings->current_branch, "main") == 0) {
         if (strcmp(settings->current_room_type, "spawn") == 0) {
             settings->current_room_type = "enemy";
+            settings->create_no_path = true;
             settings->num_rooms_left = 1;
             return false;
         }
@@ -47,14 +48,29 @@ st_export bool outpost1_branch(GameApi* api, LocalMapGenerationSettings* setting
     return false;
 }
 
-#define IN_RANGE_THRESHOLD      10
-#define OUT_OF_RANGE_THRESHOLD  20
+st_export void outpost1_big_room_create(GameApi* api)
+{
+    vec2 position = api->vec2_create(8, 8);
+    i32 id = api->entity_get_id("outpost1_archer");
+    api->room_create_entity(position, id);
+    id = api->entity_get_id("outpost1_knight");
+    api->room_create_entity(position, id);
+}
+
+// *************************************************************
+// Knight
+// *************************************************************
+
+#define KNIGHT_IN_RANGE_THRESHOLD      10
+#define KNIGHT_OUT_OF_RANGE_THRESHOLD  20
 
 typedef struct {
     vec2 spawn_point;
     f32 wander_cooldown;
     f32 wander_timer;
     f32 player_arc_rad;
+    f32 shot_cooldown;
+    i32 rotate_direction;
 } KnightData;
 
 st_export void outpost1_knight_create(GameApi* api, Entity* entity)
@@ -62,8 +78,12 @@ st_export void outpost1_knight_create(GameApi* api, Entity* entity)
     KnightData* data = api->st_malloc(sizeof(KnightData));
     data->spawn_point = entity->position;
     data->wander_cooldown = 0;
+    data->shot_cooldown = 0;
     data->player_arc_rad = 0;
+    data->rotate_direction = (2*(rand()%2))-1;
     entity->health = entity->max_health = 10;
+    entity->size = 1.5f;
+    entity->hitbox_radius = 0.7;
     entity->data = data;
     entity->state = api->entity_get_state_id(entity, "idle");
 }
@@ -73,23 +93,22 @@ st_export void outpost1_knight_destroy(GameApi* api, Entity* entity)
     api->st_free(entity->data);
 }
 
-static bool outpost1_knight_player_in_range(GameApi* api, Entity* entity)
+static bool outpost1_player_in_range(GameApi* api, Entity* entity, f32 range)
 {
-    return api->vec2_mag(api->vec2_sub(api->game_get_nearest_player_position(), entity->position)) < IN_RANGE_THRESHOLD;
+    return api->vec2_mag(api->vec2_sub(api->game_get_nearest_player_position(), entity->position)) < range;
 }
 
-static bool outpost1_knight_player_out_of_range(GameApi* api, Entity* entity)
+static bool outpost1_player_out_of_range(GameApi* api, Entity* entity, f32 range)
 {
-    return api->vec2_mag(api->vec2_sub(api->game_get_nearest_player_position(), entity->position)) > OUT_OF_RANGE_THRESHOLD;
+    return api->vec2_mag(api->vec2_sub(api->game_get_nearest_player_position(), entity->position)) > range;
 }
 
 st_export void outpost1_knight_idle_update(GameApi* api, Entity* entity, f32 dt)
 {
     vec2 offset, target, distance;
     KnightData* data = entity->data;
-    if (outpost1_knight_player_in_range(api, entity)) {
+    if (outpost1_player_in_range(api, entity, KNIGHT_IN_RANGE_THRESHOLD)) {
         entity->state = api->entity_get_state_id(entity, "attack");
-        api->log_write(DEBUG, "AA");
         return;
     }
     data->wander_cooldown -= dt;
@@ -107,9 +126,8 @@ st_export void outpost1_knight_idle_update(GameApi* api, Entity* entity, f32 dt)
 st_export void outpost1_knight_wander_update(GameApi* api, Entity* entity, f32 dt)
 {
     KnightData* data = entity->data;
-    if (outpost1_knight_player_in_range(api, entity)) {
+    if (outpost1_player_in_range(api, entity, KNIGHT_IN_RANGE_THRESHOLD)) {
         entity->state = api->entity_get_state_id(entity, "attack");
-        api->log_write(DEBUG, "BB");
         return;
     }
     data->wander_timer -= dt;
@@ -123,33 +141,160 @@ st_export void outpost1_knight_wander_update(GameApi* api, Entity* entity, f32 d
 st_export void outpost1_knight_attack_update(GameApi* api, Entity* entity, f32 dt)
 {
     KnightData* data = entity->data;
+    Projectile* proj;
     vec2 direction, offset, target;
     vec2 player_position = api->game_get_nearest_player_position();
     f32 distance = api->vec2_mag(api->vec2_sub(player_position, entity->position));
-    if (outpost1_knight_player_out_of_range(api, entity)) {
+    if (outpost1_player_out_of_range(api, entity, KNIGHT_OUT_OF_RANGE_THRESHOLD)) {
         entity->state = api->entity_get_state_id(entity, "idle");
         entity->direction = api->vec2_create(0, 0);
         return;
     }
-    if (distance > 7) {
-        direction = api->vec2_normalize(api->vec2_sub(player_position, entity->position));
+    direction = api->vec2_normalize(api->vec2_sub(player_position, entity->position));
+    if (distance > 3.1) {
         entity->direction = direction;
         data->player_arc_rad = api->vec2_radians(direction) + PI;
         return;
     }
-    data->player_arc_rad = api->gmodf(data->player_arc_rad + dt, 2 * PI);
+    if (api->entity_get_flag(entity, ENTITY_FLAG_HIT_WALL))
+        data->rotate_direction = -data->rotate_direction;
+    data->player_arc_rad = api->gmodf(data->player_arc_rad + data->rotate_direction * dt, 2 * PI);
     offset = api->vec2_direction(data->player_arc_rad);
     offset = api->vec2_scale(offset, 3.0f);
     target = api->vec2_add(player_position, offset);
     entity->direction = api->vec2_normalize(api->vec2_sub(target, entity->position));
+    data->shot_cooldown -= dt;
+    if (data->shot_cooldown < 0) {
+        proj = api->map_create_projectile(entity->position);
+        proj->direction = api->vec2_rotate(direction, api->randf_range(-0.3, 0.3));
+        proj->speed = 6.5f;
+        proj->size = 0.5f;
+        proj->tex = api->texture_get_id("bullet");
+        proj->facing = api->vec2_radians(proj->direction);
+        data->shot_cooldown += 1.0f;
+    }
 }
 
-st_export void outpost1_big_room_create(GameApi* api)
+// *************************************************************
+// Archer
+// *************************************************************
+
+#define ARCHER_IN_RANGE_THRESHOLD      10
+#define ARCHER_OUT_OF_RANGE_THRESHOLD  20
+
+typedef struct {
+    vec2 spawn_point;
+    f32 wander_cooldown;
+    f32 wander_timer;
+    f32 reposition_timer;
+    f32 attack_timer;
+    f32 player_arc_rad;
+    f32 shot_cooldown;
+} ArcherData;
+
+st_export void outpost1_archer_create(GameApi* api, Entity* entity)
 {
-    vec2 position = api->vec2_create(8, 8);
-    i32 id = api->entity_get_id("outpost1_knight");
-    api->room_create_entity(position, id);
-    api->room_create_entity(position, id);
-    api->room_create_entity(position, id);
-    api->room_create_entity(position, id);
+    ArcherData* data = api->st_malloc(sizeof(ArcherData));
+    data->spawn_point = entity->position;
+    data->wander_cooldown = 0;
+    data->shot_cooldown = 0;
+    data->player_arc_rad = 0;
+    data->attack_timer = 0;
+    entity->health = entity->max_health = 10;
+    entity->speed = 5.0f;
+    entity->size = 1.5f;
+    entity->hitbox_radius = 0.7;
+    entity->data = data;
+    entity->state = api->entity_get_state_id(entity, "idle");
+}
+
+st_export void outpost1_archer_destroy(GameApi* api, Entity* entity)
+{
+    api->st_free(entity->data);
+}
+
+static void reposition_archer(GameApi* api, Entity* entity)
+{
+    ArcherData* data = entity->data;
+    vec2 player_position = api->game_get_nearest_player_position();
+    vec2 direction = api->vec2_sub(entity->position, player_position);
+    f32 cur_rad = api->vec2_radians(direction);
+    cur_rad += (2*(rand()%2)-1) * api->randf_range(0.1, 0.2);
+    vec2 offset = api->vec2_scale(api->vec2_direction(cur_rad), 6.5f);
+    vec2 target = api->vec2_add(player_position, offset);
+    direction = api->vec2_sub(target, entity->position);
+    entity->direction = api->vec2_normalize(direction);
+    data->reposition_timer = api->vec2_mag(direction) / entity->speed;
+}
+
+st_export void outpost1_archer_idle_update(GameApi* api, Entity* entity, f32 dt)
+{
+    vec2 offset, target, distance;
+    ArcherData* data = entity->data;
+    if (outpost1_player_in_range(api, entity, ARCHER_IN_RANGE_THRESHOLD)) {
+        entity->state = api->entity_get_state_id(entity, "reposition");
+        reposition_archer(api, entity);
+        return;
+    }
+    data->wander_cooldown -= dt;
+    if (data->wander_cooldown < 0) {
+        offset = api->vec2_create(api->randf() * 3, 0.0f);
+        offset = api->vec2_rotate(offset, api->randf() * 2 * PI);
+        target = api->vec2_add(data->spawn_point, offset);
+        distance = api->vec2_sub(target, entity->position);
+        data->wander_timer = api->vec2_mag(distance) / entity->speed;
+        entity->direction = api->vec2_normalize(distance);
+        entity->state = api->entity_get_state_id(entity, "wander");
+    }
+}
+
+st_export void outpost1_archer_wander_update(GameApi* api, Entity* entity, f32 dt)
+{
+    ArcherData* data = entity->data;
+    if (outpost1_player_in_range(api, entity, ARCHER_IN_RANGE_THRESHOLD)) {
+        entity->state = api->entity_get_state_id(entity, "reposition");
+        reposition_archer(api, entity);
+        return;
+    }
+    data->wander_timer -= dt;
+    if (data->wander_timer > 0)
+        return;
+    entity->direction = api->vec2_create(0, 0);
+    data->wander_cooldown = api->randf_range(3.0f, 7.0f);
+    entity->state = api->entity_get_state_id(entity, "idle");
+}
+
+st_export void outpost1_archer_attack_update(GameApi* api, Entity* entity, f32 dt)
+{
+    ArcherData* data = entity->data;
+    Projectile* proj;
+    vec2 direction, player_position;
+    data->attack_timer -= dt;
+    if (data->attack_timer < 0) {
+        proj = api->map_create_projectile(entity->position);
+        player_position = api->game_get_nearest_player_position();
+        direction = api->vec2_normalize(api->vec2_sub(player_position, entity->position));
+        proj->direction = direction;
+        //proj->direction = api->vec2_rotate(direction, api->randf_range(-0.3, 0.3));
+        proj->speed = 10.0f;
+        proj->size = 0.5f;
+        proj->tex = api->texture_get_id("bullet");
+        proj->facing = api->vec2_radians(proj->direction);
+        data->attack_timer += 0.5f;
+    }
+    data->reposition_timer -= dt;
+    if (data->reposition_timer < 0) {
+        entity->state = api->entity_get_state_id(entity, "reposition");
+        reposition_archer(api, entity);
+    }
+}
+
+st_export void outpost1_archer_reposition_update(GameApi* api, Entity* entity, f32 dt)
+{
+    ArcherData* data = entity->data;
+    data->reposition_timer -= dt;
+    if (data->reposition_timer < 0) {
+        entity->state = api->entity_get_state_id(entity, "attack");
+        data->reposition_timer = 3.0f;
+    }
 }
