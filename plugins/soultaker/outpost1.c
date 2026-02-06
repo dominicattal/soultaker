@@ -25,8 +25,8 @@ st_export bool outpost1_generate(GameApi* api, LocalMapGenerationSettings* setti
     if (strcmp(settings->current_branch, "main") == 0) {
         if (strcmp(settings->current_room_type, "spawn") == 0) {
             settings->current_room_type = "enemy";
-            settings->create_no_path = true;
-            settings->num_rooms_left = 1;
+            //settings->create_no_path = true;
+            settings->num_rooms_left = 10;
             return false;
         }
     }
@@ -39,7 +39,7 @@ st_export bool outpost1_branch(GameApi* api, LocalMapGenerationSettings* setting
     return false;
     if (strcmp(settings->current_branch, "main") != 0)
         return false;
-    if (rand() % 8 == 0) {
+    if (rand() % 10 == 0) {
         settings->current_branch = "dead_end";
         settings->current_room_type = "enemy";
         settings->num_rooms_left = 5 + rand() % 3;
@@ -50,10 +50,19 @@ st_export bool outpost1_branch(GameApi* api, LocalMapGenerationSettings* setting
 
 st_export void outpost1_big_room_create(GameApi* api)
 {
-    vec2 position = api->vec2_create(8, 8);
-    i32 id = api->entity_get_id("outpost1_archer");
-    api->room_create_entity(position, id);
+    vec2 position = api->vec2_create(14, 14);
+    i32 id;
     id = api->entity_get_id("outpost1_knight");
+    api->room_create_entity(position, id);
+    api->room_create_entity(position, id);
+    api->room_create_entity(position, id);
+    id = api->entity_get_id("outpost1_archer");
+    api->room_create_entity(position, id);
+    api->room_create_entity(position, id);
+    api->room_create_entity(position, id);
+    id = api->entity_get_id("outpost1_mage");
+    api->room_create_entity(position, id);
+    api->room_create_entity(position, id);
     api->room_create_entity(position, id);
 }
 
@@ -290,6 +299,140 @@ st_export void outpost1_archer_attack_update(GameApi* api, Entity* entity, f32 d
 }
 
 st_export void outpost1_archer_reposition_update(GameApi* api, Entity* entity, f32 dt)
+{
+    ArcherData* data = entity->data;
+    data->reposition_timer -= dt;
+    if (data->reposition_timer < 0) {
+        entity->state = api->entity_get_state_id(entity, "attack");
+        data->reposition_timer = 3.0f;
+    }
+}
+
+// *************************************************************
+// Mage
+// *************************************************************
+
+#define MAGE_IN_RANGE_THRESHOLD      10
+#define MAGE_OUT_OF_RANGE_THRESHOLD  20
+
+typedef struct {
+    vec2 spawn_point;
+    f32 wander_cooldown;
+    f32 wander_timer;
+    f32 reposition_timer;
+    f32 attack_timer;
+    f32 player_arc_rad;
+    f32 shot_cooldown;
+} MageData;
+
+st_export void outpost1_mage_create(GameApi* api, Entity* entity)
+{
+    ArcherData* data = api->st_malloc(sizeof(ArcherData));
+    data->spawn_point = entity->position;
+    data->wander_cooldown = 0;
+    data->shot_cooldown = 0;
+    data->player_arc_rad = 0;
+    data->attack_timer = 0;
+    entity->health = entity->max_health = 10;
+    entity->speed = 5.0f;
+    entity->size = 1.5f;
+    entity->hitbox_radius = 0.7;
+    entity->data = data;
+    entity->state = api->entity_get_state_id(entity, "idle");
+}
+
+st_export void outpost1_mage_destroy(GameApi* api, Entity* entity)
+{
+    api->st_free(entity->data);
+}
+
+static void reposition_mage(GameApi* api, Entity* entity)
+{
+    ArcherData* data = entity->data;
+    vec2 player_position = api->game_get_nearest_player_position();
+    vec2 direction = api->vec2_sub(entity->position, player_position);
+    f32 cur_rad = api->vec2_radians(direction);
+    cur_rad += (2*(rand()%2)-1) * api->randf_range(0.1, 0.2);
+    vec2 offset = api->vec2_scale(api->vec2_direction(cur_rad), 6.5f);
+    vec2 target = api->vec2_add(player_position, offset);
+    direction = api->vec2_sub(target, entity->position);
+    entity->direction = api->vec2_normalize(direction);
+    data->reposition_timer = api->vec2_mag(direction) / entity->speed;
+}
+
+st_export void outpost1_mage_idle_update(GameApi* api, Entity* entity, f32 dt)
+{
+    vec2 offset, target, distance;
+    ArcherData* data = entity->data;
+    if (outpost1_player_in_range(api, entity, ARCHER_IN_RANGE_THRESHOLD)) {
+        entity->state = api->entity_get_state_id(entity, "reposition");
+        reposition_mage(api, entity);
+        return;
+    }
+    data->wander_cooldown -= dt;
+    if (data->wander_cooldown < 0) {
+        offset = api->vec2_create(api->randf() * 3, 0.0f);
+        offset = api->vec2_rotate(offset, api->randf() * 2 * PI);
+        target = api->vec2_add(data->spawn_point, offset);
+        distance = api->vec2_sub(target, entity->position);
+        data->wander_timer = api->vec2_mag(distance) / entity->speed;
+        entity->direction = api->vec2_normalize(distance);
+        entity->state = api->entity_get_state_id(entity, "wander");
+    }
+}
+
+st_export void outpost1_mage_wander_update(GameApi* api, Entity* entity, f32 dt)
+{
+    ArcherData* data = entity->data;
+    if (outpost1_player_in_range(api, entity, ARCHER_IN_RANGE_THRESHOLD)) {
+        entity->state = api->entity_get_state_id(entity, "reposition");
+        reposition_mage(api, entity);
+        return;
+    }
+    data->wander_timer -= dt;
+    if (data->wander_timer > 0)
+        return;
+    entity->direction = api->vec2_create(0, 0);
+    data->wander_cooldown = api->randf_range(3.0f, 7.0f);
+    entity->state = api->entity_get_state_id(entity, "idle");
+}
+
+static void mage_projectile_update(GameApi* api, Projectile* proj, f32 dt)
+{
+    vec2 player_position = api->game_get_nearest_player_position();
+    vec2 acceleration = api->vec2_normalize(api->vec2_sub(player_position, proj->position));
+    vec2 direction = api->vec2_add(proj->direction, api->vec2_scale(acceleration, 3 * dt));
+    proj->direction = api->vec2_normalize(direction);
+    proj->facing = api->vec2_radians(proj->direction);
+}
+
+st_export void outpost1_mage_attack_update(GameApi* api, Entity* entity, f32 dt)
+{
+    ArcherData* data = entity->data;
+    Projectile* proj;
+    vec2 direction, player_position;
+    data->attack_timer -= dt;
+    if (data->attack_timer < 0) {
+        proj = api->map_create_projectile(entity->position);
+        player_position = api->game_get_nearest_player_position();
+        direction = api->vec2_normalize(api->vec2_sub(player_position, entity->position));
+        proj->direction = direction;
+        //proj->direction = api->vec2_rotate(direction, api->randf_range(-0.3, 0.3));
+        proj->speed = 10.0f;
+        proj->size = 0.5f;
+        proj->tex = api->texture_get_id("bullet");
+        proj->facing = api->vec2_radians(proj->direction);
+        proj->update = mage_projectile_update;
+        data->attack_timer += 0.5f;
+    }
+    data->reposition_timer -= dt;
+    if (data->reposition_timer < 0) {
+        entity->state = api->entity_get_state_id(entity, "reposition");
+        reposition_mage(api, entity);
+    }
+}
+
+st_export void outpost1_mage_reposition_update(GameApi* api, Entity* entity, f32 dt)
 {
     ArcherData* data = entity->data;
     data->reposition_timer -= dt;

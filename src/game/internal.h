@@ -346,10 +346,13 @@ void wall_destroy(Wall* wall);
 // Projectile definitions
 //**************************************************************************
 
-typedef void (*ProjectileUpdateFuncPtr)(Projectile*, f32);
-typedef void (*ProjectileDestroyFuncPtr)(Projectile*);
+typedef void (*ProjectileUpdateFuncPtr)(GameApi*, Projectile*, f32);
+typedef void (*ProjectileDestroyFuncPtr)(GameApi*, Projectile*);
 
 typedef struct Projectile {
+    ProjectileUpdateFuncPtr update;
+    ProjectileDestroyFuncPtr destroy;
+    void* data;
     vec2 position;
     vec2 direction;
     f32 elevation;
@@ -360,8 +363,6 @@ typedef struct Projectile {
     f32 lifetime;
     u32 flags;
     i32 tex;
-    ProjectileUpdateFuncPtr update;
-    ProjectileDestroyFuncPtr destroy;
 } Projectile;
 
 typedef enum {

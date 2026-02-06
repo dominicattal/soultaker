@@ -105,7 +105,8 @@
             "outpost1_wall1_side": [8, 43, 8, 16],
             "outpost1_wall1_top": [16, 43, 8, 8],
             "outpost1_knight": [0, 0, 12, 12],
-            "outpost1_archer": [13, 0, 12, 12]
+            "outpost1_archer": [13, 0, 12, 12],
+            "outpost1_mage": [25, 0, 12, 12]
         }
     }
 }

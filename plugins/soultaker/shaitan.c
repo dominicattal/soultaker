@@ -45,12 +45,12 @@ typedef struct {
     f32 timer1;
 } AdvisorData;
 
-void firestorm(Projectile* proj, f32 dt)
+static void firestorm(GameApi* api, Projectile* proj, f32 dt)
 {
     proj->rotation += 10 * dt;
 }
 
-void firebullet(Projectile* proj, f32 dt)
+static void firebullet(GameApi* api, Projectile* proj, f32 dt)
 {
     proj->rotation += 3 * dt;
 }

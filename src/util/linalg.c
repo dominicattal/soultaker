@@ -54,6 +54,7 @@ vec2 vec2_rotate180(vec2 vec)
 
 f32 vec2_radians(vec2 vec)
 {
+    // atan2f does this
     return atan(vec.y / vec.x) + ((vec.x < 0) ? PI : 0);
 }
 
