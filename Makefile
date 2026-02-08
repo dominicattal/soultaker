@@ -3,11 +3,12 @@ CFLAGS = -MMD -Wall -Wextra -Werror -Wfatal-errors -Wno-unused-parameter -finlin
 		 -fopenmp -pthread -Wno-unused-function -Iinclude
 CFLAGS_DEV = -g3 -D DEBUG_BUILD
 CFLAGS_RELEASE = -O2 -D RELEASE_BUILD
-LINKER_FLAGS = -lm
 ifeq ($(OS), Windows_NT)
-	LINKER_FLAGS += -Llib -lglfw3dll
+	LINKER_FLAGS=-Llib -lglfw3dll
+	SHARED_EXT=dll
 else
-	LINKER_FLAGS += -lglfw3
+	LINKER_FLAGS=-lm lib/libglfw3.a
+	SHARED_EXT=so
 endif
 NAME = st
 DLL_NAME = soultaker
@@ -35,12 +36,12 @@ dev-src: $(OBJS_DEV)
 dev-dll: $(PLUGIN_OBJS_DEV)
 	@mkdir -p bin/dev
 	@mkdir -p bin/dev/plugins
-	@$(CC) -shared $(PLUGIN_OBJS_DEV) $(LINKER_FLAGS) -o bin/dev/plugins/$(DLL_NAME).dll
+	@$(CC) -shared -lm $(LINKER_FLAGS) $(PLUGIN_OBJS_DEV) -o bin/dev/plugins/$(DLL_NAME).$(SHARED_EXT)
 
 build/dev/%.o: %.c
 	@mkdir -p $(shell dirname $@)
 	@echo $<
-	@$(CC) $(CFLAGS) $(CFLAGS_DEV) $(LINKER_FLAGS) -fpic -c -o $@ $<
+	@$(CC) $(CFLAGS) $(CFLAGS_DEV) -fpic -c -o $@ $<
 
 release: build release-src release-dll
 
@@ -56,7 +57,7 @@ release-dll: $(PLUGIN_OBJS_REL)
 build/release/%.o: %.c
 	@mkdir -p $(shell dirname $@)
 	@echo $<
-	@$(CC) $(CFLAGS) $(CFLAGS_RELEASE) $(LINKER_FLAGS) -c -o $@ $<
+	@$(CC) $(CFLAGS) $(CFLAGS_RELEASE) -c -o $@ $<
 
 build:
 	@mkdir -p build

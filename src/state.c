@@ -37,7 +37,7 @@ int dlclose(void* handle)
 }
 #else
 #include <dlfcn.h>
-const char* pathname = "bin/dev/plugins/soultaker.dll";
+const char* pathname = "bin/dev/plugins/soultaker.so";
 const int flags = RTLD_NOW;
 #endif
 
