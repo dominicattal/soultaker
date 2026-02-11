@@ -52,6 +52,7 @@ typedef struct LocalMapGenerationSettings {
     i32 male_x, male_z;
     bool no_path;
     bool create_no_path;
+    bool succeed_even_if_no_path;
 } LocalMapGenerationSettings;
 
 typedef struct MapInfo {
@@ -583,19 +584,19 @@ typedef struct GameApi {
     i32 (*texture_get_id)(const char*);
 
     // Util
-    vec3 (*vec3_create)(f32, f32, f32);
+    vec3 (*vec3_create)(f64, f64, f64);
     vec3 (*vec3_normalize)(vec3);
     vec3 (*vec3_sub)(vec3, vec3);
     vec2 (*vec2_add)(vec2, vec2);
-    f32  (*vec2_mag)(vec2);
-    vec2 (*vec2_create)(f32, f32);
-    vec2 (*vec2_scale)(vec2, f32);
-    vec2 (*vec2_rotate)(vec2, f32);
+    f64  (*vec2_mag)(vec2);
+    vec2 (*vec2_create)(f64, f64);
+    vec2 (*vec2_scale)(vec2, f64);
+    vec2 (*vec2_rotate)(vec2, f64);
     vec2 (*vec2_rotate180)(vec2);
-    vec2 (*vec2_direction)(f32);
+    vec2 (*vec2_direction)(f64);
     vec2 (*vec2_sub)(vec2, vec2);
     vec2 (*vec2_normalize)(vec2);
-    f32 (*vec2_radians)(vec2);
+    f64 (*vec2_radians)(vec2);
     f32 (*randf)(void);
     f32 (*randf_range)(f32, f32);
     f64 (*gmodf)(f64, f64);

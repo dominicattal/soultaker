@@ -85,13 +85,13 @@ void log_init(char* exe_path)
     strncpy(&log_dir[n], "\\logs", 6);
     stream = stderr;
 #ifdef RELEASE_BUILD
-    if (mkdir(log_dir) != 0 && errno != EEXIST) {
-        log_write(INFO, "Failed to create log directory, using stderr instead");
-    } else {
-        stream = create_log_file(log_dir);
-        if (stream != stderr)
-            log_write(INFO, "Created log file");
-    }
+    //if (mkdir(log_dir, 0777) != 0 && errno != EEXIST) {
+    //    log_write(INFO, "Failed to create log directory, using stderr instead");
+    //} else {
+    //    stream = create_log_file(log_dir);
+    //    if (stream != stderr)
+    //        log_write(INFO, "Created log file");
+    //}
 #endif
 }
 

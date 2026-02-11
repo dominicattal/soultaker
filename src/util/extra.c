@@ -55,7 +55,9 @@ char* string_create(const char* fmt, ...)
     char* string;
     va_start(args, fmt);
     n = vsnprintf(NULL, 0, fmt, args);
+    va_end(args);
     string = st_malloc((n+1) * sizeof(char));
+    va_start(args, fmt);
     vsnprintf(string, n+1, fmt, args);
     va_end(args);
     return string;
@@ -68,7 +70,9 @@ char* string_create_len(const char* fmt, i32* len, ...)
     char* string;
     va_start(args, len);
     n = vsnprintf(NULL, 0, fmt, args);
+    va_end(args);
     string = st_malloc((n+1) * sizeof(char));
+    va_start(args, len);
     vsnprintf(string, n+1, fmt, args);
     va_end(args);
     *len = n;

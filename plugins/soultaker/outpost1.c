@@ -54,16 +54,16 @@ st_export void outpost1_big_room_create(GameApi* api)
     i32 id;
     id = api->entity_get_id("outpost1_knight");
     api->room_create_entity(position, id);
-    api->room_create_entity(position, id);
-    api->room_create_entity(position, id);
-    id = api->entity_get_id("outpost1_archer");
-    api->room_create_entity(position, id);
-    api->room_create_entity(position, id);
-    api->room_create_entity(position, id);
-    id = api->entity_get_id("outpost1_mage");
-    api->room_create_entity(position, id);
-    api->room_create_entity(position, id);
-    api->room_create_entity(position, id);
+    //api->room_create_entity(position, id);
+    //api->room_create_entity(position, id);
+    //id = api->entity_get_id("outpost1_archer");
+    //api->room_create_entity(position, id);
+    //api->room_create_entity(position, id);
+    //api->room_create_entity(position, id);
+    //id = api->entity_get_id("outpost1_mage");
+    //api->room_create_entity(position, id);
+    //api->room_create_entity(position, id);
+    //api->room_create_entity(position, id);
 }
 
 // *************************************************************
@@ -77,7 +77,6 @@ typedef struct {
     vec2 spawn_point;
     f32 wander_cooldown;
     f32 wander_timer;
-    f32 player_arc_rad;
     f32 shot_cooldown;
     i32 rotate_direction;
 } KnightData;
@@ -88,7 +87,6 @@ st_export void outpost1_knight_create(GameApi* api, Entity* entity)
     data->spawn_point = entity->position;
     data->wander_cooldown = 0;
     data->shot_cooldown = 0;
-    data->player_arc_rad = 0;
     data->rotate_direction = (2*(rand()%2))-1;
     entity->health = entity->max_health = 10;
     entity->size = 1.5f;
@@ -153,7 +151,7 @@ st_export void outpost1_knight_attack_update(GameApi* api, Entity* entity, f32 d
     Projectile* proj;
     vec2 direction, offset, target;
     vec2 player_position = api->game_get_nearest_player_position();
-    f32 distance = api->vec2_mag(api->vec2_sub(player_position, entity->position));
+    f64 distance = api->vec2_mag(api->vec2_sub(player_position, entity->position));
     if (outpost1_player_out_of_range(api, entity, KNIGHT_OUT_OF_RANGE_THRESHOLD)) {
         entity->state = api->entity_get_state_id(entity, "idle");
         entity->direction = api->vec2_create(0, 0);
@@ -162,17 +160,24 @@ st_export void outpost1_knight_attack_update(GameApi* api, Entity* entity, f32 d
     direction = api->vec2_normalize(api->vec2_sub(player_position, entity->position));
     if (distance > 3.1) {
         entity->direction = direction;
-        data->player_arc_rad = api->vec2_radians(direction) + PI;
         return;
     }
     if (api->entity_get_flag(entity, ENTITY_FLAG_HIT_WALL))
         data->rotate_direction = -data->rotate_direction;
-    data->player_arc_rad = api->gmodf(data->player_arc_rad + data->rotate_direction * dt, 2 * PI);
-    offset = api->vec2_direction(data->player_arc_rad);
+
+    vec2 player_offset = api->vec2_sub(entity->position, player_position);
+    f64 player_offset_rad = api->vec2_radians(player_offset);
+    f64 player_arc_rad = api->gmodf(player_offset_rad + data->rotate_direction * dt, 2 * PI);
+    offset = api->vec2_direction(player_arc_rad);
     offset = api->vec2_scale(offset, 3.0f);
     target = api->vec2_add(player_position, offset);
     entity->direction = api->vec2_normalize(api->vec2_sub(target, entity->position));
     data->shot_cooldown -= dt;
+    if (api->entity_get_flag(entity, ENTITY_FLAG_HIT_WALL)) {
+        //api->log_write(DEBUG, "%f %f", player_position.x, player_position.z);
+        //api->log_write(DEBUG, "%f %f %f %f %f %f", before, data->player_arc_rad, offset.x, offset.z, target.x, target.z);
+        //api->log_write(DEBUG, "%f %f %f %f %i", entity->direction.x, entity->direction.z, entity->position.x, entity->position.z, data->rotate_direction);
+    }
     if (data->shot_cooldown < 0) {
         proj = api->map_create_projectile(entity->position);
         proj->direction = api->vec2_rotate(direction, api->randf_range(-0.3, 0.3));

@@ -130,8 +130,13 @@ typedef struct {
 
 static void update_fps(GUIComp* comp, f32 dt)
 {
-    char* string = string_create("%.5f", 1000 * game_get_dt());
-    gui_comp_set_text(comp, string);
+    CompFpsData* data = comp->data;
+    data->timer -= dt;
+    if (data->timer < 0) {
+        char* string = string_create("%.3f %.3f %.3f", 1000 * game_get_dt(), 1000 * state_dt(), 1 / (state_dt()));
+        gui_comp_set_text(comp, string);
+        data->timer += 0.1;
+    }
 }
 
 static GUIComp* create_player_health(void)
@@ -147,7 +152,7 @@ static GUIComp* create_player_health(void)
     gui_comp_set_text_align(hp_text, ALIGN_CENTER, ALIGN_CENTER);
     gui_comp_set_color(hp_text, 0, 0, 0, 0);
     hp_text->font_size = 16;
-    hp_text->font = FONT_CONSOLA;
+    hp_text->font = FONT_MONOSPACE;
     gui_comp_copy_text(hp_text, "HP");
 
     gui_comp_attach(player_health, current_health);
@@ -170,7 +175,7 @@ static GUIComp* create_player_mana(void)
     gui_comp_set_color(mp_text, 0, 0, 0, 0);
     gui_comp_copy_text(mp_text, "MP");
     mp_text->font_size = 16;
-    mp_text->font = FONT_CONSOLA;
+    mp_text->font = FONT_MONOSPACE;
 
     gui_comp_attach(player_mana, current_mana);
     gui_comp_attach(player_mana, mp_text);
@@ -191,7 +196,7 @@ static GUIComp* create_player_souls(void)
     gui_comp_set_text_align(sp_text, ALIGN_CENTER, ALIGN_CENTER);
     gui_comp_set_color(sp_text, 0, 0, 0, 0);
     gui_comp_copy_text(sp_text, "SP");
-    sp_text->font = FONT_CONSOLA;
+    sp_text->font = FONT_MONOSPACE;
     sp_text->font_size = 16;
 
     gui_comp_attach(player_souls, current_souls);
@@ -237,6 +242,7 @@ void gui_create_boss_healthbar(char* name, void* boss_ptr, f32 health, f32 max_h
     gui_comp_set_color(comp_text, 0, 0, 0, 0);
     gui_comp_set_text_align(comp_text, ALIGN_CENTER, ALIGN_CENTER);
     char* text = string_create("%.0f/%.0f", health, max_health);
+    log_write(DEBUG, text);
     gui_comp_set_text(comp_text, text);
 
     GUIComp* comp_name = gui_comp_create(0, 0, STAT_POINT_WIDTH, 20);
@@ -476,7 +482,7 @@ static void load_preset_game(GUIComp* root)
     gui_comp_set_color(textbox, 255, 255, 255, 100);
     textbox->valign = ALIGN_BOTTOM;
     textbox->font_size = 16;
-    textbox->font = FONT_CONSOLA;
+    textbox->font = FONT_MONOSPACE;
     textbox->key = keyfunc;
     gui_comp_set_flag(textbox, GUI_COMP_FLAG_CLICKABLE, true);
     gui_comp_attach(root, textbox);
@@ -489,7 +495,8 @@ static void load_preset_game(GUIComp* root)
     gui_comp_attach(weapon_info, weapon_tex);
     gui_comp_attach(root, weapon_info);
 
-    GUIComp* comp_fps = gui_comp_create(0, 0, 100, 30);
+    GUIComp* comp_fps = gui_comp_create(0, 0, 300, 30);
+    comp_fps->data = st_malloc(sizeof(CompFpsData));
     comp_fps->update = update_fps;
     gui_comp_set_align(comp_fps, ALIGN_LEFT, ALIGN_BOTTOM);
     gui_comp_set_color(comp_fps, 255, 255, 255, 255);

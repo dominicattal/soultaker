@@ -14,8 +14,7 @@ void collide_entity_wall(Entity* entity, Wall* wall)
     wz = wall->position.z;
     sx = wall->size.x;
     sz = wall->size.z;
-    if (!(ex + er > wx && ex - er < wx + sx
-       && ez + er > wz && ez - er < wz + sz))
+    if (!(ex + er > wx && ex - er < wx + sx && ez + er > wz && ez - er < wz + sz))
         return;
     entity_set_flag(entity, ENTITY_FLAG_HIT_WALL, true);
     ex = entity->prev_position.x;
@@ -34,6 +33,7 @@ void collide_entity_wall(Entity* entity, Wall* wall)
     } else if (ez > wz + sz && dz < 0 && ex - er < wx + sx && ex + er > wx) {
         entity->position.z = wz + sz + er;
         entity->direction.z = 0;
+        log_write(DEBUG, "%f %f", entity->position.x, entity->position.z);
     }
 }
 

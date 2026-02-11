@@ -1190,7 +1190,7 @@ static bool pregenerate_map_helper(GlobalMapGenerationSettings* global_settings,
     if (roomset->generate(&game_api, &local_settings))
         return true;
     if (local_settings.no_path)
-        return false;
+        return local_settings.succeed_even_if_no_path;
 
     current_room_type = local_settings.current_room_type;
     local_settings.num_rooms_loaded = 0;
@@ -1253,7 +1253,6 @@ static bool pregenerate_map_helper(GlobalMapGenerationSettings* global_settings,
                     if (pregenerate_map_helper(global_settings, local_settings, child)) {
                         local_settings.num_rooms_loaded++;
                         if (roomset->branch(&game_api, &local_settings)) {
-                            // reset female alternates too
                             quadmask_destroy(male_qm);
                             male_qm = NULL;
                             male_idx = 0;
@@ -1556,6 +1555,7 @@ static Map* generate_map(i32 id)
 
     global_settings.qm = qm;
     global_settings.roomset = roomset;
+    //global_settings.num_branches = 0;
     local_settings.current_branch = "main";
     local_settings.current_room_type = "spawn";
     local_settings.num_rooms_left = 1;
@@ -1563,6 +1563,7 @@ static Map* generate_map(i32 id)
     local_settings.male_z = MAP_MAX_LENGTH / 2;
     local_settings.no_path = false;
     local_settings.create_no_path = false;
+    local_settings.succeed_even_if_no_path = false;
 
     root = map_node_create();
 

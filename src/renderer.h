@@ -30,7 +30,7 @@ typedef enum {
 } TextureEnum;
 
 typedef enum {
-    FONT_CONSOLA,
+    FONT_MONOSPACE,
     FONT_NOVEMBER,
     FONT_7_12,
     FONT_SOULTAKER,

@@ -423,6 +423,7 @@ static void handle_lava(Entity* entity, f32 dt)
 void entity_update(Entity* entity, f32 dt)
 {
     log_assert(entity->speed != 0, "Entity speed cannot be 0 since some calculations need to divide by it, set direction = vec2(0,0) instead");
+
     EntityState state = entity_context.infos[entity->id].states[entity->state];
     f32 frame_length = state.frame_lengths[entity->frame];
     i32 num_frames = state.num_frames;

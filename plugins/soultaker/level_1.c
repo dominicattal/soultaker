@@ -32,7 +32,7 @@ st_export bool level_1_generate(GameApi* api, LocalMapGenerationSettings* settin
     if (strcmp(settings->current_branch, "main") == 0) {
         if (strcmp(settings->current_room_type, "spawn") == 0) {
             settings->current_room_type = "enemy";
-            settings->num_rooms_left = 5;
+            settings->num_rooms_left = 15;
             return false;
         }
         if (strcmp(settings->current_room_type, "enemy") == 0) {
@@ -48,13 +48,15 @@ st_export bool level_1_generate(GameApi* api, LocalMapGenerationSettings* settin
 st_export bool level_1_branch(GameApi* api, LocalMapGenerationSettings* settings)
 {
     LevelData* gdata = api->map_get_data();
-    if (gdata->num_branches == 3)
+    if (gdata->num_branches == 6)
         return false;
     int roll = rand() % 10;
-    if (roll == 0) {
+    if (roll >= 0) {
         settings->current_branch = "dead_end";
         settings->current_room_type = "enemy";
         settings->num_rooms_left = 5 + rand() % 3;
+        settings->num_rooms_left = 100;
+        settings->succeed_even_if_no_path = true;
         gdata->num_branches++;
         return true;
     }
