@@ -20,6 +20,10 @@ void game_key_callback(i32 key, i32 scancode, i32 action, i32 mods)
         camera_zoom(1);
     if (key == GLFW_KEY_P && action == GLFW_PRESS)
         camera_zoom(-1);
+    if (key == GLFW_KEY_RIGHT_BRACKET && (action == GLFW_PRESS || action == GLFW_REPEAT))
+        camera_minimap_zoom(1);
+    if (key == GLFW_KEY_LEFT_BRACKET && (action == GLFW_PRESS || action == GLFW_REPEAT))
+        camera_minimap_zoom(-1);
     if (key == GLFW_KEY_I && action == GLFW_PRESS)
         game_context.paused = 1-game_context.paused;
     if (key == GLFW_KEY_M && action == GLFW_PRESS)

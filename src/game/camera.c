@@ -49,6 +49,7 @@ void camera_init(void)
     game_context.camera.pitch = DEFAULT_PITCH;
     game_context.camera.zoom = DEFAULT_ZOOM;
     game_context.camera.fov = DEFAULT_FOV;
+    game_context.camera.minimap_zoom = 150;
     game_context.camera.move_speed = DEFAULT_MOVESPEED;
     game_context.camera.rotate_speed = DEFAULT_ROTSPEED;
     game_context.camera.tilt_speed = DEFAULT_TILTSPEED;
@@ -132,6 +133,11 @@ void camera_zoom(i32 mag)
         game_context.camera.zoom = MIN_ZOOM;
     else if (game_context.camera.zoom > MAX_ZOOM)
         game_context.camera.zoom = MAX_ZOOM;
+}
+
+void camera_minimap_zoom(i32 mag)
+{
+    game_context.camera.minimap_zoom += 5 * mag;
 }
 
 void camera_cleanup(void)

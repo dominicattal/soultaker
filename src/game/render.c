@@ -54,7 +54,7 @@ typedef struct {
 } RenderData;
 
 typedef struct {
-    f32 yaw, pitch, zoom, fov;
+    f32 yaw, pitch, zoom, fov, minimap_zoom;
     f32 view[16], proj[16];
     vec3 position, facing, right, up;
     vec2 target;
@@ -142,22 +142,23 @@ static void update_proj_matrix(void)
     glBufferSubData(GL_UNIFORM_BUFFER, 16 * sizeof(GLfloat), 16 * sizeof(GLfloat), &cam->proj[0]);
     glBufferSubData(GL_UNIFORM_BUFFER, 32 * sizeof(GLfloat), sizeof(GLfloat), &cam->zoom);
     glBindBuffer(GL_UNIFORM_BUFFER, render_context.minimap_ubo);
-    glBufferSubData(GL_UNIFORM_BUFFER, 3 * sizeof(GLfloat), sizeof(GLfloat), &cam->zoom);
+    glBufferSubData(GL_UNIFORM_BUFFER, 3 * sizeof(GLfloat), sizeof(GLfloat), &cam->minimap_zoom);
 }
 
 static void copy_camera(void)
 {
     Camera* game_cam = &game_context.camera;
     RenderCamera* render_cam = &render_context.camera;
-    render_cam->yaw         = game_cam->yaw;
-    render_cam->pitch       = game_cam->pitch;
-    render_cam->zoom        = game_cam->zoom;
-    render_cam->fov         = game_cam->fov;
-    render_cam->position    = game_cam->position;
-    render_cam->facing      = game_cam->facing;
-    render_cam->right       = game_cam->right;
-    render_cam->up          = game_cam->up;
-    render_cam->target      = game_cam->target;
+    render_cam->yaw          = game_cam->yaw;
+    render_cam->pitch        = game_cam->pitch;
+    render_cam->zoom         = game_cam->zoom;
+    render_cam->fov          = game_cam->fov;
+    render_cam->minimap_zoom = game_cam->minimap_zoom;
+    render_cam->position     = game_cam->position;
+    render_cam->facing       = game_cam->facing;
+    render_cam->right        = game_cam->right;
+    render_cam->up           = game_cam->up;
+    render_cam->target       = game_cam->target;
 }
 
 static VertexBuffer* get_vertex_buffer(GameBufferEnum type)

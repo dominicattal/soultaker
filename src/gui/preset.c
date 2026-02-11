@@ -444,6 +444,21 @@ static void interactable_control(GUIComp* comp, ControlEnum ctrl, i32 action)
     }
 }
 
+static void minimap_key(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods)
+{
+    if (key == GLFW_KEY_TAB) {
+        if (action == GLFW_PRESS) {
+            comp->w = 500;
+            comp->h = 500;
+            gui_comp_set_align(comp, ALIGN_CENTER, ALIGN_CENTER);
+        } else if (action == GLFW_RELEASE) {
+            comp->w = 250;
+            comp->h = 250;
+            gui_comp_set_align(comp, ALIGN_RIGHT, ALIGN_TOP);
+        }
+    }
+}
+
 static GUIComp* create_interactable(void)
 {
     GUIComp* comp = gui_comp_create(20, 550, 100, 100);
@@ -503,7 +518,8 @@ static void load_preset_game(GUIComp* root)
     gui_comp_set_text_align(comp_fps, ALIGN_CENTER, ALIGN_CENTER);
     gui_comp_attach(root, comp_fps);
 
-    GUIComp* minimap = gui_comp_create(0, 0, 252, 252);
+    GUIComp* minimap = gui_comp_create(0, 0, 250, 250);
+    minimap->key = minimap_key;
     minimap->tex = texture_get_enum_id(TEX_GAME_MINIMAP_SCENE);
     gui_comp_set_align(minimap, ALIGN_RIGHT, ALIGN_TOP);
     gui_comp_set_color(minimap, 255, 255, 255, 100);

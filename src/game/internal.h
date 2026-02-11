@@ -11,7 +11,7 @@
 //**************************************************************************
 
 typedef struct Camera {
-    f64 yaw, pitch, zoom, fov;
+    f64 yaw, pitch, zoom, fov, minimap_zoom;
     f32 move_speed, rotate_speed, tilt_speed;
     f32 rotate_mag, tilt_mag;
     vec3 position, facing, right, up;
@@ -33,6 +33,7 @@ void camera_update(void);
 // when the screenspace is changed
 void camera_framebuffer_size_callback(void);
 void camera_zoom(i32 mag);
+void camera_minimap_zoom(i32 mag);
 
 void camera_update_direction(vec2 mag);
 void camera_update_rotation(f32 mag);
