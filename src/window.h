@@ -33,5 +33,6 @@ i32 window_height(void);
 f64 window_cursor_position_x(void);
 f64 window_cursor_position_y(void);
 vec2 window_cursor_position(void);
+void window_toggle_fullscreen(void);
 
 #endif

@@ -81,6 +81,11 @@ void window_close(void)
     glfwSetWindowShouldClose(window_context.handle, 1);
 }
 
+void window_toggle_fullscreen(void)
+{
+    glfwMaximizeWindow(window_context.handle);
+}
+
 bool window_closed(void)
 {
     return glfwWindowShouldClose(window_context.handle);

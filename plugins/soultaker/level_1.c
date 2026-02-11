@@ -34,8 +34,7 @@ st_export bool level_1_generate(GameApi* api, LocalMapGenerationSettings* settin
             settings->current_room_type = "enemy";
             settings->num_rooms_left = 15;
             return false;
-        }
-        if (strcmp(settings->current_room_type, "enemy") == 0) {
+        } else if (strcmp(settings->current_room_type, "enemy") == 0) {
             settings->current_room_type = "boss";
             settings->num_rooms_left = 1;
             return false;

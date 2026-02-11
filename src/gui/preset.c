@@ -512,6 +512,7 @@ static void load_preset_game(GUIComp* root)
 
     GUIComp* comp_fps = gui_comp_create(0, 0, 300, 30);
     comp_fps->data = st_malloc(sizeof(CompFpsData));
+    ((CompFpsData*)comp_fps->data)->timer = 0;
     comp_fps->update = update_fps;
     gui_comp_set_align(comp_fps, ALIGN_LEFT, ALIGN_BOTTOM);
     gui_comp_set_color(comp_fps, 255, 255, 255, 255);

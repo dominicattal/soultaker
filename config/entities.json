@@ -301,5 +301,43 @@
                 "down": [ "outpost1_mage" ]
             }
         }
+    },
+    "outpost1_boss": {
+        "create": "outpost1_boss_create",
+        "destroy": "outpost1_boss_destroy",
+        "states": {
+            "idle": {
+                "frames": 1,
+                "update": "outpost1_boss_idle_update",
+                "left": [ "outpost1_boss" ],
+                "right": [ "outpost1_boss" ],
+                "up": [ "outpost1_boss" ],
+                "down": [ "outpost1_boss" ]
+            },
+            "wander": {
+                "frames": 1,
+                "update": "outpost1_boss_wander_update",
+                "left": [ "outpost1_boss" ],
+                "right": [ "outpost1_boss" ],
+                "up": [ "outpost1_boss" ],
+                "down": [ "outpost1_boss" ]
+            },
+            "attack": {
+                "frames": 1,
+                "update": "outpost1_boss_attack_update",
+                "left": [ "outpost1_boss" ],
+                "right": [ "outpost1_boss" ],
+                "up": [ "outpost1_boss" ],
+                "down": [ "outpost1_boss" ]
+            },
+            "reposition": {
+                "frames": 1,
+                "update": "outpost1_boss_reposition_update",
+                "left": [ "outpost1_boss" ],
+                "right": [ "outpost1_boss" ],
+                "up": [ "outpost1_boss" ],
+                "down": [ "outpost1_boss" ]
+            }
+        }
     }
 }

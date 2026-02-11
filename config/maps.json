@@ -510,6 +510,20 @@
                         "origin": [20, 3]
                     }
                 ]
+            },
+            "boss_room": {
+                "bounding_box": [70, 0, 126, 55],
+                "create": "outpost1_boss_room_create",
+                "type": "boss",
+                "alternates": [
+                    {
+                        "type": "female",
+                        "default": "wall1",
+                        "location": [98, 54],
+                        "bounding_box": [21, 1, 25, 1],
+                        "origin": [23, 1]
+                    }
+                ]
             }
         }
     }

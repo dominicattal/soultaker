@@ -12,21 +12,18 @@ st_export void outpost1_cleanup(GameApi* api, void* data)
 
 st_export bool outpost1_generate(GameApi* api, LocalMapGenerationSettings* settings)
 {
-    if (strcmp(settings->current_room_type, "enemy") == 0) {
-        if (settings->num_rooms_left == 1) {
-            settings->create_no_path = true;
-            return false;
-        }
-    }
-
     if (settings->num_rooms_left != 0)
         return false;
 
     if (strcmp(settings->current_branch, "main") == 0) {
         if (strcmp(settings->current_room_type, "spawn") == 0) {
-            settings->current_room_type = "enemy";
+            settings->current_room_type = "boss";
             //settings->create_no_path = true;
-            settings->num_rooms_left = 10;
+            settings->num_rooms_left = 1;
+            return false;
+        } else if (strcmp(settings->current_room_type, "enemy") == 0) {
+            settings->current_room_type = "boss";
+            settings->num_rooms_left = 1;
             return false;
         }
     }
@@ -64,6 +61,14 @@ st_export void outpost1_big_room_create(GameApi* api)
     //api->room_create_entity(position, id);
     //api->room_create_entity(position, id);
     //api->room_create_entity(position, id);
+}
+
+st_export void outpost1_boss_room_create(GameApi* api)
+{
+    vec2 position = api->vec2_create(28, 10);
+    i32 id;
+    id = api->entity_get_id("outpost1_boss");
+    api->room_create_entity(position, id);
 }
 
 // *************************************************************
@@ -445,4 +450,41 @@ st_export void outpost1_mage_reposition_update(GameApi* api, Entity* entity, f32
         entity->state = api->entity_get_state_id(entity, "attack");
         data->reposition_timer = 3.0f;
     }
+}
+
+// *************************************************************
+// Boss
+// *************************************************************
+
+static void boss_start(GameApi* api, Trigger* trigger, Entity* entity)
+{
+    api->log_write(DEBUG, "test");
+}
+
+st_export void outpost1_boss_create(GameApi* api, Entity* entity)
+{
+    Trigger* trigger = api->map_create_trigger(entity->position, 10);
+    api->trigger_set_flag(trigger, TRIGGER_FLAG_PLAYER, true);
+    trigger->enter = boss_start;
+    entity->size = 3.0;
+}
+
+st_export void outpost1_boss_destroy(GameApi* api, Entity* entity)
+{
+}
+
+st_export void outpost1_boss_idle_update(GameApi* api, Entity* entity, f32 dt)
+{
+}
+
+st_export void outpost1_boss_wander_update(GameApi* api, Entity* entity, f32 dt)
+{
+}
+
+st_export void outpost1_boss_attack_update(GameApi* api, Entity* entity, f32 dt)
+{
+}
+
+st_export void outpost1_boss_reposition_update(GameApi* api, Entity* entity, f32 dt)
+{
 }

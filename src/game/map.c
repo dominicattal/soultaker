@@ -1735,21 +1735,24 @@ void map_fog_clear(Map* map)
 void map_handle_trigger_enter(Trigger* trigger, Entity* entity)
 {
     map_context.current_map_node = trigger->map_node;
-    trigger->enter(&game_api, trigger, entity);
+    if (trigger->enter != NULL)
+        trigger->enter(&game_api, trigger, entity);
     map_context.current_map_node = NULL;
 }
 
 void map_handle_trigger_stay(Trigger* trigger, Entity* entity)
 {
     map_context.current_map_node = trigger->map_node;
-    trigger->stay(&game_api, trigger, entity);
+    if (trigger->stay != NULL)
+        trigger->stay(&game_api, trigger, entity);
     map_context.current_map_node = NULL;
 }
 
 void map_handle_trigger_leave(Trigger* trigger, Entity* entity)
 {
     // in update loop so dont have to set map node
-    trigger->leave(&game_api, trigger, entity);
+    if (trigger->leave != NULL)
+        trigger->leave(&game_api, trigger, entity);
 }
 
 vec2 map_orientation(void)

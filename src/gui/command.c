@@ -2,6 +2,7 @@
 #define COMMAND_H
 
 #include "internal.h"
+#include "../state.h"
 #include "../game.h"
 #include "../window.h"
 #include "../renderer.h"
@@ -11,6 +12,7 @@
 typedef enum {
     CS_ERROR,
     CS_START,
+    CS_RELOAD,
     CS_LOGLEVEL,
     CS_LOGLEVELFIN,
     CS_DEFOGFIN,
@@ -48,6 +50,9 @@ static char* state_string(CommandState state)
             break;
         case CS_START: 
             message = string_copy("Must type something");
+            break;
+        case CS_RELOAD:
+            message = string_copy("Reload failed");
             break;
         case CS_LOGLEVEL: 
             message = string_copy("Must provide log level");
@@ -113,6 +118,8 @@ static CommandState new_state(CommandState state, char* command, i32 left, i32 r
                 return CS_SUMMON;
             if (cmp("position", command, left, right))
                 return CS_POSITIONFIN;
+            if (cmp("reload", command, left, right))
+                return CS_RELOAD;
             if (cmp("exit", command, left, right))
                 window_close();
             if (cmp("respawn", command, left, right)) {

@@ -4,7 +4,7 @@ CFLAGS = -MMD -Wall -Wextra -Werror -Wfatal-errors -Wno-unused-parameter -finlin
 CFLAGS_DEV = -g3 -D DEBUG_BUILD
 CFLAGS_RELEASE = -O2 -D RELEASE_BUILD
 ifeq ($(OS), Windows_NT)
-	LINKER_FLAGS=-Llib -lglfw3dll
+	LINKER_FLAGS=-Llib glfw3.dll
 	SHARED_EXT=dll
 else
 	LINKER_FLAGS=-lm lib/libglfw3.a

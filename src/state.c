@@ -42,12 +42,14 @@ const int flags = RTLD_NOW;
 #endif
 
 struct {
+    pthread_mutex_t mutex;
     void* handle;
     f32 dt;
 } state_context;
 
 void state_init(void)
 {
+    pthread_mutex_init(&state_context.mutex, 0);
     thread_link("Main");
 
     state_context.handle = dlopen(pathname, flags);
@@ -96,6 +98,7 @@ void state_cleanup(void)
     log_cleanup();
 
     dlclose(state_context.handle);
+    pthread_mutex_destroy(&state_context.mutex);
 }
 
 void* state_load_function(const char* name)
