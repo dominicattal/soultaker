@@ -33,7 +33,6 @@ void collide_entity_wall(Entity* entity, Wall* wall)
     } else if (ez > wz + sz && dz < 0 && ex - er < wx + sx && ex + er > wx) {
         entity->position.z = wz + sz + er;
         entity->direction.z = 0;
-        log_write(DEBUG, "%f %f", entity->position.x, entity->position.z);
     }
 }
 
@@ -106,6 +105,8 @@ void collide_entity_trigger(Entity* entity, Trigger* trigger)
     f32 ex, ez, er, tx, tz, tr;
     vec2 offset;
     i32 i;
+    if (!entity_get_flag(entity, ENTITY_FLAG_PLAYER) && trigger_get_flag(trigger, TRIGGER_FLAG_PLAYER))
+        return;
     ex = entity->position.x;
     ez = entity->position.y;
     er = entity->hitbox_radius;

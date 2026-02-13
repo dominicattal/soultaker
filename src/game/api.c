@@ -49,6 +49,7 @@ GameApi game_api = {
     REGISTER(room_create_trigger),
     REGISTER(room_set_tilemap_wall),
     REGISTER(room_set_tilemap_tile),
+    REGISTER(room_position),
 
     // Misc
     REGISTER(texture_get_id),

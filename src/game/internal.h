@@ -61,6 +61,7 @@ typedef struct MapInfo {
     MapNode* current_node;
 } MapInfo;
 
+// useless gettings, remove these
 List* map_list_entities(Map* map);
 List* map_list_tiles(Map* map);
 List* map_list_walls(Map* map);
@@ -140,6 +141,9 @@ Wall*           room_create_wall(vec2 position, f32 height, f32 width, f32 lengt
 Trigger*        room_create_trigger(vec2 position, f32 radius);
 Tile*           room_set_tilemap_tile(i32 x, i32 z, u32 minimap_color);
 Wall*           room_set_tilemap_wall(i32 x, i32 z, f32 height, u32 minimap_color);
+
+// returns the position of the global coordinates relative to the room
+vec2            room_position(vec2 position);
 
 //**************************************************************************
 // Trigger definitions
@@ -230,6 +234,7 @@ typedef struct Player {
 } Player;
 
 typedef enum {
+    ENTITY_FLAG_PLAYER,
     ENTITY_FLAG_FRIENDLY,
     ENTITY_FLAG_IN_LAVA,
     ENTITY_FLAG_INVULNERABLE,
@@ -580,6 +585,7 @@ typedef struct GameApi {
     Trigger* (*room_create_trigger)(vec2, f32);
     Tile* (*room_set_tilemap_tile)(i32, i32, u32);
     Wall* (*room_set_tilemap_wall)(i32, i32, f32, u32);
+    vec2 (*room_position)(vec2);
 
     // Misc
     i32 (*texture_get_id)(const char*);

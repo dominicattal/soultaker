@@ -1,13 +1,20 @@
 #include "../../src/api.h"
 #include <string.h>
 
+typedef struct {
+    Entity* boss;
+} MapData;
+
 st_export void* outpost1_init(GameApi* api)
 {
-    return NULL;
+    MapData* map_data = api->st_malloc(sizeof(MapData));
+    map_data->boss = NULL;
+    return map_data;
 }
 
 st_export void outpost1_cleanup(GameApi* api, void* data)
 {
+    api->st_free(data);
 }
 
 st_export bool outpost1_generate(GameApi* api, LocalMapGenerationSettings* settings)
@@ -458,15 +465,41 @@ st_export void outpost1_mage_reposition_update(GameApi* api, Entity* entity, f32
 
 static void boss_start(GameApi* api, Trigger* trigger, Entity* entity)
 {
+    MapData* map_data = api->map_get_data();
+    api->log_write(DEBUG, "%f %f", entity->position.x, entity->position.z);
     api->log_write(DEBUG, "test");
+    if (map_data->boss == NULL)
+        api->log_write(FATAL, "Map boss is null");
+    api->map_make_boss("Asgore", map_data->boss);
+    Wall* wall;
+    wall = api->room_set_tilemap_wall(26, 54, 2.0f, 0x683434);
+    wall->top_tex = api->texture_get_id("outpost1_wall1_top");
+    wall->side_tex = api->texture_get_id("outpost1_wall1_side");
+    wall = api->room_set_tilemap_wall(27, 54, 2.0f, 0x683434);
+    wall->top_tex = api->texture_get_id("outpost1_wall1_top");
+    wall->side_tex = api->texture_get_id("outpost1_wall1_side");
+    wall = api->room_set_tilemap_wall(28, 54, 2.0f, 0x683435);
+    wall->top_tex = api->texture_get_id("outpost1_wall1_top");
+    wall->side_tex = api->texture_get_id("outpost1_wall1_side");
+    wall = api->room_set_tilemap_wall(29, 54, 2.0f, 0x683434);
+    wall->top_tex = api->texture_get_id("outpost1_wall1_top");
+    wall->side_tex = api->texture_get_id("outpost1_wall1_side");
+    wall = api->room_set_tilemap_wall(30, 54, 2.0f, 0x683434);
+    wall->top_tex = api->texture_get_id("outpost1_wall1_top");
+    wall->side_tex = api->texture_get_id("outpost1_wall1_side");
 }
 
 st_export void outpost1_boss_create(GameApi* api, Entity* entity)
 {
-    Trigger* trigger = api->map_create_trigger(entity->position, 10);
+    Trigger* trigger = api->map_create_trigger(entity->position, 10.0f);
+    api->trigger_set_flag(trigger, TRIGGER_FLAG_ONCE, true);
     api->trigger_set_flag(trigger, TRIGGER_FLAG_PLAYER, true);
     trigger->enter = boss_start;
     entity->size = 3.0;
+    entity->health = entity->max_health = 100;
+
+    MapData* map_data = api->map_get_data();
+    map_data->boss = entity;
 }
 
 st_export void outpost1_boss_destroy(GameApi* api, Entity* entity)

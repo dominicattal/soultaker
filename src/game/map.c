@@ -870,9 +870,9 @@ static i32 calculate_room_dz(Room* room, Orientation orientation, i32 u, i32 v)
     return 0;
 }
 
-static f32 calculate_room_fdx(Room* room, Orientation orientation, f32 u, f32 v)
+static f64 calculate_room_dxf(Room* room, Orientation orientation, f64 u, f64 v)
 {
-    f32 du, dv, w, l;
+    f64 du, dv, w, l;
     w = room->u2 - room->u1 + 1;
     l = room->v2 - room->v1 + 1;
     du = u - room->u1;
@@ -900,9 +900,9 @@ static f32 calculate_room_fdx(Room* room, Orientation orientation, f32 u, f32 v)
     return 0;
 }
 
-static f32 calculate_room_fdz(Room* room, Orientation orientation, f32 u, f32 v)
+static f64 calculate_room_dzf(Room* room, Orientation orientation, f64 u, f64 v)
 {
-    f32 du, dv, w, l;
+    f64 du, dv, w, l;
     w = room->u2 - room->u1 + 1;
     l = room->v2 - room->v1 + 1;
     du = u - room->u1;
@@ -1839,9 +1839,11 @@ Trigger* map_create_trigger(vec2 position, f32 radius)
 {
     Trigger* trigger;
     Map* map = map_context.current_map;
+    MapNode* node = map_context.current_map_node;
     if (!map->active)
         return NULL;
     trigger = trigger_create(position, radius);
+    trigger->map_node = node;
     list_append(map->triggers, trigger);
     return trigger;
 }
@@ -1855,8 +1857,8 @@ Entity* room_create_entity_explicit(Map* map, MapNode* node, vec2 position, i32 
     i32 orientation = node->orientation;
     f32 u = room->u1 + position.x;
     f32 v = room->v1 + position.z;
-    f32 dx = calculate_room_fdx(room, orientation, u, v);
-    f32 dz = calculate_room_fdz(room, orientation, u, v);
+    f32 dx = calculate_room_dxf(room, orientation, u, v);
+    f32 dz = calculate_room_dzf(room, orientation, u, v);
     vec2 new_position;
     new_position.x = node->origin_x + dx;
     new_position.z = node->origin_z + dz;
@@ -1886,8 +1888,8 @@ Trigger* room_create_trigger(vec2 position, f32 radius)
     i32 orientation = node->orientation;
     f32 u = room->u1 + position.x;
     f32 v = room->v1 + position.z;
-    f32 dx = calculate_room_fdx(room, orientation, u, v);
-    f32 dz = calculate_room_fdz(room, orientation, u, v);
+    f32 dx = calculate_room_dxf(room, orientation, u, v);
+    f32 dz = calculate_room_dzf(room, orientation, u, v);
     vec2 new_position;
     new_position.x = node->origin_x + dx;
     new_position.z = node->origin_z + dz;
@@ -1909,8 +1911,8 @@ Obstacle* room_create_obstacle(vec2 position)
     i32 orientation = node->orientation;
     f32 u = room->u1 + position.x;
     f32 v = room->v1 + position.z;
-    f32 dx = calculate_room_fdx(room, orientation, u, v);
-    f32 dz = calculate_room_fdz(room, orientation, u, v);
+    f32 dx = calculate_room_dxf(room, orientation, u, v);
+    f32 dz = calculate_room_dzf(room, orientation, u, v);
     vec2 new_position;
     new_position.x = node->origin_x + dx;
     new_position.z = node->origin_z + dz;
@@ -1931,8 +1933,8 @@ Parstacle* room_create_parstacle(vec2 position)
     i32 orientation = node->orientation;
     f32 u = room->u1 + position.x;
     f32 v = room->v1 + position.z;
-    f32 dx = calculate_room_fdx(room, orientation, u, v);
-    f32 dz = calculate_room_fdz(room, orientation, u, v);
+    f32 dx = calculate_room_dxf(room, orientation, u, v);
+    f32 dz = calculate_room_dzf(room, orientation, u, v);
     vec2 new_position;
     new_position.x = node->origin_x + dx;
     new_position.z = node->origin_z + dz;
@@ -1955,10 +1957,10 @@ Wall* room_create_wall(vec2 position, f32 height, f32 width, f32 length, u32 min
     vec2 new_position;
     u = room->u1 + position.x;
     v = room->v1 + position.z;
-    dx1 = calculate_room_fdx(room, orientation, u, v);
-    dz1 = calculate_room_fdz(room, orientation, u, v);
-    dx2 = calculate_room_fdx(room, orientation, u+width, v+length);
-    dz2 = calculate_room_fdz(room, orientation, u+width, v+length);
+    dx1 = calculate_room_dxf(room, orientation, u, v);
+    dz1 = calculate_room_dzf(room, orientation, u, v);
+    dx2 = calculate_room_dxf(room, orientation, u+width, v+length);
+    dz2 = calculate_room_dzf(room, orientation, u+width, v+length);
     new_position.x = node->origin_x + minf(dx1, dx2);
     new_position.z = node->origin_z + minf(dz1, dz2);
     Wall* wall = wall_create(new_position, height, minimap_color);
@@ -2015,6 +2017,33 @@ Wall* room_set_tilemap_wall(i32 x, i32 z, f32 height, u32 minimap_color)
     list_append(map->walls, wall);
     map_set_wall(map, x, z, wall);
     return wall;
+}
+
+vec2 room_position(vec2 position)
+{
+    log_write(FATAL, "Unused function for now");
+    return vec2_create(0,0);
+    //Map* map = map_context.current_map;
+    //MapNode* node = map_context.current_map_node;
+    //if (!map->active) {
+    //    log_write(WARNING, "Map is not active");
+    //    return vec2_create(0,0);
+    //}
+    //log_assert(node != NULL, "fuck");
+    //Room* room = node->room;
+    //i32 orientation = node->orientation;
+    //i32 u, v, dx, dz;
+    //log_write(DEBUG, "B: %f %f", position.x, position.z);
+    //dx = position.x - node->origin_x;
+    //dz = position.z - node->origin_z;
+    //u = room->u1 + position.x - node->origin_x;
+    //v = room->v1 + position.z - node->origin_z;
+    //dx = calculate_room_dx(room, orientation, u, v);
+    //dz = calculate_room_dz(room, orientation, u, v);
+    //position.x = node->origin_x + dx;
+    //position.z = node->origin_z + dz;
+    //log_write(DEBUG, "C: %f %f", position.x, position.z);
+    //return position;
 }
 
 i32 map_get_id(const char* name)
