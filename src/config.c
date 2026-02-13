@@ -1,6 +1,7 @@
 #include "config.h"
 #include "util.h"
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <string.h>
 #include <dirent.h>
 
@@ -32,6 +33,19 @@ const char* pathname = "bin/dev/plugins/soultaker.so";
 const int flags = RTLD_NOW;
 #endif
 
+static bool is_dir(const char* dir_path, const struct dirent* iterator)
+{
+#ifdef _WIN32
+    struct stat path_stat;
+    char* path = string_create("%s/%s", dir_path, iterator->d_name);
+    stat(path, &path_stat);
+    string_free(path);
+    return (path_stat.st_mode & S_IFMT) == S_IFDIR;
+#else
+    return iterator->d_type == DT_DIR;
+#endif
+}
+
 static bool ends_with(const char* string, const char* suffix)
 {
     int n = strlen(string);
@@ -57,7 +71,7 @@ static void read_weapons(Config* config, const char* dir_path)
     const struct dirent* iterator = readdir(cur_dir);
     while (iterator != NULL) {
         if (iterator->d_name[0] != '.') {
-            if (iterator->d_type == DT_DIR) {
+            if (is_dir(dir_path, iterator)) {
                 new_dir = string_create("%s/%s", dir_path, iterator->d_name);
                 read_weapons(config, new_dir);
                 string_free(new_dir);
@@ -96,7 +110,7 @@ static void read_entities(Config* config, const char* dir_path)
     const struct dirent* iterator = readdir(cur_dir);
     while (iterator != NULL) {
         if (iterator->d_name[0] != '.') {
-            if (iterator->d_type == DT_DIR) {
+            if (is_dir(dir_path, iterator)) {
                 new_dir = string_create("%s/%s", dir_path, iterator->d_name);
                 read_entities(config, new_dir);
                 string_free(new_dir);
@@ -135,7 +149,7 @@ static void read_textures(Config* config, const char* dir_path)
     const struct dirent* iterator = readdir(cur_dir);
     while (iterator != NULL) {
         if (iterator->d_name[0] != '.') {
-            if (iterator->d_type == DT_DIR) {
+            if (is_dir(dir_path, iterator)) {
                 new_dir = string_create("%s/%s", dir_path, iterator->d_name);
                 read_textures(config, new_dir);
                 string_free(new_dir);
@@ -174,7 +188,7 @@ static void read_maps(Config* config, const char* dir_path)
     const struct dirent* iterator = readdir(cur_dir);
     while (iterator != NULL) {
         if (iterator->d_name[0] != '.') {
-            if (iterator->d_type == DT_DIR) {
+            if (is_dir(dir_path, iterator)) {
                 new_dir = string_create("%s/%s", dir_path, iterator->d_name);
                 read_maps(config, new_dir);
                 string_free(new_dir);
@@ -293,6 +307,7 @@ Config* config_create(void)
 
 void config_destroy(Config* config)
 {
+    json_object_destroy(config->weapons);
     json_object_destroy(config->textures);
     json_object_destroy(config->entities);
     json_object_destroy(config->maps);
