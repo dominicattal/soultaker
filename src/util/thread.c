@@ -36,7 +36,7 @@ i32 thread_get_id(const char* name)
 const char* thread_get_name(i32 id)
 {
     if (id < 0 || id >= NUM_THREADS || threads[id].name == NULL)
-        return "Unrecognized";
+        return "N/A";
     return threads[id].name;
 }
 
@@ -55,5 +55,5 @@ const char* thread_get_self_name(void)
     for (i32 i = 0; i < NUM_THREADS; i++)
         if (pthread_equal(thread, threads[i].thread))
             return threads[i].name;
-    return "Unrecognized";
+    return "N/A";
 }

@@ -12,7 +12,7 @@ typedef enum {
     MEMORY = 5
 } LogLevel;
 
-void log_init(char* exe_path);
+void log_init(void);
 void log_unlock(void);
 void log_set_level(int level);
 void log_cleanup(void);

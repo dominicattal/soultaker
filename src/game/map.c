@@ -2143,7 +2143,7 @@ void map_set_wall(Map* map, i32 x, i32 z, Wall* wall)
 
 void map_init(void)
 {
-    JsonObject* json = json_read("config/maps.json");
+    JsonObject* json = state_context.config->maps;
     if (json == NULL)
         throw_map_error(ERROR_CONFIG_FILE);
     JsonIterator* it = json_iterator_create(json);
@@ -2182,7 +2182,6 @@ void map_cleanup(void)
 {
     st_free(map_context.names);
     map_destroy(game_context.current_map);
-    json_object_destroy(map_context.json);
 }
 
 Map* map_create(i32 id)

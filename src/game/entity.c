@@ -269,9 +269,7 @@ static void load_state_info(i32 entity_id, JsonObject* object)
 
 static void load_entity_info(void)
 {
-    JsonObject* json = json_read("config/entities.json");
-    if (json == NULL)
-        throw_entity_error(ERROR_CONFIG_FILE);
+    JsonObject* json = state_context.config->entities;
     JsonIterator* it = json_iterator_create(json);
     if (it == NULL)
         throw_entity_error(ERROR_GENERIC);
@@ -314,7 +312,6 @@ static void load_entity_info(void)
 
     entity_context.current_entity_name = NULL;
     json_iterator_destroy(it);
-    json_object_destroy(json);
 }
 
 i32 entity_get_id(const char* name)

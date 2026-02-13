@@ -99,10 +99,7 @@ static void load_attack_func(JsonObject* object, i32 id)
 
 static void load_weapon_info(void)
 {
-    JsonObject* json = json_read("config/weapons.json");
-    if (json == NULL)
-        throw_weapon_error(ERROR_CONFIG_FILE);
-
+    JsonObject* json = state_context.config->weapons;
     JsonIterator* it = json_iterator_create(json);
     if (it == NULL)
         throw_weapon_error(ERROR_GENERIC);
@@ -127,7 +124,6 @@ static void load_weapon_info(void)
     }
 
     json_iterator_destroy(it);
-    json_object_destroy(json);
 }
 
 void weapon_init(void)

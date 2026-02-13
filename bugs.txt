@@ -30,3 +30,6 @@
 # 2025-12-20
 - parjicle and particle were not rendering
 - using z instead of y when updating buffer
+
+# 2026-2-12
+- game froze, probably because of uninitialized data somewhere causing infinite loop

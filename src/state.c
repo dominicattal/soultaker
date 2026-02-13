@@ -7,54 +7,22 @@
 #include "audio.h"
 #include <stdio.h>
 #include <pthread.h>
-#include <json.h>
 
-#ifdef DEBUG_BUILD
-    #define BUILD_INFO "DEBUG"
-#elif RELEASE_BUILD
-    #define BUILD_INFO "RELEASE"
-#endif
-
-#ifdef _WIN32
-#include <windows.h>
-const char* pathname = "plugins/soultaker.dll";
-const int flags = 0;
-void* dlopen(const char* path, i32 flags)
-{
-    return LoadLibrary(path);
-}
-void* dlsym(void* handle, const char* symbol)
-{
-    return GetProcAddress(handle, symbol);
-}
-char* dlerror(void)
-{
-    return "could not load library";
-}
-int dlclose(void* handle)
-{
-    return FreeLibrary(handle);
-}
-#else
-#include <dlfcn.h>
-const char* pathname = "bin/dev/plugins/soultaker.so";
-const int flags = RTLD_NOW;
-#endif
-
-struct {
-    pthread_mutex_t mutex;
-    void* handle;
-    f32 dt;
-} state_context;
+StateContext state_context;
 
 void state_init(void)
 {
     pthread_mutex_init(&state_context.mutex, 0);
+
+    log_init();
+    state_context.config = config_create();
+
     thread_link("Main");
 
-    state_context.handle = dlopen(pathname, flags);
-    if (!state_context.handle)
-        log_write(FATAL, dlerror());
+
+    //state_context.handle = dlopen(pathname, flags);
+    //if (!state_context.handle)
+    //    log_write(FATAL, dlerror());
 
     event_init();
     window_init();
@@ -66,8 +34,7 @@ void state_init(void)
 void state_loop(void)
 {
     f64 start, end;
-    while (!window_closed())
-    {
+    while (!window_closed()) {
         start = get_time();
         window_update();
         game_process_input();
@@ -92,16 +59,20 @@ void state_cleanup(void)
     renderer_cleanup();
     window_cleanup();
     event_cleanup();
+
+    config_destroy(state_context.config);
+
 #ifdef DEBUG_BUILD
     print_heap_info();
 #endif
+
     log_cleanup();
 
-    dlclose(state_context.handle);
     pthread_mutex_destroy(&state_context.mutex);
 }
 
 void* state_load_function(const char* name)
 {
-    return dlsym(state_context.handle, name);
+    return config_get_function(state_context.config, name);
+    //return dlsym(state_context.handle, name);
 }

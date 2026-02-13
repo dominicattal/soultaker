@@ -499,12 +499,10 @@ static void create_textures(i32* tex_unit_location)
     i32 num_rects;
     i32 i;
 
-    const char* textures_path = "config/textures.json";
-    JsonObject* json = json_read(textures_path);
-    log_assert(json, "Failed to read texture json file %s", textures_path);
+    JsonObject* json = state_context.config->textures;
 
     JsonIterator* it = json_iterator_create(json);
-    log_assert(it != NULL, "Failed to create json iterator for file %s", textures_path);
+    log_assert(it != NULL, "Failed to create json iterator for textures");
 
     
     JsonMember* member;
@@ -547,7 +545,6 @@ static void create_textures(i32* tex_unit_location)
         stbi_image_free(image_data[i]);
 
     json_iterator_destroy(it);
-    json_object_destroy(json);
     st_free(rects);
     st_free(image_data);
 }

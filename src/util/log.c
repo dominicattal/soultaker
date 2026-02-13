@@ -76,13 +76,13 @@ static FILE* create_log_file(const char* log_dir)
 }
 #endif
 
-void log_init(char* exe_path)
+void log_init(void)
 {
-    char* dir = dirname(exe_path);
-    int n = strlen(dir);
-    char log_dir[n+10];
-    strncpy(log_dir, dir, n+1);
-    strncpy(&log_dir[n], "\\logs", 6);
+    //char* dir = dirname(exe_path);
+    //int n = strlen(dir);
+    //char log_dir[n+10];
+    //strncpy(log_dir, dir, n+1);
+    //strncpy(&log_dir[n], "\\logs", 6);
     stream = stderr;
 #ifdef RELEASE_BUILD
     //if (mkdir(log_dir, 0777) != 0 && errno != EEXIST) {
@@ -104,14 +104,14 @@ void _log_write(LogLevel severity, const char* message, const char* filename, in
     va_list args;
     pthread_mutex_lock(&mutex);
     get_timestamp(&Y, &M, &D, &h, &m, &s);
-    fprintf(stderr, "\033[35;2;70;140;70m%4d-%02d-%02d %02d:%02d:%02d %s \033[36m%s \033[96m%s:%d\033[0m\n- ", 
-            Y, M, D, h, m, s, 
+    fprintf(stderr, "\033[35;2;70;140;70m%02d:%02d:%02d %s \033[36m%s \033[96m%s:%d\033[0m ", 
+            h, m, s, 
             severity_string(severity), 
             thread_get_self_name(), filename, line);
     va_start(args, line);
     vfprintf(stderr, message, args);
     va_end(args);
-    fprintf(stderr, "\n\n");
+    fprintf(stderr, "\n");
     fflush(stderr);
     if (severity == FATAL)
         abort();

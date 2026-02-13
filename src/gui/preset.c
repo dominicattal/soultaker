@@ -133,7 +133,7 @@ static void update_fps(GUIComp* comp, f32 dt)
     CompFpsData* data = comp->data;
     data->timer -= dt;
     if (data->timer < 0) {
-        char* string = string_create("%.3f %.3f %.3f", 1000 * game_get_dt(), 1000 * state_dt(), 1 / (state_dt()));
+        char* string = string_create("%.3f %.3f %.3f", 1000 * game_get_dt(), 1000 * state_dt(), 1 / state_dt());
         gui_comp_set_text(comp, string);
         data->timer += 0.1;
     }
