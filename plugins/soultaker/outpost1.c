@@ -24,12 +24,12 @@ st_export bool outpost1_generate(GameApi* api, LocalMapGenerationSettings* setti
 
     if (strcmp(settings->current_branch, "main") == 0) {
         if (strcmp(settings->current_room_type, "spawn") == 0) {
-            settings->current_room_type = "boss";
-            //settings->create_no_path = true;
-            settings->num_rooms_left = 1;
+            settings->current_room_type = "enemy";
+            settings->num_rooms_left = 5;
             return false;
         } else if (strcmp(settings->current_room_type, "enemy") == 0) {
             settings->current_room_type = "boss";
+            settings->create_no_path = true;
             settings->num_rooms_left = 1;
             return false;
         }
@@ -186,9 +186,8 @@ st_export void outpost1_knight_attack_update(GameApi* api, Entity* entity, f32 d
     entity->direction = api->vec2_normalize(api->vec2_sub(target, entity->position));
     data->shot_cooldown -= dt;
     if (api->entity_get_flag(entity, ENTITY_FLAG_HIT_WALL)) {
-        //api->log_write(DEBUG, "%f %f", player_position.x, player_position.z);
-        //api->log_write(DEBUG, "%f %f %f %f %f %f", before, data->player_arc_rad, offset.x, offset.z, target.x, target.z);
-        //api->log_write(DEBUG, "%f %f %f %f %i", entity->direction.x, entity->direction.z, entity->position.x, entity->position.z, data->rotate_direction);
+        api->log_write(DEBUG, "%f %f", player_position.x, player_position.z);
+        api->log_write(DEBUG, "%f %f %f %f %i", entity->direction.x, entity->direction.z, entity->position.x, entity->position.z, data->rotate_direction);
     }
     if (data->shot_cooldown < 0) {
         proj = api->map_create_projectile(entity->position);

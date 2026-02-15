@@ -33,3 +33,7 @@
 
 # 2026-2-12
 - game froze, probably because of uninitialized data somewhere causing infinite loop
+
+# 2026-2-13
+- using glBufferSubData(buffer 1, offset 4, size 4) to update a GL_STATIC_DRAW buffer
+- resize window

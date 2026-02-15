@@ -471,6 +471,28 @@ static GUIComp* create_interactable(void)
     return comp;
 }
 
+static void inventory_toggle(GUIComp* comp)
+{
+    gui_comp_toggle_flag(comp, GUI_COMP_FLAG_VISIBLE);
+    gui_comp_toggle_flag(comp, GUI_COMP_FLAG_CLICKABLE);
+}
+
+static void inventory_key(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods)
+{
+    if (key == GLFW_KEY_R && action == GLFW_PRESS)
+        inventory_toggle(comp);
+}
+
+static GUIComp* create_inventory()
+{
+    GUIComp* inventory = gui_comp_create(0, 0, 400, 400);
+    inventory_toggle(inventory);
+    gui_comp_set_align(inventory, ALIGN_CENTER, ALIGN_CENTER);
+    gui_comp_set_color(inventory, 255, 255, 255, 100);
+    inventory->key = inventory_key;
+    return inventory;
+}
+
 static void load_preset_game(GUIComp* root)
 {
     GUIComp* player_stats = gui_comp_create(20, 20, 400, 50);
@@ -534,6 +556,9 @@ static void load_preset_game(GUIComp* root)
 
     GUIComp* help = create_help_screen();
     gui_comp_attach(root, help);
+
+    GUIComp* inventory = create_inventory();
+    gui_comp_attach(root, inventory);
 }
 
 // **************************************************

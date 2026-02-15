@@ -213,15 +213,17 @@ static void read_maps(Config* config, const char* dir_path)
     closedir(cur_dir);
 }
 
-static void read_config(Config* config, const char* dir_path)
+static void read_config(Config* config)
 {
+    const char* dir_path = "config";
     DIR* config_dir = opendir(dir_path);
     if (config_dir == NULL) {
-        log_write(WARNING, "%s found in config folder not directory", dir_path);
+        log_write(WARNING, "%s not found", dir_path);
         return;
     }
     char* new_dir;
     const struct dirent* config_type = readdir(config_dir);
+    log_write(DEBUG, dir_path);
     while (config_type != NULL) {
         if (strcmp(config_type->d_name, "textures") == 0) {
             new_dir = string_create("%s/%s", dir_path, config_type->d_name);
@@ -245,48 +247,6 @@ static void read_config(Config* config, const char* dir_path)
     closedir(config_dir);
 }
 
-static void read_plugin(Config* config, const char* dir_path)
-{
-    DIR* plugin_dir = opendir(dir_path);
-    if (plugin_dir == NULL) {
-        log_write(WARNING, "%s found in plugins folder not directory", dir_path);
-        return;
-    }
-    char* new_dir;
-    const struct dirent* config_root = readdir(plugin_dir);
-    while (config_root != NULL) {
-        if (strcmp(config_root->d_name, "config") == 0) {
-            new_dir = string_create("%s/%s", dir_path, config_root->d_name);
-            read_config(config, new_dir);
-            string_free(new_dir);
-            goto found;
-        }
-        config_root = readdir(plugin_dir);
-    }
-    log_write(WARNING, "Could not find config files for plugin %s", dir_path);
-found:
-    closedir(plugin_dir);
-}
-
-static void read_plugins(Config* config)
-{
-    const char* dir_path = "plugins";
-    char* new_dir;
-    DIR* root_dir = opendir(dir_path);
-    if (root_dir == NULL)
-        log_write(FATAL, "plugin directory doesn't exist");
-    const struct dirent* plugin = readdir(root_dir);
-    while (plugin != NULL) {
-        if (plugin->d_name[0] != '.') {
-            new_dir = string_create("%s/%s", dir_path, plugin->d_name);
-            read_plugin(config, new_dir);
-            string_free(new_dir);
-        }
-        plugin = readdir(root_dir);
-    }
-    closedir(root_dir);
-}
-
 Config* config_create(void)
 {
     Config* config = st_malloc(sizeof(Config));
@@ -294,7 +254,7 @@ Config* config_create(void)
     config->textures = json_object_create();
     config->entities = json_object_create();
     config->maps = json_object_create();
-    read_plugins(config);
+    read_config(config);
     if (json_object_length(config->textures) == 0)
         log_write(FATAL, "Did not find any textures");
     if (json_object_length(config->entities) == 0)
