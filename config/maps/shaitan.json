@@ -1,0 +1,51 @@
+{
+    "shaitan": {
+        "path": "assets/maps/shaitan.png",
+        "init": "shaitan_init",
+        "cleanup": "shaitan_cleanup",
+        "generate": "shaitan_generate",
+        "branch": "shaitan_branch",
+        "palette": {
+            "lava": {
+                "color": "FFAE00",
+                "type": "tile",
+                "tex": "shaitan_lava",
+                "collide": "shaitan_lava_collide",
+                "create": "shaitan_lava_create"
+            },
+            "floor_1": {
+                "color": "774F00",
+                "type": "tile",
+                "tex": "shaitan_floor_1"
+            },
+            "wall": {
+                "color": "303030",
+                "type": "wall",
+                "side_tex": "shaitan_wall_side",
+                "top_tex": "shaitan_wall_top",
+                "height": 3
+            },
+            "hellstone": {
+                "color": "FF8300",
+                "type": "tile",
+                "tex": "shaitan_hellstone"
+            }
+        },
+        "rooms": {
+            "spawn": {
+                "bounding_box": [0, 0, 30, 36],
+                "create": "shaitan_spawn_create",
+                "type": "spawn",
+                "alternates": [
+                    {
+                        "type": "female",
+                        "default": "floor_1",
+                        "location": [15, 30],
+                        "bounding_box": [15, 29, 15, 29],
+                        "origin": [15, 29]
+                    }
+                ]
+            }
+        }
+    }
+}

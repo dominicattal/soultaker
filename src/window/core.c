@@ -67,7 +67,6 @@ void window_init(void)
     glBufferSubData(GL_UNIFORM_BUFFER, 2 * sizeof(GLint), sizeof(GLfloat), &aspect_ratio);
 
     init_controls();
-
 }
 
 void window_update(void)

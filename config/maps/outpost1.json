@@ -1,0 +1,229 @@
+{
+    "outpost1": {
+        "path": "assets/maps/outpost1.png",
+        "init": "outpost1_init",
+        "cleanup": "outpost1_cleanup",
+        "generate": "outpost1_generate",
+        "branch": "outpost1_branch",
+        "palette": {
+            "floor1": {
+                "color": "8E4747",
+                "type": "tile",
+                "tex": "outpost1_floor1"
+            },
+            "wall1": {
+                "color": "683434",
+                "type": "wall",
+                "height": 2.0,
+                "side_tex": "outpost1_wall1_side",
+                "top_tex": "outpost1_wall1_top"
+            }
+        },
+        "rooms": {
+            "spawn": {
+                "bounding_box": [0, 0, 18, 18],
+                "create": "outpost1_spawn_create",
+                "type": "spawn",
+                "alternates": [
+                    {
+                        "type": "female",
+                        "default": "floor1",
+                        "location": [9, 9],
+                        "bounding_box": [7, 6, 7, 6],
+                        "origin": [7, 6]
+                    },
+                    {
+                        "type": "male",
+                        "location": [18, 9],
+                        "bounding_box": [19, 1, 20, 5],
+                        "origin": [20, 3]
+                    }
+                ]
+            },
+            "big_room": {
+                "bounding_box": [0, 21, 28, 49],
+                "create": "outpost1_big_room_create",
+                "type": "enemy",
+                "alternates": [
+                    {
+                        "type": "female",
+                        "default": "wall1",
+                        "location": [14, 22],
+                        "bounding_box": [21, 1, 25, 1],
+                        "origin": [23, 1]
+                    },
+                    {
+                        "type": "female",
+                        "default": "wall1",
+                        "location": [1, 35],
+                        "bounding_box": [19, 1, 19, 5],
+                        "origin": [19, 3]
+                    },
+                    {
+                        "type": "female",
+                        "default": "wall1",
+                        "location": [14, 48],
+                        "bounding_box": [21, 1, 25, 1],
+                        "origin": [23, 1]
+                    },
+                    {
+                        "type": "female",
+                        "default": "wall1",
+                        "location": [27, 35],
+                        "bounding_box": [19, 1, 19, 5],
+                        "origin": [19, 3]
+                    },
+                    {
+                        "type": "male",
+                        "location": [14, 21],
+                        "bounding_box": [21, 0, 25, 1],
+                        "origin": [23, 0]
+                    },
+                    {
+                        "type": "male",
+                        "location": [0, 35],
+                        "bounding_box": [18, 1, 19, 5],
+                        "origin": [18, 3]
+                    },
+                    {
+                        "type": "male",
+                        "location": [14, 49],
+                        "bounding_box": [21, 1, 25, 2],
+                        "origin": [23, 2]
+                    },
+                    {
+                        "type": "male",
+                        "location": [28, 35],
+                        "bounding_box": [19, 1, 20, 5],
+                        "origin": [20, 3]
+                    }
+                ]
+            },
+            "l_room": {
+                "bounding_box": [32, 0, 65, 33],
+                "create": "outpost1_l_room_create",
+                "type": "enemy",
+                "alternates": [
+                    {
+                        "type": "female",
+                        "default": "wall1",
+                        "location": [41, 1],
+                        "bounding_box": [21, 1, 25, 1],
+                        "origin": [23, 1]
+                    },
+                    {
+                        "type": "female",
+                        "default": "wall1",
+                        "location": [33, 8],
+                        "bounding_box": [19, 1, 19, 5],
+                        "origin": [19, 3]
+                    },
+                    {
+                        "type": "female",
+                        "default": "wall1",
+                        "location": [33, 24],
+                        "bounding_box": [19, 1, 19, 5],
+                        "origin": [19, 3]
+                    },
+                    {
+                        "type": "female",
+                        "default": "wall1",
+                        "location": [41, 32],
+                        "bounding_box": [21, 1, 25, 1],
+                        "origin": [23, 1]
+                    },
+                    {
+                        "type": "female",
+                        "default": "wall1",
+                        "location": [56, 32],
+                        "bounding_box": [21, 1, 25, 1],
+                        "origin": [23, 1]
+                    },
+                    {
+                        "type": "female",
+                        "default": "wall1",
+                        "location": [64, 24],
+                        "bounding_box": [19, 1, 19, 5],
+                        "origin": [19, 3]
+                    },
+                    {
+                        "type": "female",
+                        "default": "wall1",
+                        "location": [56, 16],
+                        "bounding_box": [21, 1, 25, 1],
+                        "origin": [23, 1]
+                    },
+                    {
+                        "type": "female",
+                        "default": "wall1",
+                        "location": [49, 8],
+                        "bounding_box": [19, 1, 19, 5],
+                        "origin": [19, 3]
+                    },
+                    {
+                        "type": "male",
+                        "location": [41, 0],
+                        "bounding_box": [21, 0, 25, 1],
+                        "origin": [23, 0]
+                    },
+                    {
+                        "type": "male",
+                        "location": [32, 8],
+                        "bounding_box": [18, 1, 19, 5],
+                        "origin": [18, 3]
+                    },
+                    {
+                        "type": "male",
+                        "location": [32, 24],
+                        "bounding_box": [18, 1, 19, 5],
+                        "origin": [18, 3]
+                    },
+                    {
+                        "type": "male",
+                        "location": [41, 33],
+                        "bounding_box": [21, 1, 25, 2],
+                        "origin": [23, 2]
+                    },
+                    {
+                        "type": "male",
+                        "location": [56, 33],
+                        "bounding_box": [21, 1, 25, 2],
+                        "origin": [23, 2]
+                    },
+                    {
+                        "type": "male",
+                        "location": [65, 24],
+                        "bounding_box": [19, 1, 20, 5],
+                        "origin": [20, 3]
+                    },
+                    {
+                        "type": "male",
+                        "location": [56, 15],
+                        "bounding_box": [21, 0, 25, 1],
+                        "origin": [23, 0]
+                    },
+                    {
+                        "type": "male",
+                        "location": [50, 8],
+                        "bounding_box": [19, 1, 20, 5],
+                        "origin": [20, 3]
+                    }
+                ]
+            },
+            "boss_room": {
+                "bounding_box": [70, 0, 126, 55],
+                "create": "outpost1_boss_room_create",
+                "type": "boss",
+                "alternates": [
+                    {
+                        "type": "female",
+                        "default": "wall1",
+                        "location": [98, 54],
+                        "bounding_box": [21, 1, 25, 1],
+                        "origin": [23, 1]
+                    }
+                ]
+            }
+        }
+    }
+}
