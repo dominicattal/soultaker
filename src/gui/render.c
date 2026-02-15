@@ -5,10 +5,10 @@
 #define FLOATS_PER_COMP 13
 
 typedef struct {
-    i32 x, y, w, h;
-    u8 r, g, b, a;
+    f32 x, y, w, h;
     f32 u1, v1, u2, v2;
     i32 location;
+    u8 r, g, b, a;
 } Quad;
 
 typedef struct {
@@ -61,10 +61,10 @@ i32 gui_comp_compute_text_height(GUIComp* comp)
     if (comp->text == NULL)
         return 0;
 
-    i32 a1, b1, a2, b2;     // glyph bounding box
-    i32 ascent, descent;    // highest and lowest glyph offsets
-    i32 line_gap;           // gap between lines
-    i32 adv, lsb, kern;     // advance, left side bearing, kerning
+    f32 a1, b1, a2, b2;     // glyph bounding box
+    f32 ascent, descent;    // highest and lowest glyph offsets
+    f32 line_gap;           // gap between lines
+    f32 adv, lsb, kern;     // advance, left side bearing, kerning
     i32 font_size;          // font_size = ascent - descent
     FontEnum font;          // font
     i32 num_spaces;         // count whitespace for horizontal alignment
@@ -74,8 +74,8 @@ i32 gui_comp_compute_text_height(GUIComp* comp)
     i32 num_lines;
     i32 cw;
 
-    register i32 test_ox;            // glyph origin
-    register i32 prev_test_ox;       // edge case
+    register f32 test_ox;            // glyph origin
+    register f32 prev_test_ox;       // edge case
     register i32 left, right, mid;   // pointers for word
     
     font = comp->font;
@@ -160,14 +160,14 @@ static void push_text_data(GUIComp* comp, i32 cx, i32 cy, i32 cw, i32 ch)
         return;
 
     f32 u1, v1, u2, v2;     // bitmap coordinates
-    i32 a1, b1, a2, b2;     // glyph bounding box
-    i32 x, y, w, h;         // pixel coordinates
-    i32 ascent, descent;    // highest and lowest glyph offsets
-    i32 line_gap;           // gap between lines
-    i32 adv, lsb, kern;     // advance, left side bearing, kerning
+    f32 a1, b1, a2, b2;     // glyph bounding box
+    f32 x, y, w, h;         // pixel coordinates
+    f32 ascent, descent;    // highest and lowest glyph offsets
+    f32 line_gap;           // gap between lines
+    f32 adv, lsb, kern;     // advance, left side bearing, kerning
     u8  ha, va;             // horizontal and vertical alignment
     u8  justify;            // branchless justify
-    i32 font_size;          // font_size = ascent - descent
+    i32 font_size;          // font_size ~ ascent - descent
     FontEnum font;          // font
     i32 num_spaces;         // count whitespace for horizontal alignment
     f32 dy;                 // change in y for vertical alignment
@@ -177,8 +177,8 @@ static void push_text_data(GUIComp* comp, i32 cx, i32 cy, i32 cw, i32 ch)
     i32 location;           // active texture slot of bitmap
     Quad quad;
 
-    register i32 ox, oy, test_ox;    // glyph origin
-    register i32 prev_test_ox;       // edge case
+    register f32 ox, oy, test_ox;    // glyph origin
+    register f32 prev_test_ox;       // edge case
     register i32 left, right, mid;   // pointers for word
     
     ha = comp->text_halign;
@@ -266,7 +266,7 @@ static void push_text_data(GUIComp* comp, i32 cx, i32 cy, i32 cw, i32 ch)
             font_char_bmap(font, font_size, text[left], &u1, &v1, &u2, &v2);
             font_char_kern(font, font_size, text[left], text[left+1], &kern);
 
-            x = cx + ox + lsb;
+            x = cx + ox + (i32)(lsb);
             y = cy + ch - oy - b2;
             w = a2 - a1;
             h = b2 - b1;

@@ -24,6 +24,7 @@ typedef enum {
     GUI_PRESET_OPTIONS,
     GUI_PRESET_GAME,
     GUI_PRESET_RUNS,
+    GUI_PRESET_TEST,
     NUM_GUI_PRESETS
 } GUIPreset;
 

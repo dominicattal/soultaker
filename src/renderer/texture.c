@@ -4,51 +4,11 @@
 #include <stb_image.h>
 #include <stb_image_write.h>
 #include <stb_rect_pack.h>
-#include <stb_truetype.h>
 #include <math.h>
 #include <string.h>
 #include <json.h>
 
-#define CHAR_OFFSET     32
-#define NUM_CHARS       96
-#define BITMAP_WIDTH    1024
-#define BITMAP_HEIGHT   1024
-#define PADDING         1
-
-typedef struct {
-    i16 font_size;
-    i16 location;
-    i32 ascent, descent, line_gap;
-    struct {
-        i32 advance, left_side_bearing;
-        i32 kern[NUM_CHARS];
-        i32 x1, y1, x2, y2;
-        u16 u1, v1, u2, v2;
-    } chars[NUM_CHARS];
-} Font;
-
-typedef struct {
-    char* name;
-    union { f32 u; i32 xint; };
-    union { f32 v; i32 yint; };
-    union { f32 w; i32 wint; };
-    f32 h;
-    vec2 pivot;
-    vec2 stretch;
-    i32 location;
-} Texture;
-
-typedef struct {
-    Font fonts[NUM_FONTS];
-    Texture* textures;
-    struct {
-        GLuint unit, name;
-    } static_textures[NUM_STATIC_TEXTURES];
-    i32 num_textures; // does not include static textures
-    u32 texture_units[NUM_TEXTURE_UNITS];
-} TextureContext;
-
-static TextureContext texture_context;
+TextureContext texture_context;
 
 static i32 texture_cmp(const void* ptr1, const void* ptr2)
 {
@@ -57,15 +17,19 @@ static i32 texture_cmp(const void* ptr1, const void* ptr2)
     return strcmp(tex1->name, tex2->name);
 }
 
-static void load_font(stbtt_pack_context* spc, FontEnum font, i32 font_size, const char* ttf_path)
+static void load_font(stbtt_pack_context* spc, FontEnum font_enum, i32 font_size, const char* ttf_path)
 {
+    Font* font;
     unsigned char* font_buffer;
     stbtt_fontinfo info;
     stbtt_pack_range font_range;
-    stbtt_packedchar chars[NUM_CHARS];
     i64 size;
     f32 scale;
+    i32 kern;
+    i32 advance, left_side_bearing;
+    i32 ascent, descent, line_gap;
 
+    font = &texture_context.fonts[font_enum];
     FILE* font_file = fopen(ttf_path, "rb");
     fseek(font_file, 0, SEEK_END);
     size = ftell(font_file);
@@ -80,63 +44,61 @@ static void load_font(stbtt_pack_context* spc, FontEnum font, i32 font_size, con
     font_range.first_unicode_codepoint_in_range = CHAR_OFFSET; 
     font_range.array_of_unicode_codepoints = NULL;
     font_range.num_chars = NUM_CHARS;       
-    font_range.chardata_for_range = chars;
+    font_range.chardata_for_range = font->chardata;
 
     stbtt_PackFontRanges(spc, font_buffer, 0, &font_range, 1);
 
     scale = stbtt_ScaleForPixelHeight(&info, font_size);
-    stbtt_GetFontVMetrics(&info, &texture_context.fonts[font].ascent, &texture_context.fonts[font].descent, &texture_context.fonts[font].line_gap);
-    texture_context.fonts[font].ascent = roundf(texture_context.fonts[font].ascent * scale);
-    texture_context.fonts[font].descent = roundf(texture_context.fonts[font].descent * scale);
-    texture_context.fonts[font].line_gap = roundf(texture_context.fonts[font].line_gap * scale);
-    texture_context.fonts[font].font_size = font_size;
+    stbtt_GetFontVMetrics(&info, &ascent, &descent, &line_gap);
+    font->ascent = ascent * scale;
+    font->descent = descent * scale;
+    font->line_gap = line_gap * scale;
+    font->font_size = font_size;
     for (i32 i = 0; i < NUM_CHARS; i++) {
-        texture_context.fonts[font].chars[i].u1 = chars[i].x0;
-        texture_context.fonts[font].chars[i].v1 = chars[i].y0;
-        texture_context.fonts[font].chars[i].u2 = chars[i].x1;
-        texture_context.fonts[font].chars[i].v2 = chars[i].y1;
-        stbtt_GetCodepointHMetrics(&info, i+CHAR_OFFSET, 
-                                   &texture_context.fonts[font].chars[i].advance, 
-                                   &texture_context.fonts[font].chars[i].left_side_bearing);
-        texture_context.fonts[font].chars[i].advance = roundf(texture_context.fonts[font].chars[i].advance * scale);
-        texture_context.fonts[font].chars[i].left_side_bearing = roundf(texture_context.fonts[font].chars[i].left_side_bearing * scale);
+        font->chars[i].u1 = font->chardata[i].x0;
+        font->chars[i].v1 = font->chardata[i].y0;
+        font->chars[i].u2 = font->chardata[i].x1;
+        font->chars[i].v2 = font->chardata[i].y1;
+        stbtt_GetCodepointHMetrics(&info, i+CHAR_OFFSET, &advance, &left_side_bearing);
+        font->chars[i].advance = advance * scale;
+        font->chars[i].left_side_bearing = left_side_bearing * scale;
         stbtt_GetCodepointBitmapBox(&info, i+CHAR_OFFSET, scale, scale, 
-                                    &texture_context.fonts[font].chars[i].x1,  
-                                    &texture_context.fonts[font].chars[i].y1,  
-                                    &texture_context.fonts[font].chars[i].x2,  
-                                    &texture_context.fonts[font].chars[i].y2);
+                                    &font->chars[i].x1,  
+                                    &font->chars[i].y1,  
+                                    &font->chars[i].x2,  
+                                    &font->chars[i].y2);
         for (i32 j = 0; j < NUM_CHARS; j++) {
-            texture_context.fonts[font].chars[i].kern[j] = stbtt_GetCodepointKernAdvance(&info, i+CHAR_OFFSET, j+CHAR_OFFSET);
-            texture_context.fonts[font].chars[i].kern[j] = roundf(texture_context.fonts[font].chars[i].kern[j] * scale);
+            kern = stbtt_GetCodepointKernAdvance(&info, i+CHAR_OFFSET, j+CHAR_OFFSET);
+            font->chars[i].kern[j] = kern * scale;
         }
     }
 
     st_free(font_buffer);
 }
 
-void font_info(FontEnum font, i32 font_size, i32* ascent, i32* descent, i32* line_gap, i32* location)
+void font_info(FontEnum font, i32 font_size, f32* ascent, f32* descent, f32* line_gap, i32* location)
 {
     f32 scale = (f32)font_size / texture_context.fonts[font].font_size;
-    *ascent   = roundf(texture_context.fonts[font].ascent   * scale);
-    *descent  = roundf(texture_context.fonts[font].descent  * scale);
-    *line_gap = roundf(texture_context.fonts[font].line_gap * scale);
+    *ascent   = texture_context.fonts[font].ascent   * scale;
+    *descent  = texture_context.fonts[font].descent  * scale;
+    *line_gap = texture_context.fonts[font].line_gap * scale;
     *location = texture_context.fonts[font].location;
 }
 
-void font_char_hmetrics(FontEnum font, i32 font_size, char character, i32* advance, i32* left_side_bearing)
+void font_char_hmetrics(FontEnum font, i32 font_size, char character, f32* advance, f32* left_side_bearing)
 {
     f32 scale = (f32)font_size / texture_context.fonts[font].font_size;
-    *advance = roundf(texture_context.fonts[font].chars[character-CHAR_OFFSET].advance * scale);
-    *left_side_bearing = roundf(texture_context.fonts[font].chars[character-CHAR_OFFSET].left_side_bearing * scale);
+    *advance = texture_context.fonts[font].chars[character-CHAR_OFFSET].advance * scale;
+    *left_side_bearing = texture_context.fonts[font].chars[character-CHAR_OFFSET].left_side_bearing * scale;
 }
 
-void font_char_bbox(FontEnum font, i32 font_size, char character, i32* bbox_x1, i32* bbox_y1, i32* bbox_x2, i32* bbox_y2)
+void font_char_bbox(FontEnum font, i32 font_size, char character, f32* bbox_x1, f32* bbox_y1, f32* bbox_x2, f32* bbox_y2)
 {
     f32 scale = (f32)font_size / texture_context.fonts[font].font_size;
-    *bbox_x1 = roundf(texture_context.fonts[font].chars[character-CHAR_OFFSET].x1 * scale);
-    *bbox_y1 = roundf(texture_context.fonts[font].chars[character-CHAR_OFFSET].y1 * scale);
-    *bbox_x2 = roundf(texture_context.fonts[font].chars[character-CHAR_OFFSET].x2 * scale);
-    *bbox_y2 = roundf(texture_context.fonts[font].chars[character-CHAR_OFFSET].y2 * scale);
+    *bbox_x1 = texture_context.fonts[font].chars[character-CHAR_OFFSET].x1 * scale;
+    *bbox_y1 = texture_context.fonts[font].chars[character-CHAR_OFFSET].y1 * scale;
+    *bbox_x2 = texture_context.fonts[font].chars[character-CHAR_OFFSET].x2 * scale;
+    *bbox_y2 = texture_context.fonts[font].chars[character-CHAR_OFFSET].y2 * scale;
 }
 
 void font_char_bmap(FontEnum font, i32 font_size, char character, f32* bmap_u1, f32* bmap_v1, f32* bmap_u2, f32* bmap_v2)
@@ -147,10 +109,10 @@ void font_char_bmap(FontEnum font, i32 font_size, char character, f32* bmap_u1, 
     *bmap_v2 = (f32)(texture_context.fonts[font].chars[character-CHAR_OFFSET].v2) / BITMAP_HEIGHT;
 }
 
-void font_char_kern(FontEnum font, i32 font_size, char character, char next_character, i32* kern)
+void font_char_kern(FontEnum font, i32 font_size, char character, char next_character, f32* kern)
 {
     f32 scale = (f32)font_size / texture_context.fonts[font].font_size;
-    *kern = roundf(texture_context.fonts[font].chars[character-CHAR_OFFSET].kern[next_character-CHAR_OFFSET] * scale);
+    *kern = texture_context.fonts[font].chars[character-CHAR_OFFSET].kern[next_character-CHAR_OFFSET] * scale;
 }
 
 static void create_font_textures(i32* tex_unit_location) 
@@ -164,8 +126,8 @@ static void create_font_textures(i32* tex_unit_location)
 
     load_font(&spc, FONT_MONOSPACE, 16, "assets/fonts/Space_Mono/SpaceMono-Regular.ttf");
     load_font(&spc, FONT_NOVEMBER, 16, "assets/fonts/november.regular.ttf");
-    load_font(&spc, FONT_7_12, 12, "assets/fonts/7-12-serif.regular.ttf");
-    load_font(&spc, FONT_SOULTAKER, 14, "assets/fonts/soultaker.ttf");
+    //load_font(&spc, FONT_7_12, 12, "assets/fonts/7-12-serif.regular.ttf");
+    //load_font(&spc, FONT_SOULTAKER, 14, "assets/fonts/soultaker.ttf");
 
     stbtt_PackEnd(&spc);
 
@@ -176,8 +138,8 @@ static void create_font_textures(i32* tex_unit_location)
     glGenTextures(1, &tex);
     glBindTexture(GL_TEXTURE_2D, tex);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, BITMAP_WIDTH, BITMAP_HEIGHT, 0, GL_RED, GL_UNSIGNED_BYTE, bitmap);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     i32 swizzle_mask[] = {GL_ZERO, GL_ZERO, GL_ZERO, GL_RED};
     glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzle_mask);
 

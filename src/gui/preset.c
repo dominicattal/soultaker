@@ -559,12 +559,6 @@ static void load_preset_game(GUIComp* root)
 
     GUIComp* inventory = create_inventory();
     gui_comp_attach(root, inventory);
-
-    GUIComp* test = gui_comp_create(0, 0, 400, 400);
-    gui_comp_set_color(test, 255, 255, 255, 255);
-    gui_comp_set_align(test, ALIGN_CENTER, ALIGN_CENTER);
-    gui_comp_copy_text(test, "The quick brown fox jumps over the lazy dog");
-    gui_comp_attach(root, test);
 }
 
 // **************************************************
@@ -740,6 +734,18 @@ static void load_preset_main_menu(GUIComp* root)
 
 // **************************************************
 
+static void load_preset_test(GUIComp* root)
+{
+    GUIComp* test = gui_comp_create(0, 0, 400, 400);
+    test->font_size = 16;
+    gui_comp_set_color(test, 255, 255, 255, 255);
+    gui_comp_set_align(test, ALIGN_CENTER, ALIGN_CENTER);
+    gui_comp_copy_text(test, "The quick brown fox jumps over the lazy dog");
+    gui_comp_attach(root, test);
+}
+
+// **************************************************
+
 extern GUIContext gui_context;
 
 void gui_preset_load(GUIPreset preset)
@@ -757,6 +763,9 @@ void gui_preset_load(GUIPreset preset)
             break;
         case GUI_PRESET_RUNS:
             load_preset_runs(gui_context.root);
+            break;
+        case GUI_PRESET_TEST:
+            load_preset_test(gui_context.root);
             break;
         default:
             break;
