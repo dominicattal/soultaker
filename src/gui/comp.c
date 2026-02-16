@@ -1,4 +1,4 @@
-#include "internal.h"
+#include "../gui.h"
 #include "../window.h"
 #include "../game.h"
 #include <assert.h>
@@ -223,6 +223,18 @@ void gui_comp_update(GUIComp* comp, f32 dt)
    if (comp->update == NULL)
        return;
    ((GUIUpdateFPtr)(comp->update))(comp, dt);
+}
+
+void gui_update_comps_helper(GUIComp* comp, f32 dt)
+{
+    gui_comp_update(comp, dt);
+    for (i32 i = 0; i < comp->num_children; i++)
+        gui_update_comps_helper(comp->children[i], dt);
+}
+
+void gui_update_comps(f32 dt)
+{
+    gui_update_comps_helper(gui_context.root, dt);
 }
 
 void align_comp_position_x(i32* position_x, u8 halign, i32 size_x, i32 x, i32 w)

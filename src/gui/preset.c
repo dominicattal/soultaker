@@ -1,4 +1,4 @@
-#include "internal.h"
+#include "../gui.h"
 #include "../state.h"
 #include "../game.h"
 #include "../state.h"
@@ -214,11 +214,13 @@ typedef struct {
     List* boss_healths;
 } BossHealthManagerData;
 
-void gui_create_boss_healthbar(char* name, void* boss_ptr, f32 health, f32 max_health)
+void gui_create_boss_healthbar(char* name, Entity* boss)
 {
     GUIComp* boss_health_manager = gui_get_event_comp(GUI_COMP_BOSS_HEALTH);
-    if (boss_health_manager == NULL)
+    if (boss_health_manager == NULL) {
+        log_write(WARNING, "tried to create boss healthbar when manager doesn't exist");
         return;
+    }
 
     BossHealthManagerData* manager_data = boss_health_manager->data;
     i32 idx = manager_data->boss_healths->length;
@@ -228,7 +230,7 @@ void gui_create_boss_healthbar(char* name, void* boss_ptr, f32 health, f32 max_h
     gui_comp_set_color(healthbar, 0, 0, 0, 0);
     gui_comp_attach(boss_health_manager, healthbar);
 
-    f32 health_ratio = health / max_health;
+    f32 health_ratio = boss->health / boss->max_health;
     GUIComp* comp_health = gui_comp_create(0, 20, round(health_ratio * STAT_POINT_WIDTH), 20);
     gui_comp_set_align(comp_health, ALIGN_RIGHT, ALIGN_TOP);
     gui_comp_set_color(comp_health, 0, 255, 0, 255);
@@ -241,7 +243,7 @@ void gui_create_boss_healthbar(char* name, void* boss_ptr, f32 health, f32 max_h
     gui_comp_set_align(comp_text, ALIGN_RIGHT, ALIGN_TOP);
     gui_comp_set_color(comp_text, 0, 0, 0, 0);
     gui_comp_set_text_align(comp_text, ALIGN_CENTER, ALIGN_CENTER);
-    char* text = string_create("%.0f/%.0f", health, max_health);
+    char* text = string_create("%.0f/%.0f", boss->health, boss->max_health);
     log_write(DEBUG, text);
     gui_comp_set_text(comp_text, text);
 
@@ -257,16 +259,18 @@ void gui_create_boss_healthbar(char* name, void* boss_ptr, f32 health, f32 max_h
     gui_comp_attach(healthbar, comp_name);
 
     BossHealthData* data = st_malloc(sizeof(BossHealthData));
-    data->boss_ptr = boss_ptr;
+    data->boss_ptr = boss;
     data->healthbar = healthbar;
     list_append(manager_data->boss_healths, data);
 }
 
-void gui_update_boss_healthbar(void* boss_ptr, f32 health, f32 max_health)
+void gui_update_boss_healthbar(Entity* boss)
 {
     GUIComp* boss_health_manager = gui_get_event_comp(GUI_COMP_BOSS_HEALTH);
-    if (boss_health_manager == NULL)
+    if (boss_health_manager == NULL) {
+        log_write(WARNING, "tried to update boss healthbar when manager doesn't exist");
         return;
+    }
 
     BossHealthManagerData* manager_data = boss_health_manager->data;
     BossHealthData* data = NULL;
@@ -274,7 +278,7 @@ void gui_update_boss_healthbar(void* boss_ptr, f32 health, f32 max_health)
     List* boss_healths = manager_data->boss_healths;
     for (idx = 0; idx < boss_healths->length; idx++) {
         data = list_get(boss_healths, idx);
-        if (data->boss_ptr == boss_ptr)
+        if (data->boss_ptr == boss)
             break;
     }
 
@@ -286,18 +290,20 @@ void gui_update_boss_healthbar(void* boss_ptr, f32 health, f32 max_health)
     GUIComp* comp_health = healthbar->children[1];
     GUIComp* comp_text = healthbar->children[2];
 
-    char* text = string_create("%.0f/%.0f", health, max_health);
+    char* text = string_create("%.0f/%.0f", boss->health, boss->max_health);
     gui_comp_set_text(comp_text, text);
 
-    f32 health_ratio = health / max_health;
+    f32 health_ratio = boss->health / boss->max_health;
     comp_health->w = round(health_ratio * STAT_POINT_WIDTH);
 }
 
-void gui_destroy_boss_healthbar(void* boss_ptr)
+void gui_destroy_boss_healthbar(Entity* boss)
 {
     GUIComp* boss_health_manager = gui_get_event_comp(GUI_COMP_BOSS_HEALTH);
-    if (boss_health_manager == NULL)
+    if (boss_health_manager == NULL) {
+        log_write(WARNING, "tried to destroy boss healthbar when manager doesn't exist");
         return;
+    }
 
     BossHealthManagerData* manager_data = boss_health_manager->data;
     BossHealthData* data = NULL;
@@ -305,7 +311,7 @@ void gui_destroy_boss_healthbar(void* boss_ptr)
     List* boss_healths = manager_data->boss_healths;
     for (idx = 0; idx < boss_healths->length; idx++) {
         data = list_get(boss_healths, idx);
-        if (data->boss_ptr == boss_ptr)
+        if (data->boss_ptr == boss)
             break;
     }
 
@@ -483,13 +489,30 @@ static void inventory_key(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 
         inventory_toggle(comp);
 }
 
-static GUIComp* create_inventory()
+static GUIComp* create_inventory(void)
 {
-    GUIComp* inventory = gui_comp_create(0, 0, 400, 400);
+    GUIComp* inventory = gui_comp_create(0, 0, 360, 400);
     inventory_toggle(inventory);
     gui_comp_set_align(inventory, ALIGN_CENTER, ALIGN_CENTER);
     gui_comp_set_color(inventory, 255, 255, 255, 100);
     inventory->key = inventory_key;
+
+    GUIComp* item;
+    item = gui_comp_create(0, 0, 64, 64);
+    gui_comp_set_color(item, 255, 255, 255, 255);
+    gui_comp_attach(inventory, item);
+    item = gui_comp_create(74, 0, 64, 64);
+    gui_comp_set_color(item, 255, 255, 255, 255);
+    gui_comp_attach(inventory, item);
+    item = gui_comp_create(148, 0, 64, 64);
+    gui_comp_set_color(item, 255, 255, 255, 255);
+    gui_comp_attach(inventory, item);
+    item = gui_comp_create(222, 0, 64, 64);
+    gui_comp_set_color(item, 255, 255, 255, 255);
+    gui_comp_attach(inventory, item);
+    item = gui_comp_create(296, 0, 64, 64);
+    gui_comp_set_color(item, 255, 255, 255, 255);
+    gui_comp_attach(inventory, item);
     return inventory;
 }
 

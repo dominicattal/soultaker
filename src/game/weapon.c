@@ -1,6 +1,7 @@
-#include "internal.h"
 #include <json.h>
 #include <string.h>
+#include "../game.h"
+#include "../renderer.h"
 #include "../api.h"
 #include "../state.h"
 

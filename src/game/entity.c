@@ -1,4 +1,4 @@
-#include "internal.h"
+#include "../game.h"
 #include "../state.h"
 #include "../api.h"
 #include "../event.h"
@@ -450,7 +450,7 @@ void entity_damage(Entity* entity, f32 damage)
     entity->health -= damage;
     if (!entity_get_flag(entity, ENTITY_FLAG_BOSS))
         return;
-    event_create_gui_update_boss_healthbar(entity, entity->health, entity->max_health);
+    gui_update_boss_healthbar(entity);
 }
 
 void entity_set_flag(Entity* entity, EntityFlagEnum flag, bool val)

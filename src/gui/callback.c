@@ -1,4 +1,4 @@
-#include "internal.h"
+#include "../gui.h"
 #include "../window.h"
 
 extern GUIContext gui_context;

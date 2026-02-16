@@ -1,4 +1,4 @@
-#include "internal.h"
+#include "../gui.h"
 #include "../renderer.h"
 #include <string.h>
 

@@ -2,7 +2,7 @@
 #define API_H
 
 #include "util.h"
-#include "game/internal.h"
+#include "game.h"
 
 #ifdef _WIN32
 #define st_export __declspec(dllexport)

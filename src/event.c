@@ -1,6 +1,6 @@
 #include "event.h"
-#include "game/internal.h"
-#include "gui/internal.h"
+#include "game.h"
+#include "gui.h"
 
 #define EVENT_QUEUE_CAPACITY 32
 
@@ -176,13 +176,13 @@ static void execute_event(Event event)
             gui_update_weapon_info(arg1._int);
             break;
         case GUI_EVENT_CREATE_BOSS_HEALTHBAR:
-            gui_create_boss_healthbar(arg1._ptr, arg2._ptr, arg3._flt, arg4._flt);
+            //gui_create_boss_healthbar(arg1._ptr, arg2._ptr, arg3._flt, arg4._flt);
             break;
         case GUI_EVENT_UPDATE_BOSS_HEALTHBAR:
-            gui_update_boss_healthbar(arg1._ptr, arg2._flt, arg3._flt);
+            //gui_update_boss_healthbar(arg1._ptr, arg2._flt, arg3._flt);
             break;
         case GUI_EVENT_DESTROY_BOSS_HEALTHBAR:
-            gui_destroy_boss_healthbar(arg1._ptr);
+            //gui_destroy_boss_healthbar(arg1._ptr);
             break;
         case GUI_EVENT_CREATE_NOTIFICATION:
             gui_create_notification(arg1._ptr);
@@ -353,7 +353,7 @@ void event_create_gui_framebuffer_size_callback(u32 width, u32 height)
         .arg1._int = width,
         .arg2._int = height
     };
-    EventList* list = get_event_list("GUI");
+    EventList* list = get_event_list("Game");
     event_enqueue(list, event);
 }
 
@@ -364,7 +364,7 @@ void event_create_gui_cursor_pos_callback(i32 xpos, i32 ypos)
         .arg1._int = xpos,
         .arg2._int = ypos
     };
-    EventList* list = get_event_list("GUI");
+    EventList* list = get_event_list("Game");
     event_enqueue(list, event);
 }
 
@@ -376,7 +376,7 @@ void event_create_gui_mouse_button_callback(i32 button, i32 action, i32 mods)
         .arg2._int = action,
         .arg3._int = mods
     };
-    EventList* list = get_event_list("GUI");
+    EventList* list = get_event_list("Game");
     event_enqueue(list, event);
 }
 
@@ -389,7 +389,7 @@ void event_create_gui_key_callback(i32 key, i32 scancode, i32 action, i32 mods)
         .arg3._int = action,
         .arg4._int = mods
     };
-    EventList* list = get_event_list("GUI");
+    EventList* list = get_event_list("Game");
     event_enqueue(list, event);
 }
 
@@ -400,7 +400,7 @@ void event_create_gui_control_callback(ControlEnum ctrl, i32 action)
         .arg1._int = ctrl,
         .arg2._int = action
     };
-    EventList* list = get_event_list("GUI");
+    EventList* list = get_event_list("Game");
     event_enqueue(list, event);
 }
 
@@ -410,7 +410,7 @@ void event_create_gui_char_callback(i32 codepoint)
         .type = GUI_EVENT_CHAR_CALLBACK,
         .arg1._int = codepoint
     };
-    EventList* list = get_event_list("GUI");
+    EventList* list = get_event_list("Game");
     event_enqueue(list, event);
 }
 
@@ -420,7 +420,7 @@ void event_create_gui_update_weapon_info(i32 weapon_id)
         .type = GUI_EVENT_UPDATE_WEAPON_INFO,
         .arg1._int = weapon_id
     };
-    EventList* list = get_event_list("GUI");
+    EventList* list = get_event_list("Game");
     event_enqueue(list, event);
 }
 
@@ -433,7 +433,7 @@ void event_create_gui_create_boss_healthbar(char* name, void* boss_ptr1, f32 hea
         .arg3._flt = health,
         .arg4._flt = max_health,
     };
-    EventList* list = get_event_list("GUI");
+    EventList* list = get_event_list("Game");
     event_enqueue(list, event);
 }
 
@@ -445,7 +445,7 @@ void event_create_gui_update_boss_healthbar(void* boss_ptr1, f32 health, f32 max
         .arg2._flt = health,
         .arg3._flt = max_health
     };
-    EventList* list = get_event_list("GUI");
+    EventList* list = get_event_list("Game");
     event_enqueue(list, event);
 }
 
@@ -455,7 +455,7 @@ void event_create_gui_destroy_boss_healthbar(void* boss_ptr1)
         .type = GUI_EVENT_DESTROY_BOSS_HEALTHBAR,
         .arg1._ptr = boss_ptr1
     };
-    EventList* list = get_event_list("GUI");
+    EventList* list = get_event_list("Game");
     event_enqueue(list, event);
 }
 
@@ -465,7 +465,7 @@ void event_create_gui_create_notification(char* notif)
         .type = GUI_EVENT_CREATE_NOTIFICATION,
         .arg1._ptr = notif
     };
-    EventList* list = get_event_list("GUI");
+    EventList* list = get_event_list("Game");
     event_enqueue(list, event);
 }
 
@@ -478,7 +478,7 @@ void event_create_gui_set_interactable(const char* desc, InteractableFuncPtr fun
         .arg3._ptr = map,
         .arg4._ptr = map_node,
     };
-    EventList* list = get_event_list("GUI");
+    EventList* list = get_event_list("Game");
     event_enqueue(list, event);
 }
 
@@ -488,7 +488,7 @@ void event_create_gui_reset_and_change_map(i32 map_id)
         .type = GUI_EVENT_RESET_AND_CHANGE_MAP,
         .arg1._int = map_id
     };
-    EventList* list = get_event_list("GUI");
+    EventList* list = get_event_list("Game");
     event_enqueue(list, event);
 }
 

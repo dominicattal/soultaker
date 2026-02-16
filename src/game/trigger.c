@@ -1,4 +1,4 @@
-#include "internal.h"
+#include "../game.h"
 
 Trigger* trigger_create(vec2 position, f32 radius)
 {

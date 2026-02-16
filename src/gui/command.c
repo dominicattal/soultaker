@@ -1,7 +1,7 @@
 #ifndef COMMAND_H
 #define COMMAND_H
 
-#include "internal.h"
+#include "../gui.h"
 #include "../state.h"
 #include "../game.h"
 #include "../window.h"

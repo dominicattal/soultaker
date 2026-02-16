@@ -24,8 +24,9 @@ st_export bool outpost1_generate(GameApi* api, LocalMapGenerationSettings* setti
 
     if (strcmp(settings->current_branch, "main") == 0) {
         if (strcmp(settings->current_room_type, "spawn") == 0) {
-            settings->current_room_type = "enemy";
-            settings->num_rooms_left = 5;
+            settings->current_room_type = "boss";
+            settings->create_no_path = true;
+            settings->num_rooms_left = 1;
             return false;
         } else if (strcmp(settings->current_room_type, "enemy") == 0) {
             settings->current_room_type = "boss";

@@ -1,6 +1,7 @@
-#include "internal.h"
+#include "../game.h"
 #include "../renderer.h"
 #include "../event.h"
+#include "../gui/../game.h"
 
 GameContext game_context;
 
@@ -12,6 +13,8 @@ void* game_loop(void* vargp)
     end = start = get_time();
     game_context.dt = 0;
     game_context.time = 0;
+    gui_comp_init();
+    gui_preset_load(GUI_PRESET_GAME);
     game_resume_loop();
     game_resume_render();
     map_create(map_get_id("outpost1"));
@@ -27,17 +30,16 @@ void* game_loop(void* vargp)
         if (end - start > 0.0001) {
             game_context.dt = end - start;
             start = get_time();
-            if (!game_context.paused) {
-                game_context.time += game_context.dt;
-                if (game_context.dt < 0.1) {
-                    map_update(game_context.current_map);
-                    event_queue_flush();
-                    game_update_vertex_data();
-                }
-            }
+            gui_update_comps(game_context.dt);
+            gui_update_vertex_data();
+            game_context.time += game_context.dt;
+            map_update(game_context.current_map);
+            event_queue_flush();
+            game_update_vertex_data();
         }
         end = get_time();
     }
+    gui_comp_cleanup();
     return NULL;
 }
 
@@ -88,9 +90,10 @@ void game_init(void)
     weapon_init();
     entity_init();
     camera_init();
-    game_render_init();
     game_halt_loop();
     game_halt_render();
+    game_render_init();
+    gui_render_init();
     pthread_create(&game_context.thread_id, NULL, game_loop, NULL);
 }
 
@@ -103,6 +106,7 @@ void game_cleanup(void)
     pthread_mutex_destroy(&game_context.getter_mutex);
     sem_destroy(&game_context.game_loop_sem);
     game_render_cleanup();
+    gui_render_cleanup();
     camera_cleanup();
     map_cleanup();
     weapon_cleanup();

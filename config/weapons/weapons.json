@@ -1,10 +1,12 @@
 {
     "pointer": {
+        "type": "weapon",
         "tooltip": "Points toward the enemy unless they weren't allocated",
         "attack": "weapon_pointer_attack",
         "texture": "pointer_weapon"
     },
     "null_pointer": {
+        "type": "weapon",
         "tooltip": "Segmentation fault",
         "attack": "weapon_null_pointer_attack",
         "texture": "null_weapon"

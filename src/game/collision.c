@@ -1,4 +1,4 @@
-#include "internal.h"
+#include "../game.h"
 #include "../api.h"
 #include <math.h>
 
