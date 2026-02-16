@@ -127,7 +127,6 @@ bool gui_char_callback(u32 codepoint);
 void gui_control_callback(ControlEnum ctrl, i32 action);
 
 void gui_preset_load(GUIPreset preset);
-void gui_reset_and_change_map(i32 id);
 
 // returns response from parsing command
 char* gui_command_parse(char* command);

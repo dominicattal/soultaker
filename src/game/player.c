@@ -46,7 +46,7 @@ void player_reset(Entity* entity)
     entity_set_flag(entity, ENTITY_FLAG_PLAYER, true);
     game_context.player.weapon.id = weapon_get_id("pointer");
     game_context.player.swap_out.id = weapon_get_id("null_pointer");
-    event_create_gui_update_weapon_info(game_context.player.weapon.id);
+    gui_update_weapon_info(game_context.player.weapon.id);
     game_context.player.state_idle = entity_get_state_id(entity, "idle");
     game_context.player.state_walking = entity_get_state_id(entity, "walking");
     game_context.player.state_shooting = entity_get_state_id(entity, "shooting");
@@ -120,7 +120,7 @@ void player_swap_weapons(void)
     i32 tmp = game_context.player.weapon.id;
     game_context.player.weapon.id = game_context.player.swap_out.id;
     game_context.player.swap_out.id = tmp;
-    event_create_gui_update_weapon_info(game_context.player.weapon.id);
+    gui_update_weapon_info(game_context.player.weapon.id);
 }
 
 void player_shoot(Player* player)

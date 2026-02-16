@@ -1815,7 +1815,7 @@ void map_set_interactable(const char* desc, InteractableFuncPtr func_ptr)
     log_assert(map_context.current_map != NULL, "");
     if (!map_context.current_map->active)
         return;
-    event_create_gui_set_interactable(desc, func_ptr, map_context.current_map, map_context.current_map_node);
+    gui_set_interactable(desc, func_ptr, map_context.current_map, map_context.current_map_node);
 }
 
 void* map_get_data(void)
@@ -2221,7 +2221,7 @@ static void destroy_entities(Map* map)
     for (i = 0; i < map->entities->length; i++) {
         entity =  list_get(map->entities, i);
         if (entity_get_flag(entity, ENTITY_FLAG_BOSS))
-            event_create_gui_destroy_boss_healthbar(entity);
+            gui_destroy_boss_healthbar(entity);
         map_context.current_map_node = entity->map_info.spawn_node;
         entity_destroy(entity);
         map_context.current_map_node = NULL;
@@ -2514,7 +2514,7 @@ void map_unmake_boss(Entity* entity)
     log_write(FATAL, "boss not in bosses list");
 found:
     entity_set_flag(entity, ENTITY_FLAG_BOSS, 0);
-    event_create_gui_destroy_boss_healthbar(entity);
+    gui_destroy_boss_healthbar(entity);
     pthread_mutex_lock(&game_context.getter_mutex);
     game_context.values.num_bosses = 0;
     game_context.values.boss_health = 0;

@@ -578,7 +578,7 @@ void game_render_update_walls(void);
 
 void game_update_vertex_data(void);
 
-void game_signal_change_map(i32 id);
+void game_change_map(i32 id);
 
 //**************************************************************************
 // Collision functions
@@ -591,6 +591,54 @@ void collide_entity_projectile(Entity* entity, Projectile* projectile);
 void collide_entity_trigger(Entity* entity, Trigger* trigger);
 void collide_projectile_wall(Projectile* projectile, Wall* wall);
 void collide_projectile_obstacle(Projectile* projectile, Obstacle* obstacle);
+
+//**************************************************************************
+// Declarations
+//**************************************************************************
+
+i32 entity_get_id(const char* name);
+i32 map_get_id(const char* name);
+
+f32 game_get_dt(void);
+f32 game_get_boss_health(void);
+f32 game_get_boss_max_health(void);
+
+void game_halt_loop(void);
+void game_resume_loop(void);
+void game_halt_input(void);
+void game_resume_input(void);
+void game_halt_render(void);
+void game_resume_render(void);
+
+void game_init(void);
+void game_cleanup(void);
+void game_process_input();
+void game_render(void);
+void game_load_starting_area(void);
+
+char* weapon_get_name(i32 id);
+char* weapon_get_tooltip(i32 id);
+i32 weapon_get_tex_id(i32 id);
+
+vec2 player_position(void);
+f32 player_health(void);
+f32 player_mana(void);
+f32 player_souls(void);
+f32 player_max_health(void);
+f32 player_max_mana(void);
+f32 player_max_souls(void);
+
+void game_key_callback(i32 key, i32 scancode, i32 action, i32 mods);
+void game_mouse_button_callback(i32 button, i32 action, i32 mods);
+void game_control_callback(ControlEnum ctrl, i32 action);
+void game_framebuffer_size_callback(void);
+
+vec3 camera_get_position(void);
+vec3 camera_get_facing(void);
+f32  camera_get_pitch(void);
+f32  camera_get_yaw(void);
+f32  camera_get_pitch(void);
+f32  camera_get_zoom(void);
 
 //**************************************************************************
 // API
@@ -665,7 +713,7 @@ typedef struct GameApi {
     f64 (*gmodf)(f64, f64);
 
     // Events
-    void (*event_create_gui_create_notification)(char*);
+    void (*gui_create_notification)(char*);
 
 #ifdef DEBUG_BUILD
     void* (*_st_malloc)(size_t, const char*, int);
@@ -680,53 +728,5 @@ typedef struct GameApi {
 } GameApi;
 
 extern GameApi game_api;
-
-//**************************************************************************
-// Declarations
-//**************************************************************************
-
-i32 entity_get_id(const char* name);
-i32 map_get_id(const char* name);
-
-f32 game_get_dt(void);
-f32 game_get_boss_health(void);
-f32 game_get_boss_max_health(void);
-
-void game_halt_loop(void);
-void game_resume_loop(void);
-void game_halt_input(void);
-void game_resume_input(void);
-void game_halt_render(void);
-void game_resume_render(void);
-
-void game_init(void);
-void game_cleanup(void);
-void game_process_input();
-void game_render(void);
-void game_load_starting_area(void);
-
-char* weapon_get_name(i32 id);
-char* weapon_get_tooltip(i32 id);
-i32 weapon_get_tex_id(i32 id);
-
-vec2 player_position(void);
-f32 player_health(void);
-f32 player_mana(void);
-f32 player_souls(void);
-f32 player_max_health(void);
-f32 player_max_mana(void);
-f32 player_max_souls(void);
-
-void game_key_callback(i32 key, i32 scancode, i32 action, i32 mods);
-void game_mouse_button_callback(i32 button, i32 action, i32 mods);
-void game_control_callback(ControlEnum ctrl, i32 action);
-void game_framebuffer_size_callback(void);
-
-vec3 camera_get_position(void);
-vec3 camera_get_facing(void);
-f32  camera_get_pitch(void);
-f32  camera_get_yaw(void);
-f32  camera_get_pitch(void);
-f32  camera_get_zoom(void);
 
 #endif

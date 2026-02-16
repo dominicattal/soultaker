@@ -123,7 +123,8 @@ static CommandState new_state(CommandState state, char* command, i32 left, i32 r
             if (cmp("exit", command, left, right))
                 window_close();
             if (cmp("respawn", command, left, right)) {
-                event_create_game_respawn();
+                //game_respawn();
+                log_write(DEBUG, "Not implemented respawn");
                 return CS_RESPAWNFIN;
             }
             if (cmp("writetex", command, left, right)) {
@@ -131,7 +132,7 @@ static CommandState new_state(CommandState state, char* command, i32 left, i32 r
                 return CS_WRITE_TEXTURESFIN;
             }
             if (cmp("defog", command, left, right)) {
-                event_create_game_defog();
+                map_fog_clear(game_context.current_map);
                 return CS_DEFOGFIN;
             }
             command_context.error_message = "Unrecognized command";
@@ -146,7 +147,8 @@ static CommandState new_state(CommandState state, char* command, i32 left, i32 r
                 command_context.error_message = "Invalid entity name";
                 return CS_ERROR;
             }
-            event_create_game_summon(id);
+            //event_create_game_summon(id);
+            log_write(DEBUG, "Not implemented respawn");
             return CS_SUMMONFIN;
         case CS_LOGLEVEL:
             i32 level;
@@ -171,7 +173,7 @@ static CommandState new_state(CommandState state, char* command, i32 left, i32 r
                 command_context.error_message = "Invalid preset name";
                 return CS_ERROR;
             }
-            event_create_game_change_map(id);
+            game_change_map(id);
             return CS_PRESETFIN;
         default:
             return CS_ERROR;

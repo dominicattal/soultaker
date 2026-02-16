@@ -432,9 +432,8 @@ static void interactable_click(GUIComp* comp, i32 button, i32 action, i32 mods)
     if (data == NULL)
         return;
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-        if (data->fptr != NULL) {
-            event_create_game_interactable_callback(data->fptr, data->map, data->map_node);
-        }
+        if (data->fptr != NULL)
+            map_interactable_callback(data->fptr, data->map, data->map_node);
     }
 }
 
@@ -445,7 +444,7 @@ static void interactable_control(GUIComp* comp, ControlEnum ctrl, i32 action)
         return;
     if (ctrl == CTRL_INTERACT && action == GLFW_PRESS) {
         if (data->fptr != NULL) {
-            event_create_game_interactable_callback(data->fptr, data->map, data->map_node);
+            map_interactable_callback(data->fptr, data->map, data->map_node);
         }
     }
 }
@@ -683,7 +682,7 @@ static void load_save(void)
     game_resume_loop();
     game_resume_render();
     i32 id = map_get_id("level_1");
-    event_create_game_change_map(id);
+    game_change_map(id);
 }
 
 static void new_run_onclick(GUIComp* comp, i32 button, i32 action, i32 mods)
@@ -793,10 +792,4 @@ void gui_preset_load(GUIPreset preset)
         default:
             break;
     }
-}
-
-void gui_reset_and_change_map(i32 id)
-{
-    gui_preset_load(GUI_PRESET_GAME);
-    event_create_game_change_map(id);
 }

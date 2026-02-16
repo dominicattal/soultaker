@@ -8,18 +8,12 @@ typedef enum {
     EVENT_NONE,
 
     // Game Events
-    GAME_EVENT_SIGNAL_MAP_CHANGE,
-    GAME_EVENT_MAP_CHANGE,
     GAME_EVENT_CAMERA_UPDATE_DIRECTION,
     GAME_EVENT_CAMERA_UPDATE_ROTATE,
     GAME_EVENT_CAMERA_UPDATE_TILT,
     GAME_EVENT_SWAP_WEAPONS,
     GAME_EVENT_SUMMON,
-    GAME_EVENT_RESPAWN,
-    GAME_EVENT_SET_POSITION,
-    GAME_EVENT_DEFOG,
     GAME_EVENT_FRAMEBUFFER_SIZE_CALLBACK,
-    GAME_EVENT_INTERACTABLE_CALLBACK,
 
     // Gui Events
     GUI_EVENT_FRAMEBUFFER_SIZE_CALLBACK,
@@ -28,13 +22,6 @@ typedef enum {
     GUI_EVENT_KEY_CALLBACK,
     GUI_EVENT_CONTROL_CALLBACK,
     GUI_EVENT_CHAR_CALLBACK,
-    GUI_EVENT_UPDATE_WEAPON_INFO,
-    GUI_EVENT_CREATE_BOSS_HEALTHBAR,
-    GUI_EVENT_DESTROY_BOSS_HEALTHBAR,
-    GUI_EVENT_UPDATE_BOSS_HEALTHBAR,
-    GUI_EVENT_CREATE_NOTIFICATION,
-    GUI_EVENT_SET_INTERACTABLE,
-    GUI_EVENT_RESET_AND_CHANGE_MAP,
 
     // Renderer Events
     GUI_EVENT_WRITE_TEXTURE_UNITS
@@ -116,12 +103,6 @@ static void execute_event(Event event)
             break;
 
         // Game events
-        case GAME_EVENT_SIGNAL_MAP_CHANGE:
-            game_signal_change_map(arg1._int);
-            break;
-        case GAME_EVENT_MAP_CHANGE:
-            map_create(arg1._int);
-            break;
         case GAME_EVENT_CAMERA_UPDATE_DIRECTION:
             camera_update_direction(vec2_create(arg1._flt, arg2._flt));
             break;
@@ -137,20 +118,8 @@ static void execute_event(Event event)
         case GAME_EVENT_SUMMON:
             //game_summon(arg1._int);
             break;
-        case GAME_EVENT_RESPAWN:
-            //player_reset();
-            break;
-        case GAME_EVENT_SET_POSITION:
-            game_set_player_position(vec2_create(arg1._flt, arg2._flt));
-            break;
-        case GAME_EVENT_DEFOG:
-            map_fog_clear(game_context.current_map);
-            break;
         case GAME_EVENT_FRAMEBUFFER_SIZE_CALLBACK:
             game_framebuffer_size_callback();
-            break;
-        case GAME_EVENT_INTERACTABLE_CALLBACK:
-            map_interactable_callback(arg1._ptr, arg2._ptr, arg3._ptr);
             break;
 
         // Gui 
@@ -171,27 +140,6 @@ static void execute_event(Event event)
             break;
         case GUI_EVENT_CHAR_CALLBACK:
             gui_char_callback(arg1._int);
-            break;
-        case GUI_EVENT_UPDATE_WEAPON_INFO:
-            gui_update_weapon_info(arg1._int);
-            break;
-        case GUI_EVENT_CREATE_BOSS_HEALTHBAR:
-            //gui_create_boss_healthbar(arg1._ptr, arg2._ptr, arg3._flt, arg4._flt);
-            break;
-        case GUI_EVENT_UPDATE_BOSS_HEALTHBAR:
-            //gui_update_boss_healthbar(arg1._ptr, arg2._flt, arg3._flt);
-            break;
-        case GUI_EVENT_DESTROY_BOSS_HEALTHBAR:
-            //gui_destroy_boss_healthbar(arg1._ptr);
-            break;
-        case GUI_EVENT_CREATE_NOTIFICATION:
-            gui_create_notification(arg1._ptr);
-            break;
-        case GUI_EVENT_SET_INTERACTABLE:
-            gui_set_interactable(arg1._ptr, arg2._ptr, arg3._ptr, arg4._ptr);
-            break;
-        case GUI_EVENT_RESET_AND_CHANGE_MAP:
-            gui_reset_and_change_map(arg1._int);
             break;
 
         // Renderer
@@ -221,26 +169,6 @@ void event_queue_flush(void)
 //**************************************************************************
 // Game Events
 //**************************************************************************
-
-void event_create_game_signal_change_map(i32 map_id)
-{
-    Event event = (Event) {
-        .type = GAME_EVENT_SIGNAL_MAP_CHANGE,
-        .arg1._int = map_id
-    };
-    EventList* list = get_event_list("Game");
-    event_enqueue(list, event);
-}
-
-void event_create_game_change_map(i32 map_id)
-{
-    Event event = (Event) {
-        .type = GAME_EVENT_MAP_CHANGE,
-        .arg1._int = map_id
-    };
-    EventList* list = get_event_list("Game");
-    event_enqueue(list, event);
-}
 
 void event_create_game_camera_update_direction(vec2 mag)
 {
@@ -292,51 +220,10 @@ void event_create_game_summon(i32 id)
     event_enqueue(list, event);
 }
 
-void event_create_game_respawn(void)
-{
-    Event event = (Event) {
-        .type = GAME_EVENT_RESPAWN,
-    };
-    EventList* list = get_event_list("Game");
-    event_enqueue(list, event);
-}
-
-void event_create_game_set_player_position(vec2 position)
-{
-    Event event = (Event) {
-        .type = GAME_EVENT_SET_POSITION,
-        .arg1._flt = position.x,
-        .arg2._flt = position.z
-    };
-    EventList* list = get_event_list("Game");
-    event_enqueue(list, event);
-}
-
-void event_create_game_defog(void)
-{
-    Event event = (Event) {
-        .type = GAME_EVENT_DEFOG
-    };
-    EventList* list = get_event_list("Game");
-    event_enqueue(list, event);
-}
-
 void event_create_game_framebuffer_size_callback(void)
 {
     Event event = (Event) {
         .type = GAME_EVENT_FRAMEBUFFER_SIZE_CALLBACK
-    };
-    EventList* list = get_event_list("Game");
-    event_enqueue(list, event);
-}
-
-void event_create_game_interactable_callback(InteractableFuncPtr func_ptr, Map* map, MapNode* map_node)
-{
-    Event event = (Event) {
-        .type = GAME_EVENT_INTERACTABLE_CALLBACK,
-        .arg1._ptr = func_ptr,
-        .arg2._ptr = map,
-        .arg3._ptr = map_node,
     };
     EventList* list = get_event_list("Game");
     event_enqueue(list, event);
@@ -409,84 +296,6 @@ void event_create_gui_char_callback(i32 codepoint)
     Event event = (Event) {
         .type = GUI_EVENT_CHAR_CALLBACK,
         .arg1._int = codepoint
-    };
-    EventList* list = get_event_list("Game");
-    event_enqueue(list, event);
-}
-
-void event_create_gui_update_weapon_info(i32 weapon_id)
-{
-    Event event = (Event) {
-        .type = GUI_EVENT_UPDATE_WEAPON_INFO,
-        .arg1._int = weapon_id
-    };
-    EventList* list = get_event_list("Game");
-    event_enqueue(list, event);
-}
-
-void event_create_gui_create_boss_healthbar(char* name, void* boss_ptr1, f32 health, f32 max_health)
-{
-    Event event = (Event) {
-        .type = GUI_EVENT_CREATE_BOSS_HEALTHBAR,
-        .arg1._ptr = name,
-        .arg2._ptr = boss_ptr1,
-        .arg3._flt = health,
-        .arg4._flt = max_health,
-    };
-    EventList* list = get_event_list("Game");
-    event_enqueue(list, event);
-}
-
-void event_create_gui_update_boss_healthbar(void* boss_ptr1, f32 health, f32 max_health)
-{
-    Event event = (Event) {
-        .type = GUI_EVENT_UPDATE_BOSS_HEALTHBAR,
-        .arg1._ptr = boss_ptr1,
-        .arg2._flt = health,
-        .arg3._flt = max_health
-    };
-    EventList* list = get_event_list("Game");
-    event_enqueue(list, event);
-}
-
-void event_create_gui_destroy_boss_healthbar(void* boss_ptr1)
-{
-    Event event = (Event) {
-        .type = GUI_EVENT_DESTROY_BOSS_HEALTHBAR,
-        .arg1._ptr = boss_ptr1
-    };
-    EventList* list = get_event_list("Game");
-    event_enqueue(list, event);
-}
-
-void event_create_gui_create_notification(char* notif)
-{
-    Event event = (Event) {
-        .type = GUI_EVENT_CREATE_NOTIFICATION,
-        .arg1._ptr = notif
-    };
-    EventList* list = get_event_list("Game");
-    event_enqueue(list, event);
-}
-
-void event_create_gui_set_interactable(const char* desc, InteractableFuncPtr func_ptr, Map* map, MapNode* map_node)
-{
-    Event event = (Event) {
-        .type = GUI_EVENT_SET_INTERACTABLE,
-        .arg1._ptr = (void*)desc, 
-        .arg2._ptr = func_ptr,
-        .arg3._ptr = map,
-        .arg4._ptr = map_node,
-    };
-    EventList* list = get_event_list("Game");
-    event_enqueue(list, event);
-}
-
-void event_create_gui_reset_and_change_map(i32 map_id)
-{
-    Event event = (Event) {
-        .type = GUI_EVENT_RESET_AND_CHANGE_MAP,
-        .arg1._int = map_id
     };
     EventList* list = get_event_list("Game");
     event_enqueue(list, event);

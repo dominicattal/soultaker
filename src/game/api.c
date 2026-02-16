@@ -1,4 +1,5 @@
 #include "../game.h"
+#include "../gui.h"
 #include "../event.h"
 
 #define REGISTER(name) \
@@ -74,7 +75,7 @@ GameApi game_api = {
     REGISTER(gmodf),
 
     // event
-    REGISTER(event_create_gui_create_notification),
+    REGISTER(gui_create_notification),
 
 #ifdef DEBUG_BUILD
     REGISTER(_st_malloc),

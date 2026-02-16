@@ -43,11 +43,11 @@ void* game_loop(void* vargp)
     return NULL;
 }
 
-void game_signal_change_map(i32 id)
+void game_change_map(i32 id)
 {
     log_assert(game_context.current_map != NULL, "should not have happened");
-    map_set_inactive(game_context.current_map);
-    event_create_gui_reset_and_change_map(id);
+    gui_preset_load(GUI_PRESET_GAME);
+    map_create(id);
 }
 
 void game_halt_loop(void)
