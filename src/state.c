@@ -7,6 +7,7 @@
 #include "audio.h"
 #include <stdio.h>
 #include <pthread.h>
+#include <math.h>
 
 StateContext state_context;
 
@@ -18,11 +19,6 @@ void state_init(void)
     state_context.config = config_create();
 
     thread_link("Main");
-
-
-    //state_context.handle = dlopen(pathname, flags);
-    //if (!state_context.handle)
-    //    log_write(FATAL, dlerror());
 
     event_init();
     window_init();
@@ -36,9 +32,10 @@ void state_loop(void)
     f64 start, end;
     while (!window_closed()) {
         start = get_time();
-        window_update();
+        glfwPollEvents();
         game_process_input();
         renderer_render();
+        glfwSwapBuffers(window_context.handle);
         end = get_time();
         state_context.dt = end - start;
         start = end;

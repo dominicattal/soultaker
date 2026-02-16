@@ -1,2 +1,4 @@
 7_12 font - https://www.1001fonts.com/7-12-serif-font.html
 november font - https://www.1001fonts.com/november-font.html
+
+https://stackoverflow.com/questions/19102189/noticable-lag-in-a-simple-opengl-program-with-mouse-input-through-glfw

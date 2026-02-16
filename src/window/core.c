@@ -1,4 +1,4 @@
-#include "internal.h"
+#include "../window.h"
 #include "../renderer.h"
 
 #define DEFAULT_WINDOW_WIDTH 1000
@@ -52,7 +52,7 @@ void window_init(void)
     window_context.cursor.hidden = false;
     gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
     glViewport(0, 0, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT);
-    //glfwSwapInterval(1);
+    glfwSwapInterval(1);
     
     window_context.dt = 0;
 
@@ -71,8 +71,6 @@ void window_init(void)
 
 void window_update(void)
 {
-    glfwPollEvents();
-    glfwSwapBuffers(window_context.handle);
 }
 
 void window_close(void)

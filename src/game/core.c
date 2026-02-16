@@ -29,13 +29,13 @@ void* game_loop(void* vargp)
         }
         if (end - start > 0.0001) {
             game_context.dt = end - start;
+            game_context.time += game_context.dt;
             start = get_time();
             gui_update_comps(game_context.dt);
-            gui_update_vertex_data();
-            game_context.time += game_context.dt;
             map_update(game_context.current_map);
             event_queue_flush();
             game_update_vertex_data();
+            gui_update_vertex_data();
         }
         end = get_time();
     }
@@ -105,6 +105,7 @@ void game_cleanup(void)
     pthread_join(game_context.thread_id, NULL);
     pthread_mutex_destroy(&game_context.getter_mutex);
     sem_destroy(&game_context.game_loop_sem);
+    player_cleanup(&game_context.player);
     game_render_cleanup();
     gui_render_cleanup();
     camera_cleanup();

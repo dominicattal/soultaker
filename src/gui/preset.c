@@ -476,6 +476,33 @@ static GUIComp* create_interactable(void)
     return comp;
 }
 
+typedef struct SlotData {
+    Item* item;
+} SlotData;
+
+typedef struct InventoryData {
+    GUIComp* held_comp;
+    GUIComp* cursor_comp;
+} InventoryData;
+
+static void inventory_slot_click(GUIComp* comp, i32 button, i32 action, i32 mods)
+{
+    GUIComp* parent = comp->parent;
+    InventoryData* inventory_data = parent->data;
+    //SlotData* slot_data = comp->data;
+    //SlotData* other_data;
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+        if (inventory_data->held_comp == NULL)
+            inventory_data->held_comp = comp;
+    }   
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
+        //if (inventory_data->held_comp != NULL) {
+        //    other_data = inventory_data->held_comp->data;
+        //    item_swap(slot_data->item, other_data->item);
+        //}
+    }
+}
+
 static void inventory_toggle(GUIComp* comp)
 {
     gui_comp_toggle_flag(comp, GUI_COMP_FLAG_VISIBLE);
@@ -488,30 +515,86 @@ static void inventory_key(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 
         inventory_toggle(comp);
 }
 
+static void inventory_update(GUIComp* comp, f32 dt)
+{
+    Inventory* inventory = &game_context.player.inventory;
+    vec2 cursor_position = window_cursor_position();
+    InventoryData* data = comp->data;
+    Weapon* weapon;
+
+    GUIComp* cursor = data->cursor_comp;
+    cursor->x = (i32)roundf(cursor_position.x)-32;
+    cursor->y = (i32)roundf(cursor_position.y)-32;
+    cursor->tex = texture_get_id("color");
+    if (data->held_comp != NULL)
+        cursor->tex = data->held_comp->tex;
+
+    GUIComp* slot;
+    slot = comp->children[0];
+    weapon = inventory->item_weapon.weapon;
+    slot->tex = weapon_get_tex_id(weapon->id);
+    slot->click = inventory_slot_click;
+    slot = comp->children[1];
+    weapon = inventory->item_weapon_swap.weapon;
+    slot->tex = weapon_get_tex_id(weapon->id);
+    slot->click = inventory_slot_click;
+}
+
+static void inventory_click(GUIComp* comp, i32 button, i32 action, i32 mods)
+{
+    InventoryData* data = comp->data;
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
+        data->held_comp = NULL;
+}
+
 static GUIComp* create_inventory(void)
 {
     GUIComp* inventory = gui_comp_create(0, 0, 360, 400);
-    inventory_toggle(inventory);
+    InventoryData* data;
+    data = inventory->data = st_malloc(sizeof(InventoryData));
+    data->held_comp = NULL;
+    gui_comp_set_flag(inventory, GUI_COMP_FLAG_ALLOW_CHILD_CLICK, true);
+    gui_comp_set_flag(inventory, GUI_COMP_FLAG_ALLOW_OUT_OF_BOUNDS_CLICK, true);
+    gui_comp_set_flag(inventory, GUI_COMP_FLAG_VISIBLE, false);
+    gui_comp_set_flag(inventory, GUI_COMP_FLAG_CLICKABLE, false);
     gui_comp_set_align(inventory, ALIGN_CENTER, ALIGN_CENTER);
     gui_comp_set_color(inventory, 255, 255, 255, 100);
     inventory->key = inventory_key;
+    inventory->update = inventory_update;
+    inventory->click = inventory_click;
 
     GUIComp* item;
     item = gui_comp_create(0, 0, 64, 64);
+    gui_comp_set_flag(item, GUI_COMP_FLAG_CLICKABLE, true);
     gui_comp_set_color(item, 255, 255, 255, 255);
     gui_comp_attach(inventory, item);
     item = gui_comp_create(74, 0, 64, 64);
+    gui_comp_set_flag(item, GUI_COMP_FLAG_CLICKABLE, true);
     gui_comp_set_color(item, 255, 255, 255, 255);
     gui_comp_attach(inventory, item);
     item = gui_comp_create(148, 0, 64, 64);
+    gui_comp_set_flag(item, GUI_COMP_FLAG_CLICKABLE, true);
     gui_comp_set_color(item, 255, 255, 255, 255);
     gui_comp_attach(inventory, item);
     item = gui_comp_create(222, 0, 64, 64);
+    gui_comp_set_flag(item, GUI_COMP_FLAG_CLICKABLE, true);
     gui_comp_set_color(item, 255, 255, 255, 255);
     gui_comp_attach(inventory, item);
     item = gui_comp_create(296, 0, 64, 64);
+    gui_comp_set_flag(item, GUI_COMP_FLAG_CLICKABLE, true);
     gui_comp_set_color(item, 255, 255, 255, 255);
     gui_comp_attach(inventory, item);
+    item = gui_comp_create(296, 74, 64, 64);
+    gui_comp_set_flag(item, GUI_COMP_FLAG_CLICKABLE, true);
+    gui_comp_set_color(item, 255, 255, 255, 255);
+    gui_comp_attach(inventory, item);
+
+    GUIComp* cursor;
+    cursor = gui_comp_create(0,0,64,64);
+    gui_comp_set_flag(cursor, GUI_COMP_FLAG_RELATIVE, false);
+    gui_comp_set_color(cursor, 255, 255, 255, 255);
+    gui_comp_attach(inventory, cursor);
+    data->cursor_comp = cursor;
     return inventory;
 }
 

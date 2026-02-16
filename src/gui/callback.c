@@ -83,7 +83,7 @@ static bool gui_mouse_button_callback_helper(GUIComp* comp, i32 xpos, i32 ypos, 
 {
     i32 x, y, w, h;
     u8 halign, valign;
-    bool child_clicked, in_bounds;
+    bool child_clicked, in_bounds, allow_child_click;
     x = comp->x;
     y = comp->y;
     w = comp->w;
@@ -97,15 +97,16 @@ static bool gui_mouse_button_callback_helper(GUIComp* comp, i32 xpos, i32 ypos, 
     align_comp_position_x(&position_x, halign, size_x, x, w);
     align_comp_position_y(&position_y, valign, size_y, y, h);
 
-    in_bounds = xpos >= position_x && xpos <= position_x + w 
-             && ypos >= position_y && ypos <= position_y + h;
+    in_bounds = gui_comp_get_flag(comp, GUI_COMP_FLAG_ALLOW_OUT_OF_BOUNDS_CLICK);
+    in_bounds = in_bounds || (xpos >= position_x && xpos <= position_x + w && ypos >= position_y && ypos <= position_y + h);
 
     child_clicked = false;
     for (i32 i = 0; i < comp->num_children; i++)
         if (gui_mouse_button_callback_helper(comp->children[i], xpos, ypos, button, action, mods, position_x, position_y, w, h))
             child_clicked = true;
     
-    if (!child_clicked && in_bounds)
+    allow_child_click = gui_comp_get_flag(comp, GUI_COMP_FLAG_ALLOW_CHILD_CLICK);
+    if (in_bounds && (allow_child_click || !child_clicked))
         gui_comp_click(comp, button, action, mods);
 
     return in_bounds || child_clicked;

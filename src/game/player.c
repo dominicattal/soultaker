@@ -29,14 +29,23 @@ void game_set_player_position(vec2 position)
     game_context.player.entity->position = position;
 }
 
+void player_cleanup(Player* player)
+{
+    item_destroy(&player->inventory.item_weapon);
+    item_destroy(&player->inventory.item_weapon_swap);
+}
+
 void player_reset(Entity* entity)
 {
-    if (game_context.player.entity != NULL) {
+    Player* player = &game_context.player;
+    player_cleanup(player);
+    if (player->entity != NULL) {
         log_write(WARNING, "Did not destroy player entity before resetting");
-        entity_destroy(game_context.player.entity);
+        entity_destroy(player->entity);
     }
+    Inventory* inventory = &player->inventory;
     entity->id = entity_get_id("knight");
-    game_context.player.entity = entity;
+    player->entity = entity;
     entity->direction = vec2_create(0, 0);
     entity->size = 1.0;
     entity->speed = 20;
@@ -44,12 +53,16 @@ void player_reset(Entity* entity)
     entity->health = entity->max_health = 100000;
     entity_set_flag(entity, ENTITY_FLAG_FRIENDLY, true);
     entity_set_flag(entity, ENTITY_FLAG_PLAYER, true);
-    game_context.player.weapon.id = weapon_get_id("pointer");
-    game_context.player.swap_out.id = weapon_get_id("null_pointer");
-    gui_update_weapon_info(game_context.player.weapon.id);
-    game_context.player.state_idle = entity_get_state_id(entity, "idle");
-    game_context.player.state_walking = entity_get_state_id(entity, "walking");
-    game_context.player.state_shooting = entity_get_state_id(entity, "shooting");
+    Weapon* weapon = weapon_create(weapon_get_id("pointer"));
+    Weapon* weapon_swap = weapon_create(weapon_get_id("null_pointer"));
+    inventory->item_weapon = item_create(ITEM_WEAPON, weapon);
+    inventory->item_weapon_swap = item_create(ITEM_WEAPON, weapon_swap);
+    //player->inventory.weapon.weapon.id = weapon_get_id("pointer");
+    //player->inventory.weapon_swap.weapon.id = weapon_get_id("null_pointer");
+    gui_update_weapon_info(weapon->id);
+    player->state_idle = entity_get_state_id(entity, "idle");
+    player->state_walking = entity_get_state_id(entity, "walking");
+    player->state_shooting = entity_get_state_id(entity, "shooting");
 }
 
 vec2 game_get_nearest_player_position(void)
@@ -117,10 +130,10 @@ void player_update(Player* player, f32 dt)
 
 void player_swap_weapons(void)
 {
-    i32 tmp = game_context.player.weapon.id;
-    game_context.player.weapon.id = game_context.player.swap_out.id;
-    game_context.player.swap_out.id = tmp;
-    gui_update_weapon_info(game_context.player.weapon.id);
+    Inventory* inventory = &game_context.player.inventory;
+    item_swap(&inventory->item_weapon, &inventory->item_weapon_swap);
+    log_assert(inventory->item_weapon.type == ITEM_WEAPON, "Equipped item not a weapon");
+    gui_update_weapon_info(inventory->item_weapon.weapon->id);
 }
 
 void player_shoot(Player* player)

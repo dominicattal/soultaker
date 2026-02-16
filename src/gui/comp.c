@@ -34,6 +34,7 @@ GUIComp* gui_comp_create(i16 x, i16 y, i16 w, i16 h)
     comp->tex = texture_get_id("color");
     comp->font_size = 16;
     comp->font = FONT_MONOSPACE;
+    comp->destroy = NULL;
     gui_comp_set_flag(comp, GUI_COMP_FLAG_VISIBLE, true);
     gui_comp_set_flag(comp, GUI_COMP_FLAG_RELATIVE, true);
     return comp;

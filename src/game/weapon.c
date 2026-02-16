@@ -160,9 +160,27 @@ i32 weapon_get_id(const char* name)
     return -1;
 }
 
+Weapon* weapon_create(i32 id)
+{
+    Weapon* weapon = st_malloc(sizeof(Weapon));
+    weapon->id = id;
+    return weapon;
+}
+
+void weapon_destroy(Weapon* weapon)
+{
+    st_free(weapon);
+}
+
 void weapon_shoot(Player* player, vec2 direction, vec2 target)
 {
-    i32 id = player->weapon.id;
+    Item item = player->inventory.item_weapon;
+    if (item.type != ITEM_WEAPON) {
+        log_write(CRITICAL, "Equipped item not weapon");
+        return;
+    }
+    Weapon* weapon = item.weapon;
+    i32 id = weapon->id;
     weapon_context.infos[id].shoot(&game_api, player, direction, target);
 }
 

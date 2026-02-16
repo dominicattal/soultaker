@@ -49,7 +49,9 @@ typedef enum {
     GUI_COMP_FLAG_HOVERED,
     GUI_COMP_FLAG_CLICKABLE,
     GUI_COMP_FLAG_VISIBLE,
-    GUI_COMP_FLAG_RELATIVE
+    GUI_COMP_FLAG_RELATIVE,
+    GUI_COMP_FLAG_ALLOW_CHILD_CLICK,
+    GUI_COMP_FLAG_ALLOW_OUT_OF_BOUNDS_CLICK
 } GUICompFlagEnum;
 
 typedef struct GUIComp GUIComp;
@@ -66,8 +68,8 @@ typedef struct GUIComp {
     GUIClickFPtr click;
     GUIKeyFPtr key;
     GUICompDestroyFPtr destroy;
-    GUIEventCompEnum event_id;
     GUIControlFPtr control;
+    GUIEventCompEnum event_id;
     void* data;
     char* text;
     GUIComp* parent;
