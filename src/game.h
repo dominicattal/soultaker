@@ -532,7 +532,6 @@ typedef struct {
 } GetterValues;
 
 typedef struct {
-    GetterValues values;
     Map* current_map;
     Player player;
     Camera camera;

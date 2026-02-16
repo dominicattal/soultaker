@@ -118,16 +118,6 @@ f32 game_get_dt(void)
     return game_context.dt;
 }
 
-f32 game_get_boss_health(void)
-{
-    return game_context.values.boss_health;
-}
-
-f32 game_get_boss_max_health(void)
-{
-    return game_context.values.boss_max_health;
-}
-
 void game_summon(i32 id)
 {
     //vec2 position = player_position();

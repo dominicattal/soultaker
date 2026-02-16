@@ -32,7 +32,7 @@ void window_init(void)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    window_context.handle = glfwCreateWindow(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, "program", NULL, NULL);
+    window_context.handle = glfwCreateWindow(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, "soultaker", NULL, NULL);
     window_context.resolution.x = DEFAULT_WINDOW_WIDTH;
     window_context.resolution.y = DEFAULT_WINDOW_HEIGHT;
     glfwGetWindowSize(window_context.handle, &window_context.width, &window_context.height);

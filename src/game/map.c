@@ -2493,9 +2493,6 @@ void map_make_boss(char* name, Entity* entity)
     //event_create_gui_create_boss_healthbar(name, entity, entity->health, entity->max_health);
     gui_create_boss_healthbar(name, entity);
     pthread_mutex_lock(&game_context.getter_mutex);
-    game_context.values.num_bosses = 1;
-    game_context.values.boss_health = entity->health;
-    game_context.values.boss_max_health = entity->max_health;
     pthread_mutex_unlock(&game_context.getter_mutex);
 }
 
@@ -2516,9 +2513,6 @@ found:
     entity_set_flag(entity, ENTITY_FLAG_BOSS, 0);
     gui_destroy_boss_healthbar(entity);
     pthread_mutex_lock(&game_context.getter_mutex);
-    game_context.values.num_bosses = 0;
-    game_context.values.boss_health = 0;
-    game_context.values.boss_max_health = 0;
     pthread_mutex_unlock(&game_context.getter_mutex);
 }
 
