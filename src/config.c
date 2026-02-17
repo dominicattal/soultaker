@@ -57,7 +57,7 @@ static bool ends_with(const char* string, const char* suffix)
     return true;
 }
 
-static void read_weapons(Config* config, const char* dir_path)
+static void read_items(Config* config, const char* dir_path)
 {
     DIR* cur_dir = opendir(dir_path);
     if (cur_dir == NULL) {
@@ -65,7 +65,7 @@ static void read_weapons(Config* config, const char* dir_path)
         return;
     }
     JsonObject* object;
-    JsonObject* new_config_weapons;
+    JsonObject* new_config_items;
     char* new_dir;
     char* path;
     const struct dirent* iterator = readdir(cur_dir);
@@ -73,7 +73,7 @@ static void read_weapons(Config* config, const char* dir_path)
         if (iterator->d_name[0] != '.') {
             if (is_dir(dir_path, iterator)) {
                 new_dir = string_create("%s/%s", dir_path, iterator->d_name);
-                read_weapons(config, new_dir);
+                read_items(config, new_dir);
                 string_free(new_dir);
             } else if (ends_with(iterator->d_name, ".json")) {
                 path = string_create("%s/%s", dir_path, iterator->d_name);
@@ -82,11 +82,11 @@ static void read_weapons(Config* config, const char* dir_path)
                 if (object == NULL)
                     log_write(CRITICAL, "Error reading %s", path);
                 else {
-                    new_config_weapons = json_merge_objects(config->weapons, object);
-                    if (new_config_weapons == NULL)
+                    new_config_items = json_merge_objects(config->items, object);
+                    if (new_config_items == NULL)
                         log_write(CRITICAL, "Error merging %s", path);
                     else
-                        config->weapons = new_config_weapons;
+                        config->items = new_config_items;
                 }
                 string_free(path);
             }
@@ -237,9 +237,9 @@ static void read_config(Config* config)
             new_dir = string_create("%s/%s", dir_path, config_type->d_name);
             read_maps(config, new_dir);
             string_free(new_dir);
-        } else if (strcmp(config_type->d_name, "weapons") == 0) {
+        } else if (strcmp(config_type->d_name, "items") == 0) {
             new_dir = string_create("%s/%s", dir_path, config_type->d_name);
-            read_weapons(config, new_dir);
+            read_items(config, new_dir);
             string_free(new_dir);
         }
         config_type = readdir(config_dir);
@@ -250,7 +250,7 @@ static void read_config(Config* config)
 Config* config_create(void)
 {
     Config* config = st_malloc(sizeof(Config));
-    config->weapons = json_object_create();
+    config->items = json_object_create();
     config->textures = json_object_create();
     config->entities = json_object_create();
     config->maps = json_object_create();
@@ -261,13 +261,15 @@ Config* config_create(void)
         log_write(FATAL, "Did not find any entities");
     if (json_object_length(config->maps) == 0)
         log_write(FATAL, "Did not find any maps");
+    if (json_object_length(config->items) == 0)
+        log_write(FATAL, "Did not find any items");
     config->shared_handle = dlopen(pathname, flags);
     return config;
 }
 
 void config_destroy(Config* config)
 {
-    json_object_destroy(config->weapons);
+    json_object_destroy(config->items);
     json_object_destroy(config->textures);
     json_object_destroy(config->entities);
     json_object_destroy(config->maps);

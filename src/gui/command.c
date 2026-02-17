@@ -168,12 +168,13 @@ static CommandState new_state(CommandState state, char* command, i32 left, i32 r
             command[right+1] = '\0';
             command_context.arg_string = string_copy(command+left);
             id = map_get_id(command+left);
+            log_write(DEBUG, "%d %s", id, command+left);
             command[right+1] = c;
             if (id == -1) {
                 command_context.error_message = "Invalid preset name";
                 return CS_ERROR;
             }
-            game_change_map(id);
+            event_create_game_change_map(id);
             return CS_PRESETFIN;
         default:
             return CS_ERROR;

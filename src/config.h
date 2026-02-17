@@ -4,7 +4,7 @@
 #include <json.h>
 
 typedef struct Config {
-    JsonObject* weapons;
+    JsonObject* items;
     JsonObject* textures;
     JsonObject* entities;
     JsonObject* maps;

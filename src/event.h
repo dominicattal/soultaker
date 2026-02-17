@@ -26,6 +26,7 @@ void event_create_game_camera_update_rotation(f32 mag);
 void event_create_game_camera_update_tilt(f32 mag);
 void event_create_game_swap_weapons(void);
 void event_create_game_framebuffer_size_callback(void);
+void event_create_game_change_map(i32 id);
 
 // Gui events
 void event_create_gui_framebuffer_size_callback(u32 width, u32 height);

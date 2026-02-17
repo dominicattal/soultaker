@@ -215,39 +215,23 @@ bool trigger_get_flag(Trigger* trigger, TriggerFlagEnum flag);
 //**************************************************************************
 
 typedef enum ItemEnum {
-    ITEM_NONE,
     ITEM_WEAPON,
     ITEM_ARMOR,
     ITEM_MATERIAL,
     NUM_ITEM_TYPES
 } ItemEnum;
 
-typedef struct Weapon {
-    i32 id;
-} Weapon;
-
-typedef struct Armor {
-    i32 id;
-} Armor;
-
-typedef struct Material {
-    i32 id;
-} Material;
-
 typedef struct Item {
     ItemEnum type;
-    union {
-        Weapon* weapon;
-        Armor* armor;
-        Material* material;
-        void* generic_ptr;
-    };
+    i32 id;
     bool equipped;
 } Item;
 
-Item item_create(ItemEnum type, void* item);
-void item_destroy(Item* item);
-void item_swap(Item* item1, Item* item2);
+i32   item_get_id(const char* name);
+i32   item_get_tex_id(i32 item_id);
+Item* item_create(ItemEnum type, i32 id);
+void  item_destroy(Item* item);
+void  inventory_swap_items(Item** item1, Item** item2);
 
 typedef struct {
     f32 health, max_health;
@@ -257,9 +241,10 @@ typedef struct {
 } Stats;
 
 typedef struct {
-    Item item_weapon;
-    Item item_weapon_swap;
-    Item items[25];
+    i32 num_items;
+    Item** item_weapon;
+    Item** item_weapon_swap;
+    Item* items[25];
 } Inventory;
 
 typedef struct Entity {
@@ -354,9 +339,6 @@ void player_cleanup(Player* player);
 void weapon_init(void);
 void weapon_cleanup(void);
 
-i32 weapon_get_id(const char* name);
-Weapon* weapon_create(i32 id);
-void weapon_destroy(Weapon* weapon);
 void weapon_shoot(Player* player, vec2 direction, vec2 target);
 
 //**************************************************************************
@@ -628,7 +610,6 @@ void game_load_starting_area(void);
 
 char* weapon_get_name(i32 id);
 char* weapon_get_tooltip(i32 id);
-i32 weapon_get_tex_id(i32 id);
 
 vec2 player_position(void);
 f32 player_health(void);

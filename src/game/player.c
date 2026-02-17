@@ -29,21 +29,29 @@ void game_set_player_position(vec2 position)
     game_context.player.entity->position = position;
 }
 
+void inventory_destroy(Inventory* inventory)
+{
+    for (i32 i = 0; i < inventory->num_items; i++) {
+        item_destroy(inventory->items[i]);
+        inventory->items[i] = NULL;
+    }
+}
+
 void player_cleanup(Player* player)
 {
-    item_destroy(&player->inventory.item_weapon);
-    item_destroy(&player->inventory.item_weapon_swap);
+    inventory_destroy(&player->inventory);
 }
 
 void player_reset(Entity* entity)
 {
     Player* player = &game_context.player;
-    player_cleanup(player);
+    inventory_destroy(&player->inventory);
     if (player->entity != NULL) {
         log_write(WARNING, "Did not destroy player entity before resetting");
         entity_destroy(player->entity);
     }
     Inventory* inventory = &player->inventory;
+    inventory->num_items = 25;
     entity->id = entity_get_id("knight");
     player->entity = entity;
     entity->direction = vec2_create(0, 0);
@@ -53,13 +61,14 @@ void player_reset(Entity* entity)
     entity->health = entity->max_health = 100000;
     entity_set_flag(entity, ENTITY_FLAG_FRIENDLY, true);
     entity_set_flag(entity, ENTITY_FLAG_PLAYER, true);
-    Weapon* weapon = weapon_create(weapon_get_id("pointer"));
-    Weapon* weapon_swap = weapon_create(weapon_get_id("null_pointer"));
-    inventory->item_weapon = item_create(ITEM_WEAPON, weapon);
-    inventory->item_weapon_swap = item_create(ITEM_WEAPON, weapon_swap);
+    inventory->items[0] = item_create(ITEM_WEAPON, item_get_id("pointer"));
+    inventory->items[1] = item_create(ITEM_WEAPON, item_get_id("null_pointer"));
+    inventory->items[2] = item_create(ITEM_WEAPON, item_get_id("null_pointer"));
+    inventory->item_weapon = &inventory->items[0];
+    inventory->item_weapon_swap = &inventory->items[1];
     //player->inventory.weapon.weapon.id = weapon_get_id("pointer");
     //player->inventory.weapon_swap.weapon.id = weapon_get_id("null_pointer");
-    gui_update_weapon_info(weapon->id);
+    gui_update_weapon_info((*inventory->item_weapon)->id);
     player->state_idle = entity_get_state_id(entity, "idle");
     player->state_walking = entity_get_state_id(entity, "walking");
     player->state_shooting = entity_get_state_id(entity, "shooting");
@@ -130,10 +139,11 @@ void player_update(Player* player, f32 dt)
 
 void player_swap_weapons(void)
 {
-    Inventory* inventory = &game_context.player.inventory;
-    item_swap(&inventory->item_weapon, &inventory->item_weapon_swap);
-    log_assert(inventory->item_weapon.type == ITEM_WEAPON, "Equipped item not a weapon");
-    gui_update_weapon_info(inventory->item_weapon.weapon->id);
+    //Inventory* inventory = &game_context.player.inventory;
+    //Item* tmp = inventory->items[0];
+    //inventory->items[0] = inventory->items[1];
+    //inventory->items[1] = tmp;
+    //gui_update_weapon_info(inventory->items[0]->id);
 }
 
 void player_shoot(Player* player)

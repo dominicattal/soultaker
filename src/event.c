@@ -14,6 +14,7 @@ typedef enum {
     GAME_EVENT_SWAP_WEAPONS,
     GAME_EVENT_SUMMON,
     GAME_EVENT_FRAMEBUFFER_SIZE_CALLBACK,
+    GAME_EVENT_CHANGE_MAP,
 
     // Gui Events
     GUI_EVENT_FRAMEBUFFER_SIZE_CALLBACK,
@@ -98,7 +99,8 @@ static void execute_event(Event event)
     arg2 = event.arg2;
     arg3 = event.arg3;
     arg4 = event.arg4;
-    switch (event.type) {
+    switch (event.type) 
+    {
         case EVENT_NONE:
             break;
 
@@ -120,6 +122,9 @@ static void execute_event(Event event)
             break;
         case GAME_EVENT_FRAMEBUFFER_SIZE_CALLBACK:
             game_framebuffer_size_callback();
+            break;
+        case GAME_EVENT_CHANGE_MAP:
+            game_change_map(arg1._int);
             break;
 
         // Gui 
@@ -224,6 +229,16 @@ void event_create_game_framebuffer_size_callback(void)
 {
     Event event = (Event) {
         .type = GAME_EVENT_FRAMEBUFFER_SIZE_CALLBACK
+    };
+    EventList* list = get_event_list("Game");
+    event_enqueue(list, event);
+}
+
+void event_create_game_change_map(i32 id)
+{
+    Event event = (Event) {
+        .type = GAME_EVENT_CHANGE_MAP,
+        .arg1._int = id
     };
     EventList* list = get_event_list("Game");
     event_enqueue(list, event);
