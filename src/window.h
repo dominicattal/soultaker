@@ -55,7 +55,7 @@ void window_char_callback(GLFWwindow* window, u32 codepoint);
 
 void window_set_control_binding(ControlEnum ctrl, i32 glfw_enum, i32 mods);
 
-// returns whether or not glfw_enum is a valid control, will return 
+// returns whether or not glfw_enum is a valid control, will return all of the controls that match
 bool control_find_range(i32 glfw_enum, i32 mods, i32* l, i32* r);
 Control* control_get(ControlEnum ctrl_enum);
 

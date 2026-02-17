@@ -86,7 +86,9 @@ static void update_player_state(Player* player, f32 dt)
     Entity* entity = player->entity;
     if (entity == NULL) return;
     player->shot_timer -= dt;
+    player->cast_timer -= dt;
     player_shoot(player);
+    player_cast(player);
     if (player_is_shooting()) {
         if (entity->state == player->state_shooting)
             return;
@@ -146,15 +148,8 @@ void player_swap_weapons(void)
     //gui_update_weapon_info(inventory->items[0]->id);
 }
 
-void player_shoot(Player* player)
+static void player_target(Player* player, void (*callback)(Player*, vec2, vec2))
 {
-    if (player->entity == NULL)
-        return;
-    if (!player->shooting)
-        return;
-    if (player_is_shooting())
-        return;
-    player->shot_timer = 0.5;
     vec2 cursor_position = window_cursor_position();
     cursor_position.x /= window_width();
     cursor_position.y /= window_height();
@@ -181,13 +176,74 @@ void player_shoot(Player* player)
     direction.y = pos.x * sin(rotation - HALFPI) + pos.y * cos(rotation - HALFPI);
     direction = vec2_normalize(direction);
     target = vec2_sub(player->entity->position, vec2_scale(direction, -2 * zoom * r * r / ratio));
-    weapon_shoot(player, direction, target);
+    callback(player, direction, target);
     player->entity->facing = direction;
+}
+
+void player_shoot(Player* player)
+{
+    if (player->entity == NULL)
+        return;
+    if (!player->shooting)
+        return;
+    if (player_is_shooting())
+        return;
+    player->shot_timer = 0.5;
+    player_target(player, weapon_shoot);
+}
+
+static void update_aoe_func(GameApi* api, AOE* aoe, f32 dt)
+{
+}
+
+static void cast(Player* player, vec2 direction, vec2 target)
+{
+    Particle* part;
+    vec2 pos;
+    vec3 pos3;
+    i32 i;
+    f32 rad, dis, height, hue;
+    log_write(DEBUG, "Cast");
+    AOE* aoe = map_create_aoe(player->entity->position, 1.0f);
+    aoe->update = update_aoe_func;
+    for (i = 0; i < 250; i++) {
+        rad = randf() * 2 * PI;
+        dis = randf_range(2.5, 3.0);
+        height = randf_range(0.25, 0.75);
+        pos = vec2_direction(rad);
+        pos = vec2_scale(pos, dis);
+        pos3.x = pos.x + aoe->position.x;
+        pos3.y = height;
+        pos3.z = pos.z + aoe->position.z;
+        part = map_create_particle(pos3);
+        part->direction = vec3_create(randf_range(-0.1,0.1),randf_range(-0.1,0.1),randf_range(-0.1,0.1));
+        hue = randf();
+        part->color.x = hue;
+        part->color.y = hue;
+        part->color.z = hue;
+    }
+}
+
+void player_cast(Player* player)
+{
+    if (player->entity == NULL)
+        return;
+    if (!player->casting)
+        return;
+    if (player_is_casting())
+        return;
+    player->cast_timer = 0.5;
+    player_target(player, cast);
 }
 
 bool player_is_shooting(void)
 {
     return game_context.player.shot_timer > 0;
+}
+
+bool player_is_casting(void)
+{
+    return game_context.player.cast_timer > 0;
 }
 
 vec2 player_position(void)

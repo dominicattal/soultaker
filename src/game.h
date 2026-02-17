@@ -14,6 +14,7 @@ typedef struct Weapon Weapon;
 typedef struct Entity Entity;
 typedef struct Player Player;
 typedef struct Projectile Projectile;
+typedef struct AOE AOE;
 typedef struct Tile Tile;
 typedef struct Wall Wall;
 typedef struct Barrier Barrier;
@@ -155,8 +156,10 @@ void map_set_interactable(const char* desc, InteractableFuncPtr func_ptr);
 void* map_get_data(void);
 
 // create object in global map coords
+Particle*       map_create_particle(vec3 position);
 Projectile*     map_create_projectile(vec2 position);
 Trigger*        map_create_trigger(vec2 position, f32 radius);
+AOE*            map_create_aoe(vec2 position, f32 lifetime);
 
 // create objects in local room coords without relying on/modifting global state
 Entity*         room_create_entity_explicit(Map* map, MapNode* node, vec2 position, i32 id);
@@ -275,11 +278,14 @@ typedef struct Player {
     Entity* entity;
     vec2 position;
     f32 shot_timer;
-    bool shooting;
+    f32 cast_timer;
     // store special states
     i32 state_idle;
     i32 state_walking;
     i32 state_shooting;
+
+    bool shooting;
+    bool casting;
 } Player;
 
 typedef enum {
@@ -330,8 +336,10 @@ void entity_damage(Entity* entity, f32 damage);
 void player_reset(Entity* entity);
 void player_update(Player* player, f32 dt);
 void player_shoot(Player* player);
+void player_cast(Player* player);
 void player_swap_weapons(void);
 bool player_is_shooting(void);
+bool player_is_casting(void);
 void player_cleanup(Player* player);
 
 // Initalize and cleanup weapon info
@@ -436,6 +444,42 @@ void projectile_destroy(Projectile* projectile);
 
 void projectile_set_flag(Projectile* proj, ProjectileFlagEnum flag, bool val);
 bool projectile_get_flag(Projectile* proj, ProjectileFlagEnum flag);
+
+//**************************************************************************
+// AOE definitions
+//**************************************************************************
+
+typedef void (*AOEUpdateFuncPtr)(GameApi*, AOE*, f32);
+typedef void (*AOECollisionFuncPtr)(GameApi*, AOE*, Entity*);
+typedef void (*AOEDestroyFuncPtr)(GameApi*, AOE*);
+
+typedef struct AOE {
+    AOEUpdateFuncPtr update;
+    AOECollisionFuncPtr collision;
+    AOEDestroyFuncPtr destroy;
+    void* data;
+    vec2 position;
+    f32 lifetime;
+    f32 timer;
+    u32 flags;
+} AOE;
+
+typedef enum {
+    AOE_FLAG_FRIENDLY,
+    AOE_FLAG_LINGER
+} AOEFlagEnum;
+
+// AOEs call their update and destroy functions. They do
+// not have a create function. They do not have ids mapped to a 
+// function ptr (like entities) because it is not necessary to 
+// know aoe information + it would be a headache.
+AOE* aoe_create(vec2 position, f32 lifetime);
+void aoe_update(AOE* aoe, f32 dt);
+void aoe_destroy(AOE* aoe);
+
+void aoe_set_flag(AOE* proj, AOEFlagEnum flag, bool val);
+bool aoe_get_flag(AOE* proj, AOEFlagEnum flag);
+
 
 //**************************************************************************
 // Obstacle definitions

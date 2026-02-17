@@ -109,6 +109,7 @@ typedef struct Map {
     List* particles;
     List* parjicles;
     List* triggers;
+    List* aoes;
     bool active;
 } Map;
 
@@ -1586,6 +1587,7 @@ static Map* generate_map(i32 id)
     map->particles = list_create();
     map->parjicles = list_create();
     map->triggers = list_create();
+    map->aoes = list_create();
     map->root = root;
     map->spawn_point = vec2_create(MAP_MAX_WIDTH / 2 + 0.5, MAP_MAX_LENGTH / 2 + 0.5);
     map->active = true;
@@ -1824,6 +1826,17 @@ void* map_get_data(void)
     return map_context.current_map->roomset->data;
 }
 
+Particle* map_create_particle(vec3 position)
+{
+    Particle* part;
+    Map* map = map_context.current_map;
+    if (!map->active)
+        return NULL;
+    part = particle_create(position);
+    list_append(map->particles, part);
+    return part;
+}
+
 Projectile* map_create_projectile(vec2 position)
 {
     Projectile* proj;
@@ -1846,6 +1859,17 @@ Trigger* map_create_trigger(vec2 position, f32 radius)
     trigger->map_node = node;
     list_append(map->triggers, trigger);
     return trigger;
+}
+
+AOE* map_create_aoe(vec2 position, f32 lifetime)
+{
+    AOE* aoe;
+    Map* map = map_context.current_map;
+    if (!map->active)
+        return NULL;
+    aoe = aoe_create(position, lifetime);
+    list_append(map->aoes, aoe);
+    return aoe;
 }
 
 Entity* room_create_entity_explicit(Map* map, MapNode* node, vec2 position, i32 id)
@@ -2295,6 +2319,17 @@ static void destroy_triggers(Map* map)
     list_destroy(map->triggers);
 }
 
+static void destroy_aoes(Map* map)
+{
+    AOE* aoe;
+    i32 i;
+    for (i = 0; i < map->aoes->length; i++) {
+        aoe = list_get(map->aoes, i);
+        aoe_destroy(aoe);
+    }
+    list_destroy(map->aoes);
+}
+
 void map_destroy(Map* map)
 {
     i32 i;
@@ -2307,6 +2342,7 @@ void map_destroy(Map* map)
     destroy_particles(map);
     destroy_parjicles(map);
     destroy_triggers(map);
+    destroy_aoes(map);
     for (i = 0; i < map->tiles->length; i++)
         tile_destroy(list_get(map->tiles, i));
     list_destroy(map->tiles);
@@ -2453,6 +2489,15 @@ static void map_update_objects(Map* map)
         parjicle_update(parjicle, game_context.dt);
         if (parjicle->lifetime <= 0)
             parjicle_destroy(list_remove(map->parjicles, i));
+        else
+            i++;
+    }
+    i = 0;
+    while (i < map->aoes->length) {
+        AOE* aoe = list_get(map->aoes, i);
+        aoe_update(aoe, game_context.dt);
+        if (aoe->lifetime <= 0)
+            aoe_destroy(list_remove(map->aoes, i));
         else
             i++;
     }

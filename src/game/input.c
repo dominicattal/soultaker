@@ -13,6 +13,7 @@ void game_process_input()
     f32 rotate_mag = 0;
     f32 tilt_mag = 0; 
     game_context.player.shooting = false;
+    game_context.player.casting = false;
 
     if (game_context.halt_input)
         goto update;
@@ -35,6 +36,8 @@ void game_process_input()
         tilt_mag -= 1;
     if (window_get_mouse_button(GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
         game_context.player.shooting = true;
+    if (window_get_mouse_button(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+        game_context.player.casting = true;
 
 update:
     event_create_game_camera_update_direction(move_mag);
