@@ -36,8 +36,9 @@ void main() {
     int dx, dy;
     vec4 position, color;
     vec2 size;
-    position = vec4(data_in[idx], data_in[idx+1], data_in[idx+2], 1.0f);
+    position = vec4(data_in[idx], 0.0f, data_in[idx+2], 1.0f);
     position = proj * view * position;
+    position.y += data_in[idx+1] / zoom;
     size.x = data_in[idx+6] / 2.0f / window.aspect_ratio / zoom;
     size.y = data_in[idx+6] / 2.0f / zoom;
 

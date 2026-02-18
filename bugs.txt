@@ -37,3 +37,12 @@
 # 2026-2-13
 - using glBufferSubData(buffer 1, offset 4, size 4) to update a GL_STATIC_DRAW buffer
 - resize window
+
+# 2026-2-17
+- font rendering had weird spacing
+- fix was just using the api correctly
+- real fix was using floats for calculation and flooring left side bearing
+
+# 2026-2-17
+- centering text has issues with monospace font
+- no issues when left aligned, so problem is probably rounding error 

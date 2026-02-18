@@ -1826,6 +1826,17 @@ void* map_get_data(void)
     return map_context.current_map->roomset->data;
 }
 
+Parjicle* map_create_parjicle(vec3 position)
+{
+    Parjicle* parj;
+    Map* map = map_context.current_map;
+    if (!map->active)
+        return NULL;
+    parj = parjicle_create(position);
+    list_append(map->parjicles, parj);
+    return parj;
+}
+
 Particle* map_create_particle(vec3 position)
 {
     Particle* part;

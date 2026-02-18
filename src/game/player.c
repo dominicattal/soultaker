@@ -148,7 +148,7 @@ void player_swap_weapons(void)
     //gui_update_weapon_info(inventory->items[0]->id);
 }
 
-static void player_target(Player* player, void (*callback)(Player*, vec2, vec2))
+static void player_target(Player* player, f32 height, void (*callback)(Player*, vec2, vec2))
 {
     vec2 cursor_position = window_cursor_position();
     cursor_position.x /= window_width();
@@ -160,8 +160,8 @@ static void player_target(Player* player, void (*callback)(Player*, vec2, vec2))
     f32 rotation = camera_get_yaw();
     f32 a, b, c, r, ratio;
     vec2 direction, target;
-    const float character_offset = 1.0 / 4.0 / zoom;
-    vec2 pos = vec2_create((cursor_position.x - 0.5) * ar, cursor_position.y - 0.5 + character_offset);
+    f32 vertical_offset = 1.0 / (2.0 * zoom) * height;
+    vec2 pos = vec2_create((cursor_position.x - 0.5) * ar, cursor_position.y - 0.5 + vertical_offset);
     // https://www.desmos.com/calculator/a7186fd475
     // think of circle as screen space and ellipse inside of it as game space
     // the solution is the intersection point on the ellipse based on angle of screen space
@@ -189,39 +189,149 @@ void player_shoot(Player* player)
     if (player_is_shooting())
         return;
     player->shot_timer = 0.5;
-    player_target(player, weapon_shoot);
+    player_target(player, 0.5, weapon_shoot);
 }
 
-static void update_aoe_func(GameApi* api, AOE* aoe, f32 dt)
+static void other_part_update(GameApi* api, Particle* part, f32 dt)
 {
+    part->size -= 0.4*dt;
+    if (part->size < 0) 
+        part->size = 0;
 }
 
-static void cast(Player* player, vec2 direction, vec2 target)
+static void create_aoe(vec2 position)
 {
     Particle* part;
-    vec2 pos;
+    vec2 dir;
     vec3 pos3;
     i32 i;
-    f32 rad, dis, height, hue;
+    f32 rad, hue, lifetime;
     log_write(DEBUG, "Cast");
-    AOE* aoe = map_create_aoe(player->entity->position, 1.0f);
-    aoe->update = update_aoe_func;
-    for (i = 0; i < 250; i++) {
-        rad = randf() * 2 * PI;
-        dis = randf_range(2.5, 3.0);
-        height = randf_range(0.25, 0.75);
-        pos = vec2_direction(rad);
-        pos = vec2_scale(pos, dis);
-        pos3.x = pos.x + aoe->position.x;
-        pos3.y = height;
-        pos3.z = pos.z + aoe->position.z;
+    AOE* aoe = map_create_aoe(position, 1.0f);
+    if (aoe == NULL)
+        return;
+    i32 n = 100;
+    lifetime = 0.4;
+    pos3 = vec3_create(position.x, 0.5, position.z);
+    for (i = 0; i < n; i++) {
+        rad = (2*PI*i)/n;
+        dir = vec2_direction(rad);
         part = map_create_particle(pos3);
-        part->direction = vec3_create(randf_range(-0.1,0.1),randf_range(-0.1,0.1),randf_range(-0.1,0.1));
+        if (part == NULL)
+            return;
+        part->velocity.x = 5*dir.x;
+        part->velocity.z = 5*dir.z;
+        part->update = other_part_update;
+        part->lifetime = lifetime;
+        hue = randf();
+        part->color.x = hue;
+        part->color.y = hue;
+        part->color.z = hue;
+        part = map_create_particle(pos3);
+        if (part == NULL)
+            return;
+        part->velocity.x = 7*dir.x;
+        part->velocity.z = 7*dir.z;
+        part->update = other_part_update;
+        part->lifetime = lifetime;
+        hue = randf();
+        part->color.x = hue;
+        part->color.y = hue;
+        part->color.z = hue;
+        part = map_create_particle(pos3);
+        if (part == NULL)
+            return;
+        part->velocity.x = 9*dir.x;
+        part->velocity.z = 9*dir.z;
+        part->lifetime = lifetime;
+        part->update = other_part_update;
         hue = randf();
         part->color.x = hue;
         part->color.y = hue;
         part->color.z = hue;
     }
+    //for (i = 0; i < 1000; i++) {
+    //    rad = randf() * 2 * PI;
+    //    dis = randf_range(2.5, 3.0);
+    //    pos = vec2_direction(rad);
+    //    pos = vec2_scale(pos, dis);
+    //    pos3.x = aoe->position.x;
+    //    pos3.y = 0.5;
+    //    pos3.z = aoe->position.z;
+    //    part->velocity = vec3_create(10*pos.x, 0, 10*pos.z);
+    //    part->lifetime = 0.1f;
+    //    hue = randf();
+    //    part->color.x = hue;
+    //    part->color.y = hue;
+    //    part->color.z = hue;
+    //}
+}
+
+static void update_lob(GameApi* api, Particle* part, f32 dt)
+{
+    Particle* new_part;
+    f32* timer = part->data;
+    *timer -= dt;
+    if (*timer < 0) {
+        new_part = map_create_particle(part->position);
+        new_part->color.x = new_part->color.y = new_part->color.z = randf();
+        new_part->lifetime = 0.1;
+        *timer += 0.01;
+    }
+}
+
+static void destroy_lob(GameApi* api, Particle* part)
+{
+    create_aoe(vec2_create(part->position.x, part->position.z));
+    st_free(part->data);
+}
+
+static void cast(Player* player, vec2 direction, vec2 target)
+{
+    // https://www.desmos.com/calculator/lybiehprmk
+    Particle* part;
+    vec2 origin = player->entity->position;
+    vec2 offset = vec2_sub(target, origin);
+    vec2 part_velocity = vec2_normalize(offset);
+    f32 distance = vec2_mag(offset);
+    vec3 origin3 = vec3_create(origin.x, 0.5, origin.z);
+    log_write(DEBUG, "Cast");
+    part = map_create_particle(origin3);
+    if (part == NULL)
+        return;
+
+    f32 g, h, y1, y2, t1, t2, speed;
+    g = GRAVITY;
+    h = 3.0f;
+    y2 = 0.5;
+    t1 = sqrt(2*(y2-h)/g);
+    y1 = -g*t1;
+    t2 = (-y1-sqrt(y1*y1-2*g*y2))/g;
+    part->lifetime = t2;
+    speed = distance / t2;
+    part_velocity = vec2_scale(part_velocity, speed);
+    part->velocity.x = part_velocity.x;
+    part->velocity.y = y1;
+    part->velocity.z = part_velocity.z;
+    log_write(DEBUG, "%f %f %f %f %f %f %f", g, h, y2, t1, y1, t2, speed);
+    part->acceleration.y = GRAVITY;
+    part->data = st_malloc(sizeof(f32));
+    part->size = 0.2f;
+    *((f32*)part->data) = 0.0f;
+    part->update = update_lob;
+    part->destroy = destroy_lob;
+
+    //origin3 = vec3_create(target.x, 0, target.z);
+    //part = map_create_particle(origin3);
+
+    //Parjicle* parj;
+    //parj = map_create_parjicle(origin3);
+    //parj->velocity.x = part_velocity.x;
+    ////parj->velocity.y = 12.05;
+    //parj->velocity.z = part_velocity.z;
+    //parj->speed = 3.0;
+    ////parj->acceleration.y = GRAVITY;
+    //parj->lifetime = mag / parj->speed;
 }
 
 void player_cast(Player* player)
@@ -233,7 +343,7 @@ void player_cast(Player* player)
     if (player_is_casting())
         return;
     player->cast_timer = 0.5;
-    player_target(player, cast);
+    player_target(player, 0.0, cast);
 }
 
 bool player_is_shooting(void)

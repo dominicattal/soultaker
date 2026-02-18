@@ -5,6 +5,12 @@
 #include "window.h"
 
 //**************************************************************************
+// Constant(s) Declarations
+//**************************************************************************
+
+#define GRAVITY     -9.8
+
+//**************************************************************************
 // Forward Declarations
 //**************************************************************************
 
@@ -34,6 +40,9 @@ typedef void (*TriggerLeaveFunc)(GameApi*, Trigger*, Entity*);
 typedef void (*TriggerDestroyFunc)(GameApi*, Trigger*);
 
 typedef void (*InteractableFuncPtr)(GameApi*);
+
+typedef void (*ProjectileUpdateFuncPtr)(GameApi*, Projectile*, f32);
+typedef void (*ProjectileDestroyFuncPtr)(GameApi*, Projectile*);
 
 //**************************************************************************
 // Camera declarations
@@ -155,7 +164,15 @@ void map_set_interactable(const char* desc, InteractableFuncPtr func_ptr);
 // get global data that is created on map generation
 void* map_get_data(void);
 
+// returns the position of the global coordinates relative to the room
+vec2            room_position(vec2 position);
+
+// the following functions will return NULL if the map is not active
+// a map is inactive when it is signaled to be destroyed. this is so that
+// objects can free their memory without creating new memory
+
 // create object in global map coords
+Parjicle*       map_create_parjicle(vec3 position);
 Particle*       map_create_particle(vec3 position);
 Projectile*     map_create_projectile(vec2 position);
 Trigger*        map_create_trigger(vec2 position, f32 radius);
@@ -172,9 +189,6 @@ Wall*           room_create_wall(vec2 position, f32 height, f32 width, f32 lengt
 Trigger*        room_create_trigger(vec2 position, f32 radius);
 Tile*           room_set_tilemap_tile(i32 x, i32 z, u32 minimap_color);
 Wall*           room_set_tilemap_wall(i32 x, i32 z, f32 height, u32 minimap_color);
-
-// returns the position of the global coordinates relative to the room
-vec2            room_position(vec2 position);
 
 //**************************************************************************
 // Trigger definitions
@@ -410,9 +424,6 @@ void wall_destroy(Wall* wall);
 // Projectile definitions
 //**************************************************************************
 
-typedef void (*ProjectileUpdateFuncPtr)(GameApi*, Projectile*, f32);
-typedef void (*ProjectileDestroyFuncPtr)(GameApi*, Projectile*);
-
 typedef struct Projectile {
     ProjectileUpdateFuncPtr update;
     ProjectileDestroyFuncPtr destroy;
@@ -516,12 +527,18 @@ void parstacle_destroy(Parstacle* parstacle);
 // Particles have no hitbox and are solid colors
 //**************************************************************************
 
+typedef void (*ParticleUpdateFuncPtr)(GameApi*, Particle*, f32);
+typedef void (*ParticleDestroyFuncPtr)(GameApi*, Particle*);
+
 typedef struct Particle {
+    ParticleUpdateFuncPtr update;
+    ParticleDestroyFuncPtr destroy;
+    void* data;
     vec3 position;
-    vec3 direction;
+    vec3 velocity;
+    vec3 acceleration;
     vec3 color;
     f32 lifetime;
-    f32 speed;
     f32 size;
 } Particle;
 
