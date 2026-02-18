@@ -4,12 +4,14 @@ AOE* aoe_create(vec2 position, f32 lifetime)
 {
     AOE* aoe = st_malloc(sizeof(AOE));
     aoe->update = NULL;
-    aoe->collision = NULL;
     aoe->destroy = NULL;
     aoe->data = NULL;
     aoe->position = position;
-    aoe->lifetime = lifetime;
+    aoe->lifetime = 0;
+    aoe->damage = 1;
     aoe->timer = 0;
+    aoe->cooldown = 0.5;
+    aoe->radius = 2;
     aoe->flags = 0;
     return aoe;
 }
@@ -17,6 +19,9 @@ AOE* aoe_create(vec2 position, f32 lifetime)
 void aoe_update(AOE* aoe, f32 dt)
 {
     aoe->lifetime -= dt;
+    if (aoe->timer < 0)
+        aoe->timer += aoe->cooldown;
+    aoe->timer -= dt;
     if (aoe->update != NULL)
         aoe->update(&game_api, aoe, dt);
 }

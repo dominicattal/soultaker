@@ -461,23 +461,25 @@ bool projectile_get_flag(Projectile* proj, ProjectileFlagEnum flag);
 //**************************************************************************
 
 typedef void (*AOEUpdateFuncPtr)(GameApi*, AOE*, f32);
-typedef void (*AOECollisionFuncPtr)(GameApi*, AOE*, Entity*);
 typedef void (*AOEDestroyFuncPtr)(GameApi*, AOE*);
 
 typedef struct AOE {
     AOEUpdateFuncPtr update;
-    AOECollisionFuncPtr collision;
     AOEDestroyFuncPtr destroy;
     void* data;
     vec2 position;
+    f32 radius;
+    f32 damage;
     f32 lifetime;
     f32 timer;
+    f32 cooldown;
     u32 flags;
 } AOE;
 
 typedef enum {
     AOE_FLAG_FRIENDLY,
-    AOE_FLAG_LINGER
+    AOE_FLAG_LINGER,
+    AOE_FLAG_USED
 } AOEFlagEnum;
 
 // AOEs call their update and destroy functions. They do
@@ -490,6 +492,7 @@ void aoe_destroy(AOE* aoe);
 
 void aoe_set_flag(AOE* proj, AOEFlagEnum flag, bool val);
 bool aoe_get_flag(AOE* proj, AOEFlagEnum flag);
+
 
 
 //**************************************************************************
@@ -642,6 +645,7 @@ void collide_entity_tile(Entity* entity, Tile* tile);
 void collide_entity_obstacle(Entity* entity, Obstacle* obstacle);
 void collide_entity_projectile(Entity* entity, Projectile* projectile);
 void collide_entity_trigger(Entity* entity, Trigger* trigger);
+void collide_entity_aoe(Entity* entity, AOE* aoe);
 void collide_projectile_wall(Projectile* projectile, Wall* wall);
 void collide_projectile_obstacle(Projectile* projectile, Obstacle* obstacle);
 

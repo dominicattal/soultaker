@@ -128,6 +128,22 @@ void collide_entity_trigger(Entity* entity, Trigger* trigger)
     list_append(trigger->entities, entity);
 }
 
+void collide_entity_aoe(Entity* entity, AOE* aoe)
+{
+    f32 ex, ez, er, ax, az, ar;
+    vec2 offset;
+    ex = entity->position.x;
+    ez = entity->position.y;
+    er = entity->hitbox_radius;
+    ax = aoe->position.x;
+    az = aoe->position.y;
+    ar = aoe->radius;
+    offset = vec2_create(ex - ax, ez - az);
+    if (vec2_mag(offset) >= er + ar)
+        return;
+    entity_damage(entity, aoe->damage);
+}
+
 void collide_projectile_wall(Projectile* projectile, Wall* wall)
 {
     f32 px, pz, pr, wx, wz, sx, sz;

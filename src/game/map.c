@@ -2428,6 +2428,11 @@ void map_collide_objects(Map* map)
             Trigger* trigger = list_get(map->triggers, j);
             collide_entity_trigger(entity, trigger);
         }
+        for (j = 0; j < map->aoes->length; j++) {
+            AOE* aoe = list_get(map->aoes, j);
+            if  (aoe->timer >= 0) continue;
+            collide_entity_aoe(entity, aoe);
+        }
     }
     for (i = 0; i < map->projectiles->length; i++) {
         Projectile* projectile = list_get(map->projectiles, i);
@@ -2507,10 +2512,12 @@ static void map_update_objects(Map* map)
     while (i < map->aoes->length) {
         AOE* aoe = list_get(map->aoes, i);
         aoe_update(aoe, game_context.dt);
-        if (aoe->lifetime <= 0)
+        if ((!aoe_get_flag(aoe, AOE_FLAG_LINGER) && aoe_get_flag(aoe, AOE_FLAG_USED)) || (aoe_get_flag(aoe, AOE_FLAG_LINGER) && aoe->lifetime <= 0))
             aoe_destroy(list_remove(map->aoes, i));
-        else
+        else {
+            aoe_set_flag(aoe, AOE_FLAG_USED, true);
             i++;
+        }
     }
     player_update(&game_context.player, game_context.dt);
 }
