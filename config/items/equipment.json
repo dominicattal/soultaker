@@ -1,0 +1,9 @@
+{
+    "mothers_pendant": {
+        "type": "equipment",
+        "display_name": "Mother's Pendant",
+        "tooltip": "This is a tooltip",
+        "attack": "weapon_pointer_attack",
+        "texture": "placeholder"
+    }
+}

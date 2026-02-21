@@ -1,5 +1,5 @@
 {
-    "none": "assets/textures/none.png",
+    "placeholder": "assets/textures/placeholder.png",
     "color": "assets/textures/color.png",
     "tile_1": "assets/textures/tile_1.png",
     "tile_2": "assets/textures/tile_2.png",

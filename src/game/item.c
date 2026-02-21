@@ -8,8 +8,10 @@
 typedef void (*WeaponShootFuncPtr)(GameApi*, Player*, vec2, vec2);
 
 typedef struct {
+    ItemTypeEnum type;
     char* name;
     char* tooltip;
+    char* display_name;
     i32 tex_id;
     WeaponShootFuncPtr shoot;
 } ItemInfo;
@@ -28,7 +30,8 @@ typedef enum {
     ERROR_GENERIC,
     ERROR_CONFIG_FILE,
     ERROR_MISSING,
-    ERROR_INVALID_TYPE
+    ERROR_INVALID_TYPE,
+    ERROR_INVALID_ITEM_TYPE
 } ItemError;
 
 static void _throw_item_error(ItemError error, i32 line)
@@ -51,6 +54,9 @@ static void _throw_item_error(ItemError error, i32 line)
         case ERROR_INVALID_TYPE:
             message = "wrong type";
             break;
+        case ERROR_INVALID_ITEM_TYPE:
+            message = "Invalid item type";
+            break;
     }
 
     log_write(FATAL, "%s:%d\nitem: %s\n%s", 1024, __FILE__, line, name, message);
@@ -58,6 +64,41 @@ static void _throw_item_error(ItemError error, i32 line)
 
 #define throw_item_error(error) \
     _throw_item_error(error, __LINE__);
+
+static void load_type(JsonObject* object, i32 id)
+{
+    JsonValue* val_string = json_object_get_value(object, "type");
+    if (json_value_get_type(val_string) != JTYPE_STRING)
+        throw_item_error(ERROR_INVALID_TYPE);
+
+    char* string = json_value_get_string(val_string);
+    if (string == NULL)
+        throw_item_error(ERROR_MISSING);
+
+    if (strcmp(string, "weapon") == 0)
+        item_context.infos[id].type = ITEM_WEAPON;
+    else if (strcmp(string, "armor") == 0)
+        item_context.infos[id].type = ITEM_ARMOR;
+    else if (strcmp(string, "equipment") == 0)
+        item_context.infos[id].type = ITEM_EQUIPMENT;
+    else if (strcmp(string, "material") == 0)
+        item_context.infos[id].type = ITEM_MATERIAL;
+    else
+        throw_item_error(ERROR_INVALID_ITEM_TYPE);
+}
+
+static void load_display_name(JsonObject* object, i32 id)
+{
+    JsonValue* val_string = json_object_get_value(object, "display_name");
+    if (json_value_get_type(val_string) != JTYPE_STRING)
+        throw_item_error(ERROR_INVALID_TYPE);
+
+    char* string = json_value_get_string(val_string);
+    if (string == NULL)
+        throw_item_error(ERROR_MISSING);
+
+    item_context.infos[id].display_name = string_copy(string);
+}
 
 static void load_tooltip(JsonObject* object, i32 id)
 {
@@ -119,6 +160,8 @@ static void load_item_info(void)
         val_object = json_member_get_value(member);
         object = json_value_get_object(val_object);
         load_tooltip(object, i);
+        load_display_name(object, i);
+        load_type(object, i);
         load_texture(object, i);
         load_attack_func(object, i);
         json_iterator_increment(it);
@@ -127,16 +170,17 @@ static void load_item_info(void)
     json_iterator_destroy(it);
 }
 
-void weapon_init(void)
+void item_init(void)
 {
     load_item_info();
 }
 
-void weapon_cleanup(void)
+void item_cleanup(void)
 {
     for (i32 i = 0; i < item_context.num_items; i++) {
         st_free(item_context.infos[i].name);
         st_free(item_context.infos[i].tooltip);
+        st_free(item_context.infos[i].display_name);
     }
     st_free(item_context.infos);
 }
@@ -197,11 +241,12 @@ char* weapon_get_tooltip(i32 id)
     return item_context.infos[id].tooltip;
 }
 
-Item* item_create(ItemEnum type, i32 id)
+Item* item_create(i32 id)
 {
     Item* item = st_malloc(sizeof(Item));
-    item->type = type;
     item->id = id;
+    log_write(DEBUG, "%s %d", item_context.infos[id].display_name, item_context.infos[id].type);
+    item->type = item_context.infos[id].type;
     item->equipped = false;
     return item;
 }

@@ -231,22 +231,30 @@ bool trigger_get_flag(Trigger* trigger, TriggerFlagEnum flag);
 // Entity, Player definitions
 //**************************************************************************
 
-typedef enum ItemEnum {
+typedef enum ItemTypeEnum {
     ITEM_WEAPON,
     ITEM_ARMOR,
+    ITEM_EQUIPMENT,
     ITEM_MATERIAL,
     NUM_ITEM_TYPES
-} ItemEnum;
+} ItemTypeEnum;
+
+// not implemented
+typedef enum ItemSubTypeEnum {
+    ITEM_SWORD,
+    ITEM_STAFF,
+    NUM_ITEM_SUBTYPES
+} ItemSubTypeEnum;
 
 typedef struct Item {
-    ItemEnum type;
+    ItemTypeEnum type;
     i32 id;
     bool equipped;
 } Item;
 
 i32   item_get_id(const char* name);
 i32   item_get_tex_id(i32 item_id);
-Item* item_create(ItemEnum type, i32 id);
+Item* item_create(i32 id);
 void  item_destroy(Item* item);
 void  inventory_swap_items(Item** item1, Item** item2);
 
@@ -358,8 +366,8 @@ void player_cleanup(Player* player);
 
 // Initalize and cleanup weapon info
 // Loads weapon data from config/weapons.json
-void weapon_init(void);
-void weapon_cleanup(void);
+void item_init(void);
+void item_cleanup(void);
 
 void weapon_shoot(Player* player, vec2 direction, vec2 target);
 

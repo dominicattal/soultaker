@@ -525,7 +525,11 @@ i32 texture_get_id(const char* name)
         else
             return m;
     }
-    log_write(FATAL, "Failed to get id for %s\n", name);
+    if (strcmp(name, "placeholder") != 0) {
+        log_write(WARNING, "Failed to get id for %s, returning placeholder", name);
+        return texture_get_id("placeholder");
+    }
+    log_write(FATAL, "Placeholder image doesn't exist");
     return -1;
 }
 

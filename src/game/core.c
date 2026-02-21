@@ -87,7 +87,7 @@ void game_init(void)
     sem_init(&game_context.game_loop_sem, 0, 1);
 
     map_init();
-    weapon_init();
+    item_init();
     entity_init();
     camera_init();
     game_halt_loop();
@@ -110,7 +110,7 @@ void game_cleanup(void)
     gui_render_cleanup();
     camera_cleanup();
     map_cleanup();
-    weapon_cleanup();
+    item_cleanup();
     entity_cleanup();
 }
 

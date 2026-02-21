@@ -349,7 +349,7 @@ void gui_update_weapon_info(i32 weapon_id)
     if (comp == NULL)
         return;
 
-    i32 tex_id = item_get_tex_id(weapon_id);
+    i32 tex_id = texture_get_id("placeholder");
     comp->tex = tex_id;
 }
 

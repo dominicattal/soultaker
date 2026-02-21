@@ -61,9 +61,9 @@ void player_reset(Entity* entity)
     entity->health = entity->max_health = 100000;
     entity_set_flag(entity, ENTITY_FLAG_FRIENDLY, true);
     entity_set_flag(entity, ENTITY_FLAG_PLAYER, true);
-    inventory->items[0] = item_create(ITEM_WEAPON, item_get_id("pointer"));
-    inventory->items[1] = item_create(ITEM_WEAPON, item_get_id("null_pointer"));
-    inventory->items[2] = item_create(ITEM_WEAPON, item_get_id("null_pointer"));
+    inventory->items[0] = item_create(item_get_id("pointer"));
+    inventory->items[1] = item_create(item_get_id("null_pointer"));
+    inventory->items[2] = item_create(item_get_id("mothers_pendant"));
     inventory->item_weapon = &inventory->items[0];
     inventory->item_weapon_swap = &inventory->items[1];
     //player->inventory.weapon.weapon.id = weapon_get_id("pointer");
