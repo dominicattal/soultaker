@@ -14,7 +14,7 @@ void* game_loop(void* vargp)
     game_context.dt = 0;
     game_context.time = 0;
     gui_comp_init();
-    gui_preset_load(GUI_PRESET_TEST);
+    gui_preset_load(GUI_PRESET_GAME);
     game_resume_loop();
     game_resume_render();
     map_create(map_get_id("outpost1"));

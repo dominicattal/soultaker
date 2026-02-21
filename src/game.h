@@ -252,11 +252,13 @@ typedef struct Item {
     bool equipped;
 } Item;
 
-i32   item_get_id(const char* name);
-i32   item_get_tex_id(i32 item_id);
-Item* item_create(i32 id);
-void  item_destroy(Item* item);
-void  inventory_swap_items(Item** item1, Item** item2);
+i32     item_get_id(const char* name);
+i32     item_get_tex_id(i32 item_id);
+Item*   item_create(i32 id);
+char*   item_get_display_name(Item* item);
+char*   item_get_tooltip(Item* item);
+void    item_destroy(Item* item);
+void    inventory_swap_items(Item** item1, Item** item2);
 
 typedef struct {
     f32 health, max_health;

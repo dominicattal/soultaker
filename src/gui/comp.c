@@ -147,6 +147,8 @@ void gui_comp_copy_text(GUIComp* comp, const char* text)
 
 void gui_comp_point_to_text(GUIComp* comp, char* text)
 {
+    if (comp->text == text)
+        return;
     if (!gui_comp_get_flag(comp, GUI_COMP_FLAG_POINT_TO_TEXT))
         string_free(comp->text);
     gui_comp_set_flag(comp, GUI_COMP_FLAG_POINT_TO_TEXT, true);
@@ -156,6 +158,7 @@ void gui_comp_point_to_text(GUIComp* comp, char* text)
         return;
     }
     comp->text = text;
+    comp->text_length = strlen(text);
 }
 
 void gui_comp_remove_text(GUIComp* comp)
@@ -294,11 +297,20 @@ void gui_comp_get_true_position(GUIComp* comp, i32* x, i32* y)
         else
             res_y = res_y + comp->y;
         comp = comp->parent;
-        log_write(DEBUG, "%d %d", res_x, res_y);
     }
     *x = res_x;
     *y = res_y;
-    gui_comp_print(comp);
+}
+
+bool gui_comp_contains_cursor(GUIComp* comp)
+{
+    f64 cx = window_cursor_position_x();
+    f64 cy = window_cursor_position_y();
+    i32 x, y, w, h;
+    w = comp->w;
+    h = comp->h;
+    gui_comp_get_true_position(comp, &x, &y);
+    return cx >= x && cx <= x + w && cy >= y && cy <= y + h;
 }
 
 void gui_comp_set_bbox(GUIComp* comp, i32 x, i32 y, i32 w, i32 h)

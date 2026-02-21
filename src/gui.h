@@ -154,6 +154,10 @@ void gui_update_comps(f32 dt);
 // returns the x and y coordinates of the bottom left corner of the component in the screen
 void gui_comp_get_true_position(GUIComp* comp, i32* x, i32* y);
 
+// returns true if the mouse cursor is in the bounds of the comp by using
+// gui_comp_get_true_position
+bool gui_comp_contains_cursor(GUIComp* comp);
+
 void gui_comp_init(void);
 void gui_comp_cleanup(void);
 

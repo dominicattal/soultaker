@@ -49,7 +49,6 @@ static bool gui_cursor_pos_callback_helper(GUIComp* comp, f64 xpos, f64 ypos, i3
 bool gui_cursor_pos_callback(f64 xpos, f64 ypos)
 {
     bool comp_found = false;
-    log_write(DEBUG, "%f %f", xpos, ypos);
     comp_found = gui_cursor_pos_callback_helper(gui_context.root, xpos, ypos, 0, 0, 0, 0);
     return comp_found;
 }

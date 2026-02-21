@@ -251,6 +251,16 @@ Item* item_create(i32 id)
     return item;
 }
 
+char* item_get_display_name(Item* item)
+{
+    return item_context.infos[item->id].display_name;
+}
+
+char* item_get_tooltip(Item* item)
+{
+    return item_context.infos[item->id].tooltip;
+}
+
 void item_destroy(Item* item)
 {
     st_free(item);

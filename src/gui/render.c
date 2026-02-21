@@ -351,10 +351,11 @@ static void gui_update_vertex_data_helper(GUIComp* comp, i32 position_x, i32 pos
     if (gui_comp_get_flag(comp, GUI_COMP_FLAG_RELATIVE)) {
         align_comp_position_x(&position_x, halign, size_x, x, w);
         align_comp_position_y(&position_y, valign, size_y, y, h);
-        push_comp_data(comp, position_x, position_y, w, h);
     } else {
-        push_comp_data(comp, x, y, w, h);
+        position_x = x;
+        position_y = y;
     }
+    push_comp_data(comp, position_x, position_y, w, h);
     for (i32 i = 0; i < comp->num_children; i++)
         gui_update_vertex_data_helper(comp->children[i], position_x, position_y, w, h);
 }

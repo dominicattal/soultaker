@@ -506,27 +506,14 @@ static void inventory_slot_click(GUIComp* comp, i32 button, i32 action, i32 mods
     }
 }
 
-static void inventory_slot_hover(GUIComp* comp, bool status)
+static void inventory_slot_update(GUIComp* comp, f32 dt)
 {
     GUIComp* parent = comp->parent;
     InventoryData* inventory_data = parent->data;
-    SlotData* slot_data = comp->data;
-    i32 x, y;
-    //SlotData* other_data;
-    if (status && inventory_data->hovered_comp == NULL && *slot_data->item_slot != NULL) {
-        gui_comp_get_true_position(comp, &x, &y);
-        log_write(DEBUG, "%d %d %d %d", x, y, comp->x, comp->y);
-        inventory_data->hovered_comp = comp;
-    } else if (!status && inventory_data->hovered_comp != NULL) {
-        log_write(DEBUG, "b");
-        inventory_data->hovered_comp = NULL;
-    }
-}
-
-static void inventory_slot_update(GUIComp* comp, f32 dt)
-{
     SlotData* data = comp->data;
     Item* item = *data->item_slot;
+    if (item != NULL && gui_comp_contains_cursor(comp))
+        inventory_data->hovered_comp = comp;    
     if (item == NULL)
         comp->tex = texture_get_id("color");
     else
@@ -565,12 +552,20 @@ static void inventory_update(GUIComp* comp, f32 dt)
     }
 
     GUIComp* item_info = data->item_info_comp;
+    Item* item;
+    SlotData* slot_data;
     item_info->x = (i32)roundf(cursor_position.x);
     item_info->y = (i32)roundf(cursor_position.y);
     if (data->hovered_comp != NULL) {
+        slot_data = data->hovered_comp->data;
+        item = *slot_data->item_slot;
+        gui_comp_point_to_text(item_info->children[0], item_get_display_name(item));
+        gui_comp_point_to_text(item_info->children[2], item_get_tooltip(item));
         gui_comp_set_color(item_info, 255, 255, 255, 255);
+        gui_comp_set_flag(item_info, GUI_COMP_FLAG_VISIBLE, true);
+        data->hovered_comp = NULL;
     } else {
-        gui_comp_set_color(item_info, 0, 0, 0, 0);
+        gui_comp_set_flag(item_info, GUI_COMP_FLAG_VISIBLE, false);
         item_info->tex = texture_get_id("color");
     }
 }
@@ -590,7 +585,6 @@ static GUIComp* create_inventory_slot(i32 x, i32 y, i32 idx)
     data = slot->data = st_malloc(sizeof(SlotData));
     data->item_slot = &inventory->items[idx];
     slot->click = inventory_slot_click;
-    slot->hover = inventory_slot_hover;
     slot->update = inventory_slot_update;
     gui_comp_set_flag(slot, GUI_COMP_FLAG_HOVERABLE, true);
     gui_comp_set_flag(slot, GUI_COMP_FLAG_CLICKABLE, true);
@@ -631,11 +625,29 @@ static GUIComp* create_inventory(void)
     data->cursor_comp = cursor;
 
     GUIComp* item_info;
-    item_info = gui_comp_create(0,0,64,64);
+    item_info = gui_comp_create(0,0,200,200);
     gui_comp_set_flag(item_info, GUI_COMP_FLAG_RELATIVE, false);
     gui_comp_set_color(item_info, 255, 255, 255, 255);
     gui_comp_attach(inventory, item_info);
     data->item_info_comp = item_info;
+
+    GUIComp* item_name;
+    item_name = gui_comp_create(3,3,194,30);
+    gui_comp_set_color(item_name, 255, 255, 255, 0);
+    item_name->text_valign = ALIGN_CENTER;
+    item_name->font = FONT_NOVEMBER;
+    gui_comp_attach(item_info, item_name);
+
+    GUIComp* item_br;
+    item_br = gui_comp_create(3, 36, 194, 3);
+    gui_comp_set_color(item_br, 70, 70, 70, 255);
+    gui_comp_attach(item_info, item_br);
+
+    GUIComp* item_tooltip;
+    item_tooltip = gui_comp_create(3, 42, 194, 155);
+    gui_comp_set_color(item_tooltip, 255, 255, 255, 0);
+    item_tooltip->font = FONT_NOVEMBER;
+    gui_comp_attach(item_info, item_tooltip);
 
     return inventory;
 }
