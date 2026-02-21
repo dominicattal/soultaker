@@ -34,6 +34,9 @@ typedef struct MapNode MapNode;
 typedef struct MapInfo MapInfo;
 typedef struct LocalMapGenerationSettings LocalMapGenerationSettings;
 
+typedef void (*TileCreateFuncPtr)(GameApi*, Tile*);
+typedef void (*TileCollideFuncPtr)(GameApi* api, Entity* entity);
+
 typedef void (*TriggerEnterFunc)(GameApi*, Trigger*, Entity*);
 typedef void (*TriggerStayFunc)(GameApi*, Trigger*, Entity*);
 typedef void (*TriggerLeaveFunc)(GameApi*, Trigger*, Entity*);
@@ -43,6 +46,23 @@ typedef void (*InteractableFuncPtr)(GameApi*);
 
 typedef void (*ProjectileUpdateFuncPtr)(GameApi*, Projectile*, f32);
 typedef void (*ProjectileDestroyFuncPtr)(GameApi*, Projectile*);
+
+// function called when room in generated. used to create game objects in that room
+typedef void (*RoomCreateFuncPtr)(GameApi*);
+// function called when player enters a room. i32 arg is the number of times that player entered
+typedef void (*RoomEnterFuncPtr)(GameApi*, i32);
+// functionc alled when player exits a room.
+typedef void (*RoomExitFuncPtr)(GameApi*, i32);
+// create data for map that persists while map is in memory
+// this data can be queried with map_get_data()
+typedef void* (*RoomsetInitFuncPtr)(GameApi*);
+// last function called before map is destroyed, used to cleanup allocations
+// in RoomsetInitFuncPtr. void* arg is the data
+typedef void (*RoomsetCleanupFuncPtr)(GameApi*, void*);
+// true if at end of branch, false otherwise
+typedef bool (*RoomsetGenerateFuncPtr)(GameApi*, LocalMapGenerationSettings*);
+// true if should create branch, false otherwise
+typedef bool (*RoomsetBranchFuncPtr)(GameApi*, LocalMapGenerationSettings*);
 
 //**************************************************************************
 // Camera declarations
@@ -99,15 +119,101 @@ typedef struct MapInfo {
     MapNode* current_node;
 } MapInfo;
 
-// useless gettings, remove these
-List* map_list_entities(Map* map);
-List* map_list_tiles(Map* map);
-List* map_list_walls(Map* map);
-List* map_list_projectiles(Map* map);
-List* map_list_obstacles(Map* map);
-List* map_list_parstacles(Map* map);
-List* map_list_particles(Map* map);
-List* map_list_parjicles(Map* map);
+typedef struct {
+    const char* name;
+    TileCreateFuncPtr create;
+    TileCollideFuncPtr collide;
+    u32 color;
+    u32 top_tex;
+    f32 height;
+    union {
+        u32 tex;
+        u32 side_tex;
+    };
+    bool is_wall;
+} TileColor;
+
+typedef struct {
+    TileColor* colors;
+    i32 num_colors;
+} Palette;
+
+typedef struct {
+    i32 u1, v1, u2, v2;
+    i32 origin_u, origin_v;
+    i32 loc_u, loc_v;
+    TileColor* default_tile;
+} Alternate;
+
+typedef struct Room {
+    i32 u1, v1, u2, v2;
+    const char* name;
+    const char* type;
+    RoomCreateFuncPtr create;
+    RoomEnterFuncPtr enter;
+    RoomExitFuncPtr exit;
+    List* male_alternates;
+    List* female_alternates;
+} Room;
+
+typedef struct {
+    i32 width, length;
+    u32* pixels;
+    Room* rooms;
+    i32 num_rooms;
+    void* data;
+    Palette* palette;
+    RoomsetInitFuncPtr init;
+    RoomsetGenerateFuncPtr generate;
+    RoomsetBranchFuncPtr branch;
+    RoomsetCleanupFuncPtr cleanup;
+} Roomset;
+
+typedef struct Map {
+    // x is width, z is length
+    i32 width, length;
+    vec2 spawn_point;
+    Roomset* roomset;
+    MapNode* root;
+    void** tilemap;
+    MapNode** map_nodes;
+    Quadmask* tile_mask;
+    Quadmask* fog_mask;
+    List* bosses;
+    List* entities;
+    List* tiles;
+    List* walls;
+    List* free_walls;
+    List* projectiles;
+    List* obstacles;
+    List* parstacles;
+    List* particles;
+    List* parjicles;
+    List* triggers;
+    List* aoes;
+    bool active;
+} Map;
+
+typedef struct MapNode {
+    MapNode* parent;
+    MapNode** children;
+    Alternate* female_alternate;
+    Room* room;
+    List* male_alternates;
+    i32 num_children;
+    i32 origin_x, origin_z;
+    i32 x1, x2, z1, z2;
+    i32 orientation;
+    i32 num_exits;
+    i32 num_enters;
+    bool visited;
+    bool cleared;
+} MapNode;
+
+typedef struct {
+    Quadmask* qm;
+    Roomset* roomset;
+} GlobalMapGenerationSettings;
 
 void map_make_boss(char* name, Entity* entity);
 void map_boss_update(Entity* entity);
@@ -376,8 +482,6 @@ void weapon_shoot(Player* player, vec2 direction, vec2 target);
 //**************************************************************************
 // Tile definitions
 //**************************************************************************
-
-typedef void (*TileCollideFuncPtr)(GameApi* api, Entity* entity);
 
 typedef struct Tile {
     TileCollideFuncPtr collide;

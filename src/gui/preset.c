@@ -139,6 +139,41 @@ static void update_fps(GUIComp* comp, f32 dt)
     }
 }
 
+static void update_game_stats(GUIComp* comp, f32 dt)
+{
+    CompFpsData* data = comp->data;
+    Map* map = game_context.current_map;
+    data->timer -= dt;
+    if (map != NULL && map->entities != NULL && data->timer < 0) {
+        char* string = string_create(
+            "Triggers: %d\n"
+            "Entities: %d\n"
+            "Projectiles: %d\n"
+            "AOEs: %d\n"
+            "Particles: %d\n"
+            "Parjicles: %d\n"
+            "Obstacles: %d\n"
+            "Parstacles: %d\n"
+            "Free Walls: %d\n"
+            "Walls: %d\n"
+            "Tiles: %d\n",
+        map->triggers->length,
+        map->entities->length,
+        map->projectiles->length,
+        map->aoes->length,
+        map->particles->length,
+        map->parjicles->length,
+        map->obstacles->length,
+        map->parstacles->length,
+        map->free_walls->length,
+        map->walls->length,
+        map->tiles->length
+        );
+        gui_comp_set_text(comp, string);
+        data->timer += 0.1;
+    }
+}
+
 static GUIComp* create_player_health(void)
 {
     GUIComp* player_health = gui_comp_create(0, 0, STAT_POINT_WIDTH, 20);
@@ -556,13 +591,15 @@ static void inventory_update(GUIComp* comp, f32 dt)
     SlotData* slot_data;
     item_info->x = (i32)roundf(cursor_position.x);
     item_info->y = (i32)roundf(cursor_position.y);
-    if (data->hovered_comp != NULL) {
+    if (data->hovered_comp != NULL && data->held_comp == NULL) {
         slot_data = data->hovered_comp->data;
         item = *slot_data->item_slot;
-        gui_comp_point_to_text(item_info->children[0], item_get_display_name(item));
-        gui_comp_point_to_text(item_info->children[2], item_get_tooltip(item));
-        gui_comp_set_color(item_info, 255, 255, 255, 255);
-        gui_comp_set_flag(item_info, GUI_COMP_FLAG_VISIBLE, true);
+        if (item != NULL) {
+            gui_comp_point_to_text(item_info->children[0], item_get_display_name(item));
+            gui_comp_point_to_text(item_info->children[2], item_get_tooltip(item));
+            gui_comp_set_color(item_info, 255, 255, 255, 255);
+            gui_comp_set_flag(item_info, GUI_COMP_FLAG_VISIBLE, true);
+        }
         data->hovered_comp = NULL;
     } else {
         gui_comp_set_flag(item_info, GUI_COMP_FLAG_VISIBLE, false);
@@ -707,6 +744,15 @@ static void load_preset_game(GUIComp* root)
     gui_comp_set_color(comp_fps, 255, 255, 255, 255);
     gui_comp_set_text_align(comp_fps, ALIGN_CENTER, ALIGN_CENTER);
     gui_comp_attach(root, comp_fps);
+
+    GUIComp* comp_game_stats = gui_comp_create(0, 0, 150, 200);
+    comp_game_stats->data = st_malloc(sizeof(CompFpsData));
+    ((CompFpsData*)comp_game_stats->data)->timer = 0;
+    comp_game_stats->update = update_game_stats;
+    gui_comp_set_align(comp_game_stats, ALIGN_LEFT, ALIGN_CENTER);
+    gui_comp_set_color(comp_game_stats, 255, 255, 255, 255);
+    gui_comp_set_text_align(comp_game_stats, ALIGN_CENTER, ALIGN_CENTER);
+    gui_comp_attach(root, comp_game_stats);
 
     GUIComp* minimap = gui_comp_create(0, 0, 250, 250);
     minimap->key = minimap_key;

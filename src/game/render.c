@@ -212,7 +212,7 @@ static void update_entity_vertex_data(Map* map)
     Entity* entity;
     List* entities;
 
-    entities = map_list_entities(map);
+    entities = map->entities;
     vb = get_vertex_buffer_swap(SSBO_ENTITY);
     shadow_vb = get_vertex_buffer_swap(SSBO_ENTITY_SHADOW);
     map_vb = get_vertex_buffer_swap(SSBO_ENTITY_MINIMAP);
@@ -283,7 +283,7 @@ static void update_projectile_vertex_data(Map* map)
     bool rotate_tex;
     List* projectiles;
 
-    projectiles = map_list_projectiles(map);
+    projectiles = map->projectiles;
     vb = get_vertex_buffer_swap(SSBO_PROJECTILE);
     resize_vertex_buffer(vb, PROJECTILE_FLOATS_PER_VERTEX * projectiles->capacity);
 
@@ -324,7 +324,7 @@ static void update_tile_vertex_data(Map* map)
     Tile* tile;
     List* tiles;
 
-    tiles = map_list_tiles(map);
+    tiles = map->tiles;
     vb = get_vertex_buffer_swap(VBO_TILE);
     map_vb = get_vertex_buffer_swap(VBO_TILE_MINIMAP);
     resize_vertex_buffer(vb, TILE_VERTEX_LENGTH * tiles->capacity);
@@ -382,7 +382,7 @@ static void update_wall_vertex_data(Map* map)
     Wall* wall;
     List* walls;
 
-    walls = map_list_walls(map);
+    walls = map->walls;
     vb = get_vertex_buffer_swap(VBO_WALL);
     map_vb = get_vertex_buffer_swap(VBO_WALL_MINIMAP);
     resize_vertex_buffer(vb, WALL_VERTEX_LENGTH * walls->capacity);
@@ -465,7 +465,7 @@ static void update_parstacle_vertex_data(Map* map)
     Parstacle* parstacle;
     List* parstacles;
 
-    parstacles = map_list_parstacles(map);
+    parstacles = map->parstacles;
     vb = get_vertex_buffer_swap(SSBO_PARSTACLE);
     resize_vertex_buffer(vb, OBSTACLE_FLOATS_PER_VERTEX * parstacles->capacity);
 
@@ -500,7 +500,7 @@ static void update_obstacle_vertex_data(Map* map)
     i32 i, j;
     List* obstacles;
 
-    obstacles = map_list_obstacles(map);
+    obstacles = map->obstacles;
     vb = get_vertex_buffer_swap(SSBO_OBSTACLE);
     map_vb = get_vertex_buffer(SSBO_OBSTACLE_MINIMAP);
     resize_vertex_buffer(vb, OBSTACLE_FLOATS_PER_VERTEX * obstacles->capacity);
@@ -545,7 +545,7 @@ static void update_particle_vertex_data(Map* map)
     i32 i, j;
     List* particles;
 
-    particles = map_list_particles(map);
+    particles = map->particles;
     vb = get_vertex_buffer_swap(SSBO_PARTICLE);
     resize_vertex_buffer(vb, PARTICLE_FLOATS_PER_VERTEX * particles->capacity);
    
@@ -573,7 +573,7 @@ static void update_parjicle_vertex_data(Map* map)
     i32 i, j;
     List* parjicles;
 
-    parjicles = map_list_parjicles(map);
+    parjicles = map->parjicles;
     vb = get_vertex_buffer_swap(SSBO_PARJICLE);
     resize_vertex_buffer(vb, PARJICLE_FLOATS_PER_VERTEX * parjicles->capacity);
    
