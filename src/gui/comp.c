@@ -97,8 +97,9 @@ void gui_comp_destroy(GUIComp* comp)
         comp->destroy(comp);
     for (i32 i = 0; i < comp->num_children; i++)
         gui_comp_destroy(comp->children[i]);
+    if (!gui_comp_get_flag(comp, GUI_COMP_FLAG_POINT_TO_TEXT))
+        string_free(comp->text);
     st_free(comp->children);
-    st_free(comp->text);
     st_free(comp->data);
     st_free(comp);
 }
@@ -119,7 +120,9 @@ void gui_comp_detach_and_destroy(GUIComp* parent, GUIComp* child)
 
 void gui_comp_set_text(GUIComp* comp, char* text)
 {
-    string_free(comp->text);
+    if (!gui_comp_get_flag(comp, GUI_COMP_FLAG_POINT_TO_TEXT))
+        string_free(comp->text);
+    gui_comp_set_flag(comp, GUI_COMP_FLAG_POINT_TO_TEXT, false);
     if (text == NULL) {
         comp->text = NULL;
         comp->text_length = 0;
@@ -131,13 +134,28 @@ void gui_comp_set_text(GUIComp* comp, char* text)
 
 void gui_comp_copy_text(GUIComp* comp, const char* text)
 {
-    string_free(comp->text);
+    if (!gui_comp_get_flag(comp, GUI_COMP_FLAG_POINT_TO_TEXT))
+        string_free(comp->text);
+    gui_comp_set_flag(comp, GUI_COMP_FLAG_POINT_TO_TEXT, false);
     if (text == NULL) {
         comp->text = NULL;
         comp->text_length = 0;
         return;
     }
     comp->text = string_copy_len(text, &comp->text_length);
+}
+
+void gui_comp_point_to_text(GUIComp* comp, char* text)
+{
+    if (!gui_comp_get_flag(comp, GUI_COMP_FLAG_POINT_TO_TEXT))
+        string_free(comp->text);
+    gui_comp_set_flag(comp, GUI_COMP_FLAG_POINT_TO_TEXT, true);
+    if (text == NULL) {
+        comp->text = NULL;
+        comp->text_length = 0;
+        return;
+    }
+    comp->text = text;
 }
 
 void gui_comp_remove_text(GUIComp* comp)
@@ -254,6 +272,35 @@ void align_comp_position_y(i32* position_y, u8 valign, i32 size_y, i32 y, i32 h)
     else if (valign == ALIGN_BOTTOM)     *position_y += y;
 }
 
+void gui_comp_get_true_position(GUIComp* comp, i32* x, i32* y)
+{
+    i32 res_x, res_y;
+    res_x = res_y = 0;
+    while (comp->parent != NULL) {
+        if (comp->halign == ALIGN_LEFT)
+            res_x = res_x + comp->x;
+        else if  (comp->halign == ALIGN_CENTER_POS)
+            res_x = res_x + comp->x + (comp->parent->w - comp->w) / 2;
+        else if  (comp->halign == ALIGN_CENTER_NEG)
+            res_x = res_x - comp->x + (comp->parent->w - comp->w) / 2;
+        else
+            res_x = res_x - comp->x - comp->w + comp->parent->w;
+        if (comp->valign == ALIGN_TOP)
+            res_y = res_y - comp->y + comp->parent->h - comp->h;
+        else if  (comp->valign == ALIGN_CENTER_POS)
+            res_y = res_y + comp->y - comp->h / 2 + comp->parent->h / 2;
+        else if  (comp->valign == ALIGN_CENTER_NEG)
+            res_y = res_y - comp->y - comp->h / 2 + comp->parent->h / 2;
+        else
+            res_y = res_y + comp->y;
+        comp = comp->parent;
+        log_write(DEBUG, "%d %d", res_x, res_y);
+    }
+    *x = res_x;
+    *y = res_y;
+    gui_comp_print(comp);
+}
+
 void gui_comp_set_bbox(GUIComp* comp, i32 x, i32 y, i32 w, i32 h)
 {
     comp->x = x;
@@ -280,4 +327,11 @@ void gui_comp_set_text_align(GUIComp* comp, i32 halign, i32 valign)
 {
     comp->text_halign = halign;
     comp->text_valign = valign;
+}
+
+void gui_comp_print(GUIComp* comp)
+{
+    char* str = string_create("\nx=%d;y=%d;w=%d;h=%d", comp->x, comp->y, comp->w, comp->h);
+    log_write(DEBUG, str);
+    string_free(str);
 }

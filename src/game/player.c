@@ -64,6 +64,8 @@ void player_reset(Entity* entity)
     inventory->items[0] = item_create(item_get_id("pointer"));
     inventory->items[1] = item_create(item_get_id("null_pointer"));
     inventory->items[2] = item_create(item_get_id("mothers_pendant"));
+    inventory->items[3] = item_create(item_get_id("mothers_pendant"));
+    inventory->items[4] = item_create(item_get_id("mothers_pendant"));
     inventory->item_weapon = &inventory->items[0];
     inventory->item_weapon_swap = &inventory->items[1];
     //player->inventory.weapon.weapon.id = weapon_get_id("pointer");

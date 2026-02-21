@@ -51,7 +51,8 @@ typedef enum {
     GUI_COMP_FLAG_VISIBLE,
     GUI_COMP_FLAG_RELATIVE,
     GUI_COMP_FLAG_ALLOW_CHILD_CLICK,
-    GUI_COMP_FLAG_ALLOW_OUT_OF_BOUNDS_CLICK
+    GUI_COMP_FLAG_ALLOW_OUT_OF_BOUNDS_CLICK,
+    GUI_COMP_FLAG_POINT_TO_TEXT
 } GUICompFlagEnum;
 
 typedef struct GUIComp GUIComp;
@@ -150,6 +151,9 @@ void gui_comp_update(GUIComp* comp, f32 dt);
 void gui_update_comps_helper(GUIComp* comp, f32 dt);
 void gui_update_comps(f32 dt);
 
+// returns the x and y coordinates of the bottom left corner of the component in the screen
+void gui_comp_get_true_position(GUIComp* comp, i32* x, i32* y);
+
 void gui_comp_init(void);
 void gui_comp_cleanup(void);
 
@@ -190,6 +194,10 @@ void gui_comp_set_text(GUIComp* comp, char* text);
 // the comp, so it should be deallocated properly. text does not have to be on heap.
 void gui_comp_copy_text(GUIComp* comp, const char* text);
 
+// sets the comp's text pointer to text and does not free it when setting the text
+// again or destroying the component
+void gui_comp_point_to_text(GUIComp* comp, char* text);
+
 // removes the comp's current text, freeing it and setting it to NULL
 void gui_comp_remove_text(GUIComp* comp);
 
@@ -201,5 +209,7 @@ void gui_comp_set_bbox(GUIComp* comp, i32 x, i32 y, i32 w, i32 h);
 void gui_comp_set_color(GUIComp* comp, i32 r, i32 g, i32 b, i32 a);
 void gui_comp_set_align(GUIComp* comp, i32 halign, i32 valign);
 void gui_comp_set_text_align(GUIComp* comp, i32 halign, i32 valign);
+
+void gui_comp_print(GUIComp* comp);
 
 #endif
