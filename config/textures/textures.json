@@ -12,6 +12,7 @@
     "null_weapon": "assets/textures/null.png",
     "null_ptr": "assets/textures/null_ptr.png",
     "dummy": "assets/textures/dummy.png",
+    "mothers_pendant": "assets/textures/mothers_pendant.png",
     "knight": {
         "spritesheet": true,
         "path": "assets/textures/knight_spritesheet.png",

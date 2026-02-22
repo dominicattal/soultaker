@@ -372,8 +372,13 @@ void player_cast(Player* player)
         return;
     if (player_is_casting())
         return;
+    if (player->stats[STAT_MP] < 5) {
+        log_write(DEBUG, "Not enough mana");
+        return;
+    }
     player->cast_timer = 0.5;
     player_target(player, 0.0, cast);
+    player->stats[STAT_MP] -= 5;
 }
 
 bool player_is_shooting(void)
