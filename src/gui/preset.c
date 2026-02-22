@@ -104,6 +104,9 @@ static void update_player_health(GUIComp* comp, f32 dt)
     f32 max_health = player_max_health();
     i32 width = (i32)round(STAT_POINT_WIDTH * health / max_health);
     current_health->w = width;
+
+    GUIComp* hp_text = comp->children[1];
+    gui_comp_set_text(hp_text, string_create("%.1f/%.1f", health, max_health));
 }
 
 static void update_player_mana(GUIComp* comp, f32 dt)
@@ -113,6 +116,9 @@ static void update_player_mana(GUIComp* comp, f32 dt)
     f32 max_mana = player_max_mana();
     i32 width = (i32)round(STAT_POINT_WIDTH * mana / max_mana);
     current_mana->w = width;
+
+    GUIComp* mp_text = comp->children[1];
+    gui_comp_set_text(mp_text, string_create("%.1f/%.1f", mana, max_mana));
 }
 
 static void update_player_souls(GUIComp* comp, f32 dt)
@@ -188,7 +194,6 @@ static GUIComp* create_player_health(void)
     gui_comp_set_color(hp_text, 0, 0, 0, 0);
     hp_text->font_size = 16;
     hp_text->font = FONT_MONOSPACE;
-    gui_comp_copy_text(hp_text, "HP");
 
     gui_comp_attach(player_health, current_health);
     gui_comp_attach(player_health, hp_text);
@@ -208,7 +213,6 @@ static GUIComp* create_player_mana(void)
     GUIComp* mp_text = gui_comp_create(0, 0, STAT_POINT_WIDTH, 20);
     gui_comp_set_text_align(mp_text, ALIGN_CENTER, ALIGN_CENTER);
     gui_comp_set_color(mp_text, 0, 0, 0, 0);
-    gui_comp_copy_text(mp_text, "MP");
     mp_text->font_size = 16;
     mp_text->font = FONT_MONOSPACE;
 
@@ -538,6 +542,10 @@ static void inventory_slot_click(GUIComp* comp, i32 button, i32 action, i32 mods
             other_data = inventory_data->held_comp->data;
             inventory_swap_items(slot_data->item_slot, other_data->item_slot);
         }
+    }
+    if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
+        if (*slot_data->item_slot != NULL)
+            (*slot_data->item_slot)->equipped = !(*slot_data->item_slot)->equipped;
     }
 }
 

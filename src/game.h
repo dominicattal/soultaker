@@ -334,8 +334,22 @@ void trigger_set_flag(Trigger* trigger, TriggerFlagEnum flag, bool val);
 bool trigger_get_flag(Trigger* trigger, TriggerFlagEnum flag);
 
 //**************************************************************************
-// Entity, Player definitions
+// Item definitions
 //**************************************************************************
+
+typedef enum StatEnum {
+    STAT_HP,
+    STAT_MAX_HP,
+    STAT_HP_REGEN,
+    STAT_MP,
+    STAT_MAX_MP,
+    STAT_MP_REGEN,
+    STAT_SP,
+    STAT_MAX_SP,
+    STAT_SPEED,
+    STAT_DAMAGE,
+    NUM_STATS
+} StatEnum;
 
 typedef enum ItemTypeEnum {
     ITEM_WEAPON,
@@ -354,6 +368,8 @@ typedef enum ItemSubTypeEnum {
 
 typedef struct Item {
     ItemTypeEnum type;
+    f32 additive_stats[NUM_STATS];
+    f32 multiplicative_stats[NUM_STATS];
     i32 id;
     bool equipped;
 } Item;
@@ -365,6 +381,10 @@ char*   item_get_display_name(Item* item);
 char*   item_get_tooltip(Item* item);
 void    item_destroy(Item* item);
 void    inventory_swap_items(Item** item1, Item** item2);
+
+//**************************************************************************
+// Entity, Player definitions
+//**************************************************************************
 
 typedef struct {
     f32 health, max_health;
@@ -404,11 +424,13 @@ typedef struct Entity {
 
 typedef struct Player {
     Inventory inventory;
-    Stats stats;
+    f32 base_stats[NUM_STATS];
+    f32 stats[NUM_STATS];
     Entity* entity;
     vec2 position;
     f32 shot_timer;
     f32 cast_timer;
+
     // store special states
     i32 state_idle;
     i32 state_walking;

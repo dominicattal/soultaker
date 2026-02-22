@@ -50,6 +50,11 @@ void player_reset(Entity* entity)
         log_write(WARNING, "Did not destroy player entity before resetting");
         entity_destroy(player->entity);
     }
+    for (i32 i = 0; i < NUM_STATS; i++)
+        player->base_stats[i] = 100;
+    player->stats[STAT_MP] = 50;
+    player->base_stats[STAT_HP_REGEN] = 0.5;
+    player->base_stats[STAT_MP_REGEN] = 0.5;
     Inventory* inventory = &player->inventory;
     inventory->num_items = 25;
     entity->id = entity_get_id("knight");
@@ -58,12 +63,13 @@ void player_reset(Entity* entity)
     entity->size = 1.0;
     entity->speed = 20;
     entity->frame_speed = 2;
-    entity->health = entity->max_health = 100000;
+    entity->health = entity->max_health = player->base_stats[STAT_MAX_HP];
     entity_set_flag(entity, ENTITY_FLAG_FRIENDLY, true);
     entity_set_flag(entity, ENTITY_FLAG_PLAYER, true);
     inventory->items[0] = item_create(item_get_id("pointer"));
     inventory->items[1] = item_create(item_get_id("null_pointer"));
     inventory->items[2] = item_create(item_get_id("mothers_pendant"));
+    inventory->items[2]->additive_stats[STAT_MAX_HP] = 10;
     inventory->items[3] = item_create(item_get_id("mothers_pendant"));
     inventory->items[4] = item_create(item_get_id("mothers_pendant"));
     inventory->item_weapon = &inventory->items[0];
@@ -114,21 +120,43 @@ static void update_player_state(Player* player, f32 dt)
     }
 }
 
-static void update_player_stats(Player* player)
+static void update_player_stats(Player* player, f32 dt)
 {
     Entity* entity = player->entity;
     if (entity == NULL) {
-        player->stats.health = 0;
-        player->stats.mana = 0;
-        player->stats.souls = 0;
+        player->stats[STAT_HP] = 0;
+        player->stats[STAT_MP] = 0;
+        player->stats[STAT_SP] = 0;
         return;
     }
-    player->stats.health = entity->health;
-    player->stats.max_health = entity->max_health;
-    player->stats.mana = 50;
-    player->stats.max_mana = 100;
-    player->stats.souls = 50;
-    player->stats.max_souls = 100;
+    for (i32 j = 0; j < NUM_STATS; j++) {
+        if (j == STAT_MP) continue;
+        if (j == STAT_HP) continue;
+        if (j == STAT_SP) continue;
+        player->stats[j] = player->base_stats[j];
+    }
+    for (i32 i = 0; i < 25; i++) {
+        Item* item = player->inventory.items[i];
+        if (item == NULL) 
+            continue;
+        if (!item->equipped)
+            continue;
+        for (i32 j = 0; j < NUM_STATS; j++)
+            player->stats[j] += item->additive_stats[j];
+    }
+
+    entity->max_health = player->stats[STAT_MAX_HP];
+    player->entity->health += player->stats[STAT_HP_REGEN] * dt;
+    if (player->entity->health > player->entity->max_health)
+        player->entity->health = player->entity->max_health;
+    player->stats[STAT_HP] = entity->health;
+    player->stats[STAT_MAX_HP] = entity->max_health;
+
+    player->stats[STAT_MP] += player->stats[STAT_MP_REGEN] * dt;
+    if (player->stats[STAT_MP] > player->stats[STAT_MAX_MP])
+        player->stats[STAT_MP] = player->stats[STAT_MAX_MP];
+    player->stats[STAT_SP] = 50;
+    player->stats[STAT_MAX_SP] = 100;
 }
 
 void player_update(Player* player, f32 dt)
@@ -138,7 +166,7 @@ void player_update(Player* player, f32 dt)
         map_fog_explore(game_context.current_map, player->position);
     }
     update_player_state(player, dt);
-    update_player_stats(player);
+    update_player_stats(player, dt);
 }
 
 void player_swap_weapons(void)
@@ -365,30 +393,30 @@ vec2 player_position(void)
 
 f32 player_health(void)
 {
-    return game_context.player.stats.health;
+    return game_context.player.stats[STAT_HP];
 }
 
 f32 player_mana(void)
 {
-    return game_context.player.stats.mana;
+    return game_context.player.stats[STAT_MP];
 }
 
 f32 player_souls(void)
 {
-    return game_context.player.stats.souls;
+    return game_context.player.stats[STAT_SP];
 }
 
 f32 player_max_health(void)
 {
-    return game_context.player.stats.max_health;
+    return game_context.player.stats[STAT_MAX_HP];
 }
 
 f32 player_max_mana(void)
 {
-    return game_context.player.stats.max_mana;
+    return game_context.player.stats[STAT_MAX_MP];
 }
 
 f32 player_max_souls(void)
 {
-    return game_context.player.stats.max_souls;
+    return game_context.player.stats[STAT_MAX_SP];
 }

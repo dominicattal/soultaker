@@ -245,9 +245,12 @@ Item* item_create(i32 id)
 {
     Item* item = st_malloc(sizeof(Item));
     item->id = id;
-    log_write(DEBUG, "%s %d", item_context.infos[id].display_name, item_context.infos[id].type);
     item->type = item_context.infos[id].type;
     item->equipped = false;
+    for (i32 i = 0; i < NUM_STATS; i++) {
+        item->additive_stats[i] = 0;
+        item->multiplicative_stats[i] = 0;
+    }
     return item;
 }
 
