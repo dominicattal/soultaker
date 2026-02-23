@@ -1,0 +1,16 @@
+{
+    "bear_hide": {
+        "type": "material",
+        "display_name": "Bear Hide",
+        "tooltip": "This is a tooltip",
+        "attack": "weapon_pointer_attack",
+        "texture": "bear_hide"
+    },
+    "dragon_scale": {
+        "type": "material",
+        "display_name": "Dragon Scale",
+        "tooltip": "This is a tooltip",
+        "attack": "weapon_pointer_attack",
+        "texture": "dragon_scale"
+    }
+}

@@ -53,8 +53,8 @@ void player_reset(Entity* entity)
     for (i32 i = 0; i < NUM_STATS; i++)
         player->base_stats[i] = 100;
     player->stats[STAT_MP] = 50;
-    player->base_stats[STAT_HP_REGEN] = 0.5;
-    player->base_stats[STAT_MP_REGEN] = 0.5;
+    player->base_stats[STAT_HP_REGEN] = 5;
+    player->base_stats[STAT_MP_REGEN] = 5;
     Inventory* inventory = &player->inventory;
     inventory->num_items = 25;
     entity->id = entity_get_id("knight");
@@ -70,8 +70,20 @@ void player_reset(Entity* entity)
     inventory->items[1] = item_create(item_get_id("null_pointer"));
     inventory->items[2] = item_create(item_get_id("mothers_pendant"));
     inventory->items[2]->additive_stats[STAT_MAX_HP] = 10;
-    inventory->items[3] = item_create(item_get_id("mothers_pendant"));
-    inventory->items[4] = item_create(item_get_id("mothers_pendant"));
+    inventory->items[3] = item_create(item_get_id("helmet"));
+    inventory->items[3]->additive_stats[STAT_MAX_HP] = 50;
+    inventory->items[4] = item_create(item_get_id("chestplate"));
+    inventory->items[4]->additive_stats[STAT_MAX_HP] = 50;
+    inventory->items[5] = item_create(item_get_id("leggings"));
+    inventory->items[5]->additive_stats[STAT_MAX_HP] = 50;
+    inventory->items[6] = item_create(item_get_id("boots"));
+    inventory->items[6]->additive_stats[STAT_MAX_HP] = 50;
+    inventory->items[7] = item_create(item_get_id("shiv"));
+    inventory->items[8] = item_create(item_get_id("staff"));
+    inventory->items[9] = item_create(item_get_id("wand"));
+    inventory->items[10] = item_create(item_get_id("feral_claws"));
+    inventory->items[11] = item_create(item_get_id("bear_hide"));
+    inventory->items[12] = item_create(item_get_id("dragon_scale"));
     inventory->item_weapon = &inventory->items[0];
     inventory->item_weapon_swap = &inventory->items[1];
     //player->inventory.weapon.weapon.id = weapon_get_id("pointer");
@@ -366,6 +378,7 @@ static void cast(Player* player, vec2 direction, vec2 target)
 
 void player_cast(Player* player)
 {
+    return;
     if (player->entity == NULL)
         return;
     if (!player->casting)

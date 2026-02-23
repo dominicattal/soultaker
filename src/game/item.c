@@ -68,6 +68,8 @@ static void _throw_item_error(ItemError error, i32 line)
 static void load_type(JsonObject* object, i32 id)
 {
     JsonValue* val_string = json_object_get_value(object, "type");
+    if (val_string == NULL)
+        throw_item_error(ERROR_GENERIC);
     if (json_value_get_type(val_string) != JTYPE_STRING)
         throw_item_error(ERROR_INVALID_TYPE);
 
@@ -103,6 +105,8 @@ static void load_display_name(JsonObject* object, i32 id)
 static void load_tooltip(JsonObject* object, i32 id)
 {
     JsonValue* val_string = json_object_get_value(object, "tooltip");
+    if (val_string == NULL)
+        throw_item_error(ERROR_GENERIC);
     if (json_value_get_type(val_string) != JTYPE_STRING)
         throw_item_error(ERROR_INVALID_TYPE);
 
@@ -116,6 +120,8 @@ static void load_tooltip(JsonObject* object, i32 id)
 static void load_texture(JsonObject* object, i32 id)
 {
     JsonValue* val_string = json_object_get_value(object, "texture");
+    if (val_string == NULL)
+        throw_item_error(ERROR_GENERIC);
     if (json_value_get_type(val_string) != JTYPE_STRING)
         throw_item_error(ERROR_INVALID_TYPE);
 
@@ -129,6 +135,8 @@ static void load_texture(JsonObject* object, i32 id)
 static void load_attack_func(JsonObject* object, i32 id)
 {
     JsonValue* val_string = json_object_get_value(object, "attack");
+    if (val_string == NULL)
+        return;
     if (json_value_get_type(val_string) != JTYPE_STRING)
         throw_item_error(ERROR_INVALID_TYPE);
 

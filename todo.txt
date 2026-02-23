@@ -1,16 +1,19 @@
 fullscreen
-resolution
-target frames
+target frames ?
 vsync
 
 master volume
 music
 sfx
 
-controls
+make zoom pixel perfect
+animated gui textures
 
 optimize gl stuff
 - index buffers
 - ISQRT instead of SQRT
 - send izoom to shader isntead of zoom
 - do one pass instead of two for game shadows
+- figure out why screen tears on windows
+- change minimap framebuffer size when scaling up
+- try directx 11 implementation

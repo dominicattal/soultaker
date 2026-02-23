@@ -12,5 +12,26 @@
         "tooltip": "Segmentation fault",
         "attack": "weapon_null_pointer_attack",
         "texture": "null_weapon"
+    },
+    "shiv": {
+        "type": "weapon",
+        "display_name": "Shiv",
+        "tooltip": "Stab stab stab",
+        "attack": "weapon_pointer_attack",
+        "texture": "shiv_weapon"
+    },
+    "staff": {
+        "type": "weapon",
+        "display_name": "Staff",
+        "tooltip": "EXPLOSION",
+        "attack": "weapon_pointer_attack",
+        "texture": "staff_weapon"
+    },
+    "wand": {
+        "type": "weapon",
+        "display_name": "Wand",
+        "tooltip": "tooltip",
+        "attack": "weapon_pointer_attack",
+        "texture": "wand_weapon"
     }
 }

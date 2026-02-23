@@ -106,7 +106,7 @@ static void update_player_health(GUIComp* comp, f32 dt)
     current_health->w = width;
 
     GUIComp* hp_text = comp->children[1];
-    gui_comp_set_text(hp_text, string_create("%.1f/%.1f", health, max_health));
+    gui_comp_set_text(hp_text, string_create("%.0f/%.0f", health, max_health));
 }
 
 static void update_player_mana(GUIComp* comp, f32 dt)
@@ -118,7 +118,7 @@ static void update_player_mana(GUIComp* comp, f32 dt)
     current_mana->w = width;
 
     GUIComp* mp_text = comp->children[1];
-    gui_comp_set_text(mp_text, string_create("%.1f/%.1f", mana, max_mana));
+    gui_comp_set_text(mp_text, string_create("%.0f/%.0f", mana, max_mana));
 }
 
 static void update_player_souls(GUIComp* comp, f32 dt)
@@ -552,15 +552,20 @@ static void inventory_slot_click(GUIComp* comp, i32 button, i32 action, i32 mods
 static void inventory_slot_update(GUIComp* comp, f32 dt)
 {
     GUIComp* parent = comp->parent;
+    GUIComp* overlay = comp->children[0];
     InventoryData* inventory_data = parent->data;
     SlotData* data = comp->data;
     Item* item = *data->item_slot;
+    gui_comp_set_color(overlay, 30, 30, 30, 255);
     if (item != NULL && gui_comp_contains_cursor(comp))
         inventory_data->hovered_comp = comp;    
     if (item == NULL)
         comp->tex = texture_get_id("color");
-    else
+    else {
         comp->tex = item_get_tex_id(item->id);
+        if (item->equipped)
+            gui_comp_set_color(overlay, 200, 30, 30, 255);
+    }
 }
 
 static void inventory_toggle(GUIComp* comp)
@@ -634,6 +639,11 @@ static GUIComp* create_inventory_slot(i32 x, i32 y, i32 idx)
     gui_comp_set_flag(slot, GUI_COMP_FLAG_HOVERABLE, true);
     gui_comp_set_flag(slot, GUI_COMP_FLAG_CLICKABLE, true);
     gui_comp_set_color(slot, 255, 255, 255, 255);
+
+    GUIComp* overlay = gui_comp_create(-3, -3, 70, 70);
+    overlay->tex = texture_get_id("gui_inventory_slot");
+    gui_comp_set_color(overlay, 0, 0, 0, 255);
+    gui_comp_attach(slot, overlay);
     return slot;
 }
 
@@ -697,12 +707,6 @@ static GUIComp* create_inventory(void)
     return inventory;
 }
 
-static void test_hover(GUIComp* comp, bool status)
-{
-    i32 x, y;
-    gui_comp_get_true_position(comp, &x, &y);
-}
-
 static void load_preset_game(GUIComp* root)
 {
     GUIComp* player_stats = gui_comp_create(20, 20, 400, 50);
@@ -733,16 +737,6 @@ static void load_preset_game(GUIComp* root)
     textbox->key = keyfunc;
     gui_comp_set_flag(textbox, GUI_COMP_FLAG_CLICKABLE, true);
     gui_comp_attach(root, textbox);
-
-    GUIComp* weapon_info = gui_comp_create(20, 80, 52, 52);
-    gui_comp_set_color(weapon_info, 199, 199, 199, 255);
-    GUIComp* weapon_tex = gui_comp_create(2, 2, 48, 48);
-    gui_comp_set_flag(weapon_tex, GUI_COMP_FLAG_HOVERABLE, true);
-    weapon_tex->hover = test_hover;
-    gui_comp_set_color(weapon_tex, 255, 255, 255, 255);
-    gui_set_event_comp(GUI_COMP_WEAPON_INFO, weapon_tex);
-    gui_comp_attach(weapon_info, weapon_tex);
-    gui_comp_attach(root, weapon_info);
 
     GUIComp* comp_fps = gui_comp_create(0, 0, 300, 30);
     comp_fps->data = st_malloc(sizeof(CompFpsData));
@@ -954,6 +948,12 @@ static void load_preset_main_menu(GUIComp* root)
 }
 
 // **************************************************
+
+static void test_hover(GUIComp* comp, bool status)
+{
+    i32 x, y;
+    gui_comp_get_true_position(comp, &x, &y);
+}
 
 static void load_preset_test(GUIComp* root)
 {
