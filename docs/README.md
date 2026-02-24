@@ -10,6 +10,8 @@ Here is a high level overview of the file structure:
     - `items` contains configuration files for items
     - `maps` contains configuration files for maps
     - `textures` contains configuration files for textures
+    - `synergies` contains configuration files for synergies
+    - `controls` contains configuration files for controls
 - `src` contains all of the source files for the engine.
 - `plugins` contains all of the source files for the plugins.
 - `lib` and `include` contain dependencies, which are `glfw`, `glad`, `miniaudio`, and `stb`

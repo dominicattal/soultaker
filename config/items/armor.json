@@ -13,13 +13,6 @@
         "attack": "weapon_pointer_attack",
         "texture": "chestplate"
     },
-    "leggings": {
-        "type": "armor",
-        "display_name": "Leggings",
-        "tooltip": "tooltip",
-        "attack": "weapon_pointer_attack",
-        "texture": "leggings"
-    },
     "boots": {
         "type": "armor",
         "display_name": "Boots",

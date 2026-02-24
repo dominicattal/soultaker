@@ -1,0 +1,16 @@
+{
+    "spellbomb": {
+        "type": "ability",
+        "display_name": "Spellbomb",
+        "tooltip": "Casts a big lob",
+        "cast": "spellbomb_cast",
+        "texture": "spellbomb_tex"
+    },
+    "healing_tome": {
+        "type": "ability",
+        "display_name": "Healing Tome",
+        "tooltip": "Heals",
+        "cast": "healing_tome_cast",
+        "texture": "healing_tome_tex"
+    }
+}

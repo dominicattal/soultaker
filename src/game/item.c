@@ -58,7 +58,7 @@ static void _throw_item_error(ItemError error, i32 line)
             break;
     }
 
-    log_write(FATAL, "%s:%d\nitem: %s\n%s", 1024, __FILE__, line, name, message);
+    log_write(FATAL, "%s:%d\nitem: %s\n%s", __FILE__, line, name, message);
 }
 
 #define throw_item_error(error) \
@@ -80,8 +80,10 @@ static void load_type(JsonObject* object, i32 id)
         item_context.infos[id].type = ITEM_WEAPON;
     else if (strcmp(string, "armor") == 0)
         item_context.infos[id].type = ITEM_ARMOR;
-    else if (strcmp(string, "equipment") == 0)
-        item_context.infos[id].type = ITEM_EQUIPMENT;
+    else if (strcmp(string, "accessory") == 0)
+        item_context.infos[id].type = ITEM_ACCESSORY;
+    else if (strcmp(string, "ability") == 0)
+        item_context.infos[id].type = ITEM_ABILITY;
     else if (strcmp(string, "material") == 0)
         item_context.infos[id].type = ITEM_MATERIAL;
     else

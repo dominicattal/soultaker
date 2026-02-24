@@ -1,0 +1,52 @@
+{
+    "super_pointer": {
+        "display_name": "Super Pointer",
+        "tooltip": "Rust will fix it",
+        "items": [
+            "pointer",
+            "null_pointer"
+        ]
+    },
+    "armor_set_bonus": {
+        "display_name": "Soultaker Outfit",
+        "tooltip": "nothing",
+        "items": [
+            "helmet",
+            "chestplate",
+            "boots"
+        ]
+    },
+    "test_weapon_accessory": {
+        "display_name": "Pendant Pointer",
+        "tooltip": "Pendant Pointer",
+        "items": [
+            "pointer",
+            "mothers_pendant"
+        ]
+    },
+    "test_weapon_armor": {
+        "dislpay_name": "Pointer Chestplate",
+        "tooltip": "Pointer Chestplate",
+        "items": [
+            "pointer",
+            "chestplate"
+        ]
+    },
+    "test_weapon_ability": {
+        "dislpay_name": "Pointer Spellbomb",
+        "tooltip": "Pointer Spellbomb",
+        "items": [
+            "pointer",
+            "spellbomb"
+        ]
+    },
+    "test_weapon_override": {
+        "display_name": "Garbage collection",
+        "tooltip": "Ew go back",
+        "items": [
+            "pointer",
+            "null_pointer",
+            "staff"
+        ]
+    }
+}

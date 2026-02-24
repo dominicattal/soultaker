@@ -74,8 +74,6 @@ void player_reset(Entity* entity)
     inventory->items[3]->additive_stats[STAT_MAX_HP] = 50;
     inventory->items[4] = item_create(item_get_id("chestplate"));
     inventory->items[4]->additive_stats[STAT_MAX_HP] = 50;
-    inventory->items[5] = item_create(item_get_id("leggings"));
-    inventory->items[5]->additive_stats[STAT_MAX_HP] = 50;
     inventory->items[6] = item_create(item_get_id("boots"));
     inventory->items[6]->additive_stats[STAT_MAX_HP] = 50;
     inventory->items[7] = item_create(item_get_id("shiv"));

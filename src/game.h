@@ -354,7 +354,8 @@ typedef enum StatEnum {
 typedef enum ItemTypeEnum {
     ITEM_WEAPON,
     ITEM_ARMOR,
-    ITEM_EQUIPMENT,
+    ITEM_ACCESSORY,
+    ITEM_ABILITY,
     ITEM_MATERIAL,
     NUM_ITEM_TYPES
 } ItemTypeEnum;
