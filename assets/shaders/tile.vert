@@ -20,7 +20,7 @@ out vec4 TexCoords;
 out flat int Animate;
 
 void main() {
-    gl_Position = proj * view * vec4(aOffset.x + aPosition.x, aTexCoords.y * 100, aOffset.y + aPosition.y, 1.0f);
+    gl_Position = proj * view * vec4(aOffset.x + aPosition.x, 0.0f, aOffset.y + aPosition.y, 1.0f);
     Position = aPosition;
     TexCoords = aTexCoords;
     Location = int(round(aLocation));
