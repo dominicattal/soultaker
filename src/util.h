@@ -11,13 +11,12 @@
 #include "util/quadmask.h"
 #include "util/bitset.h"
 #include "util/trie.h"
+#include "util/json.h"
 #include <pthread.h>
 #include <semaphore.h>
 #include <stdlib.h>
 #include <glad.h>
 #include <glfw.h>
-#include <al.h>
-#include <alc.h>
 #include <sndfile.h>
 #include <assert.h>
 

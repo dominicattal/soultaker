@@ -6,7 +6,6 @@
 #include <stb_rect_pack.h>
 #include <math.h>
 #include <string.h>
-#include <json.h>
 
 TextureContext texture_context;
 

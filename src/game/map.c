@@ -2,7 +2,6 @@
 #include "../event.h"
 #include "../state.h"
 #include "../api.h"
-#include <json.h>
 #include <math.h>
 #include <string.h>
 #include <stb_image.h>
@@ -1769,11 +1768,16 @@ AOE* map_create_aoe(vec2 position, f32 lifetime)
     return aoe;
 }
 
-Entity* room_create_entity_explicit(Map* map, MapNode* node, vec2 position, i32 id)
+Entity* room_create_entity(vec2 position, i32 id)
 {
+    Map* map = map_context.current_map;
+    MapNode* node = map_context.current_map_node;
     if (!map->active)
         return NULL;
-    log_assert(node != NULL, "fuck");
+    if (node == NULL) {
+        log_write(WARNING, "Entity doesn't know its room");
+        return NULL;
+    }
     Room* room = node->room;
     i32 orientation = node->orientation;
     f32 u = room->u1 + position.x;
@@ -1790,13 +1794,6 @@ Entity* room_create_entity_explicit(Map* map, MapNode* node, vec2 position, i32 
     return entity;
 }
 
-Entity* room_create_entity(vec2 position, i32 id)
-{
-    Map* map = map_context.current_map;
-    MapNode* node = map_context.current_map_node;
-    return room_create_entity_explicit(map, node, position, id);
-}
-
 Trigger* room_create_trigger(vec2 position, f32 radius)
 {
     Trigger* trigger;
@@ -1804,7 +1801,10 @@ Trigger* room_create_trigger(vec2 position, f32 radius)
     MapNode* node = map_context.current_map_node;
     if (!map->active)
         return NULL;
-    log_assert(node != NULL, "fuck");
+    if (node == NULL) {
+        log_write(WARNING, "Trigger doesn't know its room");
+        return NULL;
+    }
     Room* room = node->room;
     i32 orientation = node->orientation;
     f32 u = room->u1 + position.x;
@@ -1827,7 +1827,10 @@ Obstacle* room_create_obstacle(vec2 position)
     MapNode* node = map_context.current_map_node;
     if (!map->active)
         return NULL;
-    log_assert(node != NULL, "fuck");
+    if (node == NULL) {
+        log_write(WARNING, "Obstacle doesn't know its room");
+        return NULL;
+    }
     Room* room = node->room;
     i32 orientation = node->orientation;
     f32 u = room->u1 + position.x;
@@ -1870,8 +1873,10 @@ Wall* room_create_wall(vec2 position, f32 height, f32 width, f32 length, u32 min
     MapNode* node = map_context.current_map_node;
     if (!map->active)
         return NULL;
-    log_assert(node != NULL, "fuck");
-
+    if (node == NULL) {
+        log_write(WARNING, "Wall doesn't know its room");
+        return NULL;
+    }
     Room* room = node->room;
     i32 orientation = node->orientation;
     f32 u, v, dx1, dz1, dx2, dz2;
@@ -1901,7 +1906,10 @@ Tile* room_set_tilemap_tile(i32 x, i32 z, u32 minimap_color)
     MapNode* node = map_context.current_map_node;
     if (!map->active)
         return NULL;
-    log_assert(node != NULL, "fuck");
+    if (node == NULL) {
+        log_write(WARNING, "Tilemap tile doesn't know its room");
+        return NULL;
+    }
     Room* room = node->room;
     i32 orientation = node->orientation;
     i32 u, v, dx, dz;
@@ -1924,7 +1932,10 @@ Wall* room_set_tilemap_wall(i32 x, i32 z, f32 height, u32 minimap_color)
     MapNode* node = map_context.current_map_node;
     if (!map->active)
         return NULL;
-    log_assert(node != NULL, "fuck");
+    if (node == NULL) {
+        log_write(WARNING, "Tilemap wall doesn't know its room");
+        return NULL;
+    }
     Room* room = node->room;
     i32 orientation = node->orientation;
     i32 u, v, dx, dz;
@@ -1942,7 +1953,7 @@ Wall* room_set_tilemap_wall(i32 x, i32 z, f32 height, u32 minimap_color)
 
 vec2 room_position(vec2 position)
 {
-    log_write(FATAL, "Unused function for now");
+    log_write(CRITICAL, "Unused function for now");
     return vec2_create(0,0);
     //Map* map = map_context.current_map;
     //MapNode* node = map_context.current_map_node;
@@ -2439,7 +2450,6 @@ void map_make_boss(char* name, Entity* entity)
     list_append(map->bosses, entity);
     log_assert(!entity_get_flag(entity, ENTITY_FLAG_BOSS), "Entity is already boss");
     entity_set_flag(entity, ENTITY_FLAG_BOSS, 1);
-    //event_create_gui_create_boss_healthbar(name, entity, entity->health, entity->max_health);
     gui_create_boss_healthbar(name, entity);
     pthread_mutex_lock(&game_context.getter_mutex);
     pthread_mutex_unlock(&game_context.getter_mutex);

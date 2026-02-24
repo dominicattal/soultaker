@@ -409,6 +409,8 @@ typedef struct Entity {
     vec2 facing;
     f32 health, max_health;
     f32 speed;
+    f32 armor;
+    f32 magic_resistance;
     f32 elevation;
     f32 size;
     f32 hitbox_radius;
@@ -842,7 +844,6 @@ typedef struct GameApi {
     void (*game_set_player_position)(vec2);
 
     // Entity
-    Entity* (*entity_create)(vec2, i32);
     i32 (*entity_get_id)(const char*);
     i32 (*entity_get_state_id)(Entity*, const char*);
     bool (*entity_get_flag)(Entity*, EntityFlagEnum);

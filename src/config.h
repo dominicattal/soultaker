@@ -1,7 +1,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#include <json.h>
+#include "util/json.h"
 
 typedef struct Config {
     JsonObject* items;

@@ -1,6 +1,6 @@
-#include "../game.h"
-#include "../gui.h"
-#include "../event.h"
+#include "game.h"
+#include "gui.h"
+#include "event.h"
 
 #define REGISTER(name) \
     .name = name
@@ -11,7 +11,6 @@ GameApi game_api = {
     REGISTER(game_set_player_position),
 
     // Entity
-    REGISTER(entity_create),
     REGISTER(entity_get_flag),
     REGISTER(entity_get_id),
     REGISTER(entity_get_state_id),
