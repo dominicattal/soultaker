@@ -128,6 +128,9 @@ static void update_player_souls(GUIComp* comp, f32 dt)
     f32 max_souls = player_max_souls();
     i32 width = (i32)round(STAT_POINT_WIDTH * souls / max_souls);
     current_souls->w = width;
+
+    GUIComp* sp_text = comp->children[1];
+    gui_comp_set_text(sp_text, string_create("%.0f/%.0f", souls, max_souls));
 }
 
 typedef struct {

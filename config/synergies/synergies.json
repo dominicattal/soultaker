@@ -48,5 +48,13 @@
             "null_pointer",
             "staff"
         ]
+    },
+    "healing_lob": {
+        "display_name": "Healing Lob",
+        "tooltip": "Holy shit",
+        "items": [
+            "spelltome",
+            "healing_tome"
+        ]
     }
 }

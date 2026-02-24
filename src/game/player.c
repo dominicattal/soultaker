@@ -70,22 +70,32 @@ void player_reset(Entity* entity)
     inventory->items[1] = item_create(item_get_id("null_pointer"));
     inventory->items[2] = item_create(item_get_id("mothers_pendant"));
     inventory->items[2]->additive_stats[STAT_MAX_HP] = 10;
-    inventory->items[3] = item_create(item_get_id("helmet"));
-    inventory->items[3]->additive_stats[STAT_MAX_HP] = 50;
-    inventory->items[4] = item_create(item_get_id("chestplate"));
+    inventory->items[5] = item_create(item_get_id("shiv"));
+    inventory->items[6] = item_create(item_get_id("staff"));
+    inventory->items[7] = item_create(item_get_id("wand"));
+    inventory->items[10] = item_create(item_get_id("spelltome"));
+    inventory->items[11] = item_create(item_get_id("healing_tome"));
+    inventory->items[12] = item_create(item_get_id("wand"));
+
+    inventory->items[15] = item_create(item_get_id("feral_claws"));
+    inventory->items[16] = item_create(item_get_id("bear_hide"));
+    inventory->items[17] = item_create(item_get_id("dragon_scale"));
+
+    inventory->items[3] = item_create(item_get_id("wizard_hat"));
+    inventory->items[3]->additive_stats[STAT_MAX_MP] = 50;
+    inventory->items[8] = item_create(item_get_id("robe"));
+    inventory->items[8]->additive_stats[STAT_MAX_MP] = 50;
+    inventory->items[13] = item_create(item_get_id("wizard_boots"));
+    inventory->items[13]->additive_stats[STAT_MAX_MP] = 50;
+
+    inventory->items[4] = item_create(item_get_id("helmet"));
     inventory->items[4]->additive_stats[STAT_MAX_HP] = 50;
-    inventory->items[6] = item_create(item_get_id("boots"));
-    inventory->items[6]->additive_stats[STAT_MAX_HP] = 50;
-    inventory->items[7] = item_create(item_get_id("shiv"));
-    inventory->items[8] = item_create(item_get_id("staff"));
-    inventory->items[9] = item_create(item_get_id("wand"));
-    inventory->items[10] = item_create(item_get_id("feral_claws"));
-    inventory->items[11] = item_create(item_get_id("bear_hide"));
-    inventory->items[12] = item_create(item_get_id("dragon_scale"));
+    inventory->items[9] = item_create(item_get_id("chestplate"));
+    inventory->items[9]->additive_stats[STAT_MAX_HP] = 50;
+    inventory->items[14] = item_create(item_get_id("boots"));
+    inventory->items[14]->additive_stats[STAT_MAX_HP] = 50;
     inventory->item_weapon = &inventory->items[0];
     inventory->item_weapon_swap = &inventory->items[1];
-    //player->inventory.weapon.weapon.id = weapon_get_id("pointer");
-    //player->inventory.weapon_swap.weapon.id = weapon_get_id("null_pointer");
     gui_update_weapon_info((*inventory->item_weapon)->id);
     player->state_idle = entity_get_state_id(entity, "idle");
     player->state_walking = entity_get_state_id(entity, "walking");

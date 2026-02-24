@@ -3,14 +3,12 @@
         "type": "armor",
         "display_name": "Helmet",
         "tooltip": "Protects your noggin",
-        "attack": "weapon_pointer_attack",
         "texture": "helmet"
     },
     "chestplate": {
         "type": "armor",
         "display_name": "Chestplate",
         "tooltip": "tooltip",
-        "attack": "weapon_pointer_attack",
         "texture": "chestplate"
     },
     "boots": {
@@ -18,5 +16,23 @@
         "display_name": "Boots",
         "tooltip": "The striped socks are necessary",
         "texture": "boots"
+    },
+    "wizard_hat": {
+        "type": "armor",
+        "display_name": "Wizard Hat",
+        "tooltip": "tooltip",
+        "texture": "wizard_hat"
+    },
+    "robe": {
+        "type": "armor",
+        "display_name": "Robe",
+        "tooltip": "tooltip",
+        "texture": "robe"
+    },
+    "wizard_boots": {
+        "type": "armor",
+        "display_name": "Wizard Boots",
+        "tooltip": "The striped socks are necessary",
+        "texture": "wizard_boots"
     }
 }
