@@ -75,7 +75,7 @@ void player_reset(Entity* entity)
     inventory->items[7] = item_create(item_get_id("wand"));
     inventory->items[10] = item_create(item_get_id("spelltome"));
     inventory->items[11] = item_create(item_get_id("healing_tome"));
-    inventory->items[12] = item_create(item_get_id("wand"));
+    inventory->items[12] = item_create(item_get_id("hermes_boots"));
 
     inventory->items[15] = item_create(item_get_id("feral_claws"));
     inventory->items[16] = item_create(item_get_id("bear_hide"));
@@ -386,7 +386,6 @@ static void cast(Player* player, vec2 direction, vec2 target)
 
 void player_cast(Player* player)
 {
-    return;
     if (player->entity == NULL)
         return;
     if (!player->casting)

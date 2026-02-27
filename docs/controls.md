@@ -2,6 +2,8 @@
 
 Keys are case-insensitive when taking input from the window. That means if you're holding shift and press the `5` key, glfw will send the keycode for `5` and add shift to the modifier instead of passing a value for `%`. To keep things consistent, all letters are their lowercase variant since the numbers are used instead of their symbol counterpart, among other characters. For the most part, the controls should be intuitive. Will eventually make a list of every key.
 
+Mouse buttons are specified like `MB1`
+
 Keys can be combined with modifiers to make more complicated controls.
 - `S-...` is shift
 - `C-...` is control
@@ -27,3 +29,11 @@ Some examples:
 ```
 
 Only uses name of control as key and control string as value.
+
+## Every Key
+
+```
+MB1     -> Mouse Button 1
+MB2     -> Mouse Button 2
+SPACE   -> Spacebar
+```

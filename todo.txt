@@ -9,6 +9,8 @@ sfx
 make zoom pixel perfect
 animated gui textures
 
+give piercing projectiles iframes
+
 optimize gl stuff
 - index buffers
 - ISQRT instead of SQRT

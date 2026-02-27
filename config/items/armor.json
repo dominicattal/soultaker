@@ -2,8 +2,10 @@
     "helmet": {
         "type": "armor",
         "display_name": "Helmet",
-        "tooltip": "Protects your noggin",
-        "texture": "helmet"
+        "tooltip": "Use to increase damage in radius",
+        "texture": "helmet",
+        "use": "helmet_use",
+        "control": "helmet_use"
     },
     "chestplate": {
         "type": "armor",
@@ -20,8 +22,10 @@
     "wizard_hat": {
         "type": "armor",
         "display_name": "Wizard Hat",
-        "tooltip": "tooltip",
-        "texture": "wizard_hat"
+        "tooltip": "Use to increase ability haste in radius",
+        "texture": "wizard_hat",
+        "use": "wizard_hat_use",
+        "control": "wizard_hat_use"
     },
     "robe": {
         "type": "armor",

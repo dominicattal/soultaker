@@ -8,11 +8,9 @@ The player has stats. Each item scales differently with different stats, and eac
 - (Max) Health
 - (Max) Mana
 - Soul Power
-- Attack Damage
-- Magic Damage
-- Attack Penetration
-- Magic Penetration
-    - Both penetrations apply additively
+- Damage
+- Damage Penetration
+    - Applies additively
 - Crit Damage
 - Crit Chance
     - Crit chance beyond 100% is converted to crit damage
@@ -21,11 +19,11 @@ The player has stats. Each item scales differently with different stats, and eac
     - Affects cooldown of primary attacks
 - Ability Haste
     - Affects cooldown of secondary attacks
-- Magic Resistance
-- Armor
+- Defense
 - Speed
 - Vitality (HP Regen)
 - Wisdom (MP Regen)
+- Intelligence (MP cost reduction)
 - Lifesteal
 - Weapon Slots
     - Determines how many weapons you may have equipped

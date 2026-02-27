@@ -3,14 +3,20 @@
         "type": "accessory",
         "display_name": "Mother's Pendant",
         "tooltip": "This is a tooltip",
-        "attack": "weapon_pointer_attack",
         "texture": "mothers_pendant"
     },
     "feral_claws": {
         "type": "accessory",
         "display_name": "Feral Claws",
         "tooltip": "This is a tooltip",
-        "attack": "weapon_pointer_attack",
         "texture": "feral_claws"
+    },
+    "hermes_boots": {
+        "type": "accessory",
+        "display_name": "Hermes Boots",
+        "tooltip": "Activate for quick burst of spped",
+        "texture": "hermes_boots",
+        "use": "hermes_boots_use",
+        "control": "C_1"
     }
 }
