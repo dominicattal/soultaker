@@ -260,6 +260,9 @@ static void push_text_data(GUIComp* comp, i32 cx, i32 cy, i32 cw, i32 ch)
         
         ox = ha * (cw - test_ox) / 2.0f;
 
+        if (right == length + 1)
+            right--;
+
         while (left < right) {
             font_char_hmetrics(font, font_size, text[left], &adv, &lsb);
             font_char_bbox(font, font_size, text[left], &a1, &b1, &a2, &b2);
@@ -356,8 +359,13 @@ static void gui_update_vertex_data_helper(GUIComp* comp, i32 position_x, i32 pos
         position_y = y;
     }
     push_comp_data(comp, position_x, position_y, w, h);
-    for (i32 i = 0; i < comp->num_children; i++)
-        gui_update_vertex_data_helper(comp->children[i], position_x, position_y, w, h);
+
+    if (gui_comp_get_flag(comp, GUI_COMP_FLAG_REVERSE_RENDER))
+        for (i32 i = comp->num_children-1; i >= 0; i--)
+            gui_update_vertex_data_helper(comp->children[i], position_x, position_y, w, h);
+    else
+        for (i32 i = 0; i < comp->num_children; i++)
+            gui_update_vertex_data_helper(comp->children[i], position_x, position_y, w, h);
 }
 
 void gui_update_vertex_data(void)

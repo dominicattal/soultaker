@@ -29,12 +29,78 @@ void game_set_player_position(vec2 position)
     game_context.player.entity->position = position;
 }
 
+void inventory_init(Inventory* inventory)
+{
+    inventory->num_armor_slots = 3;
+    inventory->num_weapon_slots = 3;
+    inventory->num_ability_slots = 3;
+    inventory->num_misc_slots = 25;
+    inventory->num_items = inventory->num_armor_slots
+                         + inventory->num_weapon_slots
+                         + inventory->num_ability_slots
+                         + inventory->num_misc_slots;
+    inventory->items = st_calloc(inventory->num_items, sizeof(Item*));
+    inventory->armor_slots = st_calloc(inventory->num_armor_slots, sizeof(Item**));
+    inventory->weapon_slots = st_calloc(inventory->num_weapon_slots, sizeof(Item**));
+    inventory->ability_slots = st_calloc(inventory->num_ability_slots, sizeof(Item**));
+    inventory->misc_slots = st_calloc(inventory->num_misc_slots, sizeof(Item**));
+
+    inventory->armor_slots[0]   = &inventory->items[0];
+    inventory->armor_slots[1]   = &inventory->items[1];
+    inventory->armor_slots[2]   = &inventory->items[2];
+    inventory->weapon_slots[0]  = &inventory->items[3];
+    inventory->weapon_slots[1]  = &inventory->items[4];
+    inventory->weapon_slots[2]  = &inventory->items[5];
+    inventory->ability_slots[0] = &inventory->items[6];
+    inventory->ability_slots[1] = &inventory->items[7];
+    inventory->ability_slots[2] = &inventory->items[8];
+
+    for (i32 i = 0; i < inventory->num_misc_slots; i++)
+        inventory->misc_slots[i] = &inventory->items[i+9];
+
+    *inventory->misc_slots[0] = item_create(item_get_id("pointer"));
+    *inventory->misc_slots[1] = item_create(item_get_id("null_pointer"));
+    *inventory->misc_slots[2] = item_create(item_get_id("mothers_pendant"));
+    (*inventory->misc_slots[2])->additive_stats[STAT_MAX_HP] = 10;
+    *inventory->misc_slots[5] = item_create(item_get_id("shiv"));
+    *inventory->misc_slots[6] = item_create(item_get_id("staff"));
+    *inventory->misc_slots[7] = item_create(item_get_id("wand"));
+    *inventory->misc_slots[10] = item_create(item_get_id("spelltome"));
+    *inventory->misc_slots[11] = item_create(item_get_id("healing_tome"));
+    *inventory->misc_slots[12] = item_create(item_get_id("hermes_boots"));
+
+    *inventory->misc_slots[15] = item_create(item_get_id("feral_claws"));
+    *inventory->misc_slots[16] = item_create(item_get_id("bear_hide"));
+    *inventory->misc_slots[17] = item_create(item_get_id("dragon_scale"));
+
+    *inventory->misc_slots[3] = item_create(item_get_id("wizard_hat"));
+    (*inventory->misc_slots[3])->additive_stats[STAT_MAX_MP] = 50;
+    *inventory->misc_slots[8] = item_create(item_get_id("robe"));
+    (*inventory->misc_slots[8])->additive_stats[STAT_MAX_MP] = 50;
+    *inventory->misc_slots[13] = item_create(item_get_id("wizard_boots"));
+    (*inventory->misc_slots[13])->additive_stats[STAT_MAX_MP] = 50;
+
+    *inventory->misc_slots[4] = item_create(item_get_id("helmet"));
+    (*inventory->misc_slots[4])->additive_stats[STAT_MAX_HP] = 50;
+    *inventory->misc_slots[9] = item_create(item_get_id("chestplate"));
+    (*inventory->misc_slots[9])->additive_stats[STAT_MAX_HP] = 50;
+    *inventory->misc_slots[14] = item_create(item_get_id("boots"));
+    (*inventory->misc_slots[14])->additive_stats[STAT_MAX_HP] = 50;
+
+    gui_refresh_inventory();
+}
+
 void inventory_destroy(Inventory* inventory)
 {
     for (i32 i = 0; i < inventory->num_items; i++) {
         item_destroy(inventory->items[i]);
         inventory->items[i] = NULL;
     }
+    st_free(inventory->armor_slots);
+    st_free(inventory->weapon_slots);
+    st_free(inventory->ability_slots);
+    st_free(inventory->misc_slots);
+    st_free(inventory->items);
 }
 
 void player_cleanup(Player* player)
@@ -55,8 +121,7 @@ void player_reset(Entity* entity)
     player->stats[STAT_MP] = 50;
     player->base_stats[STAT_HP_REGEN] = 5;
     player->base_stats[STAT_MP_REGEN] = 5;
-    Inventory* inventory = &player->inventory;
-    inventory->num_items = 25;
+    inventory_init(&player->inventory);
     entity->id = entity_get_id("knight");
     player->entity = entity;
     entity->direction = vec2_create(0, 0);
@@ -66,37 +131,6 @@ void player_reset(Entity* entity)
     entity->health = entity->max_health = player->base_stats[STAT_MAX_HP];
     entity_set_flag(entity, ENTITY_FLAG_FRIENDLY, true);
     entity_set_flag(entity, ENTITY_FLAG_PLAYER, true);
-    inventory->items[0] = item_create(item_get_id("pointer"));
-    inventory->items[1] = item_create(item_get_id("null_pointer"));
-    inventory->items[2] = item_create(item_get_id("mothers_pendant"));
-    inventory->items[2]->additive_stats[STAT_MAX_HP] = 10;
-    inventory->items[5] = item_create(item_get_id("shiv"));
-    inventory->items[6] = item_create(item_get_id("staff"));
-    inventory->items[7] = item_create(item_get_id("wand"));
-    inventory->items[10] = item_create(item_get_id("spelltome"));
-    inventory->items[11] = item_create(item_get_id("healing_tome"));
-    inventory->items[12] = item_create(item_get_id("hermes_boots"));
-
-    inventory->items[15] = item_create(item_get_id("feral_claws"));
-    inventory->items[16] = item_create(item_get_id("bear_hide"));
-    inventory->items[17] = item_create(item_get_id("dragon_scale"));
-
-    inventory->items[3] = item_create(item_get_id("wizard_hat"));
-    inventory->items[3]->additive_stats[STAT_MAX_MP] = 50;
-    inventory->items[8] = item_create(item_get_id("robe"));
-    inventory->items[8]->additive_stats[STAT_MAX_MP] = 50;
-    inventory->items[13] = item_create(item_get_id("wizard_boots"));
-    inventory->items[13]->additive_stats[STAT_MAX_MP] = 50;
-
-    inventory->items[4] = item_create(item_get_id("helmet"));
-    inventory->items[4]->additive_stats[STAT_MAX_HP] = 50;
-    inventory->items[9] = item_create(item_get_id("chestplate"));
-    inventory->items[9]->additive_stats[STAT_MAX_HP] = 50;
-    inventory->items[14] = item_create(item_get_id("boots"));
-    inventory->items[14]->additive_stats[STAT_MAX_HP] = 50;
-    inventory->item_weapon = &inventory->items[0];
-    inventory->item_weapon_swap = &inventory->items[1];
-    gui_update_weapon_info((*inventory->item_weapon)->id);
     player->state_idle = entity_get_state_id(entity, "idle");
     player->state_walking = entity_get_state_id(entity, "walking");
     player->state_shooting = entity_get_state_id(entity, "shooting");
@@ -187,15 +221,6 @@ void player_update(Player* player, f32 dt)
     }
     update_player_state(player, dt);
     update_player_stats(player, dt);
-}
-
-void player_swap_weapons(void)
-{
-    //Inventory* inventory = &game_context.player.inventory;
-    //Item* tmp = inventory->items[0];
-    //inventory->items[0] = inventory->items[1];
-    //inventory->items[1] = tmp;
-    //gui_update_weapon_info(inventory->items[0]->id);
 }
 
 static void player_target(Player* player, f32 height, void (*callback)(Player*, vec2, vec2))

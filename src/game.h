@@ -395,10 +395,17 @@ typedef struct {
 } Stats;
 
 typedef struct {
+    Item** items;
+    Item*** armor_slots;
+    Item*** weapon_slots;
+    Item*** ability_slots;
+    Item*** misc_slots;
+
     i32 num_items;
-    Item** item_weapon;
-    Item** item_weapon_swap;
-    Item* items[25];
+    i32 num_armor_slots;
+    i32 num_weapon_slots;
+    i32 num_ability_slots;
+    i32 num_misc_slots;
 } Inventory;
 
 typedef struct Entity {

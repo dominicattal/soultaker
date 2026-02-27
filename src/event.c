@@ -11,7 +11,6 @@ typedef enum {
     GAME_EVENT_CAMERA_UPDATE_DIRECTION,
     GAME_EVENT_CAMERA_UPDATE_ROTATE,
     GAME_EVENT_CAMERA_UPDATE_TILT,
-    GAME_EVENT_SWAP_WEAPONS,
     GAME_EVENT_SUMMON,
     GAME_EVENT_FRAMEBUFFER_SIZE_CALLBACK,
     GAME_EVENT_CHANGE_MAP,
@@ -114,9 +113,6 @@ static void execute_event(Event event)
         case GAME_EVENT_CAMERA_UPDATE_TILT:
             camera_update_tilt(arg1._flt);
             break;
-        case GAME_EVENT_SWAP_WEAPONS:
-            player_swap_weapons();
-            break;
         case GAME_EVENT_SUMMON:
             //game_summon(arg1._int);
             break;
@@ -201,15 +197,6 @@ void event_create_game_camera_update_tilt(f32 mag)
     Event event = (Event) {
         .type = GAME_EVENT_CAMERA_UPDATE_TILT,
         .arg1._flt = mag,
-    };
-    EventList* list = get_event_list("Game");
-    event_enqueue(list, event);
-}
-
-void event_create_game_swap_weapons(void)
-{
-    Event event = (Event) {
-        .type = GAME_EVENT_SWAP_WEAPONS
     };
     EventList* list = get_event_list("Game");
     event_enqueue(list, event);

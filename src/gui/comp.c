@@ -38,8 +38,39 @@ GUIComp* gui_comp_create(i16 x, i16 y, i16 w, i16 h)
     gui_comp_set_color(comp, 255, 255, 255, 255);
     gui_comp_set_flag(comp, GUI_COMP_FLAG_VISIBLE, true);
     gui_comp_set_flag(comp, GUI_COMP_FLAG_RELATIVE, true);
+    gui_comp_set_flag(comp, GUI_COMP_FLAG_AUTO_FREE_DATA, true);
     return comp;
 } 
+
+void gui_comp_set_name(GUIComp* comp, const char* text)
+{
+    comp->name = string_copy(text);
+}
+
+static GUIComp* gui_comp_get_by_name_helper(GUIComp* comp, const char* name)
+{
+    if (comp->name != NULL && strcmp(comp->name, name) == 0)
+        return comp;
+    GUIComp* res = NULL;
+    GUIComp* cur = NULL;
+    for (i32 i = 0; i < comp->num_children; i++) {
+        cur = gui_comp_get_by_name_helper(comp->children[i], name);
+        if (cur != NULL) {
+            if (res == NULL) 
+                res = cur;
+            else {
+                log_write(CRITICAL, "duplicate comp name detected: %s", name);
+                res = cur;
+            }
+        }
+    }
+    return res;
+}
+
+GUIComp* gui_comp_get_by_name(const char* name)
+{
+    return gui_comp_get_by_name_helper(gui_context.root, name);
+}
 
 void gui_comp_set_flag(GUIComp* comp, GUICompFlagEnum flag, bool val)
 {
@@ -100,8 +131,11 @@ void gui_comp_destroy(GUIComp* comp)
         gui_comp_destroy(comp->children[i]);
     if (!gui_comp_get_flag(comp, GUI_COMP_FLAG_POINT_TO_TEXT))
         string_free(comp->text);
+    if (comp->name != NULL)
+        string_free(comp->name);
+    if (gui_comp_get_flag(comp, GUI_COMP_FLAG_AUTO_FREE_DATA))
+        st_free(comp->data);
     st_free(comp->children);
-    st_free(comp->data);
     st_free(comp);
 }
 

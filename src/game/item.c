@@ -227,7 +227,7 @@ void inventory_swap_items(Item** item1, Item** item2)
 
 void weapon_shoot(Player* player, vec2 direction, vec2 target)
 {
-    Item* item = *player->inventory.item_weapon;
+    Item* item = *player->inventory.weapon_slots[0];
     if (item == NULL) {
         log_write(WARNING, "Weapon does not exist");
         return;

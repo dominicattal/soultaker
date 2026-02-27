@@ -46,3 +46,6 @@
 # 2026-2-17
 - centering text has issues with monospace font
 - no issues when left aligned, so problem is probably rounding error 
+
+# 2026-2-24
+- tile was raised only in shaitan

@@ -385,16 +385,6 @@ static GUIComp* create_boss_health()
     return boss_health_manager;
 }
 
-void gui_update_weapon_info(i32 weapon_id)
-{
-    GUIComp* comp = gui_get_event_comp(GUI_COMP_WEAPON_INFO);
-    if (comp == NULL)
-        return;
-
-    i32 tex_id = texture_get_id("placeholder");
-    comp->tex = tex_id;
-}
-
 void gui_create_notification(char* notif)
 {
     GUIComp* notif_comp = gui_get_event_comp(GUI_COMP_NOTIFICATIONS);
@@ -523,10 +513,10 @@ typedef struct SlotData {
 } SlotData;
 
 typedef struct InventoryData {
-    GUIComp* held_comp;
-    GUIComp* hovered_comp;
     GUIComp* cursor_comp;
     GUIComp* item_info_comp;
+    GUIComp* held_comp;
+    GUIComp* hovered_comp;
 } InventoryData;
 
 static void inventory_slot_click(GUIComp* comp, i32 button, i32 action, i32 mods)
@@ -568,6 +558,64 @@ static void inventory_slot_update(GUIComp* comp, f32 dt)
         comp->tex = item_get_tex_id(item->id);
         if (item->equipped)
             gui_comp_set_color(overlay, 200, 30, 30, 255);
+    }
+}
+
+static GUIComp* create_inventory_slot(i32 x, i32 y, Item** item_slot)
+{
+    GUIComp* slot = gui_comp_create(70*x+3, 70*y+3, 64, 64);
+    SlotData* data;
+    data = slot->data = st_malloc(sizeof(SlotData));
+    data->item_slot = item_slot;
+    slot->click = inventory_slot_click;
+    slot->update = inventory_slot_update;
+    gui_comp_set_flag(slot, GUI_COMP_FLAG_HOVERABLE, true);
+    gui_comp_set_flag(slot, GUI_COMP_FLAG_CLICKABLE, true);
+    gui_comp_set_color(slot, 255, 255, 255, 255);
+
+    GUIComp* overlay = gui_comp_create(-3, -3, 70, 70);
+    overlay->tex = texture_get_id("gui_inventory_slot");
+    gui_comp_set_color(overlay, 0, 0, 0, 255);
+    gui_comp_attach(slot, overlay);
+    return slot;
+}
+
+void gui_refresh_inventory(void)
+{
+    Inventory* inventory = &game_context.player.inventory;
+    GUIComp* inventory_comp = gui_comp_get_by_name("inventory");
+    log_assert(inventory_comp != NULL, "inventory comp is null");
+    log_assert(inventory->num_armor_slots == 3, "invalid number of armor slots");
+    InventoryData* data = inventory_comp->data;
+    data->held_comp = NULL;
+    data->hovered_comp = NULL;
+    while (inventory_comp->num_children > 4)
+        gui_comp_detach_and_destroy(inventory_comp, inventory_comp->children[4]);
+
+    inventory_comp->w = 70*5;
+    inventory_comp->h = 70*3;
+
+    GUIComp* slot;
+    i32 i, j;
+    slot = create_inventory_slot(0, 0, inventory->armor_slots[0]);
+    gui_comp_attach(inventory_comp, slot);
+    slot = create_inventory_slot(1, 0, inventory->armor_slots[1]);
+    gui_comp_attach(inventory_comp, slot);
+    slot = create_inventory_slot(2, 0, inventory->armor_slots[2]);
+    gui_comp_attach(inventory_comp, slot);
+    for (i = 0; i < inventory->num_weapon_slots; i++) {
+        slot = create_inventory_slot(i, 1, inventory->weapon_slots[i]);
+        gui_comp_attach(inventory_comp, slot);
+    }
+    for (j = 0; j < inventory->num_ability_slots; j++) {
+        slot = create_inventory_slot(i+j, 1, inventory->ability_slots[j]);
+        gui_comp_attach(inventory_comp, slot);
+    }
+    for (i32 i = 0; i < inventory->num_misc_slots; i++) {
+        slot = create_inventory_slot(i%5, i/5+2, inventory->misc_slots[i]);
+        gui_comp_attach(inventory_comp, slot);
+        if (i % 5 == 0)
+            inventory_comp->h += 70;
     }
 }
 
@@ -630,30 +678,11 @@ static void inventory_click(GUIComp* comp, i32 button, i32 action, i32 mods)
         data->held_comp = NULL;
 }
 
-static GUIComp* create_inventory_slot(i32 x, i32 y, i32 idx)
-{
-    Inventory* inventory = &game_context.player.inventory;
-    GUIComp* slot = gui_comp_create(x, y, 64, 64);
-    SlotData* data;
-    data = slot->data = st_malloc(sizeof(SlotData));
-    data->item_slot = &inventory->items[idx];
-    slot->click = inventory_slot_click;
-    slot->update = inventory_slot_update;
-    gui_comp_set_flag(slot, GUI_COMP_FLAG_HOVERABLE, true);
-    gui_comp_set_flag(slot, GUI_COMP_FLAG_CLICKABLE, true);
-    gui_comp_set_color(slot, 255, 255, 255, 255);
-
-    GUIComp* overlay = gui_comp_create(-3, -3, 70, 70);
-    overlay->tex = texture_get_id("gui_inventory_slot");
-    gui_comp_set_color(overlay, 0, 0, 0, 255);
-    gui_comp_attach(slot, overlay);
-    return slot;
-}
-
 static GUIComp* create_inventory(void)
 {
-    GUIComp* inventory = gui_comp_create(0, 0, 360, 400);
+    GUIComp* inventory = gui_comp_create(20, 0, 0, 0);
     InventoryData* data;
+    gui_comp_set_name(inventory, "inventory");
     data = inventory->data = st_malloc(sizeof(InventoryData));
     data->held_comp = NULL;
     data->hovered_comp = NULL;
@@ -662,19 +691,14 @@ static GUIComp* create_inventory(void)
     gui_comp_set_flag(inventory, GUI_COMP_FLAG_VISIBLE, false);
     gui_comp_set_flag(inventory, GUI_COMP_FLAG_CLICKABLE, false);
     gui_comp_set_flag(inventory, GUI_COMP_FLAG_HOVERABLE, false);
+    gui_comp_set_flag(inventory, GUI_COMP_FLAG_REVERSE_RENDER, true);
     inventory_toggle(inventory);
-    gui_comp_set_align(inventory, ALIGN_CENTER, ALIGN_CENTER);
+    gui_comp_set_align(inventory, ALIGN_LEFT, ALIGN_CENTER);
     gui_comp_set_color(inventory, 255, 255, 255, 100);
     inventory->key = inventory_key;
     inventory->update = inventory_update;
     inventory->click = inventory_click;
     
-    GUIComp* slot;
-    for (i32 i = 0; i < 25; i++) {
-        slot = create_inventory_slot((i%5)*74,(i/5)*74,i);
-        gui_comp_attach(inventory, slot);
-    }
-
     GUIComp* cursor;
     cursor = gui_comp_create(0,0,64,64);
     gui_comp_set_flag(cursor, GUI_COMP_FLAG_RELATIVE, false);
@@ -754,7 +778,7 @@ static void load_preset_game(GUIComp* root)
     comp_game_stats->data = st_malloc(sizeof(CompFpsData));
     ((CompFpsData*)comp_game_stats->data)->timer = 0;
     comp_game_stats->update = update_game_stats;
-    gui_comp_set_align(comp_game_stats, ALIGN_LEFT, ALIGN_CENTER);
+    gui_comp_set_align(comp_game_stats, ALIGN_RIGHT, ALIGN_CENTER);
     gui_comp_set_color(comp_game_stats, 255, 255, 255, 255);
     gui_comp_set_text_align(comp_game_stats, ALIGN_CENTER, ALIGN_CENTER);
     gui_comp_attach(root, comp_game_stats);

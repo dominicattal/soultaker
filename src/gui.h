@@ -36,7 +36,6 @@ typedef enum {
 
 typedef enum {
     GUI_COMP_TYPING,
-    GUI_COMP_WEAPON_INFO,
     GUI_COMP_BOSS_HEALTH,
     GUI_COMP_NOTIFICATIONS,
     GUI_COMP_INTERACTABLE,
@@ -52,7 +51,9 @@ typedef enum {
     GUI_COMP_FLAG_RELATIVE,
     GUI_COMP_FLAG_ALLOW_CHILD_CLICK,
     GUI_COMP_FLAG_ALLOW_OUT_OF_BOUNDS_CLICK,
-    GUI_COMP_FLAG_POINT_TO_TEXT
+    GUI_COMP_FLAG_POINT_TO_TEXT,
+    GUI_COMP_FLAG_AUTO_FREE_DATA,
+    GUI_COMP_FLAG_REVERSE_RENDER
 } GUICompFlagEnum;
 
 typedef struct GUIComp GUIComp;
@@ -72,6 +73,7 @@ typedef struct GUIComp {
     GUIControlFPtr control;
     GUIEventCompEnum event_id;
     void* data;
+    char* name;
     char* text;
     GUIComp* parent;
     GUIComp** children;
@@ -115,12 +117,12 @@ void gui_set_event_comp(GUIEventCompEnum type, GUIComp* comp);
 bool gui_event_comp_equal(GUIEventCompEnum type, GUIComp* comp);
 
 // events
-void gui_update_weapon_info(i32 weapon_id);
 void gui_create_boss_healthbar(char* name, Entity* boss_ptr);
 void gui_update_boss_healthbar(Entity* boss);
 void gui_destroy_boss_healthbar(Entity* boss);
 void gui_create_notification(char* notif);
 void gui_set_interactable(const char* desc, InteractableFuncPtr func_ptr, Map* map, MapNode* map_node);
+void gui_refresh_inventory(void);
 
 void gui_framebuffer_size_callback(i32 width, i32 height);
 bool gui_cursor_pos_callback(f64 xpos, f64 ypos);
@@ -170,6 +172,10 @@ GUIComp* gui_comp_create(i16 x, i16 y, i16 w, i16 h);
 void gui_comp_set_flag(GUIComp* comp, GUICompFlagEnum flag, bool val);
 void gui_comp_toggle_flag(GUIComp* comp, GUICompFlagEnum flag);
 bool gui_comp_get_flag(GUIComp* comp, GUICompFlagEnum flag);
+
+// sets the name of the comp for use in gui_comp_get_by_name
+void gui_comp_set_name(GUIComp* comp, const char* name);
+GUIComp* gui_comp_get_by_name(const char* name);
 
 // attach a component to another component. the child component's alignment 
 // is done relative to its parent

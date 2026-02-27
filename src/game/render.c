@@ -260,6 +260,9 @@ static void update_entity_vertex_data(Map* map)
     }
     map_vb->length = j;
     
+    return;
+
+    // invalid read of size 1
     for (i = j = 0; i < entities->length; i++) {
         entity = list_get(entities, i);
         if (map_fog_contains(map, entity->position))
