@@ -40,7 +40,6 @@ void inventory_init(Inventory* inventory)
                          + inventory->num_ability_slots
                          + inventory->num_misc_slots;
     inventory->items = st_calloc(inventory->num_items, sizeof(Item*));
-    inventory->armor_slots = st_calloc(inventory->num_armor_slots, sizeof(Item**));
     inventory->weapon_slots = st_calloc(inventory->num_weapon_slots, sizeof(Item**));
     inventory->ability_slots = st_calloc(inventory->num_ability_slots, sizeof(Item**));
     inventory->misc_slots = st_calloc(inventory->num_misc_slots, sizeof(Item**));
@@ -96,7 +95,6 @@ void inventory_destroy(Inventory* inventory)
         item_destroy(inventory->items[i]);
         inventory->items[i] = NULL;
     }
-    st_free(inventory->armor_slots);
     st_free(inventory->weapon_slots);
     st_free(inventory->ability_slots);
     st_free(inventory->misc_slots);

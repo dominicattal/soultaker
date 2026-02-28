@@ -362,13 +362,18 @@ typedef enum ItemTypeEnum {
 
 // not implemented
 typedef enum ItemSubTypeEnum {
+    ITEM_HELMET,
+    ITEM_CHESTPLATE,
+    ITEM_BOOTS,
     ITEM_SWORD,
     ITEM_STAFF,
-    NUM_ITEM_SUBTYPES
+    NUM_ITEM_SUBTYPES,
+    ITEM_NO_SUBTYPE
 } ItemSubTypeEnum;
 
 typedef struct Item {
     ItemTypeEnum type;
+    ItemSubTypeEnum subtype;
     f32 additive_stats[NUM_STATS];
     f32 multiplicative_stats[NUM_STATS];
     i32 id;
@@ -381,7 +386,8 @@ Item*   item_create(i32 id);
 char*   item_get_display_name(Item* item);
 char*   item_get_tooltip(Item* item);
 void    item_destroy(Item* item);
-void    inventory_swap_items(Item** item1, Item** item2);
+void    inventory_swap_items(Item** slot1, Item** slot2);
+void    inventory_move_item(Item** slot);
 
 //**************************************************************************
 // Entity, Player definitions
@@ -396,7 +402,7 @@ typedef struct {
 
 typedef struct {
     Item** items;
-    Item*** armor_slots;
+    Item** armor_slots[3];
     Item*** weapon_slots;
     Item*** ability_slots;
     Item*** misc_slots;

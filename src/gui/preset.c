@@ -526,13 +526,15 @@ static void inventory_slot_click(GUIComp* comp, i32 button, i32 action, i32 mods
     InventoryData* inventory_data = parent->data;
     SlotData* slot_data = comp->data;
     SlotData* other_data;
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && mods == GLFW_MOD_SHIFT) {
+        inventory_move_item(slot_data->item_slot);
+    }
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && mods == 0) {
         if (inventory_data->held_comp == NULL && *slot_data->item_slot != NULL)
             inventory_data->held_comp = comp;
     }   
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
         if (inventory_data->held_comp != NULL) {
-            log_write(DEBUG, "Cool");
             other_data = inventory_data->held_comp->data;
             inventory_swap_items(slot_data->item_slot, other_data->item_slot);
         }
@@ -576,15 +578,16 @@ static GUIComp* create_inventory_slot(i32 x, i32 y, Item** item_slot, i32 defaul
     gui_comp_set_flag(slot, GUI_COMP_FLAG_RENDER_CHILDREN_FIRST, true);
     gui_comp_set_color(slot, 255, 255, 255, 255);
 
-    //GUIComp* item_comp = gui_comp_create(0, 0, 64, 64);
-    //item_comp->tex = texture_get_id("color");
-    //gui_comp_attach(slot, item_comp);
-    //gui_comp_set_color(slot, 0, 190, 190, 255);
-
     GUIComp* overlay = gui_comp_create(-3, -3, 70, 70);
     overlay->tex = texture_get_id("color");
     gui_comp_set_color(overlay, 0, 0, 0, 255);
     gui_comp_attach(slot, overlay);
+
+    GUIComp* item_comp = gui_comp_create(0, 0, 64, 64);
+    item_comp->tex = texture_get_id("color");
+    gui_comp_set_color(item_comp, 190, 190, 190, 100);
+    gui_comp_attach(slot, item_comp);
+
     return slot;
 }
 
