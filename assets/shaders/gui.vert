@@ -18,8 +18,8 @@ out flat int TexLocation;
 
 void main() {
     vec2 position;
-    position.x = ((aPosOffset.x + aPosition.x * aPosOffset.z) - window.width / 2) / (window.width / 2);
-    position.y = ((aPosOffset.y + aPosition.y * aPosOffset.w) - window.height / 2) / (window.height / 2);
+    position.x = ((aPosOffset.x + aPosition.x * aPosOffset.z) - window.width / 2.0) / (window.width / 2.0);
+    position.y = ((aPosOffset.y + aPosition.y * aPosOffset.w) - window.height / 2.0) / (window.height / 2.0);
     gl_Position = vec4(position, 0.0f, 1.0f);
     TexCoord.x = (1 - aPosition.x) * aTexOffset.x + aPosition.x * aTexOffset.z;
     TexCoord.y = (1 - aPosition.y) * aTexOffset.w + aPosition.y * aTexOffset.y;

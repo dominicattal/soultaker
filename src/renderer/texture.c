@@ -45,6 +45,7 @@ static void load_font(stbtt_pack_context* spc, FontEnum font_enum, i32 font_size
     font_range.num_chars = NUM_CHARS;       
     font_range.chardata_for_range = font->chardata;
 
+    //stbtt_PackSetOversampling(spc, 4, 4);
     stbtt_PackFontRanges(spc, font_buffer, 0, &font_range, 1);
 
     scale = stbtt_ScaleForPixelHeight(&info, font_size);

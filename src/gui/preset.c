@@ -510,6 +510,7 @@ static GUIComp* create_interactable(void)
 
 typedef struct SlotData {
     Item** item_slot;
+    i32 default_tex;
 } SlotData;
 
 typedef struct InventoryData {
@@ -547,13 +548,13 @@ static void inventory_slot_update(GUIComp* comp, f32 dt)
     GUIComp* parent = comp->parent;
     GUIComp* overlay = comp->children[0];
     InventoryData* inventory_data = parent->data;
-    SlotData* data = comp->data;
-    Item* item = *data->item_slot;
+    SlotData* slot_data = comp->data;
+    Item* item = *slot_data->item_slot;
     gui_comp_set_color(overlay, 30, 30, 30, 255);
     if (item != NULL && gui_comp_contains_cursor(comp))
         inventory_data->hovered_comp = comp;    
     if (item == NULL)
-        comp->tex = texture_get_id("color");
+        comp->tex = slot_data->default_tex;
     else {
         comp->tex = item_get_tex_id(item->id);
         if (item->equipped)
@@ -561,20 +562,27 @@ static void inventory_slot_update(GUIComp* comp, f32 dt)
     }
 }
 
-static GUIComp* create_inventory_slot(i32 x, i32 y, Item** item_slot)
+static GUIComp* create_inventory_slot(i32 x, i32 y, Item** item_slot, i32 default_tex)
 {
     GUIComp* slot = gui_comp_create(70*x+3, 70*y+3, 64, 64);
     SlotData* data;
     data = slot->data = st_malloc(sizeof(SlotData));
     data->item_slot = item_slot;
+    data->default_tex = default_tex;
     slot->click = inventory_slot_click;
     slot->update = inventory_slot_update;
     gui_comp_set_flag(slot, GUI_COMP_FLAG_HOVERABLE, true);
     gui_comp_set_flag(slot, GUI_COMP_FLAG_CLICKABLE, true);
+    gui_comp_set_flag(slot, GUI_COMP_FLAG_RENDER_CHILDREN_FIRST, true);
     gui_comp_set_color(slot, 255, 255, 255, 255);
 
+    //GUIComp* item_comp = gui_comp_create(0, 0, 64, 64);
+    //item_comp->tex = texture_get_id("color");
+    //gui_comp_attach(slot, item_comp);
+    //gui_comp_set_color(slot, 0, 190, 190, 255);
+
     GUIComp* overlay = gui_comp_create(-3, -3, 70, 70);
-    overlay->tex = texture_get_id("gui_inventory_slot");
+    overlay->tex = texture_get_id("color");
     gui_comp_set_color(overlay, 0, 0, 0, 255);
     gui_comp_attach(slot, overlay);
     return slot;
@@ -597,22 +605,22 @@ void gui_refresh_inventory(void)
 
     GUIComp* slot;
     i32 i, j;
-    slot = create_inventory_slot(0, 0, inventory->armor_slots[0]);
+    slot = create_inventory_slot(0, 0, inventory->armor_slots[0], texture_get_id("helmet_slot"));
     gui_comp_attach(inventory_comp, slot);
-    slot = create_inventory_slot(1, 0, inventory->armor_slots[1]);
+    slot = create_inventory_slot(1, 0, inventory->armor_slots[1], texture_get_id("chestplate_slot"));
     gui_comp_attach(inventory_comp, slot);
-    slot = create_inventory_slot(2, 0, inventory->armor_slots[2]);
+    slot = create_inventory_slot(2, 0, inventory->armor_slots[2], texture_get_id("boots_slot"));
     gui_comp_attach(inventory_comp, slot);
     for (i = 0; i < inventory->num_weapon_slots; i++) {
-        slot = create_inventory_slot(i, 1, inventory->weapon_slots[i]);
+        slot = create_inventory_slot(i, 1, inventory->weapon_slots[i], texture_get_id("weapon_slot"));
         gui_comp_attach(inventory_comp, slot);
     }
     for (j = 0; j < inventory->num_ability_slots; j++) {
-        slot = create_inventory_slot(i+j, 1, inventory->ability_slots[j]);
+        slot = create_inventory_slot(i+j, 1, inventory->ability_slots[j], texture_get_id("ability_slot"));
         gui_comp_attach(inventory_comp, slot);
     }
     for (i32 i = 0; i < inventory->num_misc_slots; i++) {
-        slot = create_inventory_slot(i%5, i/5+2, inventory->misc_slots[i]);
+        slot = create_inventory_slot(i%5, i/5+2, inventory->misc_slots[i], texture_get_id("color"));
         gui_comp_attach(inventory_comp, slot);
         if (i % 5 == 0)
             inventory_comp->h += 70;

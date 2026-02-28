@@ -337,6 +337,18 @@ static void push_comp_data(GUIComp* comp, i32 x, i32 y, i32 w, i32 h)
     push_text_data(comp, x, y, w, h);
 }
 
+static void gui_update_vertex_data_helper(GUIComp* comp, i32 position_x, i32 position_y, i32 size_x, i32 size_y);
+
+static void push_children_comp_data(GUIComp* comp, i32 position_x, i32 position_y, i32 size_x, i32 size_y)
+{
+    if (gui_comp_get_flag(comp, GUI_COMP_FLAG_REVERSE_RENDER))
+        for (i32 i = comp->num_children-1; i >= 0; i--)
+            gui_update_vertex_data_helper(comp->children[i], position_x, position_y, size_x, size_y);
+    else
+        for (i32 i = 0; i < comp->num_children; i++)
+            gui_update_vertex_data_helper(comp->children[i], position_x, position_y, size_x, size_y);
+}
+
 static void gui_update_vertex_data_helper(GUIComp* comp, i32 position_x, i32 position_y, i32 size_x, i32 size_y)
 {
     i32 x, y, w, h;
@@ -358,14 +370,14 @@ static void gui_update_vertex_data_helper(GUIComp* comp, i32 position_x, i32 pos
         position_x = x;
         position_y = y;
     }
-    push_comp_data(comp, position_x, position_y, w, h);
 
-    if (gui_comp_get_flag(comp, GUI_COMP_FLAG_REVERSE_RENDER))
-        for (i32 i = comp->num_children-1; i >= 0; i--)
-            gui_update_vertex_data_helper(comp->children[i], position_x, position_y, w, h);
-    else
-        for (i32 i = 0; i < comp->num_children; i++)
-            gui_update_vertex_data_helper(comp->children[i], position_x, position_y, w, h);
+    if (gui_comp_get_flag(comp, GUI_COMP_FLAG_RENDER_CHILDREN_FIRST)) {
+        push_children_comp_data(comp, position_x, position_y, w, h);
+        push_comp_data(comp, position_x, position_y, w, h);
+    } else {
+        push_comp_data(comp, position_x, position_y, w, h);
+        push_children_comp_data(comp, position_x, position_y, w, h);
+    }
 }
 
 void gui_update_vertex_data(void)

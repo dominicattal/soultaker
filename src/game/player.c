@@ -281,7 +281,6 @@ static void create_aoe(vec2 position)
     vec3 pos3;
     i32 i;
     f32 rad, hue, lifetime;
-    log_write(DEBUG, "Cast");
     AOE* aoe = map_create_aoe(position, 1.0f);
     if (aoe == NULL)
         return;
@@ -370,7 +369,6 @@ static void cast(Player* player, vec2 direction, vec2 target)
     vec2 part_velocity = vec2_normalize(offset);
     f32 distance = vec2_mag(offset);
     vec3 origin3 = vec3_create(origin.x, 0.5, origin.z);
-    log_write(DEBUG, "Cast");
     part = map_create_particle(origin3);
     if (part == NULL)
         return;
@@ -388,7 +386,6 @@ static void cast(Player* player, vec2 direction, vec2 target)
     part->velocity.x = part_velocity.x;
     part->velocity.y = y1;
     part->velocity.z = part_velocity.z;
-    log_write(DEBUG, "%f %f %f %f %f %f %f", g, h, y2, t1, y1, t2, speed);
     part->acceleration.y = GRAVITY;
     part->data = st_malloc(sizeof(f32));
     part->size = 0.2f;
