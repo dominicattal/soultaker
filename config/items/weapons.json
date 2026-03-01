@@ -3,35 +3,35 @@
         "type": "weapon",
         "display_name": "Pointer",
         "tooltip": "Points toward the enemy unless they weren't allocated",
-        "attack": "weapon_pointer_attack",
+        "primary": "weapon_pointer_primary",
         "texture": "pointer_weapon"
     },
     "null_pointer": {
         "type": "weapon",
         "display_name": "null_pointer",
         "tooltip": "Segmentation fault",
-        "attack": "weapon_null_pointer_attack",
+        "primary": "weapon_null_pointer_primary",
         "texture": "null_weapon"
     },
     "shiv": {
         "type": "weapon",
         "display_name": "Shiv",
         "tooltip": "Stab stab stab",
-        "attack": "weapon_pointer_attack",
+        "primary": "weapon_pointer_primary",
         "texture": "shiv_weapon"
     },
     "staff": {
         "type": "weapon",
         "display_name": "Staff",
         "tooltip": "EXPLOSION",
-        "attack": "weapon_pointer_attack",
+        "primary": "weapon_pointer_primary",
         "texture": "staff_weapon"
     },
     "wand": {
         "type": "weapon",
         "display_name": "Wand",
         "tooltip": "tooltip",
-        "attack": "weapon_pointer_attack",
+        "primary": "weapon_pointer_primary",
         "texture": "wand_weapon"
     }
 }

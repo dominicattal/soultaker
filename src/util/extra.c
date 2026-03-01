@@ -10,7 +10,7 @@
 
 #ifdef _WIN32
 #include <windows.h>
-void sleep(i32 msec)
+void st_sleep(i32 msec)
 {
     Sleep(msec);
 }
@@ -18,7 +18,7 @@ void sleep(i32 msec)
 #define sleep sleep_orig
 #include <unistd.h>
 #undef sleep
-void sleep(i32 msec)
+void st_sleep(i32 msec)
 {
     usleep(1000*msec);
 }

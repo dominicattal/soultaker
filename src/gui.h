@@ -54,7 +54,10 @@ typedef enum {
     GUI_COMP_FLAG_POINT_TO_TEXT,
     GUI_COMP_FLAG_AUTO_FREE_DATA,
     GUI_COMP_FLAG_REVERSE_RENDER,
-    GUI_COMP_FLAG_RENDER_CHILDREN_FIRST
+    GUI_COMP_FLAG_RENDER_CHILDREN_FIRST,
+
+    // does not affect clickability, just if it is counted as found in the callback
+    GUI_COMP_FLAG_IGNORE_MOUSE_BUTTON
 } GUICompFlagEnum;
 
 typedef struct GUIComp GUIComp;

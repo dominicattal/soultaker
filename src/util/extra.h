@@ -3,7 +3,7 @@
 
 #include "type.h"
 
-void sleep(i32 msec);
+void st_sleep(i32 msec);
 f64  get_time(void);
 
 // create a copy of string on the heap

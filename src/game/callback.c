@@ -34,6 +34,8 @@ void game_key_callback(i32 key, i32 scancode, i32 action, i32 mods)
 
 void game_mouse_button_callback(i32 button, i32 action, i32 mods)
 {
+    if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+        player_cast(&game_context.player);
 }
 
 void game_control_callback(ControlEnum ctrl, i32 action)

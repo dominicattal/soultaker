@@ -4,7 +4,7 @@
 #include "../api.h"
 #include "../state.h"
 
-typedef void (*WeaponShootFuncPtr)(GameApi*, Player*, vec2, vec2);
+typedef void (*UseFuncPtr)(GameApi*, Player*, vec2, vec2);
 
 typedef struct {
     ItemTypeEnum type;
@@ -13,7 +13,14 @@ typedef struct {
     char* tooltip;
     char* display_name;
     i32 tex_id;
-    WeaponShootFuncPtr shoot;
+    union {
+        UseFuncPtr use;
+        UseFuncPtr primary;
+        UseFuncPtr cast;
+    };
+    union {
+        UseFuncPtr secondary;
+    };
 } ItemInfo;
 
 typedef struct {
@@ -157,9 +164,9 @@ static void load_texture(JsonObject* object, i32 id)
     item_context.infos[id].tex_id = texture_get_id(string);
 }
 
-static void load_attack_func(JsonObject* object, i32 id)
+static void load_primary_func(JsonObject* object, i32 id)
 {
-    JsonValue* val_string = json_object_get_value(object, "attack");
+    JsonValue* val_string = json_object_get_value(object, "primary");
     if (val_string == NULL)
         return;
     if (json_value_get_type(val_string) != JTYPE_STRING)
@@ -169,7 +176,37 @@ static void load_attack_func(JsonObject* object, i32 id)
     if (string == NULL)
         throw_item_error(ERROR_MISSING);
 
-    item_context.infos[id].shoot = state_load_function(string);
+    item_context.infos[id].primary = state_load_function(string);
+}
+
+static void load_secondary_func(JsonObject* object, i32 id)
+{
+    JsonValue* val_string = json_object_get_value(object, "secondary");
+    if (val_string == NULL)
+        return;
+    if (json_value_get_type(val_string) != JTYPE_STRING)
+        throw_item_error(ERROR_INVALID_TYPE);
+
+    char* string = json_value_get_string(val_string);
+    if (string == NULL)
+        throw_item_error(ERROR_MISSING);
+
+    item_context.infos[id].secondary = state_load_function(string);
+}
+
+static void load_cast_func(JsonObject* object, i32 id)
+{
+    JsonValue* val_string = json_object_get_value(object, "cast");
+    if (val_string == NULL)
+        return;
+    if (json_value_get_type(val_string) != JTYPE_STRING)
+        throw_item_error(ERROR_INVALID_TYPE);
+
+    char* string = json_value_get_string(val_string);
+    if (string == NULL)
+        throw_item_error(ERROR_MISSING);
+
+    item_context.infos[id].cast = state_load_function(string);
 }
 
 static void load_item_info(void)
@@ -197,7 +234,11 @@ static void load_item_info(void)
         load_type(object, i);
         load_subtype(object, i);
         load_texture(object, i);
-        load_attack_func(object, i);
+        if (item_context.infos[i].type == ITEM_WEAPON) {
+            load_primary_func(object, i);
+            load_secondary_func(object, i);
+        } if (item_context.infos[i].type == ITEM_ABILITY) 
+            load_cast_func(object, i);
         json_iterator_increment(it);
     }
 
@@ -356,19 +397,31 @@ move_to_misc:
     }
 }
 
-void weapon_shoot(Player* player, vec2 direction, vec2 target)
+void inventory_shoot_weapons(Player* player, vec2 direction, vec2 target)
 {
-    Item* item = *player->inventory.weapon_slots[0];
-    if (item == NULL) {
-        log_write(WARNING, "Weapon does not exist");
-        return;
+    for (i32 i = 0; i < player->inventory.num_weapon_slots; i++) {
+        Item* item = *player->inventory.weapon_slots[i];
+        if (item == NULL)
+            continue;
+        if (item->primary_timer > 0)
+            continue;
+        item->primary_timer = item->primary_cooldown;
+        if (item_context.infos[item->id].primary != NULL)
+            item_context.infos[item->id].primary(&game_api, player, direction, target);
     }
-    if (item->type != ITEM_WEAPON) {
-        log_write(WARNING, "Equipped item not weapon");
-        return;
+}
+
+void inventory_cast_abilities(Player* player, vec2 direction, vec2 target)
+{
+    for (i32 i = 0; i < player->inventory.num_ability_slots; i++) {
+        Item* item = *player->inventory.ability_slots[i];
+        if (item == NULL)
+            continue;
+        if (item->primary_timer > 0)
+            continue;
+        item->primary_timer = item->primary_cooldown;
+        item_context.infos[item->id].cast(&game_api, player, direction, target);
     }
-    i32 id = item->id;
-    item_context.infos[id].shoot(&game_api, player, direction, target);
 }
 
 char* weapon_get_name(i32 id)
@@ -388,11 +441,20 @@ Item* item_create(i32 id)
     item->type = item_context.infos[id].type;
     item->subtype = item_context.infos[id].subtype;
     item->equipped = false;
+    item->primary_cooldown = 0;
+    item->primary_timer = 0;
     for (i32 i = 0; i < NUM_STATS; i++) {
         item->additive_stats[i] = 0;
         item->multiplicative_stats[i] = 0;
     }
     return item;
+}
+
+void item_update(Item* item, f32 dt)
+{
+    item->primary_timer -= dt;
+    if (item->primary_timer < 0)
+        item->primary_timer = 0;
 }
 
 char* item_get_display_name(Item* item)

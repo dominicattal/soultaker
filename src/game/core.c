@@ -29,6 +29,8 @@ void* game_loop(void* vargp)
         }
         if (end - start > 0.0001) {
             game_context.dt = end - start;
+            if (game_context.dt > 0.1)
+                game_context.dt = 0.1;
             game_context.time += game_context.dt;
             start = get_time();
             gui_update_comps(game_context.dt);

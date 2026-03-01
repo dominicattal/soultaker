@@ -76,6 +76,8 @@ bool gui_key_callback(i32 key, i32 scancode, i32 action, i32 mods)
         comp_found = gui_key_callback_helper(gui_context.root, key, scancode, action, mods);
     else
         process_typing_input(key, scancode, action, mods);
+    if (!comp_found)
+        game_key_callback(key, scancode, action, mods);
     return comp_found;
 }
 
@@ -109,6 +111,16 @@ static bool gui_mouse_button_callback_helper(GUIComp* comp, i32 xpos, i32 ypos, 
     if (in_bounds && (allow_child_click || !child_clicked))
         gui_comp_click(comp, button, action, mods);
 
+    if (gui_comp_get_flag(comp, GUI_COMP_FLAG_IGNORE_MOUSE_BUTTON)) {
+        log_write(DEBUG, "%d %d %d", position_x, in_bounds, child_clicked);
+        return false;
+    }
+
+    if (in_bounds || child_clicked) {
+        log_write(DEBUG, "%d %d %d", position_x, in_bounds, child_clicked);
+        gui_comp_print(comp);
+    }
+
     return in_bounds || child_clicked;
 }
 
@@ -119,6 +131,7 @@ bool gui_mouse_button_callback(i32 button, i32 action, i32 mods)
     xpos = window_cursor_position_x();
     ypos = window_cursor_position_y();
     comp_found = gui_mouse_button_callback_helper(gui_context.root, xpos, ypos, button, action, mods, 0, 0, 0, 0);
+    game_mouse_button_callback(button, action, mods);
     return comp_found;
 }
 

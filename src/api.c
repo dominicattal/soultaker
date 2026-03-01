@@ -38,6 +38,8 @@ GameApi game_api = {
     REGISTER(map_get_data),
     REGISTER(map_set_interactable),
     REGISTER(map_orientation),
+    REGISTER(map_create_aoe),
+    REGISTER(map_create_particle),
     REGISTER(map_create_projectile),
     REGISTER(map_create_trigger),
     REGISTER(map_make_boss),

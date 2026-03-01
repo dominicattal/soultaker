@@ -1487,8 +1487,6 @@ static Map* generate_map(i32 id)
     generate_map_helper(map, qm, palette, roomset, root);
     fill_map(map, qm, palette);
 
-    map_context.current_map = NULL;
-
     palette_destroy(palette);
     quadmask_destroy(qm);
 
@@ -2423,12 +2421,10 @@ void map_update(Map* map)
 {
     if (map == NULL)
         return;
-    map_context.current_map = map;
     map_update_objects(map);
     map_collide_tilemap(map);
     map_collide_objects(map);
     camera_update();
-    map_context.current_map = NULL;
 }
 
 void map_set_active(Map* map)

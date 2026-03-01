@@ -377,17 +377,29 @@ typedef struct Item {
     f32 additive_stats[NUM_STATS];
     f32 multiplicative_stats[NUM_STATS];
     i32 id;
+    f32 primary_cooldown;
+    f32 primary_timer;
     bool equipped;
 } Item;
+
+
+// Initalize and cleanup weapon info
+// Loads weapon data from config/weapons.json
+void item_init(void);
+void item_cleanup(void);
 
 i32     item_get_id(const char* name);
 i32     item_get_tex_id(i32 item_id);
 Item*   item_create(i32 id);
+void    item_update(Item* item, f32 dt);
 char*   item_get_display_name(Item* item);
 char*   item_get_tooltip(Item* item);
 void    item_destroy(Item* item);
+
 void    inventory_swap_items(Item** slot1, Item** slot2);
 void    inventory_move_item(Item** slot);
+void    inventory_shoot_weapons(Player* player, vec2 direction, vec2 target);
+void    inventory_cast_abilities(Player* player, vec2 direction, vec2 target);
 
 //**************************************************************************
 // Entity, Player definitions
@@ -444,8 +456,6 @@ typedef struct Player {
     f32 stats[NUM_STATS];
     Entity* entity;
     vec2 position;
-    f32 shot_timer;
-    f32 cast_timer;
 
     // store special states
     i32 state_idle;
@@ -453,7 +463,6 @@ typedef struct Player {
     i32 state_shooting;
 
     bool shooting;
-    bool casting;
 } Player;
 
 typedef enum {
@@ -509,13 +518,6 @@ void player_swap_weapons(void);
 bool player_is_shooting(void);
 bool player_is_casting(void);
 void player_cleanup(Player* player);
-
-// Initalize and cleanup weapon info
-// Loads weapon data from config/weapons.json
-void item_init(void);
-void item_cleanup(void);
-
-void weapon_shoot(Player* player, vec2 direction, vec2 target);
 
 //**************************************************************************
 // Tile definitions
@@ -887,6 +889,8 @@ typedef struct GameApi {
     vec2 (*map_orientation)(void);
     void (*map_make_boss)(char*, Entity*);
     void (*map_unmake_boss)(Entity*);
+    AOE* (*map_create_aoe)(vec2, f32);
+    Particle* (*map_create_particle)(vec3);
     Projectile* (*map_create_projectile)(vec2);
     Trigger* (*map_create_trigger)(vec2, f32);
     Entity* (*room_create_entity)(vec2, i32);

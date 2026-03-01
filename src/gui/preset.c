@@ -148,6 +148,30 @@ static void update_fps(GUIComp* comp, f32 dt)
     }
 }
 
+#ifdef _WIN32
+size_t process_memory(void)
+{
+    return 0;
+}
+#else
+#include <unistd.h>
+size_t process_memory(void)
+{
+    pid_t pid = getpid();
+    i32 num_pages = 0, dummy;
+    size_t page_size;
+    char* path = string_create("/proc/%d/statm", pid);
+    FILE* fptr = fopen(path, "r");
+    if (fptr != NULL) {
+        fscanf(fptr, "%d %d", &dummy, &num_pages);
+        fclose(fptr);
+    }
+    string_free(path);
+    page_size = getpagesize();
+    return num_pages * page_size / 1000;
+}
+#endif
+
 static void update_game_stats(GUIComp* comp, f32 dt)
 {
     CompFpsData* data = comp->data;
@@ -165,7 +189,8 @@ static void update_game_stats(GUIComp* comp, f32 dt)
             "Parstacles: %d\n"
             "Free Walls: %d\n"
             "Walls: %d\n"
-            "Tiles: %d\n",
+            "Tiles: %d\n"
+            "Memory: %d KB",
         map->triggers->length,
         map->entities->length,
         map->projectiles->length,
@@ -176,7 +201,8 @@ static void update_game_stats(GUIComp* comp, f32 dt)
         map->parstacles->length,
         map->free_walls->length,
         map->walls->length,
-        map->tiles->length
+        map->tiles->length,
+        process_memory()
         );
         gui_comp_set_text(comp, string);
         data->timer += 0.1;
@@ -548,45 +574,54 @@ static void inventory_slot_click(GUIComp* comp, i32 button, i32 action, i32 mods
 static void inventory_slot_update(GUIComp* comp, f32 dt)
 {
     GUIComp* parent = comp->parent;
-    GUIComp* overlay = comp->children[0];
+    //GUIComp* background = comp->children[0];
+    GUIComp* item_tex = comp->children[1];
+    GUIComp* primary_overlay = comp->children[2];
     InventoryData* inventory_data = parent->data;
     SlotData* slot_data = comp->data;
     Item* item = *slot_data->item_slot;
-    gui_comp_set_color(overlay, 30, 30, 30, 255);
+    gui_comp_set_color(comp, 30, 30, 30, 255);
     if (item != NULL && gui_comp_contains_cursor(comp))
         inventory_data->hovered_comp = comp;    
-    if (item == NULL)
-        comp->tex = slot_data->default_tex;
-    else {
-        comp->tex = item_get_tex_id(item->id);
+    if (item == NULL) {
+        item_tex->tex = slot_data->default_tex;
+        primary_overlay->h = 0;
+    } else {
+        item_tex->tex = item_get_tex_id(item->id);
         if (item->equipped)
-            gui_comp_set_color(overlay, 200, 30, 30, 255);
+            gui_comp_set_color(comp, 200, 30, 30, 255);
+        primary_overlay->h = (i32)roundf(64 * item->primary_timer / item->primary_cooldown);
     }
 }
 
 static GUIComp* create_inventory_slot(i32 x, i32 y, Item** item_slot, i32 default_tex)
 {
-    GUIComp* slot = gui_comp_create(70*x+3, 70*y+3, 64, 64);
+    GUIComp* slot = gui_comp_create(70*x, 70*y, 70, 70);
     SlotData* data;
     data = slot->data = st_malloc(sizeof(SlotData));
     data->item_slot = item_slot;
     data->default_tex = default_tex;
+    slot->tex = texture_get_id("color");
     slot->click = inventory_slot_click;
     slot->update = inventory_slot_update;
     gui_comp_set_flag(slot, GUI_COMP_FLAG_HOVERABLE, true);
     gui_comp_set_flag(slot, GUI_COMP_FLAG_CLICKABLE, true);
-    gui_comp_set_flag(slot, GUI_COMP_FLAG_RENDER_CHILDREN_FIRST, true);
-    gui_comp_set_color(slot, 255, 255, 255, 255);
+    gui_comp_set_color(slot, 50, 50, 50, 255);
 
-    GUIComp* overlay = gui_comp_create(-3, -3, 70, 70);
-    overlay->tex = texture_get_id("color");
-    gui_comp_set_color(overlay, 0, 0, 0, 255);
-    gui_comp_attach(slot, overlay);
+    GUIComp* background = gui_comp_create(3, 3, 64, 64);
+    background->tex = texture_get_id("color");
+    gui_comp_set_color(background, 100, 100, 100, 255);
+    gui_comp_attach(slot, background);
 
-    GUIComp* item_comp = gui_comp_create(0, 0, 64, 64);
-    item_comp->tex = texture_get_id("color");
-    gui_comp_set_color(item_comp, 190, 190, 190, 100);
-    gui_comp_attach(slot, item_comp);
+    GUIComp* item_tex = gui_comp_create(3, 3, 64, 64);
+    gui_comp_set_color(item_tex, 255, 255, 255, 255);
+    gui_comp_attach(slot, item_tex);
+
+    GUIComp* primary_overlay = gui_comp_create(3, 3, 64, 0);
+    primary_overlay->tex = texture_get_id("color");
+    primary_overlay->valign = ALIGN_BOTTOM;
+    gui_comp_set_color(primary_overlay, 0, 190, 190, 50);
+    gui_comp_attach(slot, primary_overlay);
 
     return slot;
 }
@@ -604,7 +639,7 @@ void gui_refresh_inventory(void)
         gui_comp_detach_and_destroy(inventory_comp, inventory_comp->children[4]);
 
     inventory_comp->w = 70*5;
-    inventory_comp->h = 70*3;
+    inventory_comp->h = 70*2;
 
     GUIComp* slot;
     i32 i, j;
@@ -655,7 +690,7 @@ static void inventory_update(GUIComp* comp, f32 dt)
     cursor->y = (i32)roundf(cursor_position.y)-32;
     if (data->held_comp != NULL) {
         gui_comp_set_color(cursor, 255, 255, 255, 255);
-        cursor->tex = data->held_comp->tex;
+        cursor->tex = data->held_comp->children[1]->tex;
     } else {
         gui_comp_set_color(cursor, 0, 0, 0, 0);
         cursor->tex = texture_get_id("color");
@@ -713,6 +748,7 @@ static GUIComp* create_inventory(void)
     GUIComp* cursor;
     cursor = gui_comp_create(0,0,64,64);
     gui_comp_set_flag(cursor, GUI_COMP_FLAG_RELATIVE, false);
+    gui_comp_set_flag(cursor, GUI_COMP_FLAG_IGNORE_MOUSE_BUTTON, true);
     gui_comp_set_color(cursor, 255, 255, 255, 255);
     gui_comp_attach(inventory, cursor);
     data->cursor_comp = cursor;
@@ -720,6 +756,7 @@ static GUIComp* create_inventory(void)
     GUIComp* item_info;
     item_info = gui_comp_create(0,0,200,200);
     gui_comp_set_flag(item_info, GUI_COMP_FLAG_RELATIVE, false);
+    gui_comp_set_flag(item_info, GUI_COMP_FLAG_IGNORE_MOUSE_BUTTON, true);
     gui_comp_set_color(item_info, 255, 255, 255, 255);
     gui_comp_attach(inventory, item_info);
     data->item_info_comp = item_info;

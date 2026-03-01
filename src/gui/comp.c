@@ -16,6 +16,7 @@ void gui_comp_init(void)
     gui_context.root->valign = ALIGN_BOTTOM;
     gui_comp_set_flag(gui_context.root, GUI_COMP_FLAG_CLICKABLE, true);
     gui_comp_set_flag(gui_context.root, GUI_COMP_FLAG_HOVERABLE, true);
+    gui_comp_set_flag(gui_context.root, GUI_COMP_FLAG_IGNORE_MOUSE_BUTTON, true);
 }
 
 void gui_comp_cleanup(void)
