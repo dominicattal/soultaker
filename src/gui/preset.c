@@ -577,6 +577,7 @@ static void inventory_slot_update(GUIComp* comp, f32 dt)
     //GUIComp* background = comp->children[0];
     GUIComp* item_tex = comp->children[1];
     GUIComp* primary_overlay = comp->children[2];
+    GUIComp* secondary_overlay = comp->children[3];
     InventoryData* inventory_data = parent->data;
     SlotData* slot_data = comp->data;
     Item* item = *slot_data->item_slot;
@@ -586,11 +587,13 @@ static void inventory_slot_update(GUIComp* comp, f32 dt)
     if (item == NULL) {
         item_tex->tex = slot_data->default_tex;
         primary_overlay->h = 0;
+        secondary_overlay->h = 0;
     } else {
         item_tex->tex = item_get_tex_id(item->id);
         if (item->equipped)
             gui_comp_set_color(comp, 200, 30, 30, 255);
         primary_overlay->h = (i32)roundf(64 * item->primary_timer / item->primary_cooldown);
+        secondary_overlay->h = (i32)roundf(64 * item->secondary_timer / item->secondary_cooldown);
     }
 }
 
@@ -622,6 +625,12 @@ static GUIComp* create_inventory_slot(i32 x, i32 y, Item** item_slot, i32 defaul
     primary_overlay->valign = ALIGN_BOTTOM;
     gui_comp_set_color(primary_overlay, 0, 190, 190, 50);
     gui_comp_attach(slot, primary_overlay);
+
+    GUIComp* secondary_overlay = gui_comp_create(3, 3, 64, 0);
+    secondary_overlay->tex = texture_get_id("color");
+    secondary_overlay->valign = ALIGN_BOTTOM;
+    gui_comp_set_color(secondary_overlay, 190, 0, 190, 50);
+    gui_comp_attach(slot, secondary_overlay);
 
     return slot;
 }

@@ -379,6 +379,8 @@ typedef struct Item {
     i32 id;
     f32 primary_cooldown;
     f32 primary_timer;
+    f32 secondary_cooldown;
+    f32 secondary_timer;
     bool equipped;
 } Item;
 
@@ -398,7 +400,8 @@ void    item_destroy(Item* item);
 
 void    inventory_swap_items(Item** slot1, Item** slot2);
 void    inventory_move_item(Item** slot);
-void    inventory_shoot_weapons(Player* player, vec2 direction, vec2 target);
+void    inventory_shoot_weapons_primary(Player* player, vec2 direction, vec2 target);
+void    inventory_shoot_weapons_secondary(Player* player, vec2 direction, vec2 target);
 void    inventory_cast_abilities(Player* player, vec2 direction, vec2 target);
 
 //**************************************************************************
@@ -462,7 +465,8 @@ typedef struct Player {
     i32 state_walking;
     i32 state_shooting;
 
-    bool shooting;
+    bool shooting_primary;
+    bool shooting_secondary;
 } Player;
 
 typedef enum {
@@ -512,7 +516,8 @@ void entity_damage(Entity* entity, f32 damage);
 // Assigns default entity for the player
 void player_reset(Entity* entity);
 void player_update(Player* player, f32 dt);
-void player_shoot(Player* player);
+void player_shoot_primary(Player* player);
+void player_shoot_secondary(Player* player);
 void player_cast(Player* player);
 void player_swap_weapons(void);
 bool player_is_shooting(void);

@@ -112,14 +112,14 @@ static bool gui_mouse_button_callback_helper(GUIComp* comp, i32 xpos, i32 ypos, 
         gui_comp_click(comp, button, action, mods);
 
     if (gui_comp_get_flag(comp, GUI_COMP_FLAG_IGNORE_MOUSE_BUTTON)) {
-        log_write(DEBUG, "%d %d %d", position_x, in_bounds, child_clicked);
+        //log_write(DEBUG, "%d %d %d", position_x, in_bounds, child_clicked);
         return false;
     }
 
-    if (in_bounds || child_clicked) {
-        log_write(DEBUG, "%d %d %d", position_x, in_bounds, child_clicked);
-        gui_comp_print(comp);
-    }
+    //if (in_bounds || child_clicked) {
+    //    log_write(DEBUG, "%d %d %d", position_x, in_bounds, child_clicked);
+    //    gui_comp_print(comp);
+    //}
 
     return in_bounds || child_clicked;
 }

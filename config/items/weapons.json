@@ -4,6 +4,7 @@
         "display_name": "Pointer",
         "tooltip": "Points toward the enemy unless they weren't allocated",
         "primary": "weapon_pointer_primary",
+        "secondary": "weapon_pointer_secondary",
         "texture": "pointer_weapon"
     },
     "null_pointer": {
@@ -11,6 +12,7 @@
         "display_name": "null_pointer",
         "tooltip": "Segmentation fault",
         "primary": "weapon_null_pointer_primary",
+        "secondary": "weapon_null_pointer_secondary",
         "texture": "null_weapon"
     },
     "shiv": {

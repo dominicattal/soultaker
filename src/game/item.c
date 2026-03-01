@@ -397,7 +397,7 @@ move_to_misc:
     }
 }
 
-void inventory_shoot_weapons(Player* player, vec2 direction, vec2 target)
+void inventory_shoot_weapons_primary(Player* player, vec2 direction, vec2 target)
 {
     for (i32 i = 0; i < player->inventory.num_weapon_slots; i++) {
         Item* item = *player->inventory.weapon_slots[i];
@@ -411,6 +411,21 @@ void inventory_shoot_weapons(Player* player, vec2 direction, vec2 target)
     }
 }
 
+void inventory_shoot_weapons_secondary(Player* player, vec2 direction, vec2 target)
+{
+    log_write(DEBUG, "test");
+    for (i32 i = 0; i < player->inventory.num_weapon_slots; i++) {
+        Item* item = *player->inventory.weapon_slots[i];
+        if (item == NULL)
+            continue;
+        if (item->secondary_timer > 0)
+            continue;
+        item->secondary_timer = item->secondary_cooldown;
+        if (item_context.infos[item->id].secondary != NULL)
+            item_context.infos[item->id].secondary(&game_api, player, direction, target);
+    }
+}
+
 void inventory_cast_abilities(Player* player, vec2 direction, vec2 target)
 {
     for (i32 i = 0; i < player->inventory.num_ability_slots; i++) {
@@ -420,7 +435,8 @@ void inventory_cast_abilities(Player* player, vec2 direction, vec2 target)
         if (item->primary_timer > 0)
             continue;
         item->primary_timer = item->primary_cooldown;
-        item_context.infos[item->id].cast(&game_api, player, direction, target);
+        if (item_context.infos[item->id].cast != NULL)
+            item_context.infos[item->id].cast(&game_api, player, direction, target);
     }
 }
 
@@ -455,6 +471,9 @@ void item_update(Item* item, f32 dt)
     item->primary_timer -= dt;
     if (item->primary_timer < 0)
         item->primary_timer = 0;
+    item->secondary_timer -= dt;
+    if (item->secondary_timer < 0)
+        item->secondary_timer = 0;
 }
 
 char* item_get_display_name(Item* item)

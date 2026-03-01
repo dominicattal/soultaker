@@ -12,7 +12,8 @@ void game_process_input()
     vec2 move_mag = vec2_create(0, 0);
     f32 rotate_mag = 0;
     f32 tilt_mag = 0; 
-    game_context.player.shooting = false;
+    game_context.player.shooting_primary = false;
+    game_context.player.shooting_secondary = false;
 
     if (game_context.halt_input)
         goto update;
@@ -34,9 +35,9 @@ void game_process_input()
     if (window_get_key(GLFW_KEY_Y) == GLFW_PRESS)
         tilt_mag -= 1;
     if (window_get_mouse_button(GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
-        game_context.player.shooting = true;
-    //if (window_get_mouse_button(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
-    //    game_context.player.casting = true;
+        game_context.player.shooting_primary = true;
+    if (window_get_mouse_button(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+        game_context.player.shooting_secondary = true;
 
 update:
     event_create_game_camera_update_direction(move_mag);

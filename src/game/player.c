@@ -59,8 +59,10 @@ void inventory_init(Inventory* inventory)
 
     *inventory->misc_slots[0] = item_create(item_get_id("pointer"));
     (*inventory->misc_slots[0])->primary_cooldown = 0.5;
+    (*inventory->misc_slots[0])->secondary_cooldown = 0.5;
     *inventory->misc_slots[1] = item_create(item_get_id("null_pointer"));
     (*inventory->misc_slots[1])->primary_cooldown = 0.75;
+    (*inventory->misc_slots[1])->secondary_cooldown = 0.75;
     *inventory->misc_slots[2] = item_create(item_get_id("mothers_pendant"));
     (*inventory->misc_slots[2])->additive_stats[STAT_MAX_HP] = 10;
     *inventory->misc_slots[5] = item_create(item_get_id("shiv"));
@@ -148,7 +150,8 @@ static void update_player_state(Player* player, f32 dt)
 {
     Entity* entity = player->entity;
     if (entity == NULL) return;
-    player_shoot(player);
+    player_shoot_primary(player);
+    player_shoot_secondary(player);
     if (player_is_shooting()) {
         if (entity->state == player->state_shooting)
             return;
@@ -261,13 +264,22 @@ static void player_target(Player* player, f32 height, void (*callback)(Player*, 
     player->entity->facing = direction;
 }
 
-void player_shoot(Player* player)
+void player_shoot_primary(Player* player)
 {
     if (player->entity == NULL)
         return;
-    if (!player->shooting)
+    if (!player->shooting_primary)
         return;
-    player_target(player, 0.5, inventory_shoot_weapons);
+    player_target(player, 0.5, inventory_shoot_weapons_primary);
+}
+
+void player_shoot_secondary(Player* player)
+{
+    if (player->entity == NULL)
+        return;
+    if (!player->shooting_secondary)
+        return;
+    player_target(player, 0.5, inventory_shoot_weapons_secondary);
 }
 
 void player_cast(Player* player)
@@ -283,7 +295,7 @@ void player_cast(Player* player)
 
 bool player_is_shooting(void)
 {
-    return game_context.player.shooting;
+    return game_context.player.shooting_primary;
 }
 
 vec2 player_position(void)
