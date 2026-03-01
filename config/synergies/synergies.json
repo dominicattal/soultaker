@@ -2,6 +2,7 @@
     "super_pointer": {
         "display_name": "Super Pointer",
         "tooltip": "Rust will fix it",
+        "secondary": "super_pointer_secondary",
         "items": [
             "pointer",
             "null_pointer"
@@ -37,7 +38,7 @@
         "tooltip": "Pointer Spellbomb",
         "items": [
             "pointer",
-            "spellbomb"
+            "spelltome"
         ]
     },
     "test_weapon_override": {

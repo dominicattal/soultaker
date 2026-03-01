@@ -17,6 +17,9 @@
 typedef struct GameApi GameApi;
 typedef struct Camera Camera;
 typedef struct Weapon Weapon;
+typedef struct Item Item;
+typedef struct Synergy Synergy;
+typedef struct Inventory Inventory;
 typedef struct Entity Entity;
 typedef struct Player Player;
 typedef struct Projectile Projectile;
@@ -63,6 +66,9 @@ typedef void (*RoomsetCleanupFuncPtr)(GameApi*, void*);
 typedef bool (*RoomsetGenerateFuncPtr)(GameApi*, LocalMapGenerationSettings*);
 // true if should create branch, false otherwise
 typedef bool (*RoomsetBranchFuncPtr)(GameApi*, LocalMapGenerationSettings*);
+
+// used for items and synergies
+typedef void (*UseFuncPtr)(GameApi*, Player*, vec2, vec2);
 
 //**************************************************************************
 // Camera declarations
@@ -387,8 +393,8 @@ typedef struct Item {
 
 // Initalize and cleanup weapon info
 // Loads weapon data from config/weapons.json
-void item_init(void);
-void item_cleanup(void);
+void    item_init(void);
+void    item_cleanup(void);
 
 i32     item_get_id(const char* name);
 i32     item_get_tex_id(i32 item_id);
@@ -398,6 +404,69 @@ char*   item_get_display_name(Item* item);
 char*   item_get_tooltip(Item* item);
 void    item_destroy(Item* item);
 
+//**************************************************************************
+// Synergy definitions
+//**************************************************************************
+
+typedef struct {
+    i32* item_ids;
+    i32 num_items;
+    char* name;
+    char* tooltip;
+    char* display_name;
+    UseFuncPtr primary;
+    UseFuncPtr secondary;
+    UseFuncPtr cast;
+    UseFuncPtr use;
+} SynergyInfo;
+
+typedef struct {
+    SynergyInfo* infos;
+    i32 num_synergies;
+    const char* current_synergy;
+} SynergyContext;
+
+typedef struct Synergy {
+    Item** items;
+    f32 primary_cooldown;
+    f32 primary_timer;
+    f32 secondary_cooldown;
+    f32 secondary_timer;
+    f32 cast_cooldown;
+    f32 cast_timer;
+    f32 use_cooldown;
+    f32 use_timer;
+    i32 num_items;
+    i32 id;
+} Synergy;
+
+extern SynergyContext synergy_context;
+
+void    synergy_init(void);
+void    synergy_cleanup(void);
+i32     synergy_get_id(const char* name);
+char*   synergy_get_name(i32 id);
+
+//**************************************************************************
+// Inventory definitions
+//**************************************************************************
+
+typedef struct Inventory {
+    Item** items;
+    Item** armor_slots[3];
+    Item*** weapon_slots;
+    Item*** ability_slots;
+    Item*** misc_slots;
+    Synergy** synergies;
+
+    i32 num_items;
+    i32 num_armor_slots;
+    i32 num_weapon_slots;
+    i32 num_ability_slots;
+    i32 num_misc_slots;
+} Inventory;
+
+void    inventory_refresh(void);
 void    inventory_swap_items(Item** slot1, Item** slot2);
 void    inventory_move_item(Item** slot);
 void    inventory_shoot_weapons_primary(Player* player, vec2 direction, vec2 target);
@@ -408,26 +477,12 @@ void    inventory_cast_abilities(Player* player, vec2 direction, vec2 target);
 // Entity, Player definitions
 //**************************************************************************
 
-typedef struct {
+typedef struct Stats {
     f32 health, max_health;
     f32 mana, max_mana;
     f32 souls, max_souls;
     f32 speed;
 } Stats;
-
-typedef struct {
-    Item** items;
-    Item** armor_slots[3];
-    Item*** weapon_slots;
-    Item*** ability_slots;
-    Item*** misc_slots;
-
-    i32 num_items;
-    i32 num_armor_slots;
-    i32 num_weapon_slots;
-    i32 num_ability_slots;
-    i32 num_misc_slots;
-} Inventory;
 
 typedef struct Entity {
     MapInfo map_info;

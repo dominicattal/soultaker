@@ -91,6 +91,7 @@ void game_init(void)
     map_init();
     item_init();
     entity_init();
+    synergy_init();
     camera_init();
     game_halt_loop();
     game_halt_render();
@@ -113,6 +114,7 @@ void game_cleanup(void)
     camera_cleanup();
     map_cleanup();
     item_cleanup();
+    synergy_cleanup();
     entity_cleanup();
 }
 

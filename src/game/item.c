@@ -124,6 +124,8 @@ static void load_subtype(JsonObject* object, i32 id)
 static void load_display_name(JsonObject* object, i32 id)
 {
     JsonValue* val_string = json_object_get_value(object, "display_name");
+    if (val_string == NULL)
+        throw_item_error(ERROR_GENERIC);
     if (json_value_get_type(val_string) != JTYPE_STRING)
         throw_item_error(ERROR_INVALID_TYPE);
 
@@ -275,13 +277,44 @@ i32 item_get_id(const char* name)
         else
             return m;
     }
-    log_write(FATAL, "Could not get id for %s", name);
+    log_write(CRITICAL, "Could not get id for %s", name);
     return -1;
 }
 
 i32 item_get_tex_id(i32 item_id)
 {
     return item_context.infos[item_id].tex_id;
+}
+
+void inventory_refresh(void)
+{
+    Inventory* inventory = &game_context.player.inventory;
+    // check stats
+    for (i32 synergy_id = 0; synergy_id < synergy_context.num_synergies; synergy_id++) {
+        i32* item_ids = synergy_context.infos[synergy_id].item_ids;
+        i32 num_items = synergy_context.infos[synergy_id].num_items;
+        log_write(DEBUG, "%s %d", synergy_context.infos[synergy_id].name, num_items);
+        bool* mask = st_calloc(num_items, sizeof(bool));
+        for (i32 i = 0; i < num_items; i++) {
+            for (i32 j = 0; j < inventory->num_items; j++) {
+                Item* item = inventory->items[j];
+                if (item == NULL || !item->equipped)
+                    continue;
+                if (item->id == item_ids[i]) {
+                    mask[i] = true;
+                    goto next_item_id;
+                }
+            }
+next_item_id:
+            (void)0; // my text editor doesnt like labels at ends of blocks
+        }
+        for (i32 i = 0; i < num_items; i++)
+            if (!mask[i])
+                goto next_synergy_id;
+        log_write(DEBUG, "synergy %s is active", synergy_context.infos[synergy_id].name);
+next_synergy_id:
+        st_free(mask);
+    }
 }
 
 void inventory_swap_items(Item** slot1, Item** slot2)
@@ -329,6 +362,8 @@ next:
     Item* tmp = *slot1;
     *slot1 = *slot2;
     *slot2 = tmp;
+
+    inventory_refresh();
 }
 
 void inventory_move_item(Item** slot)
@@ -413,7 +448,6 @@ void inventory_shoot_weapons_primary(Player* player, vec2 direction, vec2 target
 
 void inventory_shoot_weapons_secondary(Player* player, vec2 direction, vec2 target)
 {
-    log_write(DEBUG, "test");
     for (i32 i = 0; i < player->inventory.num_weapon_slots; i++) {
         Item* item = *player->inventory.weapon_slots[i];
         if (item == NULL)
