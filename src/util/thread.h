@@ -3,7 +3,7 @@
 
 #include "type.h"
 
-#define NUM_THREADS 4
+#define NUM_THREADS 3
 
 // Permanently associate a thread with name and
 // generate idx for thread in range [0...NUM_THREADS)

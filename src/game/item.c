@@ -223,7 +223,7 @@ static void load_item_info(void)
     JsonObject* object;
     const char* string;
     item_context.num_items = json_object_length(json);
-    item_context.infos = st_malloc(item_context.num_items * sizeof(ItemInfo));
+    item_context.infos = st_calloc(item_context.num_items, sizeof(ItemInfo));
 
     for (i32 i = 0; i < item_context.num_items; i++) {
         member = json_iterator_get(it);
