@@ -289,11 +289,47 @@ i32 item_get_tex_id(i32 item_id)
 void inventory_refresh(void)
 {
     Inventory* inventory = &game_context.player.inventory;
+
+    for (i32 i = 0; i < inventory->num_armor_slots; i++) {
+        Item* item = *inventory->armor_slots[i];
+        if (item == NULL)
+            continue;
+        item->equipped = true;
+    }
+
+    for (i32 i = 0; i < inventory->num_weapon_slots; i++) {
+        Item* item = *inventory->weapon_slots[i];
+        if (item == NULL)
+            continue;
+        item->equipped = true;
+    }
+
+    for (i32 i = 0; i < inventory->num_ability_slots; i++) {
+        Item* item = *inventory->ability_slots[i];
+        if (item == NULL)
+            continue;
+        item->equipped = true;
+    }
+    
+    for (i32 i = 0; i < inventory->num_misc_slots; i++) {
+        Item* item = *inventory->misc_slots[i];
+        if (item == NULL)
+            continue;
+        if (item->type == ITEM_WEAPON)
+            item->equipped = false;
+        else if (item->type == ITEM_ARMOR)
+            item->equipped = false;
+        else if (item->type == ITEM_ABILITY)
+            item->equipped = false;
+    }
+
     // check stats
+    Synergy* synergies = NULL;
+    i32 num_synergies = 0;
     for (i32 synergy_id = 0; synergy_id < synergy_context.num_synergies; synergy_id++) {
         i32* item_ids = synergy_context.infos[synergy_id].item_ids;
         i32 num_items = synergy_context.infos[synergy_id].num_items;
-        log_write(DEBUG, "%s %d", synergy_context.infos[synergy_id].name, num_items);
+        //log_write(DEBUG, "%s %d", synergy_context.infos[synergy_id].name, num_items);
         bool* mask = st_calloc(num_items, sizeof(bool));
         for (i32 i = 0; i < num_items; i++) {
             for (i32 j = 0; j < inventory->num_items; j++) {
@@ -311,10 +347,45 @@ next_item_id:
         for (i32 i = 0; i < num_items; i++)
             if (!mask[i])
                 goto next_synergy_id;
+        if (synergies == NULL)
+            synergies = st_malloc(sizeof(Synergy));
+        else
+            synergies = st_realloc(synergies, (num_synergies+1) * sizeof(Synergy));
+        synergies[num_synergies++].id = synergy_id;
         log_write(DEBUG, "synergy %s is active", synergy_context.infos[synergy_id].name);
 next_synergy_id:
         st_free(mask);
     }
+
+    Synergy** new_synergies = NULL;
+    bool* mask = NULL;
+    if (num_synergies != 0)
+        new_synergies = st_malloc(num_synergies * sizeof(Synergy));
+    if (inventory->num_synergies != 0)
+         mask = st_calloc(inventory->num_synergies, sizeof(bool));
+    for (i32 i = 0; i < num_synergies; i++) {
+        for (i32 j = 0; j < inventory->num_synergies; j++) {
+            if (synergies[i].id == inventory->synergies[j]->id) {
+                new_synergies[i] = inventory->synergies[j];
+                mask[j] = true;
+                goto next_synergy;
+            }
+        }
+        new_synergies[i] = synergy_create(synergies[i].id);
+next_synergy:
+        (void)0;
+    }
+
+    for (i32 j = 0; j < inventory->num_synergies; j++)
+        if (!mask[j])
+            st_free(inventory->synergies[j]);
+
+    st_free(mask);
+    st_free(inventory->synergies);
+    st_free(synergies);
+
+    inventory->synergies = new_synergies;
+    inventory->num_synergies = num_synergies;
 }
 
 void inventory_swap_items(Item** slot1, Item** slot2)
@@ -444,6 +515,14 @@ void inventory_shoot_weapons_primary(Player* player, vec2 direction, vec2 target
         if (item_context.infos[item->id].primary != NULL)
             item_context.infos[item->id].primary(&game_api, player, direction, target);
     }
+    for (i32 i = 0; i < player->inventory.num_synergies; i++) {
+        Synergy* synergy = player->inventory.synergies[i];
+        if (synergy->primary_timer > 0)
+            continue;
+        synergy->primary_timer = synergy->primary_cooldown;
+        if (synergy_context.infos[synergy->id].primary != NULL)
+            synergy_context.infos[synergy->id].primary(&game_api, player, direction, target);
+    }
 }
 
 void inventory_shoot_weapons_secondary(Player* player, vec2 direction, vec2 target)
@@ -457,6 +536,14 @@ void inventory_shoot_weapons_secondary(Player* player, vec2 direction, vec2 targ
         item->secondary_timer = item->secondary_cooldown;
         if (item_context.infos[item->id].secondary != NULL)
             item_context.infos[item->id].secondary(&game_api, player, direction, target);
+    }
+    for (i32 i = 0; i < player->inventory.num_synergies; i++) {
+        Synergy* synergy = player->inventory.synergies[i];
+        if (synergy->secondary_timer > 0)
+            continue;
+        synergy->secondary_timer = synergy->secondary_cooldown;
+        if (synergy_context.infos[synergy->id].secondary != NULL)
+            synergy_context.infos[synergy->id].secondary(&game_api, player, direction, target);
     }
 }
 

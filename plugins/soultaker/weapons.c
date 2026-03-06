@@ -58,7 +58,6 @@ st_export void weapon_pointer_secondary(GameApi* api, Player* player, vec2 direc
 
 st_export void weapon_null_pointer_primary(GameApi* api, Player* player, vec2 direction, vec2 target)
 {
-    api->log_write(DEBUG, "test");
     vec2 pos = player->entity->position;
     Projectile* proj = api->map_create_projectile(pos);
     proj->direction = direction;
@@ -84,6 +83,36 @@ st_export void weapon_null_pointer_secondary(GameApi* api, Player* player, vec2 
         proj->lifetime = 0.15;
         proj->facing = api->vec2_radians(direction);
         proj->tex = api->texture_get_id("null_ptr");
+        api->projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, 1);
+    }
+}
+
+st_export void super_pointer_primary(GameApi* api, Player* player, vec2 direction, vec2 target)
+{
+    vec2 pos = player->entity->position;
+    Projectile* proj = api->map_create_projectile(pos);
+    proj->direction = direction;
+    proj->size = 0.65;
+    proj->speed = 40;
+    proj->lifetime = 0.1;
+    proj->facing = api->vec2_radians(direction);
+    proj->tex = api->texture_get_id("purp_bullet");
+    api->projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, 1);
+}
+
+st_export void super_pointer_secondary(GameApi* api, Player* player, vec2 direction, vec2 target)
+{
+    vec2 player_pos = player->entity->position;
+    for (size_t i = 0; i < sizeof(pointer_offsets) / sizeof(vec2); i++) {
+        vec2 offset = pointer_offsets[i];
+        vec2 pos = api->vec2_add(player_pos, api->vec2_rotate(offset, api->vec2_radians(direction) - PI/2));
+        Projectile* proj = api->map_create_projectile(pos);
+        proj->direction = direction;
+        proj->size = 0.65;
+        proj->speed = 40;
+        proj->lifetime = 0.1;
+        proj->facing = api->vec2_radians(direction);
+        proj->tex = api->texture_get_id("purp_bullet");
         api->projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, 1);
     }
 }

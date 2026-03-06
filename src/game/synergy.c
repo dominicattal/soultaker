@@ -77,8 +77,10 @@ static void load_tooltip(JsonObject* object, i32 id)
 static void load_primary_func(JsonObject* object, i32 id)
 {
     JsonValue* val_string = json_object_get_value(object, "primary");
-    if (val_string == NULL)
+    if (val_string == NULL) {
+        synergy_context.infos[id].primary = NULL;
         return;
+    }
     if (json_value_get_type(val_string) != JTYPE_STRING)
         throw_synergy_error(ERROR_INVALID_TYPE);
 
@@ -92,8 +94,10 @@ static void load_primary_func(JsonObject* object, i32 id)
 static void load_secondary_func(JsonObject* object, i32 id)
 {
     JsonValue* val_string = json_object_get_value(object, "secondary");
-    if (val_string == NULL)
+    if (val_string == NULL) {
+        synergy_context.infos[id].secondary = NULL;
         return;
+    }
     if (json_value_get_type(val_string) != JTYPE_STRING)
         throw_synergy_error(ERROR_INVALID_TYPE);
 
@@ -107,8 +111,10 @@ static void load_secondary_func(JsonObject* object, i32 id)
 static void load_cast_func(JsonObject* object, i32 id)
 {
     JsonValue* val_string = json_object_get_value(object, "cast");
-    if (val_string == NULL)
+    if (val_string == NULL) {
+        synergy_context.infos[id].cast = NULL;
         return;
+    }
     if (json_value_get_type(val_string) != JTYPE_STRING)
         throw_synergy_error(ERROR_INVALID_TYPE);
 
@@ -122,8 +128,10 @@ static void load_cast_func(JsonObject* object, i32 id)
 static void load_use_func(JsonObject* object, i32 id)
 {
     JsonValue* val_string = json_object_get_value(object, "use");
-    if (val_string == NULL)
+    if (val_string == NULL) {
+        synergy_context.infos[id].use = NULL;
         return;
+    }
     if (json_value_get_type(val_string) != JTYPE_STRING)
         throw_synergy_error(ERROR_INVALID_TYPE);
 
@@ -197,6 +205,31 @@ static void load_synergy_info(void)
 void synergy_init(void)
 {
     load_synergy_info();
+}
+
+Synergy* synergy_create(i32 id)
+{
+    Synergy* synergy = st_malloc(sizeof(Synergy));
+    synergy->primary_cooldown = 0.33;
+    synergy->primary_timer = 0;
+    synergy->secondary_cooldown = 0.33;
+    synergy->secondary_timer = 0;
+    synergy->cast_cooldown = 0;
+    synergy->cast_timer = 0;
+    synergy->use_cooldown = 0;
+    synergy->use_timer = 0;
+    synergy->id = id;
+    return synergy;
+}
+
+void synergy_update(Synergy* synergy, f32 dt)
+{
+    synergy->primary_timer -= dt;
+    if (synergy->primary_timer < 0)
+        synergy->primary_timer = 0;
+    synergy->secondary_timer -= dt;
+    if (synergy->secondary_timer < 0)
+        synergy->secondary_timer = 0;
 }
 
 void synergy_cleanup(void)

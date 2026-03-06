@@ -427,7 +427,6 @@ typedef struct {
 } SynergyContext;
 
 typedef struct Synergy {
-    Item** items;
     f32 primary_cooldown;
     f32 primary_timer;
     f32 secondary_cooldown;
@@ -436,7 +435,6 @@ typedef struct Synergy {
     f32 cast_timer;
     f32 use_cooldown;
     f32 use_timer;
-    i32 num_items;
     i32 id;
 } Synergy;
 
@@ -444,6 +442,8 @@ extern SynergyContext synergy_context;
 
 void    synergy_init(void);
 void    synergy_cleanup(void);
+Synergy* synergy_create(i32 id);
+void    synergy_update(Synergy* synergy, f32 dt);
 i32     synergy_get_id(const char* name);
 char*   synergy_get_name(i32 id);
 
@@ -464,6 +464,7 @@ typedef struct Inventory {
     i32 num_weapon_slots;
     i32 num_ability_slots;
     i32 num_misc_slots;
+    i32 num_synergies;
 } Inventory;
 
 void    inventory_refresh(void);

@@ -8,6 +8,7 @@
     "rock": "assets/textures/rock.png",
     "bush": "assets/textures/bush.png",
     "bullet": "assets/textures/bullet.png",
+    "purp_bullet": "assets/textures/purp_bullet.png",
     "pointer_weapon": "assets/textures/pointer.png",
     "null_weapon": "assets/textures/null.png",
     "null_ptr": "assets/textures/null_ptr.png",

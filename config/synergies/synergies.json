@@ -2,6 +2,7 @@
     "super_pointer": {
         "display_name": "Super Pointer",
         "tooltip": "Rust will fix it",
+        "primary": "super_pointer_primary",
         "secondary": "super_pointer_secondary",
         "items": [
             "pointer",

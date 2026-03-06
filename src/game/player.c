@@ -35,6 +35,7 @@ void inventory_init(Inventory* inventory)
     inventory->num_weapon_slots = 3;
     inventory->num_ability_slots = 3;
     inventory->num_misc_slots = 25;
+    inventory->num_synergies = 0;
     inventory->num_items = inventory->num_armor_slots
                          + inventory->num_weapon_slots
                          + inventory->num_ability_slots
@@ -43,6 +44,7 @@ void inventory_init(Inventory* inventory)
     inventory->weapon_slots = st_calloc(inventory->num_weapon_slots, sizeof(Item**));
     inventory->ability_slots = st_calloc(inventory->num_ability_slots, sizeof(Item**));
     inventory->misc_slots = st_calloc(inventory->num_misc_slots, sizeof(Item**));
+    inventory->synergies = NULL;
 
     inventory->armor_slots[0]   = &inventory->items[0];
     inventory->armor_slots[1]   = &inventory->items[1];
@@ -100,6 +102,9 @@ void inventory_destroy(Inventory* inventory)
         item_destroy(inventory->items[i]);
         inventory->items[i] = NULL;
     }
+    for (i32 i = 0; i < inventory->num_synergies; i++)
+        st_free(inventory->synergies[i]);
+    st_free(inventory->synergies);
     st_free(inventory->weapon_slots);
     st_free(inventory->ability_slots);
     st_free(inventory->misc_slots);
@@ -219,6 +224,9 @@ static void update_inventory(Inventory* inventory, f32 dt)
     for (i32 i = 0; i < inventory->num_items; i++)
         if (inventory->items[i] != NULL)
             item_update(inventory->items[i], dt);
+    for (i32 i = 0; i < inventory->num_synergies; i++)
+        if (inventory->synergies[i] != NULL)
+            synergy_update(inventory->synergies[i], dt);
 }
 
 void player_update(Player* player, f32 dt)
