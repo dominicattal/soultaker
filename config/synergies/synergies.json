@@ -34,11 +34,31 @@
             "chestplate"
         ]
     },
-    "test_weapon_ability": {
-        "dislpay_name": "Pointer Spellbomb",
-        "tooltip": "Pointer Spellbomb",
+    "pointer_spelltome": {
+        "dislpay_name": "Pointer Spelltome",
+        "tooltip": "Pointer Spelltome",
+        "cast": "pointer_spelltome_cast",
         "items": [
             "pointer",
+            "spelltome"
+        ]
+    },
+    "null_pointer_spelltome": {
+        "dislpay_name": "Null Pointer Spelltome",
+        "tooltip": "Null Pointer Spelltome",
+        "cast": "null_pointer_spelltome_cast",
+        "items": [
+            "null_pointer",
+            "spelltome"
+        ]
+    },
+    "pointer_null_pointer_spelltome": {
+        "dislpay_name": "Pointer Null Pointer Spelltome",
+        "tooltip": "Pointer Null Pointer Spelltome",
+        "cast": "pointer_null_pointer_spelltome_cast",
+        "items": [
+            "pointer",
+            "null_pointer",
             "spelltome"
         ]
     },

@@ -559,6 +559,14 @@ void inventory_cast_abilities(Player* player, vec2 direction, vec2 target)
         if (item_context.infos[item->id].cast != NULL)
             item_context.infos[item->id].cast(&game_api, player, direction, target);
     }
+    for (i32 i = 0; i < player->inventory.num_synergies; i++) {
+        Synergy* synergy = player->inventory.synergies[i];
+        if (synergy->secondary_timer > 0)
+            continue;
+        synergy->secondary_timer = synergy->secondary_cooldown;
+        if (synergy_context.infos[synergy->id].cast != NULL)
+            synergy_context.infos[synergy->id].cast(&game_api, player, direction, target);
+    }
 }
 
 char* weapon_get_name(i32 id)
