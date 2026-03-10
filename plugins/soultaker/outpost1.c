@@ -466,11 +466,13 @@ st_export void outpost1_mage_reposition_update(GameApi* api, Entity* entity, f32
 static void boss_start(GameApi* api, Trigger* trigger, Entity* entity)
 {
     MapData* map_data = api->map_get_data();
+    Entity* boss = map_data->boss;
     api->log_write(DEBUG, "%f %f", entity->position.x, entity->position.z);
     api->log_write(DEBUG, "test");
     if (map_data->boss == NULL)
         api->log_write(FATAL, "Map boss is null");
-    api->map_make_boss("Asgore", map_data->boss);
+    api->map_make_boss("Asgore", boss);
+    api->entity_set_state(boss, "phase1_attack");
     Wall* wall;
     wall = api->room_set_tilemap_wall(26, 54, 2.0f, 0x683434);
     wall->top_tex = api->texture_get_id("outpost1_wall1_top");
@@ -489,6 +491,11 @@ static void boss_start(GameApi* api, Trigger* trigger, Entity* entity)
     wall->side_tex = api->texture_get_id("outpost1_wall1_side");
 }
 
+typedef struct {
+    f32 shot_timer;
+    i32 pattern;
+} BossData;
+
 st_export void outpost1_boss_create(GameApi* api, Entity* entity)
 {
     Trigger* trigger = api->map_create_trigger(entity->position, 10.0f);
@@ -497,6 +504,10 @@ st_export void outpost1_boss_create(GameApi* api, Entity* entity)
     trigger->enter = boss_start;
     entity->size = 3.0;
     entity->health = entity->max_health = 100;
+    BossData* data = entity->data = api->st_malloc(sizeof(BossData));
+    data->shot_timer = 0;
+    data->pattern = 0;
+    api->entity_set_flag(entity, ENTITY_FLAG_AUTO_FREE_DATA, true);
 
     MapData* map_data = api->map_get_data();
     map_data->boss = entity;
@@ -506,18 +517,33 @@ st_export void outpost1_boss_destroy(GameApi* api, Entity* entity)
 {
 }
 
-st_export void outpost1_boss_idle_update(GameApi* api, Entity* entity, f32 dt)
+st_export void outpost1_boss_phase1_attack_update(GameApi* api, Entity* entity, f32 dt)
 {
-}
+    vec2 player_position = api->game_get_nearest_player_position();
+    vec2 cur_position = entity->position;
+    entity->direction = api->vec2_normalize(api->vec2_sub(player_position, cur_position));
 
-st_export void outpost1_boss_wander_update(GameApi* api, Entity* entity, f32 dt)
-{
-}
-
-st_export void outpost1_boss_attack_update(GameApi* api, Entity* entity, f32 dt)
-{
-}
-
-st_export void outpost1_boss_reposition_update(GameApi* api, Entity* entity, f32 dt)
-{
+    BossData* data = entity->data;
+    Projectile* proj;
+    data->shot_timer -= dt;
+    if  (data->shot_timer < 0) {
+        if (data->pattern == 0) {
+            proj = api->map_create_projectile(cur_position);
+            proj->tex = api->texture_get_id("shaitan_firebullet");
+            proj->speed = 30;
+            proj->direction = entity->direction;
+            data->pattern = 1;
+        } else if (data->pattern == 1) {
+            proj = api->map_create_projectile(cur_position);
+            proj->tex = api->texture_get_id("shaitan_firebullet");
+            proj->speed = 30;
+            proj->direction = api->vec2_rotate(entity->direction, PI/12);
+            proj = api->map_create_projectile(cur_position);
+            proj->tex = api->texture_get_id("shaitan_firebullet");
+            proj->speed = 30;
+            proj->direction = api->vec2_rotate(entity->direction, -PI/12);
+            data->pattern = 0;
+        }
+        data->shot_timer += 0.5;
+    }
 }

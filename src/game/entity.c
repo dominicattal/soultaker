@@ -510,19 +510,13 @@ i32 entity_get_texture(Entity* entity)
     return state.frames[num_frames * dir + entity->frame];
 }
 
-void entity_set_direction(Entity* entity, vec2 direction)
-{
-}
-
-void entity_set_facing(Entity* entity, vec2 facing)
-{
-}
-
 void entity_destroy(Entity* entity)
 {
     DestroyFuncPtr destroy = entity_context.infos[entity->id].destroy;
     if (destroy != NULL)
         destroy(&game_api, entity);
+    if (entity_get_flag(entity, ENTITY_FLAG_AUTO_FREE_DATA))
+        st_free(entity->data);
     st_free(entity);
 }
 

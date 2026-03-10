@@ -526,6 +526,7 @@ typedef struct Player {
 } Player;
 
 typedef enum {
+    ENTITY_FLAG_AUTO_FREE_DATA,
     ENTITY_FLAG_PLAYER,
     ENTITY_FLAG_FRIENDLY,
     ENTITY_FLAG_IN_LAVA,
@@ -549,9 +550,6 @@ bool entity_get_flag(Entity* entity, EntityFlagEnum flag);
 i32 entity_get_id(const char* name);
 i32 entity_get_state_id(Entity* entity, const char* name);
 i32 entity_get_texture(Entity* entity);
-
-void entity_set_direction(Entity* entity, vec2 direction);
-void entity_set_facing(Entity* entity, vec2 facing);
 
 // sets entity state and sets frame to 0. always use this
 // rather than setting state directly.
