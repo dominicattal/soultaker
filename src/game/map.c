@@ -337,6 +337,18 @@ static void parse_room_type(JsonObject* object, Room* room)
     room->type = get_string_value(object, "type");
 }
 
+static void parse_room_rotate(JsonObject* object, Room* room)
+{
+    JsonValue* value;
+    room->rotate = true;
+    value = json_object_get_value(object, "rotate");
+    if (value == NULL)
+        return;
+    if (json_value_get_type(value) != JTYPE_FALSE)
+        return;
+    room->rotate = false;
+}
+
 static void parse_room_alternates(JsonObject* object, Palette* palette, Room* room)
 {
     JsonValue* value;
@@ -605,6 +617,7 @@ static Roomset* roomset_create(JsonObject* root, const char* path, Palette* pale
         parse_room_enter(object, room);
         parse_room_exit(object, room);
         parse_room_type(object, room);
+        parse_room_rotate(object, room);
         parse_room_alternates(object, palette, room);
 
         if (!verify_room_alternates(room, pixels, x, y))
@@ -1091,8 +1104,10 @@ static bool pregenerate_map_helper(GlobalMapGenerationSettings* global_settings,
         for (fem_idx = 0; fem_idx < female_alternates->length; fem_idx++) {
             female_alternate = list_get(female_alternates, fem_idx);
             args.alternate = female_alternate;
-            initial_orientation = rand() % NUM_ORIENTATIONS;
+            initial_orientation = (room->rotate) ? rand() % NUM_ORIENTATIONS : 0;
             for (orientation_iter = 0; orientation_iter < NUM_ORIENTATIONS; orientation_iter++) {
+                if (!room->rotate && orientation_iter != 0)
+                    break;
                 orientation = (initial_orientation + orientation_iter) % NUM_ORIENTATIONS;
                 u = female_alternate->loc_u;
                 v = female_alternate->loc_v;

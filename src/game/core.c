@@ -17,7 +17,7 @@ void* game_loop(void* vargp)
     gui_preset_load(GUI_PRESET_GAME);
     game_resume_loop();
     game_resume_render();
-    map_create(map_get_id("outpost1"));
+    map_create(map_get_id("shaitan"));
     while (!game_context.kill_thread)
     {
         if (game_context.halt_game_loop) {

@@ -57,6 +57,7 @@ It is important to remember functions like `map_create_entity` and `room_create_
             "enter": "map_name_spawn_room_enter",
             "exit": "map_name_spawn_room_exit",
             "type": "spawn",
+            "rotate": false,
             "alternates": [
                 {
                     "type": "female",
@@ -115,4 +116,5 @@ It is important to remember functions like `map_create_entity` and `room_create_
         - `default` is the tile (specified in `palette`) that should be placed if this alternate isn't used
         - `location` is the location of the alternate in the image file
         - `bounding_box` is the area in the image file that represents the alternate
+        - `rotate` is whether to allow the room to be mirrored and rotated on generation. Defaults to true unless this field is present and set to false.
         - `origin` is the pivot point of the bounding box. If the `bounding_box` is 3x3 and the `origin` is the UV coordinate in the center of the `bounding_box`, then the center of the `bounding_box` will be equivalent to the alternate's position

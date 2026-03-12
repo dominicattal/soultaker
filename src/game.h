@@ -160,6 +160,7 @@ typedef struct Room {
     RoomExitFuncPtr exit;
     List* male_alternates;
     List* female_alternates;
+    bool rotate;
 } Room;
 
 typedef struct {

@@ -36,6 +36,7 @@
                 "bounding_box": [0, 0, 30, 36],
                 "create": "shaitan_spawn_create",
                 "type": "spawn",
+                "rotate": false,
                 "alternates": [
                     {
                         "type": "female",

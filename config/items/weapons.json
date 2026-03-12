@@ -33,7 +33,7 @@
         "type": "weapon",
         "display_name": "Wand",
         "tooltip": "tooltip",
-        "primary": "weapon_pointer_primary",
+        "primary": "wand_primary",
         "texture": "wand_weapon"
     }
 }

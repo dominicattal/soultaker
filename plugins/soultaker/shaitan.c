@@ -67,9 +67,9 @@ st_export void hand_of_shaitan_update(GameApi* api, Entity* entity, f32 dt)
     //f32 rad = api->vec2_radians(api->map_orientation());
     vec2 direction = api->vec2_normalize(api->vec2_sub(daddy_pos, hand_pos));
     direction.x *= 2 * data->rotate_direction - 1;
-    direction.y *= 2 * data->rotate_direction - 1;
-    //entity->direction = api->vec2_create(direction.y, -direction.x);
-    entity->direction = api->vec2_rotate(direction, 0);
+    direction.z *= 2 * data->rotate_direction - 1;
+    entity->direction = api->vec2_create(direction.z, -direction.x);
+    //entity->direction = api->vec2_rotate(direction, 0);
     //entity->direction = api->vec2_rotate(entity->direction, rad);
     data->rotate_timer += dt;
     data->target_rad += (2 * data->rotate_direction - 1) * 1.25 * dt;
