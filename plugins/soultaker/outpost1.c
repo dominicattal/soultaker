@@ -519,6 +519,7 @@ st_export void outpost1_boss_destroy(GameApi* api, Entity* entity)
 
 st_export void outpost1_boss_phase1_attack_update(GameApi* api, Entity* entity, f32 dt)
 {
+    return;
     vec2 player_position = api->game_get_nearest_player_position();
     vec2 cur_position = entity->position;
     entity->direction = api->vec2_normalize(api->vec2_sub(player_position, cur_position));

@@ -19,7 +19,7 @@
         "type": "weapon",
         "display_name": "Shiv",
         "tooltip": "Stab stab stab",
-        "primary": "weapon_pointer_primary",
+        "primary": "shiv_primary",
         "texture": "shiv_weapon"
     },
     "staff": {

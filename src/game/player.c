@@ -68,6 +68,8 @@ void inventory_init(Inventory* inventory)
     *inventory->misc_slots[2] = item_create(item_get_id("mothers_pendant"));
     (*inventory->misc_slots[2])->additive_stats[STAT_MAX_HP] = 10;
     *inventory->misc_slots[5] = item_create(item_get_id("shiv"));
+    (*inventory->misc_slots[5])->primary_cooldown = 0.5;
+    (*inventory->misc_slots[5])->secondary_cooldown = 0.5;
     *inventory->misc_slots[6] = item_create(item_get_id("staff"));
     *inventory->misc_slots[7] = item_create(item_get_id("wand"));
     *inventory->misc_slots[10] = item_create(item_get_id("spelltome"));
