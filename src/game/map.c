@@ -1880,6 +1880,28 @@ Parstacle* room_create_parstacle(vec2 position)
     return parstacle;
 }
 
+Projectile* room_create_projectile(vec2 position)
+{
+    Projectile* proj;
+    Map* map = map_context.current_map;
+    MapNode* node = map_context.current_map_node;
+    if (!map->active)
+        return NULL;
+    log_assert(node != NULL, "fuck");
+    Room* room = node->room;
+    i32 orientation = node->orientation;
+    f32 u = room->u1 + position.x;
+    f32 v = room->v1 + position.z;
+    f32 dx = calculate_room_dxf(room, orientation, u, v);
+    f32 dz = calculate_room_dzf(room, orientation, u, v);
+    vec2 new_position;
+    new_position.x = node->origin_x + dx;
+    new_position.z = node->origin_z + dz;
+    proj = projectile_create(new_position);
+    list_append(map->projectiles, proj);
+    return proj;
+}
+
 Wall* room_create_wall(vec2 position, f32 height, f32 width, f32 length, u32 minimap_color)
 {
     Map* map = map_context.current_map;

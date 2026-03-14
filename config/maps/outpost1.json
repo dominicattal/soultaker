@@ -211,6 +211,7 @@
                 ]
             },
             "boss_room": {
+                "rotate": false,
                 "bounding_box": [70, 0, 126, 55],
                 "create": "outpost1_boss_room_create",
                 "type": "boss",

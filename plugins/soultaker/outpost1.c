@@ -73,7 +73,7 @@ st_export void outpost1_big_room_create(GameApi* api)
 
 st_export void outpost1_boss_room_create(GameApi* api)
 {
-    vec2 position = api->vec2_create(28, 10);
+    vec2 position = api->vec2_create(28.5, 12);
     i32 id;
     id = api->entity_get_id("outpost1_boss");
     api->room_create_entity(position, id);
@@ -463,6 +463,57 @@ st_export void outpost1_mage_reposition_update(GameApi* api, Entity* entity, f32
 // Boss
 // *************************************************************
 
+static vec2 sword_offsets[] = {
+    { .x = 0, .z = 0 },
+    { .x = 0.5, .z = 0.5 },
+    { .x = 0.5, .z = 0.0 },
+    { .x = 0.5, .z = 1.0 },
+    { .x = 0.5, .z = 1.5 },
+    { .x = 0.5, .z = 2.0 },
+    { .x = 1.0, .z = 2.0 },
+    { .x = 1.5, .z = 2.0 },
+    { .x = 2.0, .z = 2.0 },
+    { .x = 2.0, .z = 2.5 },
+    { .x = 2.0, .z = 3.0 },
+    { .x = 1.5, .z = 3.0 },
+    { .x = 1.0, .z = 3.0 },
+    { .x = 0.5, .z = 3.0 },
+    { .x = 0.0, .z = 3.0 },
+    { .x = -0.5, .z = 3.0 },
+    { .x = -1.0, .z = 3.0 },
+    { .x = -1.5, .z = 3.0 },
+    { .x = -2.0, .z = 3.0 },
+    { .x = -2.0, .z = 2.5 },
+    { .x = -2.0, .z = 2.0 },
+    { .x = -1.5, .z = 2.0 },
+    { .x = -1.0, .z = 2.0 },
+    { .x = -0.5, .z = 2.0 },
+    { .x = 0.0, .z = 2.0 },
+    { .x = -0.5, .z = 1.5 },
+    { .x = -0.5, .z = 1.0 },
+    { .x = -0.5, .z = 0.5 },
+    { .x = -0.5, .z = 0.0 },
+    { .x = 1.0, .z = 3.5 },
+    { .x = 1.0, .z = 4.0 },
+    { .x = 1.0, .z = 4.5 },
+    { .x = 1.0, .z = 5.0 },
+    { .x = 1.0, .z = 5.5 },
+    { .x = 1.0, .z = 6.0 },
+    { .x = 1.0, .z = 6.5 },
+    { .x = 1.0, .z = 7.0 },
+    { .x = 0.5, .z = 7.5 },
+    { .x = 0.0, .z = 8.0 },
+    { .x = -0.5, .z = 7.5 },
+    { .x = -1.0, .z = 7.0 },
+    { .x = -1.0, .z = 6.5 },
+    { .x = -1.0, .z = 6.0 },
+    { .x = -1.0, .z = 5.5 },
+    { .x = -1.0, .z = 5.0 },
+    { .x = -1.0, .z = 4.5 },
+    { .x = -1.0, .z = 4.0 },
+    { .x = -1.0, .z = 3.5 },
+};
+
 static void boss_start(GameApi* api, Trigger* trigger, Entity* entity)
 {
     MapData* map_data = api->map_get_data();
@@ -472,7 +523,7 @@ static void boss_start(GameApi* api, Trigger* trigger, Entity* entity)
     if (map_data->boss == NULL)
         api->log_write(FATAL, "Map boss is null");
     api->map_make_boss("Asgore", boss);
-    api->entity_set_state(boss, "phase1_attack");
+    api->entity_set_state(boss, "phase1_attack1");
     Wall* wall;
     wall = api->room_set_tilemap_wall(26, 54, 2.0f, 0x683434);
     wall->top_tex = api->texture_get_id("outpost1_wall1_top");
@@ -511,40 +562,53 @@ st_export void outpost1_boss_create(GameApi* api, Entity* entity)
 
     MapData* map_data = api->map_get_data();
     map_data->boss = entity;
+    api->entity_set_flag(entity, ENTITY_FLAG_INVULNERABLE, true);
 }
 
 st_export void outpost1_boss_destroy(GameApi* api, Entity* entity)
 {
 }
 
-st_export void outpost1_boss_phase1_attack_update(GameApi* api, Entity* entity, f32 dt)
+static void spawn_sword(GameApi* api, vec2 origin, vec2 direction)
 {
-    return;
-    vec2 player_position = api->game_get_nearest_player_position();
-    vec2 cur_position = entity->position;
-    entity->direction = api->vec2_normalize(api->vec2_sub(player_position, cur_position));
+    for (size_t i = 0; i < sizeof(sword_offsets) / sizeof(vec2); i++) {
+        vec2 offset = sword_offsets[i];
+        vec2 pos = api->vec2_add(origin, api->vec2_rotate(offset, api->vec2_radians(direction) - PI/2));
+        Projectile* proj = api->room_create_projectile(pos);
+        proj->direction = direction;
+        proj->size = 0.5;
+        proj->speed = 25;
+        proj->lifetime = 5.0;
+        proj->facing = api->vec2_radians(direction);
+        proj->tex = api->texture_get_id("bullet");
+        api->projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, true);
+    }
+}
 
+st_export void outpost1_boss_phase1_attack1_update(GameApi* api, Entity* entity, f32 dt)
+{
     BossData* data = entity->data;
-    Projectile* proj;
+    vec2 origin, direction;
+    f32 center = 28.5;
     data->shot_timer -= dt;
-    if  (data->shot_timer < 0) {
-        if (data->pattern == 0) {
-            proj = api->map_create_projectile(cur_position);
-            proj->tex = api->texture_get_id("shaitan_firebullet");
-            proj->speed = 30;
-            proj->direction = entity->direction;
-            data->pattern = 1;
-        } else if (data->pattern == 1) {
-            proj = api->map_create_projectile(cur_position);
-            proj->tex = api->texture_get_id("shaitan_firebullet");
-            proj->speed = 30;
-            proj->direction = api->vec2_rotate(entity->direction, PI/12);
-            proj = api->map_create_projectile(cur_position);
-            proj->tex = api->texture_get_id("shaitan_firebullet");
-            proj->speed = 30;
-            proj->direction = api->vec2_rotate(entity->direction, -PI/12);
-            data->pattern = 0;
-        }
-        data->shot_timer += 0.5;
+    if (data->shot_timer >= 0)
+        return;
+    i32 room_width = 56;
+    i32 spacing = 3;
+    i32 num_swords = 17;
+    data->shot_timer += 1;
+    for (i32 i = 0; i < num_swords; i++) {
+        origin = api->vec2_create(center + (i-num_swords/2)*spacing, 3);
+        direction = api->vec2_create(0, 1);
+        spawn_sword(api, origin, direction);
+        origin = api->vec2_create(center + (i-num_swords/2)*spacing, room_width-3);
+        direction = api->vec2_create(0, -1);
+        spawn_sword(api, origin, direction);
+        origin = api->vec2_create(3, center + (i-num_swords/2)*spacing);
+        direction = api->vec2_create(1, 0);
+        spawn_sword(api, origin, direction);
+        origin = api->vec2_create(room_width-3, center + (i-num_swords/2)*spacing);
+        direction = api->vec2_create(-1, 0);
+        spawn_sword(api, origin, direction);
     }
 }

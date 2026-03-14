@@ -48,6 +48,7 @@ GameApi game_api = {
     REGISTER(room_create_obstacle),
     REGISTER(room_create_parstacle),
     REGISTER(room_create_wall),
+    REGISTER(room_create_projectile),
     REGISTER(room_create_trigger),
     REGISTER(room_set_tilemap_wall),
     REGISTER(room_set_tilemap_tile),
