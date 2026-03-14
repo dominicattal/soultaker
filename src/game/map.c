@@ -12,8 +12,8 @@
 // or a boss room.
 
 #define DEFAULT_WALL_HEIGHT 1.5f
-#define MAP_MAX_WIDTH   10000
-#define MAP_MAX_LENGTH  10000
+#define MAP_MAX_WIDTH   200
+#define MAP_MAX_LENGTH  200
 #define WHITE   0xFFFFFF
 #define GRAY    0x808080
 #define BLACK   0x000000
@@ -1151,6 +1151,7 @@ static bool pregenerate_map_helper(GlobalMapGenerationSettings* global_settings,
                     dz = calculate_room_dz(room, orientation, u, v);
                     local_settings.male_x = origin_x + dx;
                     local_settings.male_z = origin_z + dz;
+                    local_settings.no_path = false;
                     if (pregenerate_map_helper(global_settings, local_settings, child)) {
                         local_settings.num_rooms_loaded++;
                         if (roomset->branch(&game_api, &local_settings)) {

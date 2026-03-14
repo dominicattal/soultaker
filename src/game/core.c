@@ -7,13 +7,14 @@ GameContext game_context;
 
 void* game_loop(void* vargp)
 {
-    thread_link("Game");
-
     f64 start, end;
+    pthread_mutex_t* init_mutex = vargp;
+    thread_link("Game");
     end = start = get_time();
     game_context.dt = 0;
     game_context.time = 0;
     gui_comp_init();
+    pthread_mutex_unlock(init_mutex);
     gui_preset_load(GUI_PRESET_GAME);
     game_resume_loop();
     game_resume_render();
@@ -85,7 +86,8 @@ void game_resume_render(void)
 
 void game_init(void)
 {
-    pthread_mutex_init(&game_context.getter_mutex, NULL);
+    pthread_mutex_t init_mutex;
+    pthread_mutex_init(&init_mutex, NULL);
     sem_init(&game_context.game_loop_sem, 0, 1);
 
     map_init();
@@ -97,7 +99,10 @@ void game_init(void)
     game_halt_render();
     game_render_init();
     gui_render_init();
-    pthread_create(&game_context.thread_id, NULL, game_loop, NULL);
+    pthread_mutex_lock(&init_mutex);
+    pthread_create(&game_context.thread_id, NULL, game_loop, &init_mutex);
+    pthread_mutex_lock(&init_mutex);
+    pthread_mutex_destroy(&init_mutex);
 }
 
 void game_cleanup(void)

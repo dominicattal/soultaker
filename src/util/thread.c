@@ -31,6 +31,8 @@ i32 thread_get_id(const char* name)
     i32 res = -1;
     pthread_mutex_lock(&mutex);
     for (i32 i = 0; i < NUM_THREADS; i++) {
+        if (threads[i].name == NULL)
+            continue;
         if (!strcmp(name, threads[i].name)) {
             res = i;
             break;
