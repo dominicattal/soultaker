@@ -774,7 +774,8 @@ static GUIComp* create_inventory(void)
     item_name = gui_comp_create(3,3,194,30);
     gui_comp_set_color(item_name, 255, 255, 255, 0);
     item_name->text_valign = ALIGN_CENTER;
-    item_name->font = FONT_NOVEMBER;
+    item_name->font = FONT_MONOSPACE;
+    item_name->font_size = 24;
     gui_comp_attach(item_info, item_name);
 
     GUIComp* item_br;
@@ -785,7 +786,7 @@ static GUIComp* create_inventory(void)
     GUIComp* item_tooltip;
     item_tooltip = gui_comp_create(3, 42, 194, 155);
     gui_comp_set_color(item_tooltip, 255, 255, 255, 0);
-    item_tooltip->font = FONT_NOVEMBER;
+    item_tooltip->font = FONT_MONOSPACE;
     gui_comp_attach(item_info, item_tooltip);
 
     return inventory;
@@ -1033,10 +1034,30 @@ static void load_preset_main_menu(GUIComp* root)
 
 // **************************************************
 
+typedef struct {
+    f32 timer;
+    bool flag;
+} TestData;
+
+static void test_update(GUIComp* comp, f32 dt)
+{
+    TestData* data = comp->data;
+    data->timer -= dt;
+    if (data->timer < 0) {
+        if (data->flag)
+            gui_comp_point_to_text(comp, "4");
+        else
+            gui_comp_point_to_text(comp, "6");
+        data->flag = !data->flag;
+        //data->timer += 1.0;
+    }
+}
+
 static void test_hover(GUIComp* comp, bool status)
 {
     i32 x, y;
     gui_comp_get_true_position(comp, &x, &y);
+    log_write(DEBUG, "%d %d", x, y);
 }
 
 static void load_preset_test(GUIComp* root)
@@ -1057,6 +1078,15 @@ static void load_preset_test(GUIComp* root)
             gui_comp_attach(test, comp);
         }
     }
+
+    test = gui_comp_create(200, 200, 80, 30);
+    TestData* data = test->data = st_malloc(sizeof(TestData));
+    data->timer = 0;
+    data->flag = false;
+    test->update = test_update;
+    test->font_size = 16;
+    gui_comp_set_text_align(test, ALIGN_CENTER, ALIGN_CENTER);
+    gui_comp_attach(root, test);
 }
 
 // **************************************************

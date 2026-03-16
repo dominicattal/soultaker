@@ -45,7 +45,7 @@ static void load_font(stbtt_pack_context* spc, FontEnum font_enum, i32 font_size
     font_range.num_chars = NUM_CHARS;       
     font_range.chardata_for_range = font->chardata;
 
-    //stbtt_PackSetOversampling(spc, 4, 4);
+    stbtt_PackSetOversampling(spc, 4, 4);
     stbtt_PackFontRanges(spc, font_buffer, 0, &font_range, 1);
 
     scale = stbtt_ScaleForPixelHeight(&info, font_size);
@@ -76,32 +76,35 @@ static void load_font(stbtt_pack_context* spc, FontEnum font_enum, i32 font_size
     st_free(font_buffer);
 }
 
-void font_info(FontEnum font, i32 font_size, f32* ascent, f32* descent, f32* line_gap, i32* location)
+void font_info(FontEnum font, f32 font_scale, f32* ascent, f32* descent, f32* line_gap, i32* location)
 {
-    f32 scale = (f32)font_size / texture_context.fonts[font].font_size;
-    *ascent   = texture_context.fonts[font].ascent   * scale;
-    *descent  = texture_context.fonts[font].descent  * scale;
-    *line_gap = texture_context.fonts[font].line_gap * scale;
+    *ascent   = texture_context.fonts[font].ascent   * font_scale;
+    *descent  = texture_context.fonts[font].descent  * font_scale;
+    *line_gap = texture_context.fonts[font].line_gap * font_scale;
     *location = texture_context.fonts[font].location;
 }
 
-void font_char_hmetrics(FontEnum font, i32 font_size, char character, f32* advance, f32* left_side_bearing)
+void font_char_hmetrics(FontEnum font, f32 font_scale, char character, f32* advance, f32* left_side_bearing)
 {
-    f32 scale = (f32)font_size / texture_context.fonts[font].font_size;
-    *advance = texture_context.fonts[font].chars[character-CHAR_OFFSET].advance * scale;
-    *left_side_bearing = texture_context.fonts[font].chars[character-CHAR_OFFSET].left_side_bearing * scale;
+    *advance = texture_context.fonts[font].chars[character-CHAR_OFFSET].advance * font_scale;
+    *left_side_bearing = texture_context.fonts[font].chars[character-CHAR_OFFSET].left_side_bearing * font_scale;
 }
 
-void font_char_bbox(FontEnum font, i32 font_size, char character, f32* bbox_x1, f32* bbox_y1, f32* bbox_x2, f32* bbox_y2)
+void font_char_advance(FontEnum font, f32 font_scale, char character, f32* advance)
 {
-    f32 scale = (f32)font_size / texture_context.fonts[font].font_size;
-    *bbox_x1 = texture_context.fonts[font].chars[character-CHAR_OFFSET].x1 * scale;
-    *bbox_y1 = texture_context.fonts[font].chars[character-CHAR_OFFSET].y1 * scale;
-    *bbox_x2 = texture_context.fonts[font].chars[character-CHAR_OFFSET].x2 * scale;
-    *bbox_y2 = texture_context.fonts[font].chars[character-CHAR_OFFSET].y2 * scale;
+    *advance = texture_context.fonts[font].chars[character-CHAR_OFFSET].advance * font_scale;
 }
 
-void font_char_bmap(FontEnum font, i32 font_size, char character, f32* bmap_u1, f32* bmap_v1, f32* bmap_u2, f32* bmap_v2)
+void font_char_bbox(FontEnum font, f32 font_scale, char character, f32* bbox_x1, f32* bbox_y1, f32* bbox_x2, f32* bbox_y2)
+{
+    const stbtt_packedchar* b = texture_context.fonts[font].chardata + character - CHAR_OFFSET;
+    *bbox_x1 = font_scale * b->xoff;
+    *bbox_y1 = font_scale * b->yoff;
+    *bbox_x2 = font_scale * b->xoff2;
+    *bbox_y2 = font_scale * b->yoff2;
+}
+
+void font_char_bmap(FontEnum font, f32 font_scale, char character, f32* bmap_u1, f32* bmap_v1, f32* bmap_u2, f32* bmap_v2)
 {
     *bmap_u1 = (f32)(texture_context.fonts[font].chars[character-CHAR_OFFSET].u1) / BITMAP_WIDTH;
     *bmap_v1 = (f32)(texture_context.fonts[font].chars[character-CHAR_OFFSET].v1) / BITMAP_HEIGHT;
@@ -109,10 +112,14 @@ void font_char_bmap(FontEnum font, i32 font_size, char character, f32* bmap_u1, 
     *bmap_v2 = (f32)(texture_context.fonts[font].chars[character-CHAR_OFFSET].v2) / BITMAP_HEIGHT;
 }
 
-void font_char_kern(FontEnum font, i32 font_size, char character, char next_character, f32* kern)
+void font_char_kern(FontEnum font, f32 font_scale, char character, char next_character, f32* kern)
 {
-    f32 scale = (f32)font_size / texture_context.fonts[font].font_size;
-    *kern = texture_context.fonts[font].chars[character-CHAR_OFFSET].kern[next_character-CHAR_OFFSET] * scale;
+    *kern = texture_context.fonts[font].chars[character-CHAR_OFFSET].kern[next_character-CHAR_OFFSET] * font_scale;
+}
+
+const stbtt_packedchar* font_char(FontEnum font, char c)
+{
+    return texture_context.fonts[font].chardata + c - CHAR_OFFSET;
 }
 
 static void create_font_textures(i32* tex_unit_location) 
@@ -126,6 +133,7 @@ static void create_font_textures(i32* tex_unit_location)
 
     load_font(&spc, FONT_MONOSPACE, 16, "assets/fonts/Space_Mono/SpaceMono-Regular.ttf");
     load_font(&spc, FONT_NOVEMBER, 16, "assets/fonts/november.regular.ttf");
+    //load_font(&spc, FONT_MONOSPACE, 16, "assets/fonts/DejaVuSansMono.ttf");
     //load_font(&spc, FONT_7_12, 12, "assets/fonts/7-12-serif.regular.ttf");
     //load_font(&spc, FONT_SOULTAKER, 14, "assets/fonts/soultaker.ttf");
 

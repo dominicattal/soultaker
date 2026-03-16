@@ -66,6 +66,7 @@ i32 gui_comp_compute_text_height(GUIComp* comp)
     f32 line_gap;           // gap between lines
     f32 adv, lsb, kern;     // advance, left side bearing, kerning
     i32 font_size;          // font_size = ascent - descent
+    f32 font_scale;         // ratio of comp's font size to loaded fotn size
     FontEnum font;          // font
     i32 num_spaces;         // count whitespace for horizontal alignment
     i32 length;             // length of text, index in text
@@ -86,6 +87,9 @@ i32 gui_comp_compute_text_height(GUIComp* comp)
     length = comp->text_length;
     
     font_info(font, font_size, &ascent, &descent, &line_gap, &location);
+
+    font_size = comp->font_size;
+    font_scale = (f32)font_size / texture_context.fonts[font].font_size;
     
     num_lines = 0;
     left = right = 0;
@@ -99,8 +103,8 @@ i32 gui_comp_compute_text_height(GUIComp* comp)
         prev_test_ox = test_ox = 0;
         num_spaces = 0;
         while (right < length && text[right] != '\n' && test_ox <= cw) {
-            font_char_hmetrics(font, font_size, text[right], &adv, &lsb);
-            font_char_kern(font, font_size, text[right], text[right+1], &kern);
+            font_char_advance(font, font_scale, text[right], &adv);
+            font_char_kern(font, font_scale, text[right], text[right+1], &kern);
             prev_test_ox = test_ox;
             test_ox += adv + kern;
             num_spaces += text[right] == ' ';
@@ -110,14 +114,14 @@ i32 gui_comp_compute_text_height(GUIComp* comp)
         mid = right;
         if (test_ox > cw) {
             while (mid > left && text[mid-1] != ' ') {
-                font_char_hmetrics(font, font_size, text[mid-1], &adv, &lsb);
-                font_char_kern(font, font_size, text[mid-1], text[mid], &kern);
+                font_char_advance(font, font_scale, text[mid-1], &adv);
+                font_char_kern(font, font_scale, text[mid-1], text[mid], &kern);
                 test_ox -= adv + kern;
                 mid--;
             }
             while (mid > left && text[mid-1] == ' ') {
-                font_char_hmetrics(font, font_size, text[mid-1], &adv, &lsb);
-                font_char_kern(font, font_size, text[mid-1], text[mid], &kern);
+                font_char_advance(font, font_scale, text[mid-1], &adv);
+                font_char_kern(font, font_scale, text[mid-1], text[mid], &kern);
                 test_ox -= adv + kern;
                 num_spaces -= text[mid-1] == ' ';
                 mid--;
@@ -141,9 +145,9 @@ i32 gui_comp_compute_text_height(GUIComp* comp)
             right++;
 
         if (text[right-1] != ' ') {
-            font_char_hmetrics(font, font_size, text[right-1], &adv, &lsb);
-            font_char_bbox(font, font_size, text[right-1], &a1, &b1, &a2, &b2);
-            test_ox -= adv - (a2 + a1);
+            font_char_advance(font, font_scale, text[right-1], &adv);
+            font_char_bbox(font, font_scale, text[right-1], &a1, &b1, &a2, &b2);
+            test_ox -= adv;
         }
 
         num_lines++;
@@ -164,10 +168,11 @@ static void push_text_data(GUIComp* comp, i32 cx, i32 cy, i32 cw, i32 ch)
     f32 x, y, w, h;         // pixel coordinates
     f32 ascent, descent;    // highest and lowest glyph offsets
     f32 line_gap;           // gap between lines
-    f32 adv, lsb, kern;     // advance, left side bearing, kerning
+    f32 adv, kern;          // advance, left side bearing, kerning
     u8  ha, va;             // horizontal and vertical alignment
     u8  justify;            // branchless justify
     i32 font_size;          // font_size ~ ascent - descent
+    f32 font_scale;         // ratio of comp's font size to loaded fotn size
     FontEnum font;          // font
     i32 num_spaces;         // count whitespace for horizontal alignment
     f32 dy;                 // change in y for vertical alignment
@@ -175,7 +180,7 @@ static void push_text_data(GUIComp* comp, i32 cx, i32 cy, i32 cw, i32 ch)
     i32 length;             // length of text, index in text
     char* text;             // text, equal to comp->text
     i32 location;           // active texture slot of bitmap
-    Quad quad;
+    Quad quad;              // what to push to gl buffer
 
     register f32 ox, oy, test_ox;    // glyph origin
     register f32 prev_test_ox;       // edge case
@@ -185,6 +190,7 @@ static void push_text_data(GUIComp* comp, i32 cx, i32 cy, i32 cw, i32 ch)
     va = comp->text_valign;
     font = comp->font;
     font_size = comp->font_size;
+    font_scale = (f32)font_size / texture_context.fonts[font].font_size;
 
     text = comp->text;
     length = comp->text_length;
@@ -195,7 +201,7 @@ static void push_text_data(GUIComp* comp, i32 cx, i32 cy, i32 cw, i32 ch)
         justify = 1;
     }
     
-    font_info(font, font_size, &ascent, &descent, &line_gap, &location);
+    font_info(font, font_scale, &ascent, &descent, &line_gap, &location);
     
     left = right = 0;
     ox = 0;
@@ -211,8 +217,8 @@ static void push_text_data(GUIComp* comp, i32 cx, i32 cy, i32 cw, i32 ch)
         prev_test_ox = test_ox = 0;
         num_spaces = 0;
         while (right < length && text[right] != '\n' && test_ox <= cw) {
-            font_char_hmetrics(font, font_size, text[right], &adv, &lsb);
-            font_char_kern(font, font_size, text[right], text[right+1], &kern);
+            font_char_advance(font, font_scale, text[right], &adv);
+            font_char_kern(font, font_scale, text[right], text[right+1], &kern);
             prev_test_ox = test_ox;
             test_ox += adv + kern;
             num_spaces += text[right] == ' ';
@@ -222,14 +228,14 @@ static void push_text_data(GUIComp* comp, i32 cx, i32 cy, i32 cw, i32 ch)
         mid = right;
         if (test_ox > cw) {
             while (mid > left && text[mid-1] != ' ') {
-                font_char_hmetrics(font, font_size, text[mid-1], &adv, &lsb);
-                font_char_kern(font, font_size, text[mid-1], text[mid], &kern);
+                font_char_advance(font, font_scale, text[mid-1], &adv);
+                font_char_kern(font, font_scale, text[mid-1], text[mid], &kern);
                 test_ox -= adv + kern;
                 mid--;
             }
             while (mid > left && text[mid-1] == ' ') {
-                font_char_hmetrics(font, font_size, text[mid-1], &adv, &lsb);
-                font_char_kern(font, font_size, text[mid-1], text[mid], &kern);
+                font_char_advance(font, font_scale, text[mid-1], &adv);
+                font_char_kern(font, font_scale, text[mid-1], text[mid], &kern);
                 test_ox -= adv + kern;
                 num_spaces -= text[mid-1] == ' ';
                 mid--;
@@ -253,9 +259,8 @@ static void push_text_data(GUIComp* comp, i32 cx, i32 cy, i32 cw, i32 ch)
             right++;
 
         if (text[right-1] != ' ') {
-            font_char_hmetrics(font, font_size, text[right-1], &adv, &lsb);
-            font_char_bbox(font, font_size, text[right-1], &a1, &b1, &a2, &b2);
-            test_ox -= adv - (a2 + a1);
+            font_char_advance(font, font_scale, text[mid-1], &adv);
+            test_ox -= adv;
         }
         
         ox = ha * (cw - test_ox) / 2.0f;
@@ -264,21 +269,16 @@ static void push_text_data(GUIComp* comp, i32 cx, i32 cy, i32 cw, i32 ch)
             right--;
 
         while (left < right) {
-            font_char_hmetrics(font, font_size, text[left], &adv, &lsb);
-            font_char_bbox(font, font_size, text[left], &a1, &b1, &a2, &b2);
-            font_char_bmap(font, font_size, text[left], &u1, &v1, &u2, &v2);
-            font_char_kern(font, font_size, text[left], text[left+1], &kern);
-
-            x = cx + ox + (i32)(lsb);
-            y = cy + ch - oy - b2;
-            w = a2 - a1;
-            h = b2 - b1;
+            font_char_advance(font, font_scale, text[left], &adv);
+            font_char_bbox(font, font_scale, text[left], &a1, &b1, &a2, &b2);
+            font_char_bmap(font, font_scale, text[left], &u1, &v1, &u2, &v2);
+            font_char_kern(font, font_scale, text[left], text[left+1], &kern);
 
             if (text[left] != '\0' && text[left] != ' ') {
-                quad.x = x;
-                quad.y = y;
-                quad.w = w;
-                quad.h = h;
+                quad.x = cx + ox + a1;
+                quad.y = cy + ch - oy - b2;
+                quad.w = a2 - a1;
+                quad.h = b2 - b1;
                 quad.r = 255;
                 quad.g = 255;
                 quad.b = 255;
@@ -289,7 +289,7 @@ static void push_text_data(GUIComp* comp, i32 cx, i32 cy, i32 cw, i32 ch)
                 quad.v2 = v2;
                 quad.location = location;
                 push_quad_data(&quad);
-            }   
+            }
 
             ox += adv + kern;
             if (justify && text[left] == ' ')
@@ -298,7 +298,7 @@ static void push_text_data(GUIComp* comp, i32 cx, i32 cy, i32 cw, i32 ch)
             left++;
         }
 
-        oy += ascent - descent + line_gap;
+        oy += (i32)(ascent - descent + line_gap);
     }
 
     if (va == ALIGN_TOP)

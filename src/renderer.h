@@ -126,10 +126,11 @@ void texture_set_dimensions(i32 id, f32 u, f32 v, f32 w, f32 h);
 void texture_info(i32 id, i32* location, f32* u, f32* v, f32* w, f32* h, vec2* pivot, vec2* stretch);
 void texture_cleanup(void);
 
-void font_info(FontEnum font, i32 font_size, f32* ascent, f32* descent, f32* line_gap, i32* location);
-void font_char_hmetrics(FontEnum font, i32 font_size, char character, f32* advance, f32* left_side_bearing);
-void font_char_bbox(FontEnum font, i32 font_size, char character, f32* bbox_x1, f32* bbox_y1, f32* bbox_x2, f32* bbox_y2);
-void font_char_bmap(FontEnum font, i32 font_size, char character, f32* bmap_u1, f32* bmap_v1, f32* bmap_u2, f32* bmap_v2);
-void font_char_kern(FontEnum font, i32 font_size, char character, char next_character, f32* kern);
+void font_info(FontEnum font, f32 font_scale, f32* ascent, f32* descent, f32* line_gap, i32* location);
+void font_char_hmetrics(FontEnum font, f32 font_scale, char character, f32* advance, f32* left_side_bearing);
+void font_char_advance(FontEnum font, f32 font_scale, char character, f32* advance);
+void font_char_bbox(FontEnum font, f32 font_scale, char character, f32* bbox_x1, f32* bbox_y1, f32* bbox_x2, f32* bbox_y2);
+void font_char_bmap(FontEnum font, f32 font_scale, char character, f32* bmap_u1, f32* bmap_v1, f32* bmap_u2, f32* bmap_v2);
+void font_char_kern(FontEnum font, f32 font_scale, char character, char next_character, f32* kern);
 
 #endif

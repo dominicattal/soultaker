@@ -122,11 +122,11 @@ void renderer_write_texture_unit(i32 unit)
     i32 w, h, fmt, c;
     i32 max_image_units = renderer_get_max_image_units();
     if (strcmp(thread_get_self_name(), "Main") != 0) {
-        log_write(DEBUG, "not queried from opengl context thread");
+        log_write(WARNING, "not queried from opengl context thread");
         return;
     }
     if (unit >= max_image_units) {
-        log_write(DEBUG, "unit %d out of range (max=%d)", unit, max_image_units);
+        log_write(WARNING, "unit %d out of range (max=%d)", unit, max_image_units);
         return;
     }
     glActiveTexture(GL_TEXTURE0 + unit);
@@ -157,6 +157,10 @@ void renderer_write_texture_units(void)
     char* summary = string_create("summary");
     char* line;
     char* tmp;
+    if (strcmp(thread_get_self_name(), "Main") != 0) {
+        log_write(WARNING, "not queried from opengl context thread");
+        return;
+    }
     log_write(DEBUG, "max_image_units=%d", max_image_units);
     for (i = 0; i < 32; i++) {
         glActiveTexture(GL_TEXTURE0 + i);
