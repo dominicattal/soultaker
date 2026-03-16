@@ -85,12 +85,12 @@ i32 gui_comp_compute_text_height(GUIComp* comp)
 
     text = comp->text;
     length = comp->text_length;
-    
-    font_info(font, font_size, &ascent, &descent, &line_gap, &location);
 
     font_size = comp->font_size;
     font_scale = (f32)font_size / texture_context.fonts[font].font_size;
     
+    font_info(font, font_scale, &ascent, &descent, &line_gap, &location);
+
     num_lines = 0;
     left = right = 0;
 
@@ -153,8 +153,6 @@ i32 gui_comp_compute_text_height(GUIComp* comp)
         num_lines++;
     }
 
-    //log_write(DEBUG, "%d", (ascent - descent) * num_lines);
-    //gui_comp_set_text_height(comp, (ascent - descent) * num_lines + line_gap * (num_lines - 1));
     return (ascent - descent) * num_lines + line_gap * (num_lines - 1);
 }
 

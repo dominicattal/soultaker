@@ -4,6 +4,8 @@
 #include <assert.h>
 #include <string.h>
 
+GUIContext gui_context;
+
 void gui_comp_init(void)
 { 
     gui_context.root = gui_comp_create(0, 0, window_resolution_x(), window_resolution_y());
@@ -245,6 +247,29 @@ void gui_comp_delete_char(GUIComp* comp, i32 idx)
     st_free(comp->text);
     comp->text = new_text;
     comp->text_length--;
+}
+
+GUIComp* gui_get_event_comp(GUIEventCompEnum type)
+{
+    return gui_context.event_comps[type];
+}
+
+void gui_set_event_comp(GUIEventCompEnum type, GUIComp* comp)
+{
+    GUIComp* prev_comp = gui_context.event_comps[type];
+    gui_context.event_comps[type] = comp;
+    if (prev_comp != NULL) {
+        prev_comp->event_id = GUI_COMP_DEFAULT;
+    }
+    if (comp != NULL) {
+        log_assert(comp->event_id == GUI_COMP_DEFAULT, "cannot assign event comp to another event comp");
+        comp->event_id = type;
+    }
+}
+
+bool gui_event_comp_equal(GUIEventCompEnum type, GUIComp* comp)
+{
+    return gui_context.event_comps[type] == comp;
 }
 
 void gui_comp_hover(GUIComp* comp, bool status)

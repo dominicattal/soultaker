@@ -23,7 +23,6 @@ void state_init(void)
     event_init();
     window_init();
     renderer_init();
-    gui_init();
     game_init();
 }
 
@@ -52,7 +51,6 @@ void state_cleanup(void)
     // add signals so game doesnt cleanup b4 gui finishes with it
     log_unlock();
     game_cleanup();
-    gui_cleanup();
     renderer_cleanup();
     window_cleanup();
     event_cleanup();

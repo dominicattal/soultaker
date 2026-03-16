@@ -137,17 +137,6 @@ typedef struct {
     f32 timer;
 } CompFpsData;
 
-static void update_fps(GUIComp* comp, f32 dt)
-{
-    CompFpsData* data = comp->data;
-    data->timer -= dt;
-    if (data->timer < 0) {
-        char* string = string_create("%.3f %.3f %.3f", 1000 * game_get_dt(), 1000 * state_dt(), 1 / state_dt());
-        gui_comp_set_text(comp, string);
-        data->timer += 0.1;
-    }
-}
-
 #ifdef _WIN32
 size_t process_memory(void)
 {
@@ -172,13 +161,16 @@ size_t process_memory(void)
 }
 #endif
 
-static void update_game_stats(GUIComp* comp, f32 dt)
+static void update_debug(GUIComp* comp, f32 dt)
 {
     CompFpsData* data = comp->data;
     Map* map = game_context.current_map;
     data->timer -= dt;
     if (map != NULL && map->entities != NULL && data->timer < 0) {
         char* string = string_create(
+            "Game dt: %.3f\n"
+            "State dt: %.3f\n"
+            "State fps: %.0f\n"
             "Triggers: %d\n"
             "Entities: %d\n"
             "Projectiles: %d\n"
@@ -191,6 +183,9 @@ static void update_game_stats(GUIComp* comp, f32 dt)
             "Walls: %d\n"
             "Tiles: %d\n"
             "Memory: %d KB",
+        1000 * game_get_dt(),
+        1000 * state_dt(),
+        1 / state_dt(),
         map->triggers->length,
         map->entities->length,
         map->projectiles->length,
@@ -823,23 +818,14 @@ static void load_preset_game(GUIComp* root)
     gui_comp_set_flag(textbox, GUI_COMP_FLAG_CLICKABLE, true);
     gui_comp_attach(root, textbox);
 
-    GUIComp* comp_fps = gui_comp_create(0, 0, 300, 30);
-    comp_fps->data = st_malloc(sizeof(CompFpsData));
-    ((CompFpsData*)comp_fps->data)->timer = 0;
-    comp_fps->update = update_fps;
-    gui_comp_set_align(comp_fps, ALIGN_LEFT, ALIGN_BOTTOM);
-    gui_comp_set_color(comp_fps, 255, 255, 255, 255);
-    gui_comp_set_text_align(comp_fps, ALIGN_CENTER, ALIGN_CENTER);
-    gui_comp_attach(root, comp_fps);
-
-    GUIComp* comp_game_stats = gui_comp_create(0, 0, 150, 200);
-    comp_game_stats->data = st_malloc(sizeof(CompFpsData));
-    ((CompFpsData*)comp_game_stats->data)->timer = 0;
-    comp_game_stats->update = update_game_stats;
-    gui_comp_set_align(comp_game_stats, ALIGN_RIGHT, ALIGN_CENTER);
-    gui_comp_set_color(comp_game_stats, 255, 255, 255, 255);
-    gui_comp_set_text_align(comp_game_stats, ALIGN_CENTER, ALIGN_CENTER);
-    gui_comp_attach(root, comp_game_stats);
+    GUIComp* comp_debug = gui_comp_create(0, 0, 150, 300);
+    comp_debug->data = st_malloc(sizeof(CompFpsData));
+    ((CompFpsData*)comp_debug->data)->timer = 0;
+    comp_debug->update = update_debug;
+    gui_comp_set_align(comp_debug, ALIGN_RIGHT, ALIGN_CENTER);
+    gui_comp_set_color(comp_debug, 255, 255, 255, 255);
+    gui_comp_set_text_align(comp_debug, ALIGN_LEFT, ALIGN_CENTER);
+    gui_comp_attach(root, comp_debug);
 
     GUIComp* minimap = gui_comp_create(0, 0, 250, 250);
     minimap->key = minimap_key;
