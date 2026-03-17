@@ -19,5 +19,6 @@
 #include <glfw.h>
 #include <sndfile.h>
 #include <assert.h>
+#include <math.h>
 
 #endif

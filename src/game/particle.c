@@ -23,12 +23,12 @@ void particle_update(Particle* particle, f32 dt)
     particle->velocity = vec3_add(particle->velocity, vec3_scale(particle->acceleration, dt));
     particle->lifetime -= dt;
     if (particle->update != NULL)
-        particle->update(&game_api, particle, dt);
+        particle->update(particle, dt);
 }
 
 void particle_destroy(Particle* particle)
 {
     if (particle->destroy != NULL)
-        particle->destroy(&game_api, particle);
+        particle->destroy(particle);
     st_free(particle);
 }

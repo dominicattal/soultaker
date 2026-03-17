@@ -1,10 +1,9 @@
 #include <string.h>
 #include "../game.h"
 #include "../renderer.h"
-#include "../api.h"
 #include "../state.h"
 
-typedef void (*UseFuncPtr)(GameApi*, Player*, vec2, vec2);
+typedef void (*UseFuncPtr)(Player*, vec2, vec2);
 
 typedef struct {
     ItemTypeEnum type;
@@ -513,7 +512,7 @@ void inventory_shoot_weapons_primary(Player* player, vec2 direction, vec2 target
             continue;
         item->primary_timer = item->primary_cooldown;
         if (item_context.infos[item->id].primary != NULL)
-            item_context.infos[item->id].primary(&game_api, player, direction, target);
+            item_context.infos[item->id].primary(player, direction, target);
     }
     for (i32 i = 0; i < player->inventory.num_synergies; i++) {
         Synergy* synergy = player->inventory.synergies[i];
@@ -521,7 +520,7 @@ void inventory_shoot_weapons_primary(Player* player, vec2 direction, vec2 target
             continue;
         synergy->primary_timer = synergy->primary_cooldown;
         if (synergy_context.infos[synergy->id].primary != NULL)
-            synergy_context.infos[synergy->id].primary(&game_api, player, direction, target);
+            synergy_context.infos[synergy->id].primary(player, direction, target);
     }
 }
 
@@ -535,7 +534,7 @@ void inventory_shoot_weapons_secondary(Player* player, vec2 direction, vec2 targ
             continue;
         item->secondary_timer = item->secondary_cooldown;
         if (item_context.infos[item->id].secondary != NULL)
-            item_context.infos[item->id].secondary(&game_api, player, direction, target);
+            item_context.infos[item->id].secondary(player, direction, target);
     }
     for (i32 i = 0; i < player->inventory.num_synergies; i++) {
         Synergy* synergy = player->inventory.synergies[i];
@@ -543,7 +542,7 @@ void inventory_shoot_weapons_secondary(Player* player, vec2 direction, vec2 targ
             continue;
         synergy->secondary_timer = synergy->secondary_cooldown;
         if (synergy_context.infos[synergy->id].secondary != NULL)
-            synergy_context.infos[synergy->id].secondary(&game_api, player, direction, target);
+            synergy_context.infos[synergy->id].secondary(player, direction, target);
     }
 }
 
@@ -557,7 +556,7 @@ void inventory_cast_abilities(Player* player, vec2 direction, vec2 target)
             continue;
         item->primary_timer = item->primary_cooldown;
         if (item_context.infos[item->id].cast != NULL)
-            item_context.infos[item->id].cast(&game_api, player, direction, target);
+            item_context.infos[item->id].cast(player, direction, target);
     }
     for (i32 i = 0; i < player->inventory.num_synergies; i++) {
         Synergy* synergy = player->inventory.synergies[i];
@@ -565,7 +564,7 @@ void inventory_cast_abilities(Player* player, vec2 direction, vec2 target)
             continue;
         synergy->secondary_timer = synergy->secondary_cooldown;
         if (synergy_context.infos[synergy->id].cast != NULL)
-            synergy_context.infos[synergy->id].cast(&game_api, player, direction, target);
+            synergy_context.infos[synergy->id].cast(player, direction, target);
     }
 }
 

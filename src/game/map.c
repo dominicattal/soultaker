@@ -1,7 +1,6 @@
 #include "../game.h"
 #include "../event.h"
 #include "../state.h"
-#include "../api.h"
 #include <math.h>
 #include <string.h>
 #include <stb_image.h>
@@ -638,7 +637,7 @@ static Roomset* roomset_create(JsonObject* root, const char* path, Palette* pale
     roomset->branch = branch;
     roomset->init = init;
     roomset->cleanup = cleanup;
-    roomset->data = roomset->init(&game_api);
+    roomset->data = roomset->init();
 
     return roomset;
 }
@@ -665,7 +664,7 @@ static void roomset_destroy(Roomset* roomset)
 {
     List* list;
     i32 i, j;
-    roomset->cleanup(&game_api, roomset->data);
+    roomset->cleanup(roomset->data);
     for (i = 0; i < roomset->num_rooms; i++) {
         list = roomset->rooms[i].male_alternates;
         for (j = 0; j < list->length; j++)
@@ -1086,7 +1085,7 @@ static bool pregenerate_map_helper(GlobalMapGenerationSettings* global_settings,
     args.qm = qm;
     args.roomset = roomset;
 
-    if (roomset->generate(&game_api, &local_settings))
+    if (roomset->generate(&local_settings))
         return true;
     if (local_settings.no_path)
         return local_settings.succeed_even_if_no_path;
@@ -1154,7 +1153,7 @@ static bool pregenerate_map_helper(GlobalMapGenerationSettings* global_settings,
                     local_settings.no_path = false;
                     if (pregenerate_map_helper(global_settings, local_settings, child)) {
                         local_settings.num_rooms_loaded++;
-                        if (roomset->branch(&game_api, &local_settings)) {
+                        if (roomset->branch(&local_settings)) {
                             quadmask_destroy(male_qm);
                             male_qm = NULL;
                             male_idx = 0;
@@ -1230,7 +1229,7 @@ static void place_tile(Map* map, TileColor* tile_color, i32 x, i32 z)
         tile->tex = tile_color->tex;
         tile->collide = tile_color->collide;
         if (tile_color->create != NULL)
-            tile_color->create(&game_api, tile);
+            tile_color->create(tile);
         map->tilemap[z * map->width + x] = tile;
     }
 }
@@ -1279,7 +1278,7 @@ static void load_room(LoadArgs* args)
     }
     if (room->create != NULL) {
         map_context.current_map_node = node;
-        room->create(&game_api);
+        room->create();
         map_context.current_map_node = NULL;
     }
 }
@@ -1574,7 +1573,7 @@ static void current_map_node_exit(Map* map, MapNode* node)
         return;
     if (node->room->exit == NULL)
         return;
-    node->room->exit(&game_api, node->num_exits++);
+    node->room->exit(node->num_exits++);
 }
 
 static void current_map_node_enter(Map* map, MapNode* node)
@@ -1585,7 +1584,7 @@ static void current_map_node_enter(Map* map, MapNode* node)
         return;
     if (node->room->enter == NULL)
         return;
-    node->room->enter(&game_api, node->num_enters++);
+    node->room->enter(node->num_enters++);
 }
 
 void map_fog_explore(Map* map, vec2 position)
@@ -1637,7 +1636,7 @@ void map_handle_trigger_enter(Trigger* trigger, Entity* entity)
 {
     map_context.current_map_node = trigger->map_node;
     if (trigger->enter != NULL)
-        trigger->enter(&game_api, trigger, entity);
+        trigger->enter(trigger, entity);
     map_context.current_map_node = NULL;
 }
 
@@ -1645,7 +1644,7 @@ void map_handle_trigger_stay(Trigger* trigger, Entity* entity)
 {
     map_context.current_map_node = trigger->map_node;
     if (trigger->stay != NULL)
-        trigger->stay(&game_api, trigger, entity);
+        trigger->stay(trigger, entity);
     map_context.current_map_node = NULL;
 }
 
@@ -1653,7 +1652,7 @@ void map_handle_trigger_leave(Trigger* trigger, Entity* entity)
 {
     // in update loop so dont have to set map node
     if (trigger->leave != NULL)
-        trigger->leave(&game_api, trigger, entity);
+        trigger->leave(trigger, entity);
 }
 
 vec2 map_orientation(void)
@@ -1708,7 +1707,7 @@ void map_interactable_callback(InteractableFuncPtr fptr, Map* map, MapNode* map_
 {
     map_context.current_map = map;
     map_context.current_map_node = map_node;
-    fptr(&game_api);
+    fptr();
 }
 
 void map_set_interactable(const char* desc, InteractableFuncPtr func_ptr)

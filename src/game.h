@@ -14,7 +14,6 @@
 // Forward Declarations
 //**************************************************************************
 
-typedef struct GameApi GameApi;
 typedef struct Camera Camera;
 typedef struct Weapon Weapon;
 typedef struct Item Item;
@@ -37,38 +36,38 @@ typedef struct MapNode MapNode;
 typedef struct MapInfo MapInfo;
 typedef struct LocalMapGenerationSettings LocalMapGenerationSettings;
 
-typedef void (*TileCreateFuncPtr)(GameApi*, Tile*);
-typedef void (*TileCollideFuncPtr)(GameApi* api, Entity* entity);
+typedef void (*TileCreateFuncPtr)(Tile*);
+typedef void (*TileCollideFuncPtr)(Entity* entity);
 
-typedef void (*TriggerEnterFunc)(GameApi*, Trigger*, Entity*);
-typedef void (*TriggerStayFunc)(GameApi*, Trigger*, Entity*);
-typedef void (*TriggerLeaveFunc)(GameApi*, Trigger*, Entity*);
-typedef void (*TriggerDestroyFunc)(GameApi*, Trigger*);
+typedef void (*TriggerEnterFunc)(Trigger*, Entity*);
+typedef void (*TriggerStayFunc)(Trigger*, Entity*);
+typedef void (*TriggerLeaveFunc)(Trigger*, Entity*);
+typedef void (*TriggerDestroyFunc)(Trigger*);
 
-typedef void (*InteractableFuncPtr)(GameApi*);
+typedef void (*InteractableFuncPtr)(void);
 
-typedef void (*ProjectileUpdateFuncPtr)(GameApi*, Projectile*, f32);
-typedef void (*ProjectileDestroyFuncPtr)(GameApi*, Projectile*);
+typedef void (*ProjectileUpdateFuncPtr)(Projectile*, f32);
+typedef void (*ProjectileDestroyFuncPtr)(Projectile*);
 
 // function called when room in generated. used to create game objects in that room
-typedef void (*RoomCreateFuncPtr)(GameApi*);
+typedef void (*RoomCreateFuncPtr)(void);
 // function called when player enters a room. i32 arg is the number of times that player entered
-typedef void (*RoomEnterFuncPtr)(GameApi*, i32);
+typedef void (*RoomEnterFuncPtr)(i32);
 // functionc alled when player exits a room.
-typedef void (*RoomExitFuncPtr)(GameApi*, i32);
+typedef void (*RoomExitFuncPtr)(i32);
 // create data for map that persists while map is in memory
 // this data can be queried with map_get_data()
-typedef void* (*RoomsetInitFuncPtr)(GameApi*);
+typedef void* (*RoomsetInitFuncPtr)(void);
 // last function called before map is destroyed, used to cleanup allocations
 // in RoomsetInitFuncPtr. void* arg is the data
-typedef void (*RoomsetCleanupFuncPtr)(GameApi*, void*);
+typedef void (*RoomsetCleanupFuncPtr)(void*);
 // true if at end of branch, false otherwise
-typedef bool (*RoomsetGenerateFuncPtr)(GameApi*, LocalMapGenerationSettings*);
+typedef bool (*RoomsetGenerateFuncPtr)(LocalMapGenerationSettings*);
 // true if should create branch, false otherwise
-typedef bool (*RoomsetBranchFuncPtr)(GameApi*, LocalMapGenerationSettings*);
+typedef bool (*RoomsetBranchFuncPtr)(LocalMapGenerationSettings*);
 
 // used for items and synergies
-typedef void (*UseFuncPtr)(GameApi*, Player*, vec2, vec2);
+typedef void (*UseFuncPtr)(Player*, vec2, vec2);
 
 //**************************************************************************
 // Camera declarations
@@ -675,8 +674,8 @@ bool projectile_get_flag(Projectile* proj, ProjectileFlagEnum flag);
 // AOE definitions
 //**************************************************************************
 
-typedef void (*AOEUpdateFuncPtr)(GameApi*, AOE*, f32);
-typedef void (*AOEDestroyFuncPtr)(GameApi*, AOE*);
+typedef void (*AOEUpdateFuncPtr)(AOE*, f32);
+typedef void (*AOEDestroyFuncPtr)(AOE*);
 
 typedef struct AOE {
     AOEUpdateFuncPtr update;
@@ -745,8 +744,8 @@ void parstacle_destroy(Parstacle* parstacle);
 // Particles have no hitbox and are solid colors
 //**************************************************************************
 
-typedef void (*ParticleUpdateFuncPtr)(GameApi*, Particle*, f32);
-typedef void (*ParticleDestroyFuncPtr)(GameApi*, Particle*);
+typedef void (*ParticleUpdateFuncPtr)(Particle*, f32);
+typedef void (*ParticleDestroyFuncPtr)(Particle*);
 
 typedef struct Particle {
     ParticleUpdateFuncPtr update;
@@ -910,96 +909,5 @@ f32  camera_get_pitch(void);
 f32  camera_get_yaw(void);
 f32  camera_get_pitch(void);
 f32  camera_get_zoom(void);
-
-//**************************************************************************
-// API
-//**************************************************************************
-
-typedef struct GameApi {
-    // Game
-    vec2 (*game_get_nearest_player_position)(void);
-    void (*game_set_player_position)(vec2);
-
-    // Entity
-    i32 (*entity_get_id)(const char*);
-    i32 (*entity_get_state_id)(Entity*, const char*);
-    bool (*entity_get_flag)(Entity*, EntityFlagEnum);
-    void (*entity_set_flag)(Entity*, EntityFlagEnum, bool);
-    void (*entity_set_state)(Entity*, const char*);
-
-    // Wall
-    Wall* (*wall_create)(vec2, f32, u32);
-    void (*wall_set_flag)(Wall*, WallFlagEnum, bool);
-    bool (*wall_get_flag)(Wall*, WallFlagEnum);
-
-    // Tile
-    Tile* (*tile_create)(vec2, u32);
-    void (*tile_set_flag)(Tile*, TileFlagEnum, bool);
-    bool (*tile_get_flag)(Tile*, TileFlagEnum);
-
-    // Projectile
-    void (*projectile_set_flag)(Projectile*, ProjectileFlagEnum, bool);
-
-    // Trigger
-    void (*trigger_set_flag)(Trigger*, TriggerFlagEnum, bool);
-    bool (*trigger_get_flag)(Trigger*, TriggerFlagEnum);
-
-    // Map
-    void* (*map_get_data)(void);
-    void (*map_set_interactable)(const char*, InteractableFuncPtr);
-    vec2 (*map_orientation)(void);
-    void (*map_make_boss)(char*, Entity*);
-    void (*map_unmake_boss)(Entity*);
-    AOE* (*map_create_aoe)(vec2, f32);
-    Particle* (*map_create_particle)(vec3);
-    Projectile* (*map_create_projectile)(vec2);
-    Trigger* (*map_create_trigger)(vec2, f32);
-    Entity* (*room_create_entity)(vec2, i32);
-    Obstacle* (*room_create_obstacle)(vec2);
-    Parstacle* (*room_create_parstacle)(vec2);
-    Wall* (*room_create_wall)(vec2, f32, f32, f32, u32);
-    Projectile* (*room_create_projectile)(vec2);
-    Trigger* (*room_create_trigger)(vec2, f32);
-    Tile* (*room_set_tilemap_tile)(i32, i32, u32);
-    Wall* (*room_set_tilemap_wall)(i32, i32, f32, u32);
-    vec2 (*room_position)(vec2);
-
-    // Misc
-    i32 (*texture_get_id)(const char*);
-
-    // Util
-    vec3 (*vec3_create)(f64, f64, f64);
-    vec3 (*vec3_normalize)(vec3);
-    vec3 (*vec3_sub)(vec3, vec3);
-    vec2 (*vec2_add)(vec2, vec2);
-    f64  (*vec2_mag)(vec2);
-    vec2 (*vec2_create)(f64, f64);
-    vec2 (*vec2_scale)(vec2, f64);
-    vec2 (*vec2_rotate)(vec2, f64);
-    vec2 (*vec2_rotate180)(vec2);
-    vec2 (*vec2_direction)(f64);
-    vec2 (*vec2_sub)(vec2, vec2);
-    vec2 (*vec2_normalize)(vec2);
-    f64 (*vec2_radians)(vec2);
-    f32 (*randf)(void);
-    f32 (*randf_range)(f32, f32);
-    f64 (*gmodf)(f64, f64);
-
-    // Events
-    void (*gui_create_notification)(char*);
-
-#ifdef DEBUG_BUILD
-    void* (*_st_malloc)(size_t, const char*, int);
-    void (*_st_free)(void*, const char*, int);
-    void (*_log_write)(LogLevel, const char*, const char*, int, ...);
-#else
-    void* (*malloc)(size_t);
-    void (*free)(void*);
-    void (*_log_write)(LogLevel, const char*, ...);
-#endif
-
-} GameApi;
-
-extern GameApi game_api;
 
 #endif

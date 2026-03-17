@@ -25,7 +25,7 @@ void projectile_update(Projectile* proj, f32 dt)
     proj->position = vec2_add(proj->position, vec2_scale(proj->direction, proj->speed * dt));
     proj->lifetime -= dt;
     if (proj->update != NULL)
-        proj->update(&game_api, proj, dt);
+        proj->update(proj, dt);
 }
 
 void projectile_set_flag(Projectile* proj, ProjectileFlagEnum flag, bool val)
@@ -41,6 +41,6 @@ bool projectile_get_flag(Projectile* proj, ProjectileFlagEnum flag)
 void projectile_destroy(Projectile* proj)
 {
     if (proj->destroy != NULL)
-        proj->destroy(&game_api, proj);
+        proj->destroy(proj);
     st_free(proj);
 }

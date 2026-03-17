@@ -29,7 +29,11 @@ int dlclose(void* handle)
 #else
 #include <dlfcn.h>
 const char* shared_ext = ".so";
+#ifdef DEBUG_BUILD
 const char* pathname = "bin/dev/plugins/soultaker.so";
+#else
+const char* pathname = "bin/release/plugins/soultaker.so";
+#endif
 const int flags = RTLD_NOW;
 #endif
 

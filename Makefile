@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -MMD -Wall -Wextra -Werror -Wfatal-errors -Wno-unused-parameter -finline-functions \
+CFLAGS = -fPIC -Wall -Wextra -Werror -Wfatal-errors -Wno-unused-parameter -finline-functions \
 		 -fopenmp -pthread -Wno-unused-function -Iinclude -Wno-unused-result -Wno-maybe-uninitialized -Wno-unused-but-set-variable -Wno-unused-variable
 CFLAGS_DEV = -g3 -D DEBUG_BUILD
 CFLAGS_RELEASE = -O2 -D RELEASE_BUILD
@@ -27,37 +27,41 @@ PLUGIN_DEPS_REL = $(PLUGIN_OBJS_REL:%.o=%.d)
 
 all: dev
 
-dev: build dev-src dev-dll clean-data
+dev: build dev-folders dev-src dev-dll clean-data
+	@$(CC) $(CFLAGS) $(CFLAGS_DEV) main.c bin/dev/$(DLL_NAME).$(SHARED_EXT) -o bin/dev/$(NAME)
 
-dev-src: $(OBJS_DEV)
-	@mkdir -p bin/dev
-	@$(CC) $(CFLAGS) $(CFLAGS_DEV) $(OBJS_DEV) $(LINKER_FLAGS) -o bin/dev/$(NAME)
-
-dev-dll: $(PLUGIN_OBJS_DEV)
+dev-folders:
 	@mkdir -p bin/dev
 	@mkdir -p bin/dev/plugins
-	@$(CC) -shared -lm $(LINKER_FLAGS) $(PLUGIN_OBJS_DEV) -o bin/dev/plugins/$(DLL_NAME).$(SHARED_EXT)
+
+dev-src: $(OBJS_DEV)
+	@$(CC) -shared $(CFLAGS) $(CFLAGS_DEV) $(OBJS_DEV) $(LINKER_FLAGS) -o bin/dev/$(DLL_NAME).$(SHARED_EXT)
+
+dev-dll: dev-src $(PLUGIN_OBJS_DEV)
+	@$(CC) -shared $(LINKER_FLAGS) $(PLUGIN_OBJS_DEV) bin/dev/$(DLL_NAME).$(SHARED_EXT) -o bin/dev/plugins/$(DLL_NAME).$(SHARED_EXT)
 
 build/dev/%.o: %.c
 	@mkdir -p $(shell dirname $@)
 	@echo $<
-	@$(CC) $(CFLAGS) $(CFLAGS_DEV) -fpic -c -o $@ $<
+	@$(CC) -MMD $(CFLAGS) $(CFLAGS_DEV) -fpic -c -o $@ $<
 
-release: build release-src release-dll
+release: build release-folders release-src release-dll
+	@$(CC) $(CFLAGS) $(CFLAGS_RELEASE) main.c bin/release/$(DLL_NAME).$(SHARED_EXT) -o bin/release/$(NAME)
 
-release-src: $(OBJS_REL)
-	@mkdir -p bin/release
-	@$(CC) $(CFLAGS) $(CFLAGS_RELEASE) $(OBJS_REL) $(LINKER_FLAGS) -o bin/release/$(NAME)
-
-release-dll: $(PLUGIN_OBJS_REL)
+release-folders:
 	@mkdir -p bin/release
 	@mkdir -p bin/release/plugins
-	@$(CC) -shared $(CFLAGS) $(CFLAGS_RELEASE) $(PLUGIN_OBJS_REL) $(LINKER_FLAGS) -o bin/release/plugins/$(DLL_NAME).dll
+
+release-src: $(OBJS_REL)
+	@$(CC) -shared $(CFLAGS) $(CFLAGS_RELEASE) $(OBJS_REL) $(LINKER_FLAGS) -o bin/release/$(DLL_NAME).$(SHARED_EXT)
+
+release-dll: release-src $(PLUGIN_OBJS_REL)
+	@$(CC) -shared $(CFLAGS) $(CFLAGS_RELEASE) $(PLUGIN_OBJS_REL) $(LINKER_FLAGS) bin/release/$(DLL_NAME).$(SHARED_EXT) -o bin/release/plugins/$(DLL_NAME).$(SHARED_EXT)
 
 build/release/%.o: %.c
 	@mkdir -p $(shell dirname $@)
 	@echo $<
-	@$(CC) $(CFLAGS) $(CFLAGS_RELEASE) -c -o $@ $<
+	@$(CC) -MMD $(CFLAGS) $(CFLAGS_RELEASE) -c -o $@ $<
 
 build:
 	@mkdir -p build

@@ -1,5 +1,4 @@
 #include "../game.h"
-#include "../api.h"
 #include <math.h>
 
 extern GameContext game_context;
@@ -49,7 +48,7 @@ void collide_entity_tile(Entity* entity, Tile* tile)
     sx = sz = 1.0f;
     if (!(ex >= tx && ex < tx + sx && ez >= tz && ez < tz + sz))
         return;
-    tile->collide(&game_api, entity);
+    tile->collide(entity);
 }
 
 void collide_entity_obstacle(Entity* entity, Obstacle* obstacle)

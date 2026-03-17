@@ -49,7 +49,7 @@ void trigger_destroy(Trigger* trigger)
     if (trigger->destroy == NULL)
         st_free(trigger->data);
     else
-        trigger->destroy(&game_api, trigger);
+        trigger->destroy(trigger);
     bitset_destroy(trigger->bitset);
     list_destroy(trigger->entities);
     st_free(trigger);

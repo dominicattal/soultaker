@@ -1,6 +1,5 @@
 #include "../game.h"
 #include "../state.h"
-#include "../api.h"
 #include "../event.h"
 #include <string.h>
 #include <math.h>
@@ -9,9 +8,9 @@
 
 extern GameContext game_context;
 
-typedef void (*CreateFuncPtr)(GameApi*, Entity*);
-typedef void (*DestroyFuncPtr)(GameApi*, Entity*);
-typedef void (*UpdateFuncPtr)(GameApi*, Entity*, f32);
+typedef void (*CreateFuncPtr)(Entity*);
+typedef void (*DestroyFuncPtr)(Entity*);
+typedef void (*UpdateFuncPtr)(Entity*, f32);
 
 typedef struct {
     char* name;
@@ -395,7 +394,7 @@ Entity* entity_create(vec2 position, i32 id)
 
     CreateFuncPtr create = entity_context.infos[id].create;
     if (create != NULL)
-        create(&game_api, entity);
+        create(entity);
 
     return entity;
 }
@@ -436,10 +435,10 @@ void entity_update(Entity* entity, f32 dt)
     UpdateFuncPtr update;
     update = entity_context.infos[entity->id].update;
     if (update != NULL)
-        update(&game_api, entity, dt);
+        update(entity, dt);
     update = entity_context.infos[entity->id].states[entity->state].update;
     if (update != NULL)
-        update(&game_api, entity, dt);
+        update(entity, dt);
 
     entity_set_flag(entity, ENTITY_FLAG_HIT_WALL, false);
 }
@@ -514,7 +513,7 @@ void entity_destroy(Entity* entity)
 {
     DestroyFuncPtr destroy = entity_context.infos[entity->id].destroy;
     if (destroy != NULL)
-        destroy(&game_api, entity);
+        destroy(entity);
     if (entity_get_flag(entity, ENTITY_FLAG_AUTO_FREE_DATA))
         st_free(entity->data);
     st_free(entity);

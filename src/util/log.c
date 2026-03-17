@@ -35,6 +35,7 @@ static const char* severity_string(LogLevel severity)
         case WARNING: return "WARNING";
         case INFO: return "INFO";
         case DEBUG: return "DEBUG";
+        case MEMORY: return "MEMORY";
         default: break;
     }
     return "";

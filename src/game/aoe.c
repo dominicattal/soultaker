@@ -23,13 +23,13 @@ void aoe_update(AOE* aoe, f32 dt)
         aoe->timer += aoe->cooldown;
     aoe->timer -= dt;
     if (aoe->update != NULL)
-        aoe->update(&game_api, aoe, dt);
+        aoe->update(aoe, dt);
 }
 
 void aoe_destroy(AOE* aoe)
 {
     if (aoe->destroy != NULL)
-        aoe->destroy(&game_api, aoe);
+        aoe->destroy(aoe);
     st_free(aoe);
 }
 
