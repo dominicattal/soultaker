@@ -107,6 +107,7 @@
     },
     "outpost1_boss": {
         "create": "outpost1_boss_create",
+        "update": "outpost1_boss_update",
         "destroy": "outpost1_boss_destroy",
         "states": {
             "idle": {

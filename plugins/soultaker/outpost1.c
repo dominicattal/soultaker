@@ -514,38 +514,150 @@ static vec2 sword_offsets[] = {
     { .x = -1.0, .z = 3.5 },
 };
 
+static f32 boss_room_center = 28.5;
+static i32 boss_room_width = 56;
+static i32 boss_spacing = 3;
+static i32 boss_num_swords = 17;
+
+typedef struct {
+    f32 boundary_swords_timer;
+    f32 boundary_parj_timer;
+    f32 shot_timer;
+    i32 pattern;
+    bool started;
+    i32 phase1_attack1_pattern;
+} BossData;
+
+typedef struct {
+    f32 delay_timer;
+    f32 speed;
+} SwordProjData;
+
+static void sword_update(Projectile* proj, f32 dt)
+{
+    SwordProjData* data = proj->data;
+    data->delay_timer -= dt;
+    if (data->delay_timer < 0) {
+        proj->speed = data->speed;
+        proj->update = NULL;
+    }
+}
+
+static void spawn_sword(vec2 origin, vec2 direction, f32 lifetime, f32 speed)
+{
+    for (size_t i = 0; i < sizeof(sword_offsets) / sizeof(vec2); i++) {
+        vec2 offset = sword_offsets[i];
+        vec2 pos = vec2_add(origin, vec2_rotate(offset, vec2_radians(direction) - PI/2));
+        Projectile* proj = room_create_projectile(pos);
+        proj->direction = direction;
+        proj->size = 0.5;
+        proj->speed = speed;
+        proj->lifetime = lifetime;
+        proj->facing = vec2_radians(direction);
+        proj->tex = texture_get_id("bullet");
+        projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, false);
+    }
+}
+
+static void spawn_sword_with_delay(vec2 origin, vec2 direction, f32 lifetime, f32 speed, f32 delay)
+{
+    for (size_t i = 0; i < sizeof(sword_offsets) / sizeof(vec2); i++) {
+        vec2 offset = sword_offsets[i];
+        vec2 pos = vec2_add(origin, vec2_rotate(offset, vec2_radians(direction) - PI/2));
+        Projectile* proj = room_create_projectile(pos);
+        proj->direction = direction;
+        proj->size = 0.5;
+        proj->speed = 0;
+        proj->lifetime = lifetime + delay;
+        proj->update = sword_update;
+        SwordProjData* data = st_malloc(sizeof(SwordProjData));
+        data->delay_timer = delay;
+        data->speed = speed;
+        proj->data = data;
+        proj->facing = vec2_radians(direction);
+        proj->tex = texture_get_id("bullet");
+        projectile_set_flag(proj, PROJECTILE_FLAG_AUTO_FREE_DATA, false);
+        projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, false);
+    }
+}
+
+static void spawn_sword_at_wall(i32 idx, i32 side, f32 lifetime, f32 speed)
+{
+    vec2 origin, direction;
+    f32 rad;
+    if (side == UP) {
+        origin = vec2_create(boss_room_center + (idx-boss_num_swords/2)*boss_spacing, 3);
+        direction = vec2_create(0, 1);
+        spawn_sword(origin, direction, lifetime, speed);
+    } else if (side == DOWN) {
+        origin = vec2_create(boss_room_center + (idx-boss_num_swords/2)*boss_spacing, boss_room_width-3);
+        direction = vec2_create(0, -1);
+        spawn_sword(origin, direction, lifetime, speed);
+    } else if (side == RIGHT) {
+        origin = vec2_create(3, boss_room_center + (idx-boss_num_swords/2)*boss_spacing);
+        direction = vec2_create(1, 0);
+        spawn_sword(origin, direction, lifetime, speed);
+    } else if (side == LEFT) {
+        origin = vec2_create(boss_room_width-3, boss_room_center + (idx-boss_num_swords/2)*boss_spacing);
+        direction = vec2_create(-1, 0);
+        spawn_sword(origin, direction, lifetime, speed);
+    }
+}
+
+static void spawn_sword_at_wall_with_delay(i32 idx, i32 side, f32 lifetime, f32 speed, f32 delay)
+{
+    vec2 origin, direction;
+    f32 rad;
+    if (side == UP) {
+        origin = vec2_create(boss_room_center + (idx-boss_num_swords/2)*boss_spacing, 3);
+        direction = vec2_create(0, 1);
+        spawn_sword_with_delay(origin, direction, lifetime, speed, delay);
+    } else if (side == DOWN) {
+        origin = vec2_create(boss_room_center + (idx-boss_num_swords/2)*boss_spacing, boss_room_width-3);
+        direction = vec2_create(0, -1);
+        spawn_sword_with_delay(origin, direction, lifetime, speed, delay);
+    } else if (side == RIGHT) {
+        origin = vec2_create(3, boss_room_center + (idx-boss_num_swords/2)*boss_spacing);
+        direction = vec2_create(1, 0);
+        spawn_sword_with_delay(origin, direction, lifetime, speed, delay);
+    } else if (side == LEFT) {
+        origin = vec2_create(boss_room_width-3, boss_room_center + (idx-boss_num_swords/2)*boss_spacing);
+        direction = vec2_create(-1, 0);
+        spawn_sword_with_delay(origin, direction, lifetime, speed, delay);
+    }
+}
+
 static void boss_start(Trigger* trigger, Entity* entity)
 {
     MapData* map_data = map_get_data();
     Entity* boss = map_data->boss;
-    log_write(DEBUG, "%f %f", entity->position.x, entity->position.z);
-    log_write(DEBUG, "test");
     if (map_data->boss == NULL)
         log_write(FATAL, "Map boss is null");
+    BossData* data = boss->data;
+    data->started = true;
+    data->shot_timer = 6.0;
+    data->boundary_swords_timer = 3.0;
     map_make_boss("Asgore", boss);
     entity_set_state(boss, "phase1_attack1");
     Wall* wall;
-    wall = room_set_tilemap_wall(26, 54, 2.0f, 0x683434);
+    wall = room_set_tilemap_wall(26, 55, 2.0f, 0x683434);
     wall->top_tex = texture_get_id("outpost1_wall1_top");
     wall->side_tex = texture_get_id("outpost1_wall1_side");
-    wall = room_set_tilemap_wall(27, 54, 2.0f, 0x683434);
+    wall = room_set_tilemap_wall(27, 55, 2.0f, 0x683434);
     wall->top_tex = texture_get_id("outpost1_wall1_top");
     wall->side_tex = texture_get_id("outpost1_wall1_side");
-    wall = room_set_tilemap_wall(28, 54, 2.0f, 0x683435);
+    wall = room_set_tilemap_wall(28, 55, 2.0f, 0x683435);
     wall->top_tex = texture_get_id("outpost1_wall1_top");
     wall->side_tex = texture_get_id("outpost1_wall1_side");
-    wall = room_set_tilemap_wall(29, 54, 2.0f, 0x683434);
+    wall = room_set_tilemap_wall(29, 55, 2.0f, 0x683434);
     wall->top_tex = texture_get_id("outpost1_wall1_top");
     wall->side_tex = texture_get_id("outpost1_wall1_side");
-    wall = room_set_tilemap_wall(30, 54, 2.0f, 0x683434);
+    wall = room_set_tilemap_wall(30, 55, 2.0f, 0x683434);
     wall->top_tex = texture_get_id("outpost1_wall1_top");
     wall->side_tex = texture_get_id("outpost1_wall1_side");
-}
 
-typedef struct {
-    f32 shot_timer;
-    i32 pattern;
-} BossData;
+    gui_create_notification("You shouldn't have come here");
+}
 
 void outpost1_boss_create(Entity* entity)
 {
@@ -555,33 +667,83 @@ void outpost1_boss_create(Entity* entity)
     trigger->enter = boss_start;
     entity->size = 3.0;
     entity->health = entity->max_health = 100;
-    BossData* data = entity->data = st_malloc(sizeof(BossData));
-    data->shot_timer = 0;
-    data->pattern = 0;
+    BossData* data = entity->data = st_calloc(1, sizeof(BossData));
     entity_set_flag(entity, ENTITY_FLAG_AUTO_FREE_DATA, true);
 
     MapData* map_data = map_get_data();
     map_data->boss = entity;
-    entity_set_flag(entity, ENTITY_FLAG_INVULNERABLE, true);
 }
 
 void outpost1_boss_destroy(Entity* entity)
 {
 }
 
-static void spawn_sword(vec2 origin, vec2 direction)
+static void spawn_parjicles(void)
 {
-    for (size_t i = 0; i < sizeof(sword_offsets) / sizeof(vec2); i++) {
-        vec2 offset = sword_offsets[i];
-        vec2 pos = vec2_add(origin, vec2_rotate(offset, vec2_radians(direction) - PI/2));
-        Projectile* proj = room_create_projectile(pos);
-        proj->direction = direction;
-        proj->size = 0.5;
-        proj->speed = 25;
-        proj->lifetime = 5.0;
-        proj->facing = vec2_radians(direction);
-        proj->tex = texture_get_id("bullet");
-        projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, true);
+    vec3 position, direction;
+    i32 num_tiles = 31;
+    i32 p1 = 13;
+    i32 p2 = boss_room_width-12;
+    for (i32 dir = 0; dir < 4; dir++) {
+        for (i32 i = 0; i < 10; i++) {
+            switch (dir) {
+                case UP:
+                    position = vec3_create(p2, 0.5, p1);
+                    direction = vec3_create(-1, 0, 0);
+                    break;
+                case RIGHT:
+                    position = vec3_create(p1, 0.5, p1);
+                    direction = vec3_create(0, 0, 1);
+                    break;
+                case DOWN:
+                    position = vec3_create(p1, 0.5, p2);
+                    direction = vec3_create(1, 0, 0);
+                    break;
+                case LEFT:
+                    position = vec3_create(p2, 0.5, p2);
+                    direction = vec3_create(0, 0, -1);
+                    break;
+                default:
+                    position = vec3_create(0,0,0);
+                    break;
+            }
+            position.x += randf_range(-0.1, 0.1);
+            position.y += randf_range(-0.1, 0.1);
+            position.z += randf_range(-0.1, 0.1);
+            Parjicle* parj = room_create_parjicle(position);
+            parj->direction = direction;
+            parj->speed = randf_range(15, 25);
+            f32 hue = randf_range(0, 0.5);
+            parj->size = -randf_range(0.1, 0.2);
+            parj->color = vec3_create(hue, hue, 1);
+            parj->lifetime = num_tiles / parj->speed;
+        }
+    }
+}
+
+void outpost1_boss_update(Entity* entity, f32 dt)
+{
+    BossData* data = entity->data;
+    vec2 origin, direction;
+    if (!data->started)
+        return;
+    data->boundary_swords_timer -= dt;
+    if (data->boundary_swords_timer < 0) {
+        data->boundary_swords_timer += 0.35/2;
+        f32 lifetime = 5.0;
+        f32 speed = 50;
+        for (i32 i = 0; i < 3; i++) {
+            spawn_sword_at_wall(i, UP, lifetime, speed);
+            spawn_sword_at_wall(i, LEFT, lifetime, speed);
+            spawn_sword_at_wall(boss_num_swords-1-i, RIGHT, lifetime, speed);
+            spawn_sword_at_wall(boss_num_swords-1-i, DOWN, lifetime, speed);
+        }
+    }
+
+    data->boundary_parj_timer -= dt;
+    if (data->boundary_parj_timer < 0) {
+        spawn_parjicles();
+        data->boundary_parj_timer += 0.1;
     }
 }
 
@@ -589,26 +751,21 @@ void outpost1_boss_phase1_attack1_update(Entity* entity, f32 dt)
 {
     BossData* data = entity->data;
     vec2 origin, direction;
-    f32 center = 28.5;
     data->shot_timer -= dt;
     if (data->shot_timer >= 0)
         return;
-    i32 room_width = 56;
-    i32 spacing = 3;
-    i32 num_swords = 17;
-    data->shot_timer += 1;
-    for (i32 i = 0; i < num_swords; i++) {
-        origin = vec2_create(center + (i-num_swords/2)*spacing, 3);
-        direction = vec2_create(0, 1);
-        spawn_sword(origin, direction);
-        origin = vec2_create(center + (i-num_swords/2)*spacing, room_width-3);
-        direction = vec2_create(0, -1);
-        spawn_sword(origin, direction);
-        origin = vec2_create(3, center + (i-num_swords/2)*spacing);
-        direction = vec2_create(1, 0);
-        spawn_sword(origin, direction);
-        origin = vec2_create(room_width-3, center + (i-num_swords/2)*spacing);
-        direction = vec2_create(-1, 0);
-        spawn_sword(origin, direction);
+    if (data->phase1_attack1_pattern < 3) {
+        for (i32 i = 3; i < boss_num_swords-3; i++)
+            spawn_sword_at_wall_with_delay(i, UP, 1.8, 15, 1.0);
+        if (++data->phase1_attack1_pattern < 3)
+            data->shot_timer += 0.7;
+        else
+            data->shot_timer += 3;
+    } else {
+        i32 opening = rand() % (boss_num_swords-6-1) + 3;
+        for (i32 i = 3; i < boss_num_swords-3; i++)
+            if (i != opening && i != opening + 1)
+                spawn_sword_at_wall_with_delay(i, UP, 5.0, 15, 1.0);
+        data->shot_timer += 2;
     }
 }

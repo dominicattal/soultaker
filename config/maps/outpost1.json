@@ -212,14 +212,14 @@
             },
             "boss_room": {
                 "rotate": false,
-                "bounding_box": [70, 0, 126, 55],
+                "bounding_box": [70, 0, 126, 56],
                 "create": "outpost1_boss_room_create",
                 "type": "boss",
                 "alternates": [
                     {
                         "type": "female",
                         "default": "wall1",
-                        "location": [98, 54],
+                        "location": [98, 55],
                         "bounding_box": [21, 1, 25, 1],
                         "origin": [23, 1]
                     }

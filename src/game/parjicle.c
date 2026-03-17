@@ -8,6 +8,7 @@ Parjicle* parjicle_create(vec3 position)
     parjicle->position = position;
     parjicle->direction = vec3_create(1, 0, 0);
     parjicle->color = vec3_create(1, 1, 0);
+    parjicle->lifetime = 1.0;
     parjicle->size = 0.1f;
     parjicle->speed = 1.0f;
     parjicle->rotation = 0.0f;

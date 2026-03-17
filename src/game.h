@@ -300,6 +300,7 @@ Parstacle*      room_create_parstacle(vec2 position);
 Projectile*     room_create_projectile(vec2 position);
 Wall*           room_create_wall(vec2 position, f32 height, f32 width, f32 length, u32 minimap_color);
 Trigger*        room_create_trigger(vec2 position, f32 radius);
+Parjicle*       room_create_parjicle(vec3 position);
 Tile*           room_set_tilemap_tile(i32 x, i32 z, u32 minimap_color);
 Wall*           room_set_tilemap_wall(i32 x, i32 z, f32 height, u32 minimap_color);
 
@@ -655,6 +656,7 @@ typedef struct Projectile {
 } Projectile;
 
 typedef enum {
+    PROJECTILE_FLAG_AUTO_FREE_DATA,
     PROJECTILE_FLAG_TEX_ROTATION,
     PROJECTILE_FLAG_FRIENDLY
 } ProjectileFlagEnum;
