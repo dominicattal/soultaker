@@ -576,7 +576,7 @@ static void spawn_sword_with_delay(vec2 origin, vec2 direction, f32 lifetime, f3
         proj->data = data;
         proj->facing = vec2_radians(direction);
         proj->tex = texture_get_id("bullet");
-        projectile_set_flag(proj, PROJECTILE_FLAG_AUTO_FREE_DATA, false);
+        projectile_set_flag(proj, PROJECTILE_FLAG_AUTO_FREE_DATA, true);
         projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, false);
     }
 }

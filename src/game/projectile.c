@@ -42,5 +42,7 @@ void projectile_destroy(Projectile* proj)
 {
     if (proj->destroy != NULL)
         proj->destroy(proj);
+    if (projectile_get_flag(proj, PROJECTILE_FLAG_AUTO_FREE_DATA))
+        st_free(proj->data);
     st_free(proj);
 }
