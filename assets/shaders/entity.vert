@@ -61,12 +61,11 @@ void main() {
     dx = tu[winding[vertex_idx]] * 2 - 1;
     dy = 1 - tv[winding[vertex_idx]];
 
-    gl_Position = vec4(
-                position.x + dx * size.x * (stretch.x + dx * pivot.x),
-                position.y + dy * size.y * (stretch.y + dy * pivot.y),
-                position.z,
-                position.w
-            );
+    position.x += dx * size.x * (stretch.x + dx * pivot.x);
+    position.y += dy * size.y * (stretch.y + dy * pivot.y);
+
+    gl_Position = position;
+
     TexCoord = vec2(u + tu[winding[vertex_idx]] * du,
                     v + tv[winding[vertex_idx]] * dv);
     Location = int(round(data_in[idx+8]));

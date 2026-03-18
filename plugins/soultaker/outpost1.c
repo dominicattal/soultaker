@@ -650,7 +650,7 @@ static void boss_start(Trigger* trigger, Entity* entity)
     data->phase_pattern = 0;
     data->invulnerable_timer = 6.0;
     map_make_boss("Asgore", boss);
-    entity_set_state(boss, "phase1_attack3");
+    entity_set_state(boss, "phase1_attack1");
     Wall* wall;
     wall = room_set_tilemap_wall(26, 55, 2.0f, 0x683434);
     wall->top_tex = texture_get_id("outpost1_wall1_top");

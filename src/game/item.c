@@ -587,6 +587,8 @@ Item* item_create(i32 id)
     item->equipped = false;
     item->primary_cooldown = 0;
     item->primary_timer = 0;
+    item->secondary_cooldown = 0;
+    item->secondary_timer = 0;
     for (i32 i = 0; i < NUM_STATS; i++) {
         item->additive_stats[i] = 0;
         item->multiplicative_stats[i] = 0;
