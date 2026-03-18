@@ -63,7 +63,7 @@ void main() {
 
     gl_Position = vec4(
                 position.x + dx * size.x * (stretch.x + dx * pivot.x),
-                position.y + dy * size.y * (stretch.y + pivot.y),
+                position.y + dy * size.y * (stretch.y + dy * pivot.y),
                 position.z,
                 position.w
             );
