@@ -6,12 +6,9 @@ master volume
 music
 sfx
 
-make zoom pixel perfect
 animated gui textures
 
 give piercing projectiles iframes
-
-change gui callback functions to return void
 
 optimize gl stuff
 - index buffers

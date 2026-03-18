@@ -3,10 +3,15 @@
 #include "../window.h"
 #include <math.h>
 
+#define MIN_ZOOM 1
+#define MAX_ZOOM 8
+#define MIN_PITCH 0.3
+#define MAX_PITCH 1.3
+
 #define DEFAULT_YAW         PI
-#define DEFAULT_PITCH       PI / 6
+#define DEFAULT_PITCH       MAX_PITCH
 #define DEFAULT_FOV         PI / 4
-#define DEFAULT_ZOOM        7
+#define DEFAULT_ZOOM_LEVEL  3
 #define DEFAULT_ROTSPEED    3.5
 #define DEFAULT_TILTSPEED   3.5
 #define DEFAULT_MOVESPEED   3.5
@@ -14,11 +19,6 @@
 #define Y_AXIS              vec3_create(0, 1, 0)
 
 #define DISTANCE_FROM_PLAYER 100
-
-#define MIN_ZOOM 1
-#define MAX_ZOOM 25
-#define MIN_PITCH 0.3
-#define MAX_PITCH 1.3
 
 extern GameContext game_context;
 
@@ -47,7 +47,8 @@ void camera_init(void)
 {
     game_context.camera.yaw = DEFAULT_YAW;
     game_context.camera.pitch = DEFAULT_PITCH;
-    game_context.camera.zoom = DEFAULT_ZOOM;
+    game_context.camera.zoom_level = DEFAULT_ZOOM_LEVEL;
+    game_context.camera.zoom = window_height() / (16.0f * game_context.camera.zoom_level);
     game_context.camera.fov = DEFAULT_FOV;
     game_context.camera.minimap_zoom = 150;
     game_context.camera.move_speed = DEFAULT_MOVESPEED;
@@ -128,11 +129,12 @@ void camera_tilt(void)
 
 void camera_zoom(i32 mag)
 {
-    game_context.camera.zoom += mag;
-    if (game_context.camera.zoom < MIN_ZOOM)
-        game_context.camera.zoom = MIN_ZOOM;
-    else if (game_context.camera.zoom > MAX_ZOOM)
-        game_context.camera.zoom = MAX_ZOOM;
+    game_context.camera.zoom_level += mag;
+    if (game_context.camera.zoom_level < MIN_ZOOM)
+        game_context.camera.zoom_level = MIN_ZOOM;
+    else if (game_context.camera.zoom_level > MAX_ZOOM)
+        game_context.camera.zoom_level = MAX_ZOOM;
+    game_context.camera.zoom = window_height() / (16.0f * game_context.camera.zoom_level);
 }
 
 void camera_minimap_zoom(i32 mag)
@@ -146,6 +148,7 @@ void camera_cleanup(void)
 
 void camera_framebuffer_size_callback(void)
 {
+    game_context.camera.zoom = window_height() / (16.0f * game_context.camera.zoom_level);
 }
 
 vec3 camera_get_position(void)

@@ -79,6 +79,7 @@ typedef struct Camera {
     f32 rotate_mag, tilt_mag;
     vec3 position, facing, right, up;
     vec2 target;
+    i32 zoom_level;
     bool follow;
 } Camera;
 
