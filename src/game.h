@@ -301,6 +301,7 @@ Projectile*     room_create_projectile(vec2 position);
 Wall*           room_create_wall(vec2 position, f32 height, f32 width, f32 length, u32 minimap_color);
 Trigger*        room_create_trigger(vec2 position, f32 radius);
 Parjicle*       room_create_parjicle(vec3 position);
+Particle*       room_create_particle(vec3 position);
 Tile*           room_set_tilemap_tile(i32 x, i32 z, u32 minimap_color);
 Wall*           room_set_tilemap_wall(i32 x, i32 z, f32 height, u32 minimap_color);
 
@@ -770,13 +771,19 @@ void particle_destroy(Particle* particle);
 // Parjicles are particles with rotation (particle + projectile)
 //**************************************************************************
 
+typedef void (*ParjicleUpdateFuncPtr)(Parjicle*, f32);
+typedef void (*ParjicleDestroyFuncPtr)(Parjicle*);
+
 typedef struct Parjicle {
+    ParjicleUpdateFuncPtr update;
+    ParjicleDestroyFuncPtr destroy;
+    void* data;
     vec3 position;
-    vec3 direction;
+    vec3 velocity;
+    vec3 acceleration;
     vec3 color;
     f32 lifetime;
     f32 rotation;
-    f32 speed;
     f32 size;
     u32 flags;
 } Parjicle;

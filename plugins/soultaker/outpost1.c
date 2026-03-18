@@ -580,6 +580,15 @@ static void spawn_sword_with_delay(vec2 origin, vec2 direction, f32 lifetime, f3
         projectile_set_flag(proj, PROJECTILE_FLAG_AUTO_FREE_DATA, true);
         projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, false);
     }
+    vec2 cur = vec2_add(origin, vec2_scale(direction, 8));
+    f32 distance = speed * lifetime + 8;
+    while (vec2_mag(vec2_sub(origin, cur)) < distance) {
+        Particle* part = room_create_particle(vec3_create(cur.x, 0.5, cur.z));
+        part->color = vec3_create(1.0, randf_range(0.0, 0.2), 1.0);
+        part->size = 0.1;
+        part->lifetime = delay;
+        cur = vec2_add(cur, vec2_scale(direction, 0.25));
+    }
 }
 
 static void spawn_sword_at_wall(i32 idx, i32 side, f32 lifetime, f32 speed)
@@ -591,7 +600,7 @@ static void spawn_sword_at_wall(i32 idx, i32 side, f32 lifetime, f32 speed)
         direction = vec2_create(0, 1);
         spawn_sword(origin, direction, lifetime, speed);
     } else if (side == DOWN) {
-        origin = vec2_create(boss_room_center + (idx-boss_num_swords/2)*boss_spacing, boss_room_width-3);
+        origin = vec2_create(boss_room_center + (idx-boss_num_swords/2)*boss_spacing, boss_room_width-2);
         direction = vec2_create(0, -1);
         spawn_sword(origin, direction, lifetime, speed);
     } else if (side == RIGHT) {
@@ -599,7 +608,7 @@ static void spawn_sword_at_wall(i32 idx, i32 side, f32 lifetime, f32 speed)
         direction = vec2_create(1, 0);
         spawn_sword(origin, direction, lifetime, speed);
     } else if (side == LEFT) {
-        origin = vec2_create(boss_room_width-3, boss_room_center + (idx-boss_num_swords/2)*boss_spacing);
+        origin = vec2_create(boss_room_width-2, boss_room_center + (idx-boss_num_swords/2)*boss_spacing);
         direction = vec2_create(-1, 0);
         spawn_sword(origin, direction, lifetime, speed);
     }
@@ -614,7 +623,7 @@ static void spawn_sword_at_wall_with_delay(i32 idx, i32 side, f32 lifetime, f32 
         direction = vec2_create(0, 1);
         spawn_sword_with_delay(origin, direction, lifetime, speed, delay);
     } else if (side == DOWN) {
-        origin = vec2_create(boss_room_center + (idx-boss_num_swords/2)*boss_spacing, boss_room_width-3);
+        origin = vec2_create(boss_room_center + (idx-boss_num_swords/2)*boss_spacing, boss_room_width-2);
         direction = vec2_create(0, -1);
         spawn_sword_with_delay(origin, direction, lifetime, speed, delay);
     } else if (side == RIGHT) {
@@ -622,7 +631,7 @@ static void spawn_sword_at_wall_with_delay(i32 idx, i32 side, f32 lifetime, f32 
         direction = vec2_create(1, 0);
         spawn_sword_with_delay(origin, direction, lifetime, speed, delay);
     } else if (side == LEFT) {
-        origin = vec2_create(boss_room_width-3, boss_room_center + (idx-boss_num_swords/2)*boss_spacing);
+        origin = vec2_create(boss_room_width-2, boss_room_center + (idx-boss_num_swords/2)*boss_spacing);
         direction = vec2_create(-1, 0);
         spawn_sword_with_delay(origin, direction, lifetime, speed, delay);
     }
@@ -641,7 +650,7 @@ static void boss_start(Trigger* trigger, Entity* entity)
     data->phase_pattern = 0;
     data->invulnerable_timer = 6.0;
     map_make_boss("Asgore", boss);
-    entity_set_state(boss, "phase1_attack1");
+    entity_set_state(boss, "phase1_attack3");
     Wall* wall;
     wall = room_set_tilemap_wall(26, 55, 2.0f, 0x683434);
     wall->top_tex = texture_get_id("outpost1_wall1_top");
@@ -715,12 +724,12 @@ static void spawn_parjicles(void)
             position.y += randf_range(-0.1, 0.1);
             position.z += randf_range(-0.1, 0.1);
             Parjicle* parj = room_create_parjicle(position);
-            parj->direction = direction;
-            parj->speed = randf_range(15, 25);
+            f32 speed = randf_range(15, 25);
+            parj->velocity = vec3_scale(direction, speed);
             f32 hue = randf_range(0, 0.5);
             parj->size = -randf_range(0.1, 0.2);
             parj->color = vec3_create(hue, hue, 1);
-            parj->lifetime = num_tiles / parj->speed;
+            parj->lifetime = num_tiles / speed;
         }
     }
 }

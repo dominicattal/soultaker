@@ -1858,6 +1858,31 @@ Parjicle* room_create_parjicle(vec3 position)
     return parj;
 }
 
+Particle* room_create_particle(vec3 position)
+{
+    Map* map = map_context.current_map;
+    MapNode* node = map_context.current_map_node;
+    if (!map->active)
+        return NULL;
+    if (node == NULL) {
+        log_write(WARNING, "Entity doesn't know its room");
+        return NULL;
+    }
+    Room* room = node->room;
+    i32 orientation = node->orientation;
+    f32 u = room->u1 + position.x;
+    f32 v = room->v1 + position.z;
+    f32 dx = calculate_room_dxf(room, orientation, u, v);
+    f32 dz = calculate_room_dzf(room, orientation, u, v);
+    vec3 new_position;
+    new_position.x = node->origin_x + dx;
+    new_position.y = position.y;
+    new_position.z = node->origin_z + dz;
+    Particle* part = particle_create(new_position);
+    list_append(map->particles, part);
+    return part;
+}
+
 Obstacle* room_create_obstacle(vec2 position)
 {
     Obstacle* obstacle;
