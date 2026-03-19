@@ -75,6 +75,14 @@ f64 vec2_dot(vec2 v1, vec2 v2)
     return v1.x * v2.x + v1.y * v2.y;
 }
 
+f64 vec2_angle_between(vec2 v1, vec2 v2)
+{
+    f64 dot = vec2_dot(v1, v2);
+    f64 m1 = vec2_mag(v1);
+    f64 m2 = vec2_mag(v2);
+    return acos(dot / m1 / m2);
+}
+
 bool vec2_equal(vec2 v1, vec2 v2)
 {
     return v1.x == v2.x && v1.y == v2.y;

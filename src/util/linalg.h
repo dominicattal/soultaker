@@ -63,6 +63,7 @@ f64  vec2_radians(vec2 vec);
 f64  vec2_mag(vec2 vec);
 f64  vec2_distance(vec2 v1, vec2 v2);
 f64  vec2_dot(vec2 v1, vec2 v2);
+f64  vec2_angle_between(vec2 v1, vec2 v2);
 bool vec2_equal(vec2 v1, vec2 v2);
 void vec2_print(vec2 vec);
 
