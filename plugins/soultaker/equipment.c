@@ -450,3 +450,7 @@ void wand_primary(Player* player, vec2 direction, vec2 target)
     proj->tex = texture_get_id("null_ptr");
     projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, 1);
 }
+
+void bow_primary(Player* player, vec2 direction, vec2 target)
+{
+}

@@ -463,55 +463,59 @@ void outpost1_mage_reposition_update(Entity* entity, f32 dt)
 // Boss
 // *************************************************************
 
-static vec2 sword_offsets[] = {
-    { .x = 0, .z = 0 },
-    { .x = 0.5, .z = 0.5 },
-    { .x = 0.5, .z = 0.0 },
-    { .x = 0.5, .z = 1.0 },
-    { .x = 0.5, .z = 1.5 },
-    { .x = 0.5, .z = 2.0 },
-    { .x = 1.0, .z = 2.0 },
-    { .x = 1.5, .z = 2.0 },
-    { .x = 2.0, .z = 2.0 },
-    { .x = 2.0, .z = 2.5 },
-    { .x = 2.0, .z = 3.0 },
-    { .x = 1.5, .z = 3.0 },
-    { .x = 1.0, .z = 3.0 },
-    { .x = 0.5, .z = 3.0 },
-    { .x = 0.0, .z = 3.0 },
-    { .x = -0.5, .z = 3.0 },
-    { .x = -1.0, .z = 3.0 },
-    { .x = -1.5, .z = 3.0 },
-    { .x = -2.0, .z = 3.0 },
-    { .x = -2.0, .z = 2.5 },
-    { .x = -2.0, .z = 2.0 },
-    { .x = -1.5, .z = 2.0 },
-    { .x = -1.0, .z = 2.0 },
-    { .x = -0.5, .z = 2.0 },
-    { .x = 0.0, .z = 2.0 },
-    { .x = -0.5, .z = 1.5 },
-    { .x = -0.5, .z = 1.0 },
-    { .x = -0.5, .z = 0.5 },
-    { .x = -0.5, .z = 0.0 },
-    { .x = 1.0, .z = 3.5 },
-    { .x = 1.0, .z = 4.0 },
-    { .x = 1.0, .z = 4.5 },
-    { .x = 1.0, .z = 5.0 },
-    { .x = 1.0, .z = 5.5 },
-    { .x = 1.0, .z = 6.0 },
-    { .x = 1.0, .z = 6.5 },
-    { .x = 1.0, .z = 7.0 },
-    { .x = 0.5, .z = 7.5 },
-    { .x = 0.0, .z = 8.0 },
-    { .x = -0.5, .z = 7.5 },
-    { .x = -1.0, .z = 7.0 },
-    { .x = -1.0, .z = 6.5 },
-    { .x = -1.0, .z = 6.0 },
-    { .x = -1.0, .z = 5.5 },
-    { .x = -1.0, .z = 5.0 },
-    { .x = -1.0, .z = 4.5 },
-    { .x = -1.0, .z = 4.0 },
-    { .x = -1.0, .z = 3.5 },
+typedef struct {
+    f32 x, z, rotation;
+} SwordOffset;
+
+static SwordOffset sword_offsets[] = {
+    { 0, 0, 0 },
+    { 0.5, 0.5, PI/2 },
+    { 0.5, 0.0, 0 },
+    { 0.5, 1.0, PI/2 },
+    { 0.5, 1.5, PI/2 },
+    { 0.5, 2.0, 0 },
+    { 1.0, 2.0, 0 },
+    { 1.5, 2.0, 0 },
+    { 2.0, 2.0, 0 },
+    { 2.0, 2.5, PI/2 },
+    { 2.0, 3.0, 0 },
+    { 1.5, 3.0, 0 },
+    { 1.0, 3.0, 0 },
+    { 0.5, 3.0, 0 },
+    { 0.0, 3.0, 0 },
+    { -0.5, 3.0, 0 },
+    { -1.0, 3.0, 0 },
+    { -1.5, 3.0, 0 },
+    { -2.0, 3.0, 0 },
+    { -2.0, 2.5, PI/2 },
+    { -2.0, 2.0, 0 },
+    { -1.5, 2.0, 0 },
+    { -1.0, 2.0, 0 },
+    { -0.5, 2.0, 0 },
+    { 0.0, 2.0, 0 },
+    { -0.5, 1.5, PI/2 },
+    { -0.5, 1.0, PI/2 },
+    { -0.5, 0.5, PI/2 },
+    { -0.5, 0.0, 0 },
+    { 1.0, 3.5, 0 },
+    { 1.0, 4.0, 0 },
+    { 1.0, 4.5, 0 },
+    { 1.0, 5.0, 0 },
+    { 1.0, 5.5, 0 },
+    { 1.0, 6.0, 0 },
+    { 1.0, 6.5, 0 },
+    { 1.0, 7.0, 0 },
+    { 0.5, 7.5, 0 },
+    { 0.0, 8.0, 0 },
+    { -0.5, 7.5, 0 },
+    { -1.0, 7.0, 0 },
+    { -1.0, 6.5, 0 },
+    { -1.0, 6.0, 0 },
+    { -1.0, 5.5, 0 },
+    { -1.0, 5.0, 0 },
+    { -1.0, 4.5, 0 },
+    { -1.0, 4.0, 0 },
+    { -1.0, 3.5, 0 },
 };
 
 static f32 boss_room_center = 28.5;
@@ -546,24 +550,31 @@ static void sword_update(Projectile* proj, f32 dt)
 
 static void spawn_sword(vec2 origin, vec2 direction, f32 lifetime, f32 speed)
 {
-    for (size_t i = 0; i < sizeof(sword_offsets) / sizeof(vec2); i++) {
-        vec2 offset = sword_offsets[i];
+    for (size_t i = 0; i < sizeof(sword_offsets) / sizeof(SwordOffset); i++) {
+        SwordOffset sword_offset = sword_offsets[i];
+        vec2 offset = vec2_create(sword_offset.x, sword_offset.z);
         vec2 pos = vec2_add(origin, vec2_rotate(offset, vec2_radians(direction) - PI/2));
         Projectile* proj = room_create_projectile(pos);
         proj->direction = direction;
         proj->size = 0.5;
         proj->speed = speed;
         proj->lifetime = lifetime;
-        proj->facing = vec2_radians(direction);
-        proj->tex = texture_get_id("bullet");
+        proj->facing = vec2_radians(direction) + sword_offset.rotation;
+        if (offset.z <= 3.0)
+            proj->tex = texture_get_id("outpost1_sword_handle");
+        else {
+            proj->tex = texture_get_id("outpost1_sword_blade");
+            proj->facing += PI/2;
+        }
         projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, false);
     }
 }
 
 static void spawn_sword_with_delay(vec2 origin, vec2 direction, f32 lifetime, f32 speed, f32 delay)
 {
-    for (size_t i = 0; i < sizeof(sword_offsets) / sizeof(vec2); i++) {
-        vec2 offset = sword_offsets[i];
+    for (size_t i = 0; i < sizeof(sword_offsets) / sizeof(SwordOffset); i++) {
+        SwordOffset sword_offset = sword_offsets[i];
+        vec2 offset = vec2_create(sword_offset.x, sword_offset.z);
         vec2 pos = vec2_add(origin, vec2_rotate(offset, vec2_radians(direction) - PI/2));
         Projectile* proj = room_create_projectile(pos);
         proj->direction = direction;
@@ -575,8 +586,13 @@ static void spawn_sword_with_delay(vec2 origin, vec2 direction, f32 lifetime, f3
         data->delay_timer = delay;
         data->speed = speed;
         proj->data = data;
-        proj->facing = vec2_radians(direction);
-        proj->tex = texture_get_id("bullet");
+        proj->facing = vec2_radians(direction) + sword_offset.rotation;
+        if (offset.z <= 3.0)
+            proj->tex = texture_get_id("outpost1_sword_handle");
+        else {
+            proj->tex = texture_get_id("outpost1_sword_blade");
+            proj->facing += PI/2;
+        }
         projectile_set_flag(proj, PROJECTILE_FLAG_AUTO_FREE_DATA, true);
         projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, false);
     }

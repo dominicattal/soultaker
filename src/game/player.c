@@ -136,11 +136,12 @@ void player_reset(Entity* entity)
     player->entity = entity;
     entity->direction = vec2_create(0, 0);
     entity->size = 1.0;
-    entity->speed = 20;
+    entity->speed = 25;
     entity->frame_speed = 2;
     entity->health = entity->max_health = player->base_stats[STAT_MAX_HP];
     entity_set_flag(entity, ENTITY_FLAG_FRIENDLY, true);
     entity_set_flag(entity, ENTITY_FLAG_PLAYER, true);
+    //entity_set_flag(entity, ENTITY_FLAG_INVULNERABLE, true);
     player->state_idle = entity_get_state_id(entity, "idle");
     player->state_walking = entity_get_state_id(entity, "walking");
     player->state_shooting = entity_get_state_id(entity, "shooting");

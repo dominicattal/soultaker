@@ -35,5 +35,12 @@
         "tooltip": "tooltip",
         "primary": "wand_primary",
         "texture": "wand_weapon"
+    },
+    "bow": {
+        "type": "weapon",
+        "display_name": "Bow",
+        "tooltip": "tooltip",
+        "primary": "bow_primary",
+        "texture": "bow_weapon"
     }
 }
