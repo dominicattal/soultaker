@@ -527,9 +527,11 @@ typedef struct {
     f32 boundary_swords_timer;
     f32 boundary_parj_timer;
     f32 invulnerable_timer;
+    f32 chase_timer;
     f32 shot_timer;
     i32 pattern;
     i32 phase_pattern;
+    i32 wall_idx;
     bool started;
 } BossData;
 
@@ -809,7 +811,7 @@ void outpost1_boss_phase1_attack1_update(Entity* entity, f32 dt)
     } else {
         delay = 1.0;
         speed = 15.0;
-        lifetime = (f32)(boss_room_width-4-8)/speed;
+        lifetime = (f32)(boss_room_width-23)/speed;
         i32 opening = rand() % (boss_num_swords-6-1) + 3;
         for (i32 i = 3; i < boss_num_swords-3; i++)
             if (i != opening && i != opening + 1)
@@ -846,9 +848,9 @@ void outpost1_boss_phase1_attack2_update(Entity* entity, f32 dt)
         else
             data->shot_timer += 5;
     } else {
-        lifetime = 2.2;
         delay = 1.0;
         speed = 15.0;
+        lifetime = (f32)(boss_room_width-23)/speed;
         i32 opening = rand() % (boss_num_swords-6-1) + 3;
         for (i32 i = 3; i < boss_num_swords-3; i++)
             if (i != opening && i != opening + 1)
@@ -898,9 +900,9 @@ void outpost1_boss_phase1_attack3_update(Entity* entity, f32 dt)
         else
             data->shot_timer += 5;
     } else {
-        lifetime = 2.2;
         delay = 1.0;
         speed = 15.0;
+        lifetime = (f32)(boss_room_width-23)/speed;
         i32 opening = rand() % (boss_num_swords-6-1) + 3;
         for (i32 i = 3; i < boss_num_swords-3; i++)
             if (i != opening && i != opening + 1)
@@ -937,42 +939,71 @@ static void sword_circle_proj_update(Projectile* proj, f32 dt)
     proj->facing = data->initial_facing + vec2_radians(proj->direction) - data->initial_angle_offset + PI/2;
 }
 
+static void outpost1_boss_phase2_chase(Entity* entity, f32 dt)
+{
+    BossData* data = entity->data;
+    vec2 origin, direction, offset;
+    data->chase_timer -= dt;
+    if (data->chase_timer >= 0)
+        return;
+    vec2 player_pos = game_get_nearest_player_position();
+    if (data->phase_pattern == 0) {
+        offset = vec2_normalize(vec2_sub(entity->position, player_pos));
+        offset = vec2_scale(offset, 5.0);
+        offset = vec2_sub(vec2_add(player_pos, offset), entity->position);
+        entity->direction = vec2_normalize(offset);
+        data->chase_timer = vec2_mag(offset) / entity->speed;
+        data->phase_pattern = 1;
+    } else {
+        f32 arc_length = PI;
+        f32 speed = 6;
+        f32 lifetime = arc_length / speed;
+        entity->direction = vec2_create(0, 0);
+        origin = entity->position;
+        direction = vec2_normalize(vec2_sub(player_pos, origin));
+        direction = vec2_rotate(direction, -arc_length/2);
+        for (size_t i = 0; i < sizeof(sword_offsets) / sizeof(SwordOffset); i++) {
+            SwordOffset sword_offset = sword_offsets[i];
+            vec2 offset = vec2_create(sword_offset.x, sword_offset.z);
+            vec2 pos_offset = vec2_rotate(offset, vec2_radians(direction) - PI/2);
+            vec2 pos = vec2_add(origin, pos_offset);
+            Projectile* proj = map_create_projectile(pos);
+            proj->direction = direction;
+            proj->size = 0.5;
+            proj->speed = speed;
+            proj->lifetime = lifetime;
+            proj->facing = vec2_radians(direction) + sword_offset.rotation;
+            proj->update = sword_circle_proj_update;
+            proj->data = st_malloc(sizeof(ProjCircleData));
+            projectile_set_flag(proj, PROJECTILE_FLAG_AUTO_FREE_DATA, true);
+            if (offset.z <= 3.0)
+                proj->tex = texture_get_id("outpost1_sword_handle");
+            else
+                proj->tex = texture_get_id("outpost1_sword_blade");
+            *(ProjCircleData*)proj->data = (ProjCircleData) { 
+                origin, 
+                vec2_radians(pos_offset),
+                proj->facing
+            };
+            projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, false);
+        }
+        data->phase_pattern = 0;
+        data->chase_timer = maxf(0.5, lifetime + 0.2);
+    }
+}
+
 void outpost1_boss_phase2_attack1_update(Entity* entity, f32 dt)
 {
     BossData* data = entity->data;
-    vec2 origin, direction;
     data->shot_timer -= dt;
+    outpost1_boss_phase2_chase(entity, dt);
     if (data->shot_timer > 0)
         return;
-    data->shot_timer += 1;
-    vec2 player_pos = game_get_nearest_player_position();
-    f32 arc_length = PI;
-    origin = entity->position;
-    direction = vec2_normalize(vec2_sub(player_pos, origin));
-    direction = vec2_rotate(direction, -arc_length/2);
-    for (size_t i = 0; i < sizeof(sword_offsets) / sizeof(SwordOffset); i++) {
-        SwordOffset sword_offset = sword_offsets[i];
-        vec2 offset = vec2_create(sword_offset.x, sword_offset.z);
-        vec2 pos_offset = vec2_rotate(offset, vec2_radians(direction) - PI/2);
-        vec2 pos = vec2_add(origin, pos_offset);
-        Projectile* proj = map_create_projectile(pos);
-        proj->direction = direction;
-        proj->size = 0.5;
-        proj->speed = 7.5;
-        proj->lifetime = arc_length/proj->speed;
-        proj->facing = vec2_radians(direction) + sword_offset.rotation;
-        proj->update = sword_circle_proj_update;
-        proj->data = st_malloc(sizeof(ProjCircleData));
-        projectile_set_flag(proj, PROJECTILE_FLAG_AUTO_FREE_DATA, true);
-        if (offset.z <= 3.0)
-            proj->tex = texture_get_id("outpost1_sword_handle");
-        else
-            proj->tex = texture_get_id("outpost1_sword_blade");
-        *(ProjCircleData*)proj->data = (ProjCircleData) { 
-            origin, 
-            vec2_radians(pos_offset),
-            proj->facing
-        };
-        projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, false);
-    }
+    data->shot_timer += 0.3;
+    i32 sword_idx = rand() % (boss_num_swords - 6) + 3;
+    f32 speed = 15.0;
+    f32 delay = 1.0;
+    f32 lifetime = (f32)(boss_room_width-23)/speed;
+    spawn_sword_at_wall_with_delay(sword_idx, data->wall_idx, lifetime, speed, delay);
+    data->wall_idx = (data->wall_idx+1) % 4;
 }

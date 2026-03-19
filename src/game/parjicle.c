@@ -15,6 +15,7 @@ Parjicle* parjicle_create(vec3 position)
     parjicle->lifetime = 1.0;
     parjicle->size = 0.1f;
     parjicle->rotation = 0.0f;
+    parjicle->flags = 0;
     return parjicle;
 }
 

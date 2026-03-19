@@ -56,6 +56,7 @@ vec2 vec2_add(vec2 v1, vec2 v2);
 vec2 vec2_sub(vec2 v1, vec2 v2);
 vec2 vec2_normalize(vec2 vec);
 vec2 vec2_scale(vec2 vec, f64 scale);
+vec2 vec2_scale_to(vec2 vec, f64 scale);
 vec2 vec2_direction(f64 rad);
 vec2 vec2_rotate(vec2 vec, f64 rad);
 vec2 vec2_rotate180(vec2 vec2);

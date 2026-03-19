@@ -31,6 +31,11 @@ vec2 vec2_scale(vec2 vec, f64 scale)
     return (vec2) { .x = vec.x * scale, .y = vec.y * scale };
 }
 
+vec2 vec2_scale_to(vec2 vec, f64 scale)
+{
+    return vec2_scale(vec2_normalize(vec), scale);
+}
+
 vec2 vec2_direction(f64 rad)
 {
     return (vec2) { .x = cos(rad), .y = sin(rad) };
