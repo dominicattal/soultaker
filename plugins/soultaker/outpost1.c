@@ -73,9 +73,9 @@ void outpost1_big_room_create(void)
 
 void outpost1_boss_room_create(void)
 {
-    //vec2 position = vec2_create(28.5, 14);
+    vec2 position = vec2_create(28.5, 14);
     //vec2 position = vec2_create(28.5, 28.5);
-    vec2 position = vec2_create(33.5, 26.5);
+    //vec2 position = vec2_create(33.5, 26.5);
     i32 id;
     id = entity_get_id("outpost1_boss");
     room_create_entity(position, id);
@@ -531,6 +531,7 @@ typedef struct {
     f32 invulnerable_timer;
     f32 chase_timer;
     f32 shot_timer;
+    f32 shot_timer2;
     i32 pattern;
     i32 phase_pattern;
     i32 attack;
@@ -599,12 +600,15 @@ static void spawn_sword_with_delay(vec2 origin, vec2 direction, f32 lifetime, f3
     }
     vec2 cur = vec2_add(origin, vec2_scale(direction, 8));
     f32 distance = speed * lifetime + 8;
-    while (vec2_mag(vec2_sub(origin, cur)) < distance) {
+    f32 cur_distance = vec2_mag(vec2_sub(origin, cur));
+    while (cur_distance < distance) {
         Particle* part = room_create_particle(vec3_create(cur.x, 0.5, cur.z));
-        part->color = vec3_create(1.0, randf_range(0.0, 0.2), 1.0);
+        f32 g = lerp(0.0, 1.0, distance, cur_distance);
+        part->color = vec3_create(1.0, g, 1.0);
         part->size = 0.1;
         part->lifetime = delay;
         cur = vec2_add(cur, vec2_scale(direction, 0.25));
+        cur_distance = vec2_mag(vec2_sub(origin, cur));
     }
 }
 
@@ -615,43 +619,53 @@ static void spawn_sword_at_wall(i32 idx, i32 side, f32 lifetime, f32 speed)
     if (side == UP) {
         origin = vec2_create(boss_room_center + (idx-boss_num_swords/2)*boss_spacing, 3);
         direction = vec2_create(0, 1);
-        spawn_sword(origin, direction, lifetime, speed);
     } else if (side == DOWN) {
         origin = vec2_create(boss_room_center + (idx-boss_num_swords/2)*boss_spacing, boss_room_width-2);
         direction = vec2_create(0, -1);
-        spawn_sword(origin, direction, lifetime, speed);
     } else if (side == RIGHT) {
         origin = vec2_create(3, boss_room_center + (idx-boss_num_swords/2)*boss_spacing);
         direction = vec2_create(1, 0);
-        spawn_sword(origin, direction, lifetime, speed);
     } else if (side == LEFT) {
         origin = vec2_create(boss_room_width-2, boss_room_center + (idx-boss_num_swords/2)*boss_spacing);
         direction = vec2_create(-1, 0);
-        spawn_sword(origin, direction, lifetime, speed);
     }
+    spawn_sword(origin, direction, lifetime, speed);
 }
 
 static void spawn_sword_at_wall_with_delay(i32 idx, i32 side, f32 lifetime, f32 speed, f32 delay)
 {
-    vec2 origin, direction;
-    f32 rad;
+    vec2 direction, origin;
     if (side == UP) {
         origin = vec2_create(boss_room_center + (idx-boss_num_swords/2)*boss_spacing, 3);
         direction = vec2_create(0, 1);
-        spawn_sword_with_delay(origin, direction, lifetime, speed, delay);
     } else if (side == DOWN) {
         origin = vec2_create(boss_room_center + (idx-boss_num_swords/2)*boss_spacing, boss_room_width-2);
         direction = vec2_create(0, -1);
-        spawn_sword_with_delay(origin, direction, lifetime, speed, delay);
     } else if (side == RIGHT) {
         origin = vec2_create(3, boss_room_center + (idx-boss_num_swords/2)*boss_spacing);
         direction = vec2_create(1, 0);
-        spawn_sword_with_delay(origin, direction, lifetime, speed, delay);
     } else if (side == LEFT) {
         origin = vec2_create(boss_room_width-2, boss_room_center + (idx-boss_num_swords/2)*boss_spacing);
         direction = vec2_create(-1, 0);
-        spawn_sword_with_delay(origin, direction, lifetime, speed, delay);
     }
+    spawn_sword_with_delay(origin, direction, lifetime, speed, delay);
+}
+
+static void spawn_sword_at_wall_with_delay_toward_player(i32 idx, i32 side, f32 lifetime, f32 speed, f32 delay)
+{
+    vec2 origin, direction;
+    vec2 player_pos = map_to_room_position(game_get_nearest_player_position());
+    f32 rad;
+    if (side == UP)
+        origin = vec2_create(boss_room_center + (idx-boss_num_swords/2)*boss_spacing, 3);
+    else if (side == DOWN)
+        origin = vec2_create(boss_room_center + (idx-boss_num_swords/2)*boss_spacing, boss_room_width-2);
+    else if (side == RIGHT)
+        origin = vec2_create(3, boss_room_center + (idx-boss_num_swords/2)*boss_spacing);
+    else if (side == LEFT)
+        origin = vec2_create(boss_room_width-2, boss_room_center + (idx-boss_num_swords/2)*boss_spacing);
+    direction = vec2_normalize(vec2_sub(player_pos, origin));
+    spawn_sword_with_delay(origin, direction, lifetime, speed, delay);
 }
 
 static void boss_start(Trigger* trigger, Entity* entity)
@@ -957,7 +971,7 @@ void outpost1_boss_phase2_update(Entity* entity, f32 dt)
 void outpost1_boss_phase3_update(Entity* entity, f32 dt)
 {
     BossData* data = entity->data;
-    vec2 origin = room_position(vec2_create(28.5, 28.5));
+    vec2 origin = room_to_map_position(vec2_create(28.5, 28.5));
     vec2 offset = vec2_sub(entity->position, origin);
     if (data->phase_pattern == 0) {
         f32 radius = 14.0f;
@@ -965,7 +979,6 @@ void outpost1_boss_phase3_update(Entity* entity, f32 dt)
         vec2 target = vec2_add(origin, vec2_scale(vec2_direction(rad), radius));
         vec2 direction = vec2_sub(target, entity->position);
         data->chase_timer = vec2_mag(direction) / entity->speed;
-        log_write(DEBUG, "%f", data->chase_timer);
         entity->direction = vec2_normalize(direction);
         data->phase_pattern = 1;
     } else if (data->phase_pattern == 1) {
@@ -977,5 +990,35 @@ void outpost1_boss_phase3_update(Entity* entity, f32 dt)
     } else {
         vec2 velocity = vec2_normalize(vec2_rotate(offset, -PI / 2));
         entity->direction = velocity;
+    }
+
+    data->shot_timer -= dt;
+    if (data->shot_timer < 0) {
+        data->shot_timer += 1.5;
+        f32 delay = 1.0;
+        f32 speed = 15.0;
+        f32 lifetime = (f32)(boss_room_width-23)/speed;
+        i32 num_swords[4] = {1,1,1,1};
+        for (i32 dir = 0; dir < 4; dir++) {
+            for (i32 i = 3; i < boss_num_swords-5; i++) {
+                f32 ratio = (f32)num_swords[dir] / (boss_num_swords-5-i);
+                if (randf() <= ratio) {
+                    spawn_sword_at_wall_with_delay(i, dir, lifetime, speed, delay);
+                    num_swords[dir]--;
+                }
+            }
+        }
+    }
+
+    vec2 player_pos = game_get_nearest_player_position();
+    data->shot_timer2 -= dt;
+    if (data->shot_timer2 < 0) {
+        data->shot_timer2 += 1.0;
+        f32 delay = 1.0;
+        f32 speed = 15.0;
+        f32 lifetime = 10.0;
+        i32 wall_idx = rand() % 4;
+        i32 sword_idx = rand() % boss_num_swords;
+        spawn_sword_at_wall_with_delay_toward_player(sword_idx, wall_idx, lifetime, speed, delay);
     }
 }

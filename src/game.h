@@ -277,8 +277,8 @@ void map_set_interactable(const char* desc, InteractableFuncPtr func_ptr);
 // get global data that is created on map generation
 void* map_get_data(void);
 
-// returns the position of the global coordinates relative to the room
-vec2            room_position(vec2 position);
+vec2 room_to_map_position(vec2 position);
+vec2 map_to_room_position(vec2 position);
 
 // the following functions will return NULL if the map is not active
 // a map is inactive when it is signaled to be destroyed. this is so that

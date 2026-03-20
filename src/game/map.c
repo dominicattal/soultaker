@@ -798,6 +798,36 @@ static f64 calculate_room_dxf(Room* room, Orientation orientation, f64 u, f64 v)
     return 0;
 }
 
+static f64 calculate_room_dxfi(Room* room, Orientation orientation, f64 dx, f64 dz)
+{
+    f64 u, v, w, l;
+    w = room->u2 - room->u1 + 1;
+    l = room->v2 - room->v1 + 1;
+    u = dx + room->u1;
+    v = dz + room->v1;
+    switch (orientation) {
+        case ROTATION_R0:
+        // fall through
+        case ROTATION_MR0:
+            return u;
+        case ROTATION_R1:
+        // fall through
+        case ROTATION_MR1:
+            return -l + v - 1;
+        case ROTATION_R2:
+        // fall through
+        case ROTATION_MR2:
+            return -w + u - 1;
+        case ROTATION_R3:
+        // fall through
+        case ROTATION_MR3:
+            return v;
+        default:
+            break;
+    }
+    return 0;
+}
+
 static f64 calculate_room_dzf(Room* room, Orientation orientation, f64 u, f64 v)
 {
     f64 du, dv, w, l;
@@ -822,6 +852,36 @@ static f64 calculate_room_dzf(Room* room, Orientation orientation, f64 u, f64 v)
         // fall through
         case ROTATION_MR2:
             return dv;
+        default:
+            break;
+    }
+    return 0;
+}
+
+static f64 calculate_room_dzfi(Room* room, Orientation orientation, f64 dx, f64 dz)
+{
+    f64 u, v, w, l;
+    w = room->u2 - room->u1 + 1;
+    l = room->v2 - room->v1 + 1;
+    u = dx + room->u1;
+    v = dz + room->v1;
+    switch (orientation) {
+        case ROTATION_R1:
+        // fall through
+        case ROTATION_MR1:
+            return u;
+        case ROTATION_R2:
+        // fall through
+        case ROTATION_MR0:
+            return -l + v - 1;
+        case ROTATION_R3:
+        // fall through
+        case ROTATION_MR3:
+            return -w + u - 1;
+        case ROTATION_R0:
+        // fall through
+        case ROTATION_MR2:
+            return v;
         default:
             break;
     }
@@ -2036,7 +2096,7 @@ Wall* room_set_tilemap_wall(i32 x, i32 z, f32 height, u32 minimap_color)
     return wall;
 }
 
-vec2 room_position(vec2 position)
+vec2 room_to_map_position(vec2 position)
 {
     Map* map = map_context.current_map;
     MapNode* node = map_context.current_map_node;
@@ -2044,7 +2104,10 @@ vec2 room_position(vec2 position)
         log_write(WARNING, "Map is not active");
         return vec2_create(0,0);
     }
-    log_assert(node != NULL, "fuck");
+    if (node == NULL) {
+        log_write(CRITICAL, "Call to room_to_map_position when room is not specified");
+        return vec2_create(0, 0);
+    }
     Room* room = node->room;
     i32 orientation = node->orientation;
     f32 u = room->u1 + position.x;
@@ -2055,7 +2118,30 @@ vec2 room_position(vec2 position)
     new_position.x = node->origin_x + dx;
     new_position.z = node->origin_z + dz;
     return new_position;
+}
 
+vec2 map_to_room_position(vec2 position)
+{
+    Map* map = map_context.current_map;
+    MapNode* node = map_context.current_map_node;
+    if (!map->active) {
+        log_write(WARNING, "Map is not active");
+        return vec2_create(0,0);
+    }
+    if (node == NULL) {
+        log_write(CRITICAL, "Call to map_to_room_position when room is not specified");
+        return vec2_create(0, 0);
+    }
+    Room* room = node->room;
+    i32 orientation = node->orientation;
+    f32 dx = position.x - node->origin_x;
+    f32 dz = position.z - node->origin_z;
+    f32 u = calculate_room_dxfi(room, orientation, dx, dz);
+    f32 v = calculate_room_dzfi(room, orientation, dx, dz);
+    vec2 new_position;
+    new_position.x = u - room->u1;
+    new_position.z = v - room->v1;
+    return new_position;
 }
 
 i32 map_get_id(const char* name)
