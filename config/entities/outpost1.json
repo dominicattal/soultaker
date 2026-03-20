@@ -117,33 +117,25 @@
                 "up": [ "outpost1_boss" ],
                 "down": [ "outpost1_boss" ]
             },
-            "phase1_attack1": {
+            "phase1": {
                 "frames": 1,
-                "update": "outpost1_boss_phase1_attack1_update",
+                "update": "outpost1_boss_phase1_update",
                 "left": [ "outpost1_boss" ],
                 "right": [ "outpost1_boss" ],
                 "up": [ "outpost1_boss" ],
                 "down": [ "outpost1_boss" ]
             },
-            "phase1_attack2": {
+            "phase2": {
                 "frames": 1,
-                "update": "outpost1_boss_phase1_attack2_update",
+                "update": "outpost1_boss_phase2_update",
                 "left": [ "outpost1_boss" ],
                 "right": [ "outpost1_boss" ],
                 "up": [ "outpost1_boss" ],
                 "down": [ "outpost1_boss" ]
             },
-            "phase1_attack3": {
+            "phase3": {
                 "frames": 1,
-                "update": "outpost1_boss_phase1_attack3_update",
-                "left": [ "outpost1_boss" ],
-                "right": [ "outpost1_boss" ],
-                "up": [ "outpost1_boss" ],
-                "down": [ "outpost1_boss" ]
-            },
-            "phase2_attack1": {
-                "frames": 1,
-                "update": "outpost1_boss_phase2_attack1_update",
+                "update": "outpost1_boss_phase3_update",
                 "left": [ "outpost1_boss" ],
                 "right": [ "outpost1_boss" ],
                 "up": [ "outpost1_boss" ],

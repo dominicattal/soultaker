@@ -2038,29 +2038,24 @@ Wall* room_set_tilemap_wall(i32 x, i32 z, f32 height, u32 minimap_color)
 
 vec2 room_position(vec2 position)
 {
-    log_write(CRITICAL, "Unused function for now");
-    return vec2_create(0,0);
-    //Map* map = map_context.current_map;
-    //MapNode* node = map_context.current_map_node;
-    //if (!map->active) {
-    //    log_write(WARNING, "Map is not active");
-    //    return vec2_create(0,0);
-    //}
-    //log_assert(node != NULL, "fuck");
-    //Room* room = node->room;
-    //i32 orientation = node->orientation;
-    //i32 u, v, dx, dz;
-    //log_write(DEBUG, "B: %f %f", position.x, position.z);
-    //dx = position.x - node->origin_x;
-    //dz = position.z - node->origin_z;
-    //u = room->u1 + position.x - node->origin_x;
-    //v = room->v1 + position.z - node->origin_z;
-    //dx = calculate_room_dx(room, orientation, u, v);
-    //dz = calculate_room_dz(room, orientation, u, v);
-    //position.x = node->origin_x + dx;
-    //position.z = node->origin_z + dz;
-    //log_write(DEBUG, "C: %f %f", position.x, position.z);
-    //return position;
+    Map* map = map_context.current_map;
+    MapNode* node = map_context.current_map_node;
+    if (!map->active) {
+        log_write(WARNING, "Map is not active");
+        return vec2_create(0,0);
+    }
+    log_assert(node != NULL, "fuck");
+    Room* room = node->room;
+    i32 orientation = node->orientation;
+    f32 u = room->u1 + position.x;
+    f32 v = room->v1 + position.z;
+    f32 dx = calculate_room_dxf(room, orientation, u, v);
+    f32 dz = calculate_room_dzf(room, orientation, u, v);
+    vec2 new_position;
+    new_position.x = node->origin_x + dx;
+    new_position.z = node->origin_z + dz;
+    return new_position;
+
 }
 
 i32 map_get_id(const char* name)
