@@ -77,7 +77,12 @@ void collide_entity_projectile(Entity* entity, Projectile* projectile)
     bool is_entity_invulnerable = entity_get_flag(entity, ENTITY_FLAG_INVULNERABLE);
     bool is_entity_friendly = entity_get_flag(entity, ENTITY_FLAG_FRIENDLY);
     bool is_projectile_friendly = projectile_get_flag(projectile, PROJECTILE_FLAG_FRIENDLY);
+    bool is_projectile_pierce = projectile_get_flag(projectile, PROJECTILE_FLAG_PIERCE);
     if (is_entity_friendly == is_projectile_friendly)
+        return;
+    if (is_entity_invulnerable)
+        return;
+    if (is_projectile_pierce && projectile->pierce_timer >= 0)
         return;
 
     f32 ex, ez, er, px, pz, pr;
@@ -92,11 +97,11 @@ void collide_entity_projectile(Entity* entity, Projectile* projectile)
     if (vec2_mag(offset) >= er + pr)
         return;
 
-    projectile->lifetime = 0;
-    if (is_entity_invulnerable)
-        return;
-
     entity_damage(entity, 1);
+    if (is_projectile_pierce)
+        projectile->pierce_timer = PROJ_PIERCE_COOLDOWN;
+    else
+        projectile->lifetime = 0;
 }
 
 void collide_entity_trigger(Entity* entity, Trigger* trigger)

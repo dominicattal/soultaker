@@ -18,3 +18,5 @@ optimize gl stuff
 - figure out why screen tears on windows
 - change minimap framebuffer size when scaling up
 - try directx 11 implementation
+
+-Wl,-rpath="/path/to/lib"

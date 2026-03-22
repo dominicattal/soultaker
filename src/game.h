@@ -8,7 +8,8 @@
 // Constant(s) Declarations
 //**************************************************************************
 
-#define GRAVITY     -9.8
+#define GRAVITY                 -9.8
+#define PROJ_PIERCE_COOLDOWN    1
 
 //**************************************************************************
 // Forward Declarations
@@ -650,9 +651,10 @@ typedef struct Projectile {
     f32 elevation;
     f32 facing;
     f32 rotation;
-    f32 speed;
+    f64 speed;
     f32 size;
     f32 lifetime;
+    f32 pierce_timer;
     u32 flags;
     i32 tex;
 } Projectile;
@@ -660,6 +662,7 @@ typedef struct Projectile {
 typedef enum {
     PROJECTILE_FLAG_AUTO_FREE_DATA,
     PROJECTILE_FLAG_TEX_ROTATION,
+    PROJECTILE_FLAG_PIERCE,
     PROJECTILE_FLAG_FRIENDLY
 } ProjectileFlagEnum;
 

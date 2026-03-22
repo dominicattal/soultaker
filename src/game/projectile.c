@@ -14,6 +14,7 @@ Projectile* projectile_create(vec2 position)
     proj->size = 0.5;
     proj->lifetime = 1;
     proj->flags = 0;
+    proj->pierce_timer = 0;
     proj->update = NULL;
     proj->destroy = NULL;
     proj->data = NULL;
@@ -24,6 +25,8 @@ void projectile_update(Projectile* proj, f32 dt)
 {
     proj->position = vec2_add(proj->position, vec2_scale(proj->direction, proj->speed * dt));
     proj->lifetime -= dt;
+    if (projectile_get_flag(proj, PROJECTILE_FLAG_PIERCE) && proj->pierce_timer >= 0)
+        proj->pierce_timer -= dt;
     if (proj->update != NULL)
         proj->update(proj, dt);
 }

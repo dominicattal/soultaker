@@ -73,9 +73,9 @@ void outpost1_big_room_create(void)
 
 void outpost1_boss_room_create(void)
 {
-    vec2 position = vec2_create(28.5, 14);
+    //vec2 position = vec2_create(28.5, 14);
     //vec2 position = vec2_create(28.5, 28.5);
-    //vec2 position = vec2_create(33.5, 26.5);
+    vec2 position = vec2_create(33.5, 26.5);
     i32 id;
     id = entity_get_id("outpost1_boss");
     room_create_entity(position, id);
@@ -532,6 +532,7 @@ typedef struct {
     f32 chase_timer;
     f32 shot_timer;
     f32 shot_timer2;
+    f32 shot_timer3;
     i32 pattern;
     i32 phase_pattern;
     i32 attack;
@@ -635,6 +636,7 @@ static void spawn_sword_at_wall(i32 idx, i32 side, f32 lifetime, f32 speed)
 static void spawn_sword_at_wall_with_delay(i32 idx, i32 side, f32 lifetime, f32 speed, f32 delay)
 {
     vec2 direction, origin;
+    origin = vec2_create(0, 0);
     if (side == UP) {
         origin = vec2_create(boss_room_center + (idx-boss_num_swords/2)*boss_spacing, 3);
         direction = vec2_create(0, 1);
@@ -656,6 +658,7 @@ static void spawn_sword_at_wall_with_delay_toward_player(i32 idx, i32 side, f32 
     vec2 origin, direction;
     vec2 player_pos = map_to_room_position(game_get_nearest_player_position());
     f32 rad;
+    origin = vec2_create(0, 0);
     if (side == UP)
         origin = vec2_create(boss_room_center + (idx-boss_num_swords/2)*boss_spacing, 3);
     else if (side == DOWN)
@@ -680,8 +683,9 @@ static void boss_start(Trigger* trigger, Entity* entity)
     data->boundary_swords_timer = 3.0;
     data->phase_pattern = 0;
     //data->invulnerable_timer = 6.0;
-    entity_set_state(boss, "phase3");
-    boss->health = 0.7 * boss->max_health;
+    entity_set_state(boss, "phase4");
+    //gui_create_notification("phase1 attack1");
+    boss->health = 0.1 * boss->max_health;
     map_make_boss("Asgore", boss);
     data->attack = 0;
     Wall* wall;
@@ -812,12 +816,14 @@ void outpost1_boss_phase1_update(Entity* entity, f32 dt)
         data->invulnerable_timer = 6;
         data->attack++;
         entity->health = 0.9 * entity->max_health;
+        gui_create_notification("phase1 attack2");
     } else if (data->attack == 1 && entity->health < 0.8 * entity->max_health) {
         data->phase_pattern = 0;
         data->shot_timer = 1.0;
         data->invulnerable_timer = 6;
         data->attack++;
         entity->health = 0.8 * entity->max_health;
+        gui_create_notification("phase1 attack3");
     } else if (data->attack == 2 && entity->health < 0.7 * entity->max_health) {
         entity_set_state(entity, "phase2");
         data->chase_timer = 2;
@@ -826,6 +832,7 @@ void outpost1_boss_phase1_update(Entity* entity, f32 dt)
         data->invulnerable_timer = 4;
         data->attack = 0;
         entity->health = 0.7 * entity->max_health;
+        gui_create_notification("phase2 attack1");
     }
 
     if (data->shot_timer >= 0)
@@ -872,14 +879,52 @@ typedef struct {
     vec2 origin;
     f32 initial_angle_offset;
     f32 initial_facing;
+    bool clockwise;
 } ProjCircleData;
 
 static void sword_circle_proj_update(Projectile* proj, f32 dt)
 {
     ProjCircleData* data = proj->data;
     vec2 direction = vec2_sub(proj->position, data->origin);
-    proj->direction = vec2_create(-direction.z, direction.x);
+    if (data->clockwise)
+        proj->direction = vec2_create(-direction.z, direction.x);
+    else
+        proj->direction = vec2_create(direction.z, -direction.x);
     proj->facing = data->initial_facing + vec2_radians(proj->direction) - data->initial_angle_offset + PI/2;
+}
+
+static f32 spawn_circle_sword(f32 start_rad, f32 arc_length, vec2 origin, f32 dist_from_origin, f32 speed_per_rad, bool clockwise)
+{
+    f32 lifetime = arc_length / speed_per_rad;
+    for (size_t i = 0; i < sizeof(sword_offsets) / sizeof(SwordOffset); i++) {
+        SwordOffset sword_offset = sword_offsets[i];
+        vec2 offset = vec2_create(sword_offset.x, sword_offset.z);
+        vec2 pos_offset = vec2_rotate(offset, start_rad - PI/2);
+        pos_offset = vec2_add(pos_offset, vec2_scale(vec2_direction(start_rad), dist_from_origin));
+        vec2 pos = vec2_add(origin, pos_offset);
+        Projectile* proj = map_create_projectile(pos);
+        proj->direction = vec2_direction(start_rad);
+        proj->size = 0.5;
+        proj->speed = speed_per_rad;
+        proj->lifetime = lifetime;
+        proj->facing = start_rad + sword_offset.rotation;
+        proj->update = sword_circle_proj_update;
+        proj->data = st_malloc(sizeof(ProjCircleData));
+        projectile_set_flag(proj, PROJECTILE_FLAG_AUTO_FREE_DATA, true);
+        projectile_set_flag(proj, PROJECTILE_FLAG_PIERCE, true);
+        if (offset.z <= 3.0)
+            proj->tex = texture_get_id("outpost1_sword_handle");
+        else
+            proj->tex = texture_get_id("outpost1_sword_blade");
+        *(ProjCircleData*)proj->data = (ProjCircleData) { 
+            origin, 
+            vec2_radians(pos_offset),
+            proj->facing,
+            clockwise
+        };
+        projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, false);
+    }
+    return lifetime;
 }
 
 static void outpost1_boss_phase2_chase(Entity* entity, f32 dt)
@@ -923,10 +968,12 @@ static void outpost1_boss_phase2_chase(Entity* entity, f32 dt)
                 proj->tex = texture_get_id("outpost1_sword_handle");
             else
                 proj->tex = texture_get_id("outpost1_sword_blade");
+            bool clockwise = true;
             *(ProjCircleData*)proj->data = (ProjCircleData) { 
                 origin, 
                 vec2_radians(pos_offset),
-                proj->facing
+                proj->facing,
+                clockwise
             };
             projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, false);
         }
@@ -942,10 +989,12 @@ void outpost1_boss_phase2_update(Entity* entity, f32 dt)
         data->shot_timer = 1.0;
         entity->speed = 11.0f;
         data->attack++;
+        gui_create_notification("phase2 attack2");
     } else if (data->attack == 1 && entity->health < 0.5 * entity->max_health) {
         data->shot_timer = 1.0;
         entity->speed = 12.0f;
         data->attack++;
+        gui_create_notification("phase2 attack3");
     } else if (data->attack == 2 && entity->health < 0.4 * entity->max_health) {
         entity_set_state(entity, "phase3");
         data->phase_pattern = 0;
@@ -954,6 +1003,8 @@ void outpost1_boss_phase2_update(Entity* entity, f32 dt)
         data->invulnerable_timer = 4;
         entity->speed = 10.0f;
         entity->health = 0.4 * entity->max_health;
+        gui_create_notification("phase3 attack1");
+        return;
     }
     data->shot_timer -= dt;
     outpost1_boss_phase2_chase(entity, dt);
@@ -967,12 +1018,31 @@ void outpost1_boss_phase2_update(Entity* entity, f32 dt)
     spawn_sword_at_wall_with_delay(sword_idx, data->wall_idx, lifetime, speed, delay);
     data->wall_idx = (data->wall_idx+1) % 4;
 }
-
+ 
 void outpost1_boss_phase3_update(Entity* entity, f32 dt)
 {
     BossData* data = entity->data;
     vec2 origin = room_to_map_position(vec2_create(28.5, 28.5));
     vec2 offset = vec2_sub(entity->position, origin);
+    if (data->attack == 0 && entity->health < 0.3 * entity->max_health) {
+        data->attack++;
+        gui_create_notification("phase3 attack2");
+    } else if (data->attack == 1 && entity->health < 0.2 * entity->max_health) {
+        data->attack++;
+        gui_create_notification("phase3 attack3");
+    } else if (data->attack == 2 && entity->health < 0.1 * entity->max_health) {
+        entity_set_state(entity, "phase4");
+        data->phase_pattern = 0;
+        data->attack = 0;
+        data->shot_timer = 0;
+        data->shot_timer2 = 0;
+        data->shot_timer3 = 0;
+        data->invulnerable_timer = 4;
+        entity->speed = 10.0f;
+        entity->health = 0.1 * entity->max_health;
+        gui_create_notification("phase4");
+        return;
+    }
     if (data->phase_pattern == 0) {
         f32 radius = 14.0f;
         f32 rad = (offset.x != 0) ? vec2_radians(offset) : 0;
@@ -994,7 +1064,7 @@ void outpost1_boss_phase3_update(Entity* entity, f32 dt)
 
     data->shot_timer -= dt;
     if (data->shot_timer < 0) {
-        data->shot_timer += 1.5;
+        data->shot_timer += 1.5 - data->attack * 0.2;
         f32 delay = 1.0;
         f32 speed = 15.0;
         f32 lifetime = (f32)(boss_room_width-23)/speed;
@@ -1013,12 +1083,61 @@ void outpost1_boss_phase3_update(Entity* entity, f32 dt)
     vec2 player_pos = game_get_nearest_player_position();
     data->shot_timer2 -= dt;
     if (data->shot_timer2 < 0) {
-        data->shot_timer2 += 1.0;
+        data->shot_timer2 += 1.0 - data->attack * 0.15;
         f32 delay = 1.0;
         f32 speed = 15.0;
         f32 lifetime = 10.0;
         i32 wall_idx = rand() % 4;
         i32 sword_idx = rand() % boss_num_swords;
         spawn_sword_at_wall_with_delay_toward_player(sword_idx, wall_idx, lifetime, speed, delay);
+    }
+}
+
+void outpost1_boss_phase4_update(Entity* entity, f32 dt)
+{
+    BossData* data = entity->data;
+    vec2 origin = room_to_map_position(vec2_create(28.5, 28.5));
+    if (data->phase_pattern == 0) {
+        vec2 offset = vec2_sub(origin, entity->position);
+        data->chase_timer = vec2_mag(offset) / entity->speed;
+        entity->direction = vec2_normalize(offset);
+        log_write(DEBUG, "chase timer %f", data->chase_timer);
+        data->phase_pattern = 1;
+        return;
+    } else if (data->phase_pattern == 1) {
+        data->chase_timer -= dt;
+        if (data->chase_timer < 0) {
+            entity->direction = vec2_create(0, 0);
+            data->phase_pattern = 2;
+        }
+        return;
+    }
+    data->shot_timer -= dt;
+    if (data->shot_timer < 0) {
+        data->shot_timer += 1.0;
+        f32 delay = 1.0;
+        f32 speed = 15.0;
+        f32 lifetime = 10.0;
+        i32 sword_idx = rand() % boss_num_swords;
+        spawn_sword_at_wall_with_delay_toward_player(sword_idx, data->wall_idx, lifetime, speed, delay);
+        sword_idx = rand() % (boss_num_swords - 14) + 7;
+        speed = 15.0;
+        delay = 1.0;
+        lifetime = (f32)(boss_room_width-23)/speed;
+        spawn_sword_at_wall_with_delay(sword_idx, data->wall_idx, lifetime, speed, delay);
+        data->wall_idx = (data->wall_idx+1) % 4;
+    }
+    f32 lifetime;
+    data->shot_timer2 -= dt;
+    if (data->shot_timer2 < 0) {
+        for (i32 i = 0; i < 2; i++)
+            lifetime = spawn_circle_sword(i*PI, 2*PI, entity->position, 0, 1, true);
+        data->shot_timer2 += lifetime;
+    }
+    data->shot_timer3 -= dt;
+    if (data->shot_timer3 < 0) {
+        for (i32 i = 0; i < 8; i++)
+            lifetime = spawn_circle_sword(i*PI/4, 2*PI, entity->position, 8.5, 0.7, false);
+        data->shot_timer3 += lifetime;
     }
 }
