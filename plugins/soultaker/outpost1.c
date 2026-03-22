@@ -73,9 +73,9 @@ void outpost1_big_room_create(void)
 
 void outpost1_boss_room_create(void)
 {
-    //vec2 position = vec2_create(28.5, 14);
+    vec2 position = vec2_create(28.5, 14);
     //vec2 position = vec2_create(28.5, 28.5);
-    vec2 position = vec2_create(33.5, 26.5);
+    //vec2 position = vec2_create(33.5, 26.5);
     i32 id;
     id = entity_get_id("outpost1_boss");
     room_create_entity(position, id);
@@ -682,10 +682,9 @@ static void boss_start(Trigger* trigger, Entity* entity)
     data->shot_timer = 2.0;
     data->boundary_swords_timer = 3.0;
     data->phase_pattern = 0;
-    //data->invulnerable_timer = 6.0;
-    entity_set_state(boss, "phase4");
-    //gui_create_notification("phase1 attack1");
-    boss->health = 0.1 * boss->max_health;
+    data->invulnerable_timer = 6.0;
+    entity_set_state(boss, "phase1");
+    gui_create_notification("phase1 attack1");
     map_make_boss("Asgore", boss);
     data->attack = 0;
     Wall* wall;
@@ -704,8 +703,6 @@ static void boss_start(Trigger* trigger, Entity* entity)
     wall = room_set_tilemap_wall(30, 55, 2.0f, 0x683434);
     wall->top_tex = texture_get_id("outpost1_wall1_top");
     wall->side_tex = texture_get_id("outpost1_wall1_side");
-
-    gui_create_notification("You shouldn't have come here");
 }
 
 void outpost1_boss_create(Entity* entity)
