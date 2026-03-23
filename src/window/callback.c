@@ -94,6 +94,7 @@ void window_set_control_binding(ControlEnum ctrl_enum, i32 glfw_enum, i32 mods)
 
 void window_framebuffer_size_callback(GLFWwindow* window, i32 width, i32 height)
 {
+    log_write(DEBUG, "framebuffer callback: %d %d", width, height);
     window_context.width = width;
     window_context.height = height;
     GLfloat aspect_ratio = (GLfloat)window_context.width / window_context.height;

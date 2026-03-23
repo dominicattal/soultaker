@@ -20,3 +20,22 @@ optimize gl stuff
 - try directx 11 implementation
 
 -Wl,-rpath="/path/to/lib"
+
+
+
+
+spatial partition algorithms
+- quadtree
+- spatial hash
+- allow cycling between two
+
+buffs and debuffs
+- stackable
+
+refactor create functions to take no parameters
+
+move repeat code in map.c to own functions, mainly in create functions
+
+stuns, slows, and other movement debuffs on enemies, make sure remains functional
+
+

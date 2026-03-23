@@ -131,9 +131,10 @@
             "outpost1_knight": [0, 0, 12, 12],
             "outpost1_archer": [13, 0, 12, 12],
             "outpost1_mage": [25, 0, 12, 12],
-            "outpost1_boss": [47, 0, 24, 24],
+            "outpost1_boss_old": [47, 0, 24, 24],
             "outpost1_sword_blade": [71, 0, 8, 8],
             "outpost1_sword_handle": [79, 0, 8, 8]
         }
-    }
+    },
+    "outpost1_boss": "assets/textures/outpost1_boss.png"
 }
