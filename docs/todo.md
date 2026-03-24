@@ -38,4 +38,7 @@ move repeat code in map.c to own functions, mainly in create functions
 
 stuns, slows, and other movement debuffs on enemies, make sure remains functional
 
+collision algorithms
+
+replace entity state with animation
 

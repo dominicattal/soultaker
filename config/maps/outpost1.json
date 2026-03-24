@@ -102,7 +102,7 @@
             "l_room": {
                 "bounding_box": [32, 0, 65, 33],
                 "create": "outpost1_l_room_create",
-                "type": "enemy",
+                "type": "enemy2",
                 "alternates": [
                     {
                         "type": "female",

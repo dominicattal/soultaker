@@ -11,8 +11,8 @@
 // or a boss room.
 
 #define DEFAULT_WALL_HEIGHT 1.5f
-#define MAP_MAX_WIDTH   200
-#define MAP_MAX_LENGTH  200
+#define MAP_MAX_WIDTH   10000
+#define MAP_MAX_LENGTH  10000
 #define WHITE   0xFFFFFF
 #define GRAY    0x808080
 #define BLACK   0x000000
@@ -1763,6 +1763,69 @@ static void clear_map(void)
     map_context.current_map_node = NULL;
 }
 
+vec2 room_to_map_position(vec2 position)
+{
+    Map* map = map_context.current_map;
+    MapNode* node = map_context.current_map_node;
+    if (!map->active) {
+        log_write(WARNING, "Map is not active");
+        return vec2_create(0,0);
+    }
+    if (node == NULL) {
+        log_write(CRITICAL, "Call to room_to_map_position when room is not specified");
+        return vec2_create(0, 0);
+    }
+    Room* room = node->room;
+    i32 orientation = node->orientation;
+    f32 u = room->u1 + position.x;
+    f32 v = room->v1 + position.z;
+    f32 dx = calculate_room_dxf(room, orientation, u, v);
+    f32 dz = calculate_room_dzf(room, orientation, u, v);
+    vec2 new_position;
+    new_position.x = node->origin_x + dx;
+    new_position.z = node->origin_z + dz;
+    return new_position;
+}
+
+vec2 map_to_room_position(vec2 position)
+{
+    Map* map = map_context.current_map;
+    MapNode* node = map_context.current_map_node;
+    if (!map->active) {
+        log_write(WARNING, "Map is not active");
+        return vec2_create(0,0);
+    }
+    if (node == NULL) {
+        log_write(CRITICAL, "Call to map_to_room_position when room is not specified");
+        return vec2_create(0, 0);
+    }
+    Room* room = node->room;
+    i32 orientation = node->orientation;
+    f32 dx = position.x - node->origin_x;
+    f32 dz = position.z - node->origin_z;
+    f32 u = calculate_room_dxfi(room, orientation, dx, dz);
+    f32 v = calculate_room_dzfi(room, orientation, dx, dz);
+    vec2 new_position;
+    new_position.x = u - room->u1;
+    new_position.z = v - room->v1;
+    return new_position;
+}
+
+vec3 room_to_map_position3(vec3 position)
+{
+    vec2 pos2 = vec2_create(position.x, position.z);
+    vec2 new_pos2 = room_to_map_position(pos2);
+    return vec3_create(new_pos2.x, position.y, new_pos2.z);
+}
+
+vec3 map_to_room_position3(vec3 position)
+{
+    vec2 pos2 = vec2_create(position.x, position.z);
+    vec2 new_pos2 = map_to_room_position(pos2);
+    return vec3_create(new_pos2.x, position.y, new_pos2.z);
+}
+
+
 void map_interactable_callback(InteractableFuncPtr fptr, Map* map, MapNode* map_node)
 {
     map_context.current_map = map;
@@ -1851,15 +1914,7 @@ Entity* room_create_entity(vec2 position, i32 id)
         log_write(WARNING, "Entity doesn't know its room");
         return NULL;
     }
-    Room* room = node->room;
-    i32 orientation = node->orientation;
-    f32 u = room->u1 + position.x;
-    f32 v = room->v1 + position.z;
-    f32 dx = calculate_room_dxf(room, orientation, u, v);
-    f32 dz = calculate_room_dzf(room, orientation, u, v);
-    vec2 new_position;
-    new_position.x = node->origin_x + dx;
-    new_position.z = node->origin_z + dz;
+    vec2 new_position = room_to_map_position(position);
     Entity* entity = entity_create(new_position, id);
     entity->map_info.spawn_node = node;
     entity->map_info.current_node = NULL;
@@ -1878,15 +1933,7 @@ Trigger* room_create_trigger(vec2 position, f32 radius)
         log_write(WARNING, "Trigger doesn't know its room");
         return NULL;
     }
-    Room* room = node->room;
-    i32 orientation = node->orientation;
-    f32 u = room->u1 + position.x;
-    f32 v = room->v1 + position.z;
-    f32 dx = calculate_room_dxf(room, orientation, u, v);
-    f32 dz = calculate_room_dzf(room, orientation, u, v);
-    vec2 new_position;
-    new_position.x = node->origin_x + dx;
-    new_position.z = node->origin_z + dz;
+    vec2 new_position = room_to_map_position(position);
     trigger = trigger_create(new_position, radius);
     trigger->map_node = node;
     list_append(map->triggers, trigger);
@@ -1900,19 +1947,10 @@ Parjicle* room_create_parjicle(vec3 position)
     if (!map->active)
         return NULL;
     if (node == NULL) {
-        log_write(WARNING, "Entity doesn't know its room");
+        log_write(WARNING, "Parjicle doesn't know its room");
         return NULL;
     }
-    Room* room = node->room;
-    i32 orientation = node->orientation;
-    f32 u = room->u1 + position.x;
-    f32 v = room->v1 + position.z;
-    f32 dx = calculate_room_dxf(room, orientation, u, v);
-    f32 dz = calculate_room_dzf(room, orientation, u, v);
-    vec3 new_position;
-    new_position.x = node->origin_x + dx;
-    new_position.y = position.y;
-    new_position.z = node->origin_z + dz;
+    vec3 new_position = room_to_map_position3(position);
     Parjicle* parj = parjicle_create(new_position);
     list_append(map->parjicles, parj);
     return parj;
@@ -1928,16 +1966,7 @@ Particle* room_create_particle(vec3 position)
         log_write(WARNING, "Entity doesn't know its room");
         return NULL;
     }
-    Room* room = node->room;
-    i32 orientation = node->orientation;
-    f32 u = room->u1 + position.x;
-    f32 v = room->v1 + position.z;
-    f32 dx = calculate_room_dxf(room, orientation, u, v);
-    f32 dz = calculate_room_dzf(room, orientation, u, v);
-    vec3 new_position;
-    new_position.x = node->origin_x + dx;
-    new_position.y = position.y;
-    new_position.z = node->origin_z + dz;
+    vec3 new_position = room_to_map_position3(position);
     Particle* part = particle_create(new_position);
     list_append(map->particles, part);
     return part;
@@ -1954,15 +1983,7 @@ Obstacle* room_create_obstacle(vec2 position)
         log_write(WARNING, "Obstacle doesn't know its room");
         return NULL;
     }
-    Room* room = node->room;
-    i32 orientation = node->orientation;
-    f32 u = room->u1 + position.x;
-    f32 v = room->v1 + position.z;
-    f32 dx = calculate_room_dxf(room, orientation, u, v);
-    f32 dz = calculate_room_dzf(room, orientation, u, v);
-    vec2 new_position;
-    new_position.x = node->origin_x + dx;
-    new_position.z = node->origin_z + dz;
+    vec2 new_position = room_to_map_position(position);
     obstacle = obstacle_create(new_position);
     list_append(map->obstacles, obstacle);
     return obstacle;
@@ -1975,16 +1996,11 @@ Parstacle* room_create_parstacle(vec2 position)
     MapNode* node = map_context.current_map_node;
     if (!map->active)
         return NULL;
-    log_assert(node != NULL, "fuck");
-    Room* room = node->room;
-    i32 orientation = node->orientation;
-    f32 u = room->u1 + position.x;
-    f32 v = room->v1 + position.z;
-    f32 dx = calculate_room_dxf(room, orientation, u, v);
-    f32 dz = calculate_room_dzf(room, orientation, u, v);
-    vec2 new_position;
-    new_position.x = node->origin_x + dx;
-    new_position.z = node->origin_z + dz;
+    if (node == NULL) {
+        log_write(WARNING, "Parstacle doesn't know its room");
+        return NULL;
+    }
+    vec2 new_position = room_to_map_position(position);
     parstacle = parstacle_create(new_position);
     list_append(map->parstacles, parstacle);
     return parstacle;
@@ -1997,16 +2013,11 @@ Projectile* room_create_projectile(vec2 position)
     MapNode* node = map_context.current_map_node;
     if (!map->active)
         return NULL;
-    log_assert(node != NULL, "fuck");
-    Room* room = node->room;
-    i32 orientation = node->orientation;
-    f32 u = room->u1 + position.x;
-    f32 v = room->v1 + position.z;
-    f32 dx = calculate_room_dxf(room, orientation, u, v);
-    f32 dz = calculate_room_dzf(room, orientation, u, v);
-    vec2 new_position;
-    new_position.x = node->origin_x + dx;
-    new_position.z = node->origin_z + dz;
+    if (node == NULL) {
+        log_write(WARNING, "Projectile doesn't know its room");
+        return NULL;
+    }
+    vec2 new_position = room_to_map_position(position);
     proj = projectile_create(new_position);
     list_append(map->projectiles, proj);
     return proj;
@@ -2094,54 +2105,6 @@ Wall* room_set_tilemap_wall(i32 x, i32 z, f32 height, u32 minimap_color)
     list_append(map->walls, wall);
     map_set_wall(map, x, z, wall);
     return wall;
-}
-
-vec2 room_to_map_position(vec2 position)
-{
-    Map* map = map_context.current_map;
-    MapNode* node = map_context.current_map_node;
-    if (!map->active) {
-        log_write(WARNING, "Map is not active");
-        return vec2_create(0,0);
-    }
-    if (node == NULL) {
-        log_write(CRITICAL, "Call to room_to_map_position when room is not specified");
-        return vec2_create(0, 0);
-    }
-    Room* room = node->room;
-    i32 orientation = node->orientation;
-    f32 u = room->u1 + position.x;
-    f32 v = room->v1 + position.z;
-    f32 dx = calculate_room_dxf(room, orientation, u, v);
-    f32 dz = calculate_room_dzf(room, orientation, u, v);
-    vec2 new_position;
-    new_position.x = node->origin_x + dx;
-    new_position.z = node->origin_z + dz;
-    return new_position;
-}
-
-vec2 map_to_room_position(vec2 position)
-{
-    Map* map = map_context.current_map;
-    MapNode* node = map_context.current_map_node;
-    if (!map->active) {
-        log_write(WARNING, "Map is not active");
-        return vec2_create(0,0);
-    }
-    if (node == NULL) {
-        log_write(CRITICAL, "Call to map_to_room_position when room is not specified");
-        return vec2_create(0, 0);
-    }
-    Room* room = node->room;
-    i32 orientation = node->orientation;
-    f32 dx = position.x - node->origin_x;
-    f32 dz = position.z - node->origin_z;
-    f32 u = calculate_room_dxfi(room, orientation, dx, dz);
-    f32 v = calculate_room_dzfi(room, orientation, dx, dz);
-    vec2 new_position;
-    new_position.x = u - room->u1;
-    new_position.z = v - room->v1;
-    return new_position;
 }
 
 i32 map_get_id(const char* name)
@@ -2605,7 +2568,6 @@ void map_set_inactive(Map* map)
     map->active = false;
 }
 
-void gui_create_boss_healthbar(char* name, Entity* boss);
 void map_make_boss(char* name, Entity* entity)
 {
     Map* map = map_context.current_map;
@@ -2632,6 +2594,7 @@ void map_unmake_boss(Entity* entity)
         }
     }
     log_write(FATAL, "boss not in bosses list");
+    return;
 found:
     entity_set_flag(entity, ENTITY_FLAG_BOSS, 0);
     gui_destroy_boss_healthbar(entity);

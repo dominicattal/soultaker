@@ -54,7 +54,7 @@ typedef void (*ProjectileDestroyFuncPtr)(Projectile*);
 typedef void (*RoomCreateFuncPtr)(void);
 // function called when player enters a room. i32 arg is the number of times that player entered
 typedef void (*RoomEnterFuncPtr)(i32);
-// functionc alled when player exits a room.
+// function called when player exits a room.
 typedef void (*RoomExitFuncPtr)(i32);
 // create data for map that persists while map is in memory
 // this data can be queried with map_get_data()
@@ -84,18 +84,12 @@ typedef struct Camera {
     bool follow;
 } Camera;
 
-// These functions must be called on the render thread because
-// they change OpenGL state
-
-// Initialize and cleanup OpenGL buffers
 void camera_init(void);
+void camera_update(void);
 void camera_cleanup(void);
 
-// Updates OpenGL buffers with current camera values.
-void camera_update(void);
-
 // It is only necessary to change the projection matrix
-// when the screenspace is changed
+// when the framebuffer is changed
 void camera_framebuffer_size_callback(void);
 void camera_zoom(i32 mag);
 void camera_minimap_zoom(i32 mag);
@@ -178,7 +172,6 @@ typedef struct {
 } Roomset;
 
 typedef struct Map {
-    // x is width, z is length
     i32 width, length;
     vec2 spawn_point;
     Roomset* roomset;
@@ -280,6 +273,8 @@ void* map_get_data(void);
 
 vec2 room_to_map_position(vec2 position);
 vec2 map_to_room_position(vec2 position);
+vec3 room_to_map_position3(vec3 position);
+vec3 map_to_room_position3(vec3 position);
 
 // the following functions will return NULL if the map is not active
 // a map is inactive when it is signaled to be destroyed. this is so that
@@ -292,10 +287,7 @@ Projectile*     map_create_projectile(vec2 position);
 Trigger*        map_create_trigger(vec2 position, f32 radius);
 AOE*            map_create_aoe(vec2 position, f32 lifetime);
 
-// create objects in local room coords without relying on/modifting global state
-Entity*         room_create_entity_explicit(Map* map, MapNode* node, vec2 position, i32 id);
-
-// create objects in local room coords for use in plugins
+// create objects in local room coords
 Entity*         room_create_entity(vec2 position, i32 id);
 Obstacle*       room_create_obstacle(vec2 position);
 Parstacle*      room_create_parstacle(vec2 position);
@@ -714,8 +706,6 @@ void aoe_destroy(AOE* aoe);
 void aoe_set_flag(AOE* proj, AOEFlagEnum flag, bool val);
 bool aoe_get_flag(AOE* proj, AOEFlagEnum flag);
 
-
-
 //**************************************************************************
 // Obstacle definitions
 // Obstacles have a circular hitbox
@@ -805,6 +795,12 @@ void parjicle_destroy(Parjicle* parjicle);
 //**************************************************************************
 // Game Context
 //**************************************************************************
+
+typedef enum {
+    COLLISION_BRUTE_FORCE,
+    COLLISION_SPATIAL_HASH,
+    COLLISION_QUADTREE
+} CollisionStrategy;
 
 // contains copy of values for thread-safety
 // in getters

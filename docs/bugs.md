@@ -1,60 +1,63 @@
-# 2025-09-01
+### 2025-09-01
 - collision with particular wall is broken
 - other walls work mostly, but have same core issue
 - where collision is checked several times? what
 - fix by copying the code from my other project lol
 
-# 2025-09-02
+### 2025-09-02
 - intel integrated graphics doesnt have hole in wall, nvidia does
 - epsilon value when writing vertex buffer
 
-# 2025-09-20
+### 2025-09-20
 - when rendering bound framebuffer, would always clear texture unit 0
 - learned i have to use glClearBuffer instead
 - wrong param to glFramebufferTexture2D (fbo instead of texture name)
 
-# 2025-10-02
+### 2025-10-02
 - getting pixels doesnt work in texture unit query
 - works if texture is window width and height
 - have to make sure glTexImage2D width is aligned to GL_PACK_ALIGNMENT
 
-# 2025-10-04
+### 2025-10-04
 - resizing window changes texture unit in minimap framebuffer
 
 
 
-# 2025-12-16
+### 2025-12-16
 - purple screen of death when tilt, couldn't reproduce
 - wall buffer accessing out of bounds
 
-# 2025-12-20
+### 2025-12-20
 - parjicle and particle were not rendering
 - using z instead of y when updating buffer
 
-# 2026-2-12
+### 2026-2-12
 - game froze, probably because of uninitialized data somewhere causing infinite loop
 
-# 2026-2-13
+### 2026-2-13
 - using glBufferSubData(buffer 1, offset 4, size 4) to update a GL_STATIC_DRAW buffer
 - resize window
 
-# 2026-2-17
+### 2026-2-17
 - font rendering had weird spacing
 - fix was just using the api correctly
 - real fix was using floats for calculation and flooring left side bearing
 
-# 2026-2-17
+### 2026-2-17
 - centering text has issues with monospace font
 - no issues when left aligned, so problem is probably rounding error 
 
-# 2026-2-24
+### 2026-2-24
 - tile was raised only in shaitan
 
-# 2023-3-?
+### 2023-3-?
 - text rendering had weird spacing when trying to center with monospace font
 - problem was in calculations i was subtracting the right side bearing for no reason
 
-# 2023-3-23
+### 2023-3-23
 - pixel perfect drawing only some of the times
 - figured out this happens when window height is not a multiple of 2.
 - should be fine to leave, but i can potentially fix by round of up nearest multiple of 2 for framebuffer height on framebuffer resize
+
+### 2023-3-23
+- entity shoot animation timing inconsistent 

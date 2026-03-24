@@ -17,7 +17,29 @@ void outpost1_cleanup(void* data)
     st_free(data);
 }
 
-bool outpost1_generate(LocalMapGenerationSettings* settings)
+bool outpost1_generate_final(LocalMapGenerationSettings* settings)
+{
+    if (settings->num_rooms_left != 0)
+        return false;
+
+    if (strcmp(settings->current_branch, "main") == 0) {
+        if (strcmp(settings->current_room_type, "spawn") == 0) {
+            settings->current_room_type = "enemy";
+            //settings->create_no_path = false;
+            settings->num_rooms_left = 20;
+            return false;
+        } else if (strcmp(settings->current_room_type, "enemy") == 0) {
+            settings->current_room_type = "boss";
+            settings->create_no_path = true;
+            settings->num_rooms_left = 1;
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool outpost1_generate_test(LocalMapGenerationSettings* settings)
 {
     if (settings->num_rooms_left != 0)
         return false;
@@ -37,6 +59,11 @@ bool outpost1_generate(LocalMapGenerationSettings* settings)
     }
 
     return true;
+}
+
+bool outpost1_generate(LocalMapGenerationSettings* settings)
+{
+    return outpost1_generate_test(settings);
 }
 
 bool outpost1_branch(LocalMapGenerationSettings* settings)
@@ -59,16 +86,16 @@ void outpost1_big_room_create(void)
     i32 id;
     id = entity_get_id("outpost1_knight");
     room_create_entity(position, id);
-    //room_create_entity(position, id);
-    //room_create_entity(position, id);
-    //id = entity_get_id("outpost1_archer");
-    //room_create_entity(position, id);
-    //room_create_entity(position, id);
-    //room_create_entity(position, id);
-    //id = entity_get_id("outpost1_mage");
-    //room_create_entity(position, id);
-    //room_create_entity(position, id);
-    //room_create_entity(position, id);
+    room_create_entity(position, id);
+    room_create_entity(position, id);
+    id = entity_get_id("outpost1_archer");
+    room_create_entity(position, id);
+    room_create_entity(position, id);
+    room_create_entity(position, id);
+    id = entity_get_id("outpost1_mage");
+    room_create_entity(position, id);
+    room_create_entity(position, id);
+    room_create_entity(position, id);
 }
 
 void outpost1_boss_room_create(void)
@@ -1040,8 +1067,8 @@ void outpost1_boss_phase3_update(Entity* entity, f32 dt)
         gui_create_notification("phase4");
         return;
     }
+    f32 radius = 14.0f;
     if (data->phase_pattern == 0) {
-        f32 radius = 14.0f;
         f32 rad = (offset.x != 0) ? vec2_radians(offset) : 0;
         vec2 target = vec2_add(origin, vec2_scale(vec2_direction(rad), radius));
         vec2 direction = vec2_sub(target, entity->position);
@@ -1055,8 +1082,10 @@ void outpost1_boss_phase3_update(Entity* entity, f32 dt)
             data->phase_pattern = 2;
         }
     } else {
-        vec2 velocity = vec2_normalize(vec2_rotate(offset, -PI / 2));
-        entity->direction = velocity;
+        // need to make this based on radius rather than current position
+        // rounding error / dt variations will cause boss to stray
+        vec2 velocity = vec2_rotate(offset, -PI / 2);
+        entity->direction = vec2_normalize(velocity);
     }
 
     data->shot_timer -= dt;

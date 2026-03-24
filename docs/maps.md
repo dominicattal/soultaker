@@ -15,7 +15,7 @@ If a valid connector is not found, it will backtrack and try a different combina
 
 All of the game objects live inside of a map. When a map is loaded into memory, so are all of its objects. Likewise, when a map is unloaded from memory, so are all of its objects.
 
-Every game object created is a part of a map. They are exposed with functions that look like `map_create_entity` and `room_create_entity` in the api. If the object was created using a function like `map_create_entity`, then the object will not be associated with a room. Since each room has its own data, objects created with this function will be unable to access any room's data. Information about the map can still be queried using `map_get_data`. If the object was created using a function like `room_create_entity`, then the object will store both the map and room it was created in. When inside of an object's callback function (`create`, `update`, etc), the map will use the object's room if functions like `room_create_entity` are called in the callback. If the object was made using a function like `map_create_entity`, the function will do nothing, return NULL, and produce a warning. 
+Every game object created is a part of a map. They are exposed with functions that look like `map_create_entity` and `room_create_entity`. If the object was created using a function like `map_create_entity`, then the object will not be associated with a room. Since each room has its own data, objects created with this function will be unable to access any room's data. Information about the map can still be queried using `map_get_data`. If the object was created using a function like `room_create_entity`, then the object will store both the map and room it was created in. When inside of an object's callback function (`create`, `update`, etc), the map will use the object's room if functions like `room_create_entity` are called in the callback. If the object was made using a function like `map_create_entity`, the function will do nothing, return NULL, and produce a warning. 
 
 It is important to remember functions like `map_create_entity` and `room_create_entity` can fail and return NULL. This happens when a function like `room_create_entity` is called when the object doesn't know its room or if the map is cleaning up and doesn't create any new objects. This is only a concern if you don't know if the object knows its room or if you're calling `create` from a `destroy` function.
 
@@ -75,22 +75,22 @@ It is important to remember functions like `map_create_entity` and `room_create_
             ]
         },
         "enemy_room_1": {
-            "location": [x, y, w, h],
+            "location": [u1, v1, u2, v2],
             "create": "map_name_enemy_room_1_create",
             "type": "enemy"
         },
         "enemy_room_2": {
-            "location": [x, y, w, h],
+            "location": [u1, v1, u2, v2],
             "create": "map_name_enemy_room_2_create",
             "type": "enemy"
         },
         "boss_room": {
-            "location": [x, y, w, h],
+            "location": [u1, v1, u2, v2],
             "create": "map_name_boss_room_create",
             "type": "boss"
         },
         "mini_boss_room" {
-            "location": [x, y, w, h],
+            "location": [u1, v1, u2, v2],
             "create": "map_name_mini_boss_room_create",
             "type": "mini_boss"
         }
