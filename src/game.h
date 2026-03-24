@@ -15,6 +15,7 @@
 // Forward Declarations
 //**************************************************************************
 
+typedef struct Line Line;
 typedef struct Camera Camera;
 typedef struct Weapon Weapon;
 typedef struct Item Item;
@@ -192,6 +193,7 @@ typedef struct Map {
     List* parjicles;
     List* triggers;
     List* aoes;
+    List* lines;
     bool active;
 } Map;
 
@@ -286,6 +288,7 @@ Particle*       map_create_particle(vec3 position);
 Projectile*     map_create_projectile(vec2 position);
 Trigger*        map_create_trigger(vec2 position, f32 radius);
 AOE*            map_create_aoe(vec2 position, f32 lifetime);
+Line*           map_create_line(void);
 
 // create objects in local room coords
 Entity*         room_create_entity(vec2 position, i32 id);
@@ -296,8 +299,23 @@ Wall*           room_create_wall(vec2 position, f32 height, f32 width, f32 lengt
 Trigger*        room_create_trigger(vec2 position, f32 radius);
 Parjicle*       room_create_parjicle(vec3 position);
 Particle*       room_create_particle(vec3 position);
+Line*           room_create_line(void);
 Tile*           room_set_tilemap_tile(i32 x, i32 z, u32 minimap_color);
 Wall*           room_set_tilemap_wall(i32 x, i32 z, f32 height, u32 minimap_color);
+
+//**************************************************************************
+// Line definitions
+//**************************************************************************
+
+typedef struct Line {
+    vec3 pos1;
+    vec3 color1;
+    vec3 pos2;
+    vec3 color2;
+} Line;
+
+Line*   line_create(void);
+void    line_destroy(Line* line);
 
 //**************************************************************************
 // Trigger definitions

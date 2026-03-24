@@ -15,6 +15,7 @@
 #define MAP_CIRCLE_FLOATS_PER_VERTEX    6
 #define MAP_SQUARE_FLOATS_PER_VERTEX    7
 #define SHADOW_FLOATS_PER_VERTEX        4
+#define LINE_FLOATS_PER_VERTEX          6
 
 typedef enum {
     VAO_QUAD,
@@ -22,6 +23,7 @@ typedef enum {
     VAO_WALL,
     VAO_TILE_MINIMAP,
     VAO_WALL_MINIMAP,
+    VAO_LINE,
     NUM_VAOS
 } GameVAOEnum;
 
@@ -29,6 +31,7 @@ typedef enum {
     VBO_QUAD,
     VBO_TILE,
     VBO_WALL,
+    VBO_LINE,
     SSBO_ENTITY,
     SSBO_ENTITY_SHADOW,
     SSBO_ENTITY_MINIMAP,
@@ -598,6 +601,36 @@ static void update_parjicle_vertex_data(Map* map)
     vb->length = j;
 }
 
+static void update_line_vertex_data(Map* map)
+{
+    VertexBuffer* vb;
+    Line* line;
+    i32 i, j;
+    List* lines;
+
+    lines = map->lines;
+    vb = get_vertex_buffer_swap(VBO_LINE);
+    resize_vertex_buffer(vb, 2 * LINE_FLOATS_PER_VERTEX * lines->capacity);
+   
+    for (i = j = 0; i < lines->length; i++) {
+        line = list_get(lines, i);
+        vb->buffer[j++] = line->pos1.x;
+        vb->buffer[j++] = line->pos1.y;
+        vb->buffer[j++] = line->pos1.z;
+        vb->buffer[j++] = line->color1.x;
+        vb->buffer[j++] = line->color1.y;
+        vb->buffer[j++] = line->color1.z;
+        vb->buffer[j++] = line->pos2.x;
+        vb->buffer[j++] = line->pos2.y;
+        vb->buffer[j++] = line->pos2.z;
+        vb->buffer[j++] = line->color2.x;
+        vb->buffer[j++] = line->color2.y;
+        vb->buffer[j++] = line->color2.z;
+    }
+    
+    vb->length = j;
+}
+
 static bool is_vertex_buffer_update(GameBufferEnum type)
 {
     VertexBuffer* vb = get_vertex_buffer_swap(type);
@@ -629,6 +662,8 @@ void game_update_vertex_data(void)
     vb = get_vertex_buffer_swap(SSBO_PARTICLE);
     vb->update = true;
     vb = get_vertex_buffer_swap(SSBO_PARJICLE);
+    vb->update = true;
+    vb = get_vertex_buffer_swap(VBO_LINE);
     vb->update = true;
 
     if (is_vertex_buffer_update(SSBO_ENTITY)) {
@@ -667,6 +702,10 @@ void game_update_vertex_data(void)
         update_wall_vertex_data(map);
         vertex_buffer_updated(VBO_WALL);
         vertex_buffer_updated(VBO_WALL_MINIMAP);
+    }
+    if (is_vertex_buffer_update(VBO_LINE)) {
+        update_line_vertex_data(map);
+        vertex_buffer_updated(VBO_LINE);
     }
 
     pthread_mutex_lock(&render_context.mutex);
@@ -791,6 +830,15 @@ static void render_parjicles(void)
     glDrawArrays(GL_TRIANGLES, 0, 6 * buffer->length / PARJICLE_FLOATS_PER_VERTEX);
 }
 
+static void render_lines(void)
+{
+    Buffer* buffer = get_buffer(VBO_LINE);
+    shader_use(SHADER_PROGRAM_LINE);
+    glBindVertexArray(render_context.vaos[VAO_LINE]);
+    glBindBuffer(GL_ARRAY_BUFFER, buffer->name);
+    glDrawArrays(GL_LINES, 0, 2 * buffer->length / LINE_FLOATS_PER_VERTEX);
+}
+
 void game_render_init(void)
 {
     Buffer* buffer;
@@ -820,6 +868,8 @@ void game_render_init(void)
     render_context.buffers[VBO_TILE_MINIMAP].usage = GL_DYNAMIC_DRAW;
     render_context.buffers[VBO_WALL_MINIMAP].target = GL_ARRAY_BUFFER;
     render_context.buffers[VBO_WALL_MINIMAP].usage = GL_DYNAMIC_DRAW;
+    render_context.buffers[VBO_LINE].target = GL_ARRAY_BUFFER;
+    render_context.buffers[VBO_LINE].usage = GL_DYNAMIC_DRAW;
 
     glGenBuffers(1, &render_context.matrices_ubo);
     glBindBuffer(GL_UNIFORM_BUFFER, render_context.matrices_ubo);
@@ -902,6 +952,13 @@ void game_render_init(void)
     glVertexAttribDivisor(1, 1);
     glVertexAttribDivisor(2, 1);
     glVertexAttribDivisor(3, 1);
+
+    glBindVertexArray(render_context.vaos[VAO_LINE]);
+    glBindBuffer(GL_ARRAY_BUFFER, render_context.buffers[VBO_LINE].name);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (void*)0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
 
     shader_use(SHADER_PROGRAM_ENTITY);
     glUniform1i(shader_get_uniform_location(SHADER_PROGRAM_ENTITY, "floats_per_vertex"), ENTITY_FLOATS_PER_VERTEX);
@@ -1045,6 +1102,7 @@ void game_render(void)
     render_projectiles();
     render_particles();
     render_parjicles();
+    render_lines();
 
     glBindFramebuffer(GL_FRAMEBUFFER, render_context.shadow_fbo);
     renderer_check_framebuffer_status(GL_FRAMEBUFFER, "shadow");

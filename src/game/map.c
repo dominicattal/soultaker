@@ -11,12 +11,11 @@
 // or a boss room.
 
 #define DEFAULT_WALL_HEIGHT 1.5f
-#define MAP_MAX_WIDTH   10000
-#define MAP_MAX_LENGTH  10000
+#define MAP_MAX_WIDTH   200
+#define MAP_MAX_LENGTH  200
 #define WHITE   0xFFFFFF
 #define GRAY    0x808080
 #define BLACK   0x000000
-
 
 typedef struct {
 
@@ -1548,6 +1547,7 @@ static Map* generate_map(i32 id)
     map->parjicles = list_create();
     map->triggers = list_create();
     map->aoes = list_create();
+    map->lines = list_create();
     map->root = root;
     map->spawn_point = vec2_create(MAP_MAX_WIDTH / 2 + 0.5, MAP_MAX_LENGTH / 2 + 0.5);
     map->active = true;
@@ -1904,6 +1904,17 @@ AOE* map_create_aoe(vec2 position, f32 lifetime)
     return aoe;
 }
 
+Line* map_create_line(void)
+{
+    Line* line;
+    Map* map = map_context.current_map;
+    if (!map->active)
+        return NULL;
+    line = line_create();
+    list_append(map->lines, line);
+    return line;
+}
+
 Entity* room_create_entity(vec2 position, i32 id)
 {
     Map* map = map_context.current_map;
@@ -2107,6 +2118,22 @@ Wall* room_set_tilemap_wall(i32 x, i32 z, f32 height, u32 minimap_color)
     return wall;
 }
 
+Line* room_create_line(void)
+{
+    Line* line;
+    Map* map = map_context.current_map;
+    MapNode* node = map_context.current_map_node;
+    if (!map->active)
+        return NULL;
+    if (node == NULL) {
+        log_write(WARNING, "Line doesn't know its room");
+        return NULL;
+    }
+    line = line_create();
+    list_append(map->lines, line);
+    return line;
+}
+
 i32 map_get_id(const char* name)
 {
     int l, r, m, a;
@@ -2270,6 +2297,14 @@ Map* map_create(i32 id)
 
     game_context.current_map = map;
 
+    for (i32 i = 0; i <= MAP_MAX_WIDTH; i++) {
+        Line* line = map_create_line();
+        line->pos1 = vec3_create(i, 0.5, 0);
+        line->color1 = vec3_create(0, 0, 1);
+        line->pos2 = vec3_create(i, 0.5, MAP_MAX_WIDTH);
+        line->color2 = vec3_create(0, 1, 0);
+    }
+
     log_write(DEBUG, "loaded");
 
     return map;
@@ -2367,9 +2402,34 @@ static void destroy_aoes(Map* map)
     list_destroy(map->aoes);
 }
 
+static void destroy_lines(Map* map)
+{
+    Line* line;
+    i32 i;
+    for (i = 0; i < map->lines->length; i++) {
+        line = list_get(map->lines, i);
+        line_destroy(line);
+    }
+    list_destroy(map->lines);
+}
+
+static void destroy_tiles(Map* map)
+{
+    for (i32 i = 0; i < map->tiles->length; i++)
+        tile_destroy(list_get(map->tiles, i));
+    list_destroy(map->tiles);
+}
+
+static void destroy_walls(Map* map)
+{
+    for (i32 i = 0; i < map->walls->length; i++)
+        wall_destroy(list_get(map->walls, i));
+    list_destroy(map->walls);
+    list_destroy(map->free_walls);
+}
+
 void map_destroy(Map* map)
 {
-    i32 i;
     map_context.current_map = map;
     map->active = false;
     destroy_entities(map);
@@ -2380,13 +2440,9 @@ void map_destroy(Map* map)
     destroy_parjicles(map);
     destroy_triggers(map);
     destroy_aoes(map);
-    for (i = 0; i < map->tiles->length; i++)
-        tile_destroy(list_get(map->tiles, i));
-    list_destroy(map->tiles);
-    for (i = 0; i < map->walls->length; i++)
-        wall_destroy(list_get(map->walls, i));
-    list_destroy(map->walls);
-    list_destroy(map->free_walls);
+    destroy_lines(map);
+    destroy_tiles(map);
+    destroy_walls(map);
     list_destroy(map->bosses);
     st_free(map->tilemap);
     st_free(map->map_nodes);

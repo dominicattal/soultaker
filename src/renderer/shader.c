@@ -303,6 +303,21 @@ static void compile_shader_program_minimap_square(void)
     shader_bind_uniform_block(SHADER_PROGRAM_MINIMAP_SQUARE, UBO_INDEX_MINIMAP, "Minimap");
 }
 
+static void compile_shader_program_line(void)
+{
+    u32 vert, frag;
+    vert = compile(GL_VERTEX_SHADER, "assets/shaders/line.vert");
+    frag = compile(GL_FRAGMENT_SHADER, "assets/shaders/line.frag");
+    attach(SHADER_PROGRAM_LINE, vert);
+    attach(SHADER_PROGRAM_LINE, frag);
+    link(SHADER_PROGRAM_LINE);
+    detach(SHADER_PROGRAM_LINE, vert);
+    detach(SHADER_PROGRAM_LINE, frag);
+    delete(vert);
+    delete(frag);
+    shader_bind_uniform_block(SHADER_PROGRAM_LINE, UBO_INDEX_MATRICES, "Camera");
+}
+
 void shader_program_compile(ShaderProgramEnum program)
 {
     switch (program) {
@@ -342,6 +357,9 @@ void shader_program_compile(ShaderProgramEnum program)
         case SHADER_PROGRAM_MINIMAP_SQUARE:
             compile_shader_program_minimap_square();
             break;
+        case SHADER_PROGRAM_LINE:
+            compile_shader_program_line();
+            break;
         default:
             log_write(INFO, "Unrecognized program %x\n", program);
             break;
@@ -366,6 +384,7 @@ void shader_init(void)
     shader_program_compile(SHADER_PROGRAM_SHADOW);
     shader_program_compile(SHADER_PROGRAM_MINIMAP_CIRCLE);
     shader_program_compile(SHADER_PROGRAM_MINIMAP_SQUARE);
+    shader_program_compile(SHADER_PROGRAM_LINE);
 }
 
 void shader_use(ShaderProgramEnum id)

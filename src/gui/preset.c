@@ -182,6 +182,7 @@ static void update_debug(GUIComp* comp, f32 dt)
             "Free Walls: %d\n"
             "Walls: %d\n"
             "Tiles: %d\n"
+            "Lines: %d\n"
             "Memory: %d KB",
         1000 * game_get_dt(),
         1000 * state_dt(),
@@ -197,6 +198,7 @@ static void update_debug(GUIComp* comp, f32 dt)
         map->free_walls->length,
         map->walls->length,
         map->tiles->length,
+        map->lines->length,
         process_memory()
         );
         gui_comp_set_text(comp, string);
