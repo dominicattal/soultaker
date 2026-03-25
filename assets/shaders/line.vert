@@ -21,7 +21,7 @@ uniform int floats_per_vertex;
 
 out vec3 Color;
 
-const int winding[] = {0, 1, 2, 2, 1, 3};
+const int winding[] = {2, 1, 0, 3, 1, 2};
 const int tu[] = {0, 1, 0, 1};
 const int tv[] = {1, 1, 0, 0};
 
@@ -43,8 +43,6 @@ void main() {
     vec4 position = vec4(pos.x, 0, pos.z, 1.0f);
     position = proj * view * position;
     position.y += pos.y / zoom;
-    //gl_Position = vec4(-0.5 + 0.06 * instance_idx + 0.01 * vertex_idx, 0, -1, 1);
     gl_Position = position;
-    //Color = vec3(data_in[data_idx+3], data_in[data_idx+4], data_in[data_idx+5]);
-    Color = vec3(0, floats_per_vertex, 0);
+    Color = vec3(data_in[data_idx+3], data_in[data_idx+4], data_in[data_idx+5]);
 }

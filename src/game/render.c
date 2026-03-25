@@ -835,7 +835,7 @@ static void render_lines(void)
     Buffer* buffer = get_buffer(SSBO_LINE);
     shader_use(SHADER_PROGRAM_LINE);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, buffer->name);
-    glDrawArrays(GL_LINES, 0, 6 * buffer->length / LINE_FLOATS_PER_VERTEX);
+    glDrawArrays(GL_TRIANGLES, 0, 6 * buffer->length / LINE_FLOATS_PER_VERTEX);
 }
 
 void game_render_init(void)
@@ -1083,6 +1083,7 @@ void game_render(void)
     render_walls();
 
     glStencilFunc(GL_NOTEQUAL, 1, 0x01);
+    render_lines();
     glStencilMask(0x00);
     render_tiles();
 
@@ -1094,7 +1095,6 @@ void game_render(void)
     render_projectiles();
     render_particles();
     render_parjicles();
-    render_lines();
 
     glBindFramebuffer(GL_FRAMEBUFFER, render_context.shadow_fbo);
     renderer_check_framebuffer_status(GL_FRAMEBUFFER, "shadow");
