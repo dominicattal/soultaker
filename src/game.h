@@ -312,6 +312,7 @@ typedef struct Line {
     vec3 color1;
     vec3 pos2;
     vec3 color2;
+    f32 width;
 } Line;
 
 Line*   line_create(void);

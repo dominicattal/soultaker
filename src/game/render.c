@@ -15,7 +15,7 @@
 #define MAP_CIRCLE_FLOATS_PER_VERTEX    6
 #define MAP_SQUARE_FLOATS_PER_VERTEX    7
 #define SHADOW_FLOATS_PER_VERTEX        4
-#define LINE_FLOATS_PER_VERTEX          6
+#define LINE_FLOATS_PER_VERTEX          13
 
 typedef enum {
     VAO_QUAD,
@@ -23,7 +23,6 @@ typedef enum {
     VAO_WALL,
     VAO_TILE_MINIMAP,
     VAO_WALL_MINIMAP,
-    VAO_LINE,
     NUM_VAOS
 } GameVAOEnum;
 
@@ -31,7 +30,7 @@ typedef enum {
     VBO_QUAD,
     VBO_TILE,
     VBO_WALL,
-    VBO_LINE,
+    SSBO_LINE,
     SSBO_ENTITY,
     SSBO_ENTITY_SHADOW,
     SSBO_ENTITY_MINIMAP,
@@ -609,11 +608,12 @@ static void update_line_vertex_data(Map* map)
     List* lines;
 
     lines = map->lines;
-    vb = get_vertex_buffer_swap(VBO_LINE);
-    resize_vertex_buffer(vb, 2 * LINE_FLOATS_PER_VERTEX * lines->capacity);
+    vb = get_vertex_buffer_swap(SSBO_LINE);
+    resize_vertex_buffer(vb, LINE_FLOATS_PER_VERTEX * lines->capacity);
    
     for (i = j = 0; i < lines->length; i++) {
         line = list_get(lines, i);
+        vb->buffer[j++] = line->width;
         vb->buffer[j++] = line->pos1.x;
         vb->buffer[j++] = line->pos1.y;
         vb->buffer[j++] = line->pos1.z;
@@ -663,7 +663,7 @@ void game_update_vertex_data(void)
     vb->update = true;
     vb = get_vertex_buffer_swap(SSBO_PARJICLE);
     vb->update = true;
-    vb = get_vertex_buffer_swap(VBO_LINE);
+    vb = get_vertex_buffer_swap(SSBO_LINE);
     vb->update = true;
 
     if (is_vertex_buffer_update(SSBO_ENTITY)) {
@@ -703,9 +703,9 @@ void game_update_vertex_data(void)
         vertex_buffer_updated(VBO_WALL);
         vertex_buffer_updated(VBO_WALL_MINIMAP);
     }
-    if (is_vertex_buffer_update(VBO_LINE)) {
+    if (is_vertex_buffer_update(SSBO_LINE)) {
         update_line_vertex_data(map);
-        vertex_buffer_updated(VBO_LINE);
+        vertex_buffer_updated(SSBO_LINE);
     }
 
     pthread_mutex_lock(&render_context.mutex);
@@ -832,11 +832,10 @@ static void render_parjicles(void)
 
 static void render_lines(void)
 {
-    Buffer* buffer = get_buffer(VBO_LINE);
+    Buffer* buffer = get_buffer(SSBO_LINE);
     shader_use(SHADER_PROGRAM_LINE);
-    glBindVertexArray(render_context.vaos[VAO_LINE]);
-    glBindBuffer(GL_ARRAY_BUFFER, buffer->name);
-    glDrawArrays(GL_LINES, 0, 2 * buffer->length / LINE_FLOATS_PER_VERTEX);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, buffer->name);
+    glDrawArrays(GL_LINES, 0, 6 * buffer->length / LINE_FLOATS_PER_VERTEX);
 }
 
 void game_render_init(void)
@@ -868,8 +867,6 @@ void game_render_init(void)
     render_context.buffers[VBO_TILE_MINIMAP].usage = GL_DYNAMIC_DRAW;
     render_context.buffers[VBO_WALL_MINIMAP].target = GL_ARRAY_BUFFER;
     render_context.buffers[VBO_WALL_MINIMAP].usage = GL_DYNAMIC_DRAW;
-    render_context.buffers[VBO_LINE].target = GL_ARRAY_BUFFER;
-    render_context.buffers[VBO_LINE].usage = GL_DYNAMIC_DRAW;
 
     glGenBuffers(1, &render_context.matrices_ubo);
     glBindBuffer(GL_UNIFORM_BUFFER, render_context.matrices_ubo);
@@ -953,13 +950,6 @@ void game_render_init(void)
     glVertexAttribDivisor(2, 1);
     glVertexAttribDivisor(3, 1);
 
-    glBindVertexArray(render_context.vaos[VAO_LINE]);
-    glBindBuffer(GL_ARRAY_BUFFER, render_context.buffers[VBO_LINE].name);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (void*)0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-
     shader_use(SHADER_PROGRAM_ENTITY);
     glUniform1i(shader_get_uniform_location(SHADER_PROGRAM_ENTITY, "floats_per_vertex"), ENTITY_FLOATS_PER_VERTEX);
     shader_use(SHADER_PROGRAM_PROJECTILE);
@@ -970,6 +960,8 @@ void game_render_init(void)
     glUniform1i(shader_get_uniform_location(SHADER_PROGRAM_PARTICLE, "floats_per_vertex"), PARTICLE_FLOATS_PER_VERTEX);
     shader_use(SHADER_PROGRAM_PARJICLE);
     glUniform1i(shader_get_uniform_location(SHADER_PROGRAM_PARJICLE, "floats_per_vertex"), PARJICLE_FLOATS_PER_VERTEX);
+    shader_use(SHADER_PROGRAM_LINE);
+    glUniform1i(shader_get_uniform_location(SHADER_PROGRAM_LINE, "floats_per_vertex"), LINE_FLOATS_PER_VERTEX);
     shader_use(SHADER_PROGRAM_MINIMAP_CIRCLE);
     glUniform1i(shader_get_uniform_location(SHADER_PROGRAM_MINIMAP_CIRCLE, "floats_per_vertex"), MAP_CIRCLE_FLOATS_PER_VERTEX);
     shader_use(SHADER_PROGRAM_SHADOW);

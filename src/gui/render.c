@@ -41,8 +41,8 @@ static void push_quad_data(Quad* quad)
         resize_data_buffer(1);
     gui_context.data_swap.buffer[gui_context.data_swap.length++] = quad->x;
     gui_context.data_swap.buffer[gui_context.data_swap.length++] = quad->y;
-    gui_context.data_swap.buffer[gui_context.data_swap.length++] = quad->w;
-    gui_context.data_swap.buffer[gui_context.data_swap.length++] = quad->h;
+    gui_context.data_swap.buffer[gui_context.data_swap.length++] = (quad->w > 0) ? quad->w : 0;
+    gui_context.data_swap.buffer[gui_context.data_swap.length++] = (quad->h > 0) ? quad->h : 0;
     gui_context.data_swap.buffer[gui_context.data_swap.length++] = quad->r;
     gui_context.data_swap.buffer[gui_context.data_swap.length++] = quad->g;
     gui_context.data_swap.buffer[gui_context.data_swap.length++] = quad->b;

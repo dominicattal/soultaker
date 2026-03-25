@@ -2297,12 +2297,19 @@ Map* map_create(i32 id)
 
     game_context.current_map = map;
 
+    Line* line = map_create_line();
+    line->width = 2;
+    line->pos1 = vec3_create(MAP_MAX_WIDTH/2, 0.5, MAP_MAX_WIDTH/2);
+    line->color1 = vec3_create(0, 0, 1);
+    line->pos2 = vec3_create(MAP_MAX_WIDTH/2+1, 0.5, MAP_MAX_WIDTH/2+1);
+    line->color2 = vec3_create(1, 0, 0);
     for (i32 i = 0; i <= MAP_MAX_WIDTH; i++) {
         Line* line = map_create_line();
+        line->width = 0.1;
         line->pos1 = vec3_create(i, 0.5, 0);
         line->color1 = vec3_create(0, 0, 1);
         line->pos2 = vec3_create(i, 0.5, MAP_MAX_WIDTH);
-        line->color2 = vec3_create(0, 1, 0);
+        line->color2 = vec3_create(1, 0, 0);
     }
 
     log_write(DEBUG, "loaded");
