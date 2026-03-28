@@ -8,8 +8,8 @@
 #define MIN_PITCH 0.3
 #define MAX_PITCH 1.3
 
-#define DEFAULT_YAW         PI
-#define DEFAULT_PITCH       MAX_PITCH
+#define DEFAULT_YAW         PI + PI / 4
+#define DEFAULT_PITCH       MIN_PITCH
 #define DEFAULT_FOV         PI / 4
 #define DEFAULT_ZOOM_LEVEL  3
 #define DEFAULT_ROTSPEED    3.5

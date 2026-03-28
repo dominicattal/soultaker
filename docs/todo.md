@@ -42,3 +42,4 @@ collision algorithms
 
 replace entity state with animation
 
+fix projectile rotation, doesnt work when tilt

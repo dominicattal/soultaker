@@ -58,8 +58,10 @@ void main() {
     du = data_in[idx+8];
     dv = data_in[idx+9];
 
-    drot = -facing+yaw;
-    drot = rotation + atan(tan(drot) / cos(PI / 2 + pitch)) + (cos(drot) > 0 ? 0 : PI) + (size < 0 ? 0 : PI / 4);
+    drot = -yaw + facing;
+    drot = atan(-tan(drot) / cos((PI / 2) + pitch)) + (cos(drot) > 0 ? 0 : PI);
+    drot += rotation;
+    drot += (size < 0 ? 0 : PI / 4);
 
     theta = drot + rot_offset[winding[vertex_idx]];
     offset = size / zoom / SQRT2 * vec2(cos(theta) / window.aspect_ratio, sin(theta));

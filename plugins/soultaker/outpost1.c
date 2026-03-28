@@ -706,8 +706,10 @@ static void boss_start(Trigger* trigger, Entity* entity)
         log_write(FATAL, "Map boss is null");
     BossData* data = boss->data;
     data->started = true;
-    data->shot_timer = 2.0;
-    data->boundary_swords_timer = 3.0;
+    //data->shot_timer = 2.0;
+    //data->boundary_swords_timer = 3.0;
+    data->shot_timer = 0.0;
+    data->boundary_swords_timer = 0.0;
     data->phase_pattern = 0;
     data->invulnerable_timer = 6.0;
     entity_set_state(boss, "phase1");

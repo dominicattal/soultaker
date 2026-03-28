@@ -2305,7 +2305,7 @@ Map* map_create(i32 id)
     line->color2 = vec3_create(1, 0, 0);
     for (i32 i = 0; i <= MAP_MAX_WIDTH; i++) {
         Line* line = map_create_line();
-        line->width = 0.1;
+        line->width = 0.3;
         line->pos1 = vec3_create(i, 0.0, 0);
         line->color1 = vec3_create(0, 0, 1);
         line->pos2 = vec3_create(i, 0.0, MAP_MAX_WIDTH);
