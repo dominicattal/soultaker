@@ -626,6 +626,20 @@ static void spawn_sword_with_delay(vec2 origin, vec2 direction, f32 lifetime, f3
         projectile_set_flag(proj, PROJECTILE_FLAG_AUTO_FREE_DATA, true);
         projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, false);
     }
+    //Line* line = map_create_line();
+    //origin = room_to_map_position(origin);
+    //line->lifetime = delay;
+    //line->width = 0.05;
+    //vec2 pos1 = vec2_add(origin, vec2_scale(direction, 8));
+    //line->pos1 = vec3_create(pos1.x, 0.1, pos1.z);
+    //vec3_print(line->pos1);
+    //line->color1 = vec3_create(1.0, 0.0, 1.0);
+    //f32 distance = speed * lifetime + 8;
+    //vec2 pos2 = vec2_add(origin, vec2_scale(direction, distance));
+    //line->pos2 = vec3_create(pos2.x, 0.1, pos2.z);
+    //vec3_print(line->pos2);
+    //line->color2 = vec3_create(1.0, 1.0, 1.0);
+
     vec2 cur = vec2_add(origin, vec2_scale(direction, 8));
     f32 distance = speed * lifetime + 8;
     f32 cur_distance = vec2_mag(vec2_sub(origin, cur));

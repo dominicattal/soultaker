@@ -341,7 +341,7 @@ void inventory_refresh(void)
                 }
             }
 next_item_id:
-            (void)0; // my text editor doesnt like labels at ends of blocks
+            continue;
         }
         for (i32 i = 0; i < num_items; i++)
             if (!mask[i])

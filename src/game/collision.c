@@ -71,7 +71,7 @@ void collide_entity_obstacle(Entity* entity, Obstacle* obstacle)
 
 void collide_entity_projectile(Entity* entity, Projectile* projectile)
 {
-    if (projectile->lifetime == 0)
+    if (projectile->lifetime <= 0)
         return;
 
     bool is_entity_invulnerable = entity_get_flag(entity, ENTITY_FLAG_INVULNERABLE);
@@ -109,6 +109,11 @@ void collide_entity_trigger(Entity* entity, Trigger* trigger)
     f32 ex, ez, er, tx, tz, tr;
     vec2 offset;
     i32 i;
+    bool delete = trigger_get_flag(trigger, TRIGGER_FLAG_DELETE);
+    bool once = trigger_get_flag(trigger, TRIGGER_FLAG_ONCE);
+    bool used = trigger_get_flag(trigger, TRIGGER_FLAG_USED);
+    if ((once && used) || delete)
+        return;
     if (!entity_get_flag(entity, ENTITY_FLAG_PLAYER) && trigger_get_flag(trigger, TRIGGER_FLAG_PLAYER))
         return;
     ex = entity->position.x;

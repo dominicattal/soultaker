@@ -172,6 +172,47 @@ typedef struct {
     RoomsetCleanupFuncPtr cleanup;
 } Roomset;
 
+typedef enum {
+    MAP_COLLIDE_QUADTREE,
+
+    // Partitions map into equal-sized buckets 
+    MAP_COLLIDE_SPATIAL_HASH,
+
+    // Allocates no extra memory but is very slow
+    MAP_COLLIDE_NAIVE
+} MapCollisionStrategy;
+
+typedef struct {
+    List* entities;
+    List* free_walls;
+    List* projectiles;
+    List* obstacles;
+    List* triggers;
+    List* aoes;
+} Bucket;
+
+typedef struct {
+    i32 bucket_width;
+    i32 num_buckets_wide; // x
+    i32 num_buckets_long; // z
+    i32 num_buckets;
+    Bucket* buckets;
+} SpatialHashData;
+
+typedef struct QtNode QtNode;
+typedef struct QtNode {
+    Bucket* bucket;
+    QtNode* top_left;
+    QtNode* top_right;
+    QtNode* bottom_left;
+    QtNode* bottom_right;
+} QtNode;
+
+typedef struct {
+    i32 split_threshold;
+    QtNode* root;
+} QuadtreeData;
+
 typedef struct Map {
     i32 width, length;
     vec2 spawn_point;
@@ -181,6 +222,11 @@ typedef struct Map {
     MapNode** map_nodes;
     Quadmask* tile_mask;
     Quadmask* fog_mask;
+    MapCollisionStrategy collision_strategy;
+    union {
+        SpatialHashData spatial_hash_data;
+        QuadtreeData quadtree_data;
+    };
     List* bosses;
     List* entities;
     List* tiles;
@@ -229,6 +275,35 @@ void map_set_active(Map* map);
 void map_set_inactive(Map* map);
 void map_destroy(Map* map);
 void map_cleanup(void);
+
+// switch collision strategy for map
+void map_use_quadtree(Map* map, i32 split_threshold);
+void map_use_spatial_hash(Map* map, i32 bucket_width);
+void map_use_naive(Map* map);
+
+void bucket_create(Bucket* bucket);
+void bucket_destroy(Bucket* bucket);
+
+void buckets_insert_trigger(Map* map, Trigger* trigger);
+void buckets_insert_entity(Map* map, Entity* entity);
+void buckets_insert_projectile(Map* map, Projectile* projectile);
+void buckets_insert_free_wall(Map* map, Wall* wall);
+void buckets_insert_obstacle(Map* map, Obstacle* obstacle);
+void buckets_insert_aoe(Map* map, AOE* aoe);
+
+void buckets_update_trigger(Map* map, Trigger* trigger);
+void buckets_update_entity(Map* map, Entity* entity);
+void buckets_update_projectile(Map* map, Projectile* projectile);
+void buckets_update_free_wall(Map* map, Wall* wall);
+void buckets_update_obstacle(Map* map, Obstacle* obstacle);
+void buckets_update_aoe(Map* map, AOE* aoe);
+
+void buckets_remove_trigger(Map* map, Trigger* trigger);
+void buckets_remove_entity(Map* map, Entity* entity);
+void buckets_remove_projectile(Map* map, Projectile* projectile);
+void buckets_remove_free_wall(Map* map, Wall* wall);
+void buckets_remove_obstacle(Map* map, Obstacle* obstacle);
+void buckets_remove_aoe(Map* map, AOE* aoe);
 
 // returns true if the tile at (x, z) is a wall
 bool map_is_wall(Map* map, i32 x, i32 z);
@@ -283,6 +358,7 @@ vec3 map_to_room_position3(vec3 position);
 // objects can free their memory without creating new memory
 
 // create object in global map coords
+Entity*         map_create_entity(vec2 position, i32 id);
 Parjicle*       map_create_parjicle(vec3 position);
 Particle*       map_create_particle(vec3 position);
 Projectile*     map_create_projectile(vec2 position);
@@ -313,9 +389,12 @@ typedef struct Line {
     vec3 pos2;
     vec3 color2;
     f32 width;
+    f32 lifetime;
+    bool use_lifetime;
 } Line;
 
 Line*   line_create(void);
+void    line_update(Line* line, f32 dt);
 void    line_destroy(Line* line);
 
 //**************************************************************************
@@ -332,7 +411,9 @@ typedef struct Trigger {
     Bitset* bitset;
     List* entities;
     vec2 position;
+    vec2 prev_position;
     f32 radius;
+    f32 prev_radius;
     u32 flags;
 } Trigger;
 
@@ -514,6 +595,7 @@ typedef struct Entity {
     f32 magic_resistance;
     f32 elevation;
     f32 size;
+    f32 prev_size;
     f32 hitbox_radius;
     f32 state_timer;
     f32 tile_timer;
@@ -658,12 +740,14 @@ typedef struct Projectile {
     ProjectileDestroyFuncPtr destroy;
     void* data;
     vec2 position;
+    vec2 prev_position;
     vec2 direction;
     f32 elevation;
     f32 facing;
     f32 rotation;
     f64 speed;
     f32 size;
+    f32 prev_size;
     f32 lifetime;
     f32 pierce_timer;
     u32 flags;
@@ -700,7 +784,9 @@ typedef struct AOE {
     AOEDestroyFuncPtr destroy;
     void* data;
     vec2 position;
+    vec2 prev_position;
     f32 radius;
+    f32 prev_radius;
     f32 damage;
     f32 lifetime;
     f32 timer;
@@ -733,7 +819,9 @@ bool aoe_get_flag(AOE* proj, AOEFlagEnum flag);
 
 typedef struct Obstacle {
     vec2 position;
+    vec2 prev_position;
     f32 size;
+    f32 prev_size;
     i32 tex;
 } Obstacle;
 
@@ -814,12 +902,6 @@ void parjicle_destroy(Parjicle* parjicle);
 //**************************************************************************
 // Game Context
 //**************************************************************************
-
-typedef enum {
-    COLLISION_BRUTE_FORCE,
-    COLLISION_SPATIAL_HASH,
-    COLLISION_QUADTREE
-} CollisionStrategy;
 
 // contains copy of values for thread-safety
 // in getters
