@@ -2831,14 +2831,6 @@ static void buckets_remove_object_spatial_hash(Map* map, void* object, i32 list_
         Bucket* bucket = &data->buckets[idx];
         List* list = get_bucket_list_from_type(bucket, list_type);
         i32 list_idx = list_search(list, object);
-        if (list_idx == -1) {
-            Projectile* proj = object;
-            vec2_print(proj->position);
-            vec2_print(object_position);
-            printf("%f\n", object_hitbox_radius);
-            vec2_print(proj->prev_position);
-            vec2_print(position);
-        }
         log_assert(list_idx != -1, "Expected %s %p to be in bucket %d", list_type_str[list_type], object, idx);
         list_remove(list, list_idx);
         //log_write(DEBUG, "Remove: Removing %s %p into bucket %d", list_type_str[list_type], object, idx);
@@ -2851,8 +2843,8 @@ void buckets_insert_trigger(Map* map, Trigger* trigger)
 {
     if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH) {
         buckets_insert_object_spatial_hash(map, trigger, BUCKET_TRIGGERS, trigger->position, trigger->radius);
-        trigger->map_info.prev_position = trigger->position;
-        trigger->map_info.prev_radius = trigger->radius;
+        trigger->map_info.bucket_position = trigger->position;
+        trigger->map_info.bucket_radius = trigger->radius;
     }
 }
 
@@ -2860,8 +2852,8 @@ void buckets_insert_entity(Map* map, Entity* entity)
 {
     if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH) {
         buckets_insert_object_spatial_hash(map, entity, BUCKET_ENTITIES, entity->position, entity->size / 2);
-        entity->prev_position = entity->position;
-        entity->prev_size = entity->size;
+        entity->map_info.bucket_position = entity->position;
+        entity->map_info.bucket_radius = entity->size / 2;
     }
 }
 
@@ -2869,8 +2861,8 @@ void buckets_insert_projectile(Map* map, Projectile* projectile)
 {
     if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH) {
         buckets_insert_object_spatial_hash(map, projectile, BUCKET_PROJECTILES, projectile->position, projectile->size / 2);
-        projectile->prev_position = projectile->position;
-        projectile->prev_size = projectile->size;
+        projectile->map_info.bucket_position = projectile->position;
+        projectile->map_info.bucket_radius = projectile->size / 2;
     }
 }
 
@@ -2894,20 +2886,35 @@ void buckets_insert_aoe(Map* map, AOE* aoe)
 
 void buckets_update_trigger(Map* map, Trigger* trigger)
 {
-    if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH)
-        buckets_update_object_spatial_hash(map, trigger, BUCKET_TRIGGERS, trigger->map_info.prev_position, trigger->map_info.prev_radius, trigger->position, trigger->radius);
+    if (vec2_equal(trigger->map_info.bucket_position, trigger->position) && trigger->map_info.bucket_radius == trigger->radius)
+        return;
+    if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH) {
+        buckets_update_object_spatial_hash(map, trigger, BUCKET_TRIGGERS, trigger->map_info.bucket_position, trigger->map_info.bucket_radius, trigger->position, trigger->radius);
+        trigger->map_info.bucket_position = trigger->position;
+        trigger->map_info.bucket_radius = trigger->radius;
+    }
 }
 
 void buckets_update_entity(Map* map, Entity* entity)
 {
-    if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH)
-        buckets_update_object_spatial_hash(map, entity, BUCKET_ENTITIES, entity->prev_position, entity->prev_size / 2, entity->position, entity->size / 2);
+    if (vec2_equal(entity->map_info.bucket_position, entity->position) && entity->map_info.bucket_radius == entity->size / 2)
+        return;
+    if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH) {
+        buckets_update_object_spatial_hash(map, entity, BUCKET_ENTITIES, entity->map_info.bucket_position, entity->map_info.bucket_radius, entity->position, entity->size / 2);
+        entity->map_info.bucket_position = entity->position;
+        entity->map_info.bucket_radius = entity->size / 2;
+    }
 }
 
 void buckets_update_projectile(Map* map, Projectile* projectile)
 {
-    if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH)
-        buckets_update_object_spatial_hash(map, projectile, BUCKET_PROJECTILES, projectile->prev_position, projectile->prev_size / 2, projectile->position, projectile->size / 2);
+    if (vec2_equal(projectile->map_info.bucket_position, projectile->position) && projectile->map_info.bucket_radius != projectile->size)
+        return;
+    if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH) {
+        buckets_update_object_spatial_hash(map, projectile, BUCKET_PROJECTILES, projectile->map_info.bucket_position, projectile->map_info.bucket_radius, projectile->position, projectile->size / 2);
+        projectile->map_info.bucket_position = projectile->position;
+        projectile->map_info.bucket_radius = projectile->size / 2;
+    }
 }
 
 void buckets_update_obstacle(Map* map, Obstacle* obstacle)
@@ -2925,19 +2932,19 @@ void buckets_update_aoe(Map* map, AOE* aoe)
 void buckets_remove_trigger(Map* map, Trigger* trigger)
 {
     if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH)
-        buckets_remove_object_spatial_hash(map, trigger, BUCKET_TRIGGERS, trigger->map_info.prev_position, trigger->map_info.prev_radius);
+        buckets_remove_object_spatial_hash(map, trigger, BUCKET_TRIGGERS, trigger->map_info.bucket_position, trigger->map_info.bucket_radius);
 }
 
 void buckets_remove_entity(Map* map, Entity* entity)
 {
     if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH)
-        buckets_remove_object_spatial_hash(map, entity, BUCKET_ENTITIES, entity->prev_position, entity->prev_size / 2);
+        buckets_remove_object_spatial_hash(map, entity, BUCKET_ENTITIES, entity->map_info.bucket_position, entity->map_info.bucket_radius);
 }
 
 void buckets_remove_projectile(Map* map, Projectile* projectile)
 {
     if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH)
-        buckets_remove_object_spatial_hash(map, projectile, BUCKET_PROJECTILES, projectile->prev_position, projectile->prev_size / 2);
+        buckets_remove_object_spatial_hash(map, projectile, BUCKET_PROJECTILES, projectile->map_info.bucket_position, projectile->map_info.bucket_radius);
 }
 
 void buckets_remove_obstacle(Map* map, Obstacle* obstacle)
@@ -2983,11 +2990,8 @@ static void map_update_objects(Map* map)
             buckets_remove_trigger(map, trigger);
             trigger_destroy(list_remove(map->triggers, i));
         } else {
-            if (!vec2_equal(trigger->map_info.prev_position, trigger->position) || trigger->map_info.prev_radius != trigger->radius)
-                buckets_update_trigger(map, trigger);
-            trigger->map_info.prev_position = trigger->position;
-            trigger->map_info.prev_radius = trigger->radius;
             trigger_update(trigger);
+            buckets_update_trigger(map, trigger);
             i++;
         }
     }
@@ -2996,10 +3000,6 @@ static void map_update_objects(Map* map)
     while (i < map->entities->length) {
         Entity* entity = list_get(map->entities, i);
         map_context.current_map_node = entity->map_info.spawn_node;
-        if (!vec2_equal(entity->prev_position, entity->position) || entity->prev_size != entity->size)
-            buckets_update_entity(map, entity);
-        entity->prev_position = entity->position;
-        entity->prev_size = entity->size;
         entity_update(entity, game_context.dt);
         if (entity->health <= 0) {
             if (entity_get_flag(entity, ENTITY_FLAG_BOSS))
@@ -3007,6 +3007,7 @@ static void map_update_objects(Map* map)
             buckets_remove_entity(map, entity);
             entity_destroy(list_remove(map->entities, i));
         } else {
+            buckets_update_entity(map, entity);
             i++;
         }
     }
@@ -3014,15 +3015,12 @@ static void map_update_objects(Map* map)
     i = 0;
     while (i < map->projectiles->length) {
         Projectile* projectile = list_get(map->projectiles, i);
-        if (!vec2_equal(projectile->prev_position, projectile->position) || projectile->prev_size != projectile->size)
-            buckets_update_projectile(map, projectile);
-        projectile->prev_position = projectile->position;
-        projectile->prev_size = projectile->size;
         projectile_update(projectile, game_context.dt);
         if (projectile->lifetime <= 0) {
             buckets_remove_projectile(map, projectile);
             projectile_destroy(list_remove(map->projectiles, i));
         } else {
+            buckets_update_projectile(map, projectile);
             i++;
         }
     }

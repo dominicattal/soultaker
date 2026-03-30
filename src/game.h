@@ -119,8 +119,8 @@ typedef struct LocalMapGenerationSettings {
 typedef struct MapInfo {
     MapNode* spawn_node;
     MapNode* current_node;
-    vec2 prev_position;
-    f32 prev_radius;
+    vec2 bucket_position;
+    f32 bucket_radius;
 } MapInfo;
 
 typedef struct {
@@ -596,7 +596,6 @@ typedef struct Entity {
     f32 magic_resistance;
     f32 elevation;
     f32 size;
-    f32 prev_size;
     f32 hitbox_radius;
     f32 state_timer;
     f32 tile_timer;
@@ -737,11 +736,11 @@ void wall_destroy(Wall* wall);
 //**************************************************************************
 
 typedef struct Projectile {
+    MapInfo map_info;
     ProjectileUpdateFuncPtr update;
     ProjectileDestroyFuncPtr destroy;
     void* data;
     vec2 position;
-    vec2 prev_position;
     vec2 direction;
     f32 elevation;
     f32 facing;
