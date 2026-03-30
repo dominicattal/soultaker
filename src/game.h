@@ -119,6 +119,10 @@ typedef struct LocalMapGenerationSettings {
 typedef struct MapInfo {
     MapNode* spawn_node;
     MapNode* current_node;
+    i32 tl_bucket_idx;
+    i32 tr_bucket_idx;
+    i32 bl_bucket_idx;
+    i32 br_bucket_idx;
     vec2 bucket_position;
     f32 bucket_radius;
 } MapInfo;
