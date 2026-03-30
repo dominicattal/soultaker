@@ -2714,6 +2714,13 @@ static i32 spatial_hash_bucket_idx(SpatialHashData* data, vec2 position)
     return idx_x + idx_z * data->num_buckets_wide;
 }
 
+static IntPair spatial_hash_position(SpatialHashData* data, i32 idx)
+{
+    i32 idx_x = idx % data->num_buckets_wide;
+    i32 idx_z = idx / data->num_buckets_wide;
+    return (IntPair) { idx_x, idx_z };
+}
+
 static vec2 bucket_offsets[4] = {
     (vec2) { .x = -1, .z = 1 },
     (vec2) { .x = -1, .z = -1 },
@@ -2754,118 +2761,124 @@ static List* get_bucket_list_from_type(Bucket* bucket, i32 list_type)
     return NULL;
 }
 
+static void remove_object(void* object, i32 list_type, SpatialHashData* data, i32 bucket_idx)
+{
+    //log_write(DEBUG, "Remove: Removing %s %p into bucket %d", list_type_str[list_type], object, bucket_idx);
+    Bucket* bucket = &data->buckets[bucket_idx];
+    List* list = get_bucket_list_from_type(bucket, list_type);
+    i32 list_idx = list_search(list, object);
+    log_assert(list_idx != -1, "Expected %s %p to be in bucket %d", list_type_str[list_type], object, bucket_idx);
+    list_remove(list, list_idx);
+}
+
+static void add_object(void* object, i32 list_type, SpatialHashData* data, i32 bucket_idx)
+{
+    //log_write(DEBUG, "Insert: Inserting %s %p into bucket %d", list_type_str[list_type], object, bucket_idx);
+    Bucket* bucket = &data->buckets[bucket_idx];
+    List* list = get_bucket_list_from_type(bucket, list_type);
+    list_append(list, object);
+}
+
 static void buckets_insert_object_spatial_hash(Map* map, void* object, i32 list_type, MapInfo* map_info, vec2 object_position, f32 object_hitbox_radius)
 {
     SpatialHashData* data = &map->spatial_hash_data;
-    i32 prev_idxs[4] = {-1, -1, -1, -1};
+    IntPair top_right = (IntPair) { -1, -1 };
+    IntPair bottom_left = (IntPair) { data->num_buckets_wide, data->num_buckets_long };
+    i32 idx, i;
+    vec2 position;
+    IntPair test;
+    Bucket* bucket;
+    List* list;
     log_assert(list_type >= BUCKET_ENTITIES && list_type <= BUCKET_AOES, "invalid obj type");
-    for (i32 i = 0; i < 4; i++) {
-        vec2 position = vec2_sub(object_position, vec2_scale(bucket_offsets[i], object_hitbox_radius));
-        i32 idx = spatial_hash_bucket_idx(data, position);
-        if (idx == -1)
-            goto next_iter;
-        prev_idxs[i] = idx;
-        for (i32 j = 0; j < i; j++)
-            if (prev_idxs[i] == prev_idxs[j])
-                goto next_iter;
-        Bucket* bucket = &data->buckets[idx];
-        List* list = get_bucket_list_from_type(bucket, list_type);
-        list_append(list, object);
-        //log_write(DEBUG, "Insert: Inserting %s %p into bucket %d", list_type_str[list_type], object, idx);
-next_iter:
-        continue;
+    for (i = 0; i < 4; i++) {
+        position = vec2_sub(object_position, vec2_scale(bucket_offsets[i], object_hitbox_radius));
+        idx = spatial_hash_bucket_idx(data, position);
+        if (idx != -1) {
+            test = spatial_hash_position(data, idx);
+            top_right.idx_x = maxi(top_right.idx_x, test.idx_x);
+            top_right.idx_z = maxi(top_right.idx_z, test.idx_z);
+            bottom_left.idx_x = mini(bottom_left.idx_x, test.idx_x);
+            bottom_left.idx_z = mini(bottom_left.idx_z, test.idx_z);
+        }
     }
+    for (i32 idx_z = bottom_left.idx_z; idx_z <= top_right.idx_z; idx_z++)
+        for (i32 idx_x = bottom_left.idx_x; idx_x <= top_right.idx_x; idx_x++)
+            add_object(object, list_type, data, idx_x + idx_z * data->num_buckets_wide);
     map_info->bucket_position = object_position;
     map_info->bucket_radius = object_hitbox_radius;
+    map_info->tr_bucket_idx = top_right.idx_x + top_right.idx_z * data->num_buckets_wide;
+    map_info->bl_bucket_idx = bottom_left.idx_x + bottom_left.idx_z * data->num_buckets_wide;
 }
 
 static void buckets_update_object_spatial_hash(Map* map, void* object, i32 list_type, MapInfo* map_info, vec2 object_position, f32 object_hitbox_radius)
 {
     Bucket* bucket;
     List* list;
-    i32 list_idx;
+    i32 i, idx, list_idx, idx_x, idx_z;
     vec2 position;
     vec2 object_prev_position = map_info->bucket_position;
     f32 object_prev_hitbox_radius = map_info->bucket_radius;
     SpatialHashData* data = &map->spatial_hash_data;
-    i32 prev_idxs[4] = {-1, -1, -1, -1};
-    i32 cur_idxs[4] = {-1, -1, -1, -1};
+    IntPair test;
+    IntPair top_right = (IntPair) { -1, -1 };
+    IntPair bottom_left = (IntPair) { data->num_buckets_wide, data->num_buckets_long };
     log_assert(list_type >= BUCKET_ENTITIES && list_type <= BUCKET_AOES, "invalid obj type");
-    for (i32 i = 0; i < 4; i++) {
-        position = vec2_sub(object_prev_position, vec2_scale(bucket_offsets[i], object_prev_hitbox_radius));
-        prev_idxs[i] = spatial_hash_bucket_idx(data, position);
-    }
-    for (i32 i = 0; i < 4; i++) {
+    for (i = 0; i < 4; i++) {
         position = vec2_sub(object_position, vec2_scale(bucket_offsets[i], object_hitbox_radius));
-        cur_idxs[i] = spatial_hash_bucket_idx(data, position);
+        idx = spatial_hash_bucket_idx(data, position);
+        if (idx != -1) {
+            test = spatial_hash_position(data, idx);
+            top_right.idx_x = maxi(top_right.idx_x, test.idx_x);
+            top_right.idx_z = maxi(top_right.idx_z, test.idx_z);
+            bottom_left.idx_x = mini(bottom_left.idx_x, test.idx_x);
+            bottom_left.idx_z = mini(bottom_left.idx_z, test.idx_z);
+        }
     }
-    //log_write(DEBUG, "prev_idxs: %d %d %d %d", prev_idxs[0], prev_idxs[1], prev_idxs[2], prev_idxs[3]);
-    //log_write(DEBUG, "cur_idxs: %d %d %d %d", cur_idxs[0], cur_idxs[1], cur_idxs[2], cur_idxs[3]);
-    for (i32 i = 0; i < 4; i++) {
-        i32 prev_idx = prev_idxs[i];
-        if (prev_idx == -1)
-            goto next_iter1;
-        for (i32 j = 0; j < i; j++)
-            if (prev_idx == prev_idxs[j])
-                goto next_iter1;
-        for (i32 j = 0; j < 4; j++)
-            if (prev_idx == cur_idxs[j])
-                goto next_iter1;
-        bucket = &data->buckets[prev_idx];
-        list = get_bucket_list_from_type(bucket, list_type);
-        list_idx = list_search(list, object);
-        log_assert(list_idx != -1, "Expected %s %p to be in bucket %d", list_type_str[list_type], object, prev_idx);
-        list_remove(list, list_idx);
-        //log_write(DEBUG, "Update: Removing %s %p from bucket %d", list_type_str[list_type], object, prev_idx);
-next_iter1:
-        continue;
-    }
-    for (i32 i = 0; i < 4; i++) {
-        i32 cur_idx = cur_idxs[i];
-        if (cur_idx == -1)
-            goto next_iter2;
-        for (i32 j = 0; j < i; j++)
-            if (cur_idx == cur_idxs[j])
-                goto next_iter2;
-        for (i32 j = 0; j < 4; j++)
-            if (cur_idx == prev_idxs[j])
-                goto next_iter2;
-        bucket = &data->buckets[cur_idx];
-        list = get_bucket_list_from_type(bucket, list_type);
-        list_append(list, object);
-        //log_write(DEBUG, "Update: Inserting %s %p into bucket %d", list_type_str[list_type], object, cur_idx);
-next_iter2:
-        continue;
-    }
+    IntPair prev_top_right = spatial_hash_position(data, map_info->tr_bucket_idx);
+    IntPair prev_bottom_left = spatial_hash_position(data, map_info->bl_bucket_idx);
+
+    // get rid of everything in previous buckets not in current buckets
+    for (idx_x = prev_top_right.idx_x; idx_x > top_right.idx_x; idx_x--)
+        for (idx_z = prev_top_right.idx_z; idx_z >= prev_bottom_left.idx_z; idx_z--)
+            remove_object(object, list_type, data, idx_x + idx_z * data->num_buckets_wide);
+    for (idx_x = prev_bottom_left.idx_x; idx_x < bottom_left.idx_x; idx_x++)
+        for (idx_z = prev_bottom_left.idx_z; idx_z <= prev_top_right.idx_z; idx_z++)
+            remove_object(object, list_type, data, idx_x + idx_z * data->num_buckets_wide);
+    for (idx_z = prev_top_right.idx_z; idx_z > top_right.idx_z; idx_z--)
+        for (idx_x = top_right.idx_x; idx_x >= bottom_left.idx_x; idx_x--)
+            remove_object(object, list_type, data, idx_x + idx_z * data->num_buckets_wide);
+    for (idx_z = prev_bottom_left.idx_z; idx_z < bottom_left.idx_z; idx_z++)
+        for (idx_x = bottom_left.idx_x; idx_x <= top_right.idx_x; idx_x++)
+            remove_object(object, list_type, data, idx_x + idx_z * data->num_buckets_wide);
+    // add everything in current buckets not in previous buckets
+    for (idx_x = top_right.idx_x; idx_x > prev_top_right.idx_x; idx_x--)
+        for (idx_z = top_right.idx_z; idx_z >= bottom_left.idx_z; idx_z--)
+            add_object(object, list_type, data, idx_x + idx_z * data->num_buckets_wide);
+    for (idx_x = bottom_left.idx_x; idx_x < prev_bottom_left.idx_x; idx_x++)
+        for (idx_z = bottom_left.idx_z; idx_z <= top_right.idx_z; idx_z++)
+            add_object(object, list_type, data, idx_x + idx_z * data->num_buckets_wide);
+    for (idx_z = top_right.idx_z; idx_z > prev_top_right.idx_z; idx_z--)
+        for (idx_x = prev_top_right.idx_x; idx_x >= prev_bottom_left.idx_x; idx_x--)
+            add_object(object, list_type, data, idx_x + idx_z * data->num_buckets_wide);
+    for (idx_z = bottom_left.idx_z; idx_z < prev_bottom_left.idx_z; idx_z++)
+        for (idx_x = prev_bottom_left.idx_x; idx_x <= prev_top_right.idx_x; idx_x++)
+            add_object(object, list_type, data, idx_x + idx_z * data->num_buckets_wide);
+
     map_info->bucket_position = object_position;
     map_info->bucket_radius = object_hitbox_radius;
+    map_info->tr_bucket_idx = top_right.idx_x + top_right.idx_z * data->num_buckets_wide;
+    map_info->bl_bucket_idx = bottom_left.idx_x + bottom_left.idx_z * data->num_buckets_wide;
 }
 
 static void buckets_remove_object_spatial_hash(Map* map, void* object, i32 list_type, MapInfo* map_info, vec2 object_position, f32 object_hitbox_radius)
 {
     SpatialHashData* data = &map->spatial_hash_data;
-    i32 prev_idxs[4] = {-1, -1, -1, -1};
+    IntPair top_right = spatial_hash_position(data, map_info->tr_bucket_idx);
+    IntPair bottom_left = spatial_hash_position(data, map_info->bl_bucket_idx);
     log_assert(list_type >= BUCKET_ENTITIES && list_type <= BUCKET_AOES, "invalid obj type");
-    for (i32 i = 0; i < 4; i++) {
-        vec2 position = vec2_sub(object_position, vec2_scale(bucket_offsets[i], object_hitbox_radius));
-        i32 idx = spatial_hash_bucket_idx(data, position);
-        if (idx == -1)
-            goto next_iter;
-        prev_idxs[i] = idx;
-        for (i32 j = 0; j < i; j++)
-            if (prev_idxs[i] == prev_idxs[j])
-                goto next_iter;
-        Bucket* bucket = &data->buckets[idx];
-        List* list = get_bucket_list_from_type(bucket, list_type);
-        i32 list_idx = list_search(list, object);
-        log_assert(list_idx != -1, "Expected %s %p to be in bucket %d", list_type_str[list_type], object, idx);
-        list_remove(list, list_idx);
-        //log_write(DEBUG, "Remove: Removing %s %p into bucket %d", list_type_str[list_type], object, idx);
-next_iter:
-        continue;
-    }
-    map_info->bucket_position = object_position;
-    map_info->bucket_radius = object_hitbox_radius;
+    for (i32 idx_z = bottom_left.idx_z; idx_z <= top_right.idx_z; idx_z++)
+        for (i32 idx_x = bottom_left.idx_x; idx_x <= top_right.idx_x; idx_x++)
+            remove_object(object, list_type, data, idx_x + idx_z * data->num_buckets_wide);
 }
 
 void buckets_insert_trigger(Map* map, Trigger* trigger)

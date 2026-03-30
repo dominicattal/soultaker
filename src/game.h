@@ -116,13 +116,15 @@ typedef struct LocalMapGenerationSettings {
     bool succeed_even_if_no_path;
 } LocalMapGenerationSettings;
 
+typedef struct {
+    i32 idx_x, idx_z;
+} IntPair;
+
 typedef struct MapInfo {
     MapNode* spawn_node;
     MapNode* current_node;
-    i32 tl_bucket_idx;
     i32 tr_bucket_idx;
     i32 bl_bucket_idx;
-    i32 br_bucket_idx;
     vec2 bucket_position;
     f32 bucket_radius;
 } MapInfo;
