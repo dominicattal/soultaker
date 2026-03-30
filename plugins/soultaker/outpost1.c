@@ -750,7 +750,8 @@ static void boss_start(Trigger* trigger, Entity* entity)
 
 void outpost1_boss_create(Entity* entity)
 {
-    Trigger* trigger = map_create_trigger(entity->position, 10.0f);
+    Trigger* trigger = room_create_trigger(vec2_create(0,0), 10.0f);
+    trigger->position = entity->position;
     trigger_set_flag(trigger, TRIGGER_FLAG_ONCE, true);
     trigger_set_flag(trigger, TRIGGER_FLAG_PLAYER, true);
     trigger->enter = boss_start;

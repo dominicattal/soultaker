@@ -373,6 +373,7 @@ void entity_clear(void)
 Entity* entity_create(vec2 position, i32 id)
 {
     Entity* entity = st_malloc(sizeof(Entity));
+    entity->map_info = (MapInfo) {0};
     entity->position = position;
     entity->prev_position = position;
     entity->direction = vec2_create(0, 0);

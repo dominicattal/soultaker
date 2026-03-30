@@ -3,6 +3,7 @@
 Trigger* trigger_create(vec2 position, f32 radius)
 {
     Trigger* trigger = st_malloc(sizeof(Trigger));
+    trigger->map_info = (MapInfo) {0};
     trigger->position = position;
     trigger->radius = radius;
     trigger->entities = list_create();

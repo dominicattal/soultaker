@@ -119,6 +119,8 @@ typedef struct LocalMapGenerationSettings {
 typedef struct MapInfo {
     MapNode* spawn_node;
     MapNode* current_node;
+    vec2 prev_position;
+    f32 prev_radius;
 } MapInfo;
 
 typedef struct {
@@ -371,6 +373,7 @@ Entity*         room_create_entity(vec2 position, i32 id);
 Obstacle*       room_create_obstacle(vec2 position);
 Parstacle*      room_create_parstacle(vec2 position);
 Projectile*     room_create_projectile(vec2 position);
+Trigger*        room_create_trigger(vec2 position, f32 radius);
 Wall*           room_create_wall(vec2 position, f32 height, f32 width, f32 length, u32 minimap_color);
 Trigger*        room_create_trigger(vec2 position, f32 radius);
 Parjicle*       room_create_parjicle(vec3 position);
@@ -402,18 +405,16 @@ void    line_destroy(Line* line);
 //**************************************************************************
 
 typedef struct Trigger {
-    void* data;
-    MapNode* map_node;
+    MapInfo map_info;
     TriggerEnterFunc enter;
     TriggerStayFunc stay;
     TriggerLeaveFunc leave;
     TriggerDestroyFunc destroy;
+    void* data;
     Bitset* bitset;
     List* entities;
     vec2 position;
-    vec2 prev_position;
     f32 radius;
-    f32 prev_radius;
     u32 flags;
 } Trigger;
 

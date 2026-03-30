@@ -1695,7 +1695,7 @@ void map_fog_clear(Map* map)
 
 void map_handle_trigger_enter(Trigger* trigger, Entity* entity)
 {
-    map_context.current_map_node = trigger->map_node;
+    map_context.current_map_node = trigger->map_info.spawn_node;
     if (trigger->enter != NULL)
         trigger->enter(trigger, entity);
     map_context.current_map_node = NULL;
@@ -1703,7 +1703,7 @@ void map_handle_trigger_enter(Trigger* trigger, Entity* entity)
 
 void map_handle_trigger_stay(Trigger* trigger, Entity* entity)
 {
-    map_context.current_map_node = trigger->map_node;
+    map_context.current_map_node = trigger->map_info.spawn_node;
     if (trigger->stay != NULL)
         trigger->stay(trigger, entity);
     map_context.current_map_node = NULL;
@@ -1898,11 +1898,10 @@ Trigger* map_create_trigger(vec2 position, f32 radius)
 {
     Trigger* trigger;
     Map* map = map_context.current_map;
-    MapNode* node = map_context.current_map_node;
     if (!map->active)
         return NULL;
     trigger = trigger_create(position, radius);
-    trigger->map_node = node;
+    trigger->map_info.spawn_node = NULL;
     list_append(map->triggers, trigger);
     buckets_insert_trigger(map, trigger);
     return trigger;
@@ -1963,7 +1962,7 @@ Trigger* room_create_trigger(vec2 position, f32 radius)
     }
     vec2 new_position = room_to_map_position(position);
     trigger = trigger_create(new_position, radius);
-    trigger->map_node = node;
+    trigger->map_info.spawn_node = node;
     list_append(map->triggers, trigger);
     buckets_insert_trigger(map, trigger);
     return trigger;
@@ -2852,8 +2851,8 @@ void buckets_insert_trigger(Map* map, Trigger* trigger)
 {
     if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH) {
         buckets_insert_object_spatial_hash(map, trigger, BUCKET_TRIGGERS, trigger->position, trigger->radius);
-        trigger->prev_position = trigger->position;
-        trigger->prev_radius = trigger->radius;
+        trigger->map_info.prev_position = trigger->position;
+        trigger->map_info.prev_radius = trigger->radius;
     }
 }
 
@@ -2896,7 +2895,7 @@ void buckets_insert_aoe(Map* map, AOE* aoe)
 void buckets_update_trigger(Map* map, Trigger* trigger)
 {
     if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH)
-        buckets_update_object_spatial_hash(map, trigger, BUCKET_TRIGGERS, trigger->prev_position, trigger->prev_radius, trigger->position, trigger->radius);
+        buckets_update_object_spatial_hash(map, trigger, BUCKET_TRIGGERS, trigger->map_info.prev_position, trigger->map_info.prev_radius, trigger->position, trigger->radius);
 }
 
 void buckets_update_entity(Map* map, Entity* entity)
@@ -2926,7 +2925,7 @@ void buckets_update_aoe(Map* map, AOE* aoe)
 void buckets_remove_trigger(Map* map, Trigger* trigger)
 {
     if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH)
-        buckets_remove_object_spatial_hash(map, trigger, BUCKET_TRIGGERS, trigger->prev_position, trigger->prev_radius);
+        buckets_remove_object_spatial_hash(map, trigger, BUCKET_TRIGGERS, trigger->map_info.prev_position, trigger->map_info.prev_radius);
 }
 
 void buckets_remove_entity(Map* map, Entity* entity)
@@ -2976,7 +2975,7 @@ static void map_update_objects(Map* map)
     i = 0;
     while (i < map->triggers->length) {
         Trigger* trigger = list_get(map->triggers, i);
-        map_context.current_map_node = trigger->map_node;
+        map_context.current_map_node = trigger->map_info.spawn_node;
         delete = trigger_get_flag(trigger, TRIGGER_FLAG_DELETE);
         once = trigger_get_flag(trigger, TRIGGER_FLAG_ONCE);
         used = trigger_get_flag(trigger, TRIGGER_FLAG_USED);
@@ -2984,10 +2983,10 @@ static void map_update_objects(Map* map)
             buckets_remove_trigger(map, trigger);
             trigger_destroy(list_remove(map->triggers, i));
         } else {
-            if (!vec2_equal(trigger->prev_position, trigger->position) || trigger->prev_radius != trigger->radius)
+            if (!vec2_equal(trigger->map_info.prev_position, trigger->position) || trigger->map_info.prev_radius != trigger->radius)
                 buckets_update_trigger(map, trigger);
-            trigger->prev_position = trigger->position;
-            trigger->prev_radius = trigger->radius;
+            trigger->map_info.prev_position = trigger->position;
+            trigger->map_info.prev_radius = trigger->radius;
             trigger_update(trigger);
             i++;
         }
