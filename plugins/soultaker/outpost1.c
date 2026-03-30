@@ -63,7 +63,7 @@ bool outpost1_generate_test(LocalMapGenerationSettings* settings)
 
 bool outpost1_generate(LocalMapGenerationSettings* settings)
 {
-    return outpost1_generate_test(settings);
+    return outpost1_generate_final(settings);
 }
 
 bool outpost1_branch(LocalMapGenerationSettings* settings)
@@ -85,9 +85,8 @@ void outpost1_big_room_create(void)
     vec2 position = vec2_create(14, 14);
     i32 id;
     id = entity_get_id("outpost1_knight");
-    room_create_entity(position, id);
-    room_create_entity(position, id);
-    room_create_entity(position, id);
+    for (i32 i = 0; i < 100; i++)
+        room_create_entity(position, id);
     id = entity_get_id("outpost1_archer");
     room_create_entity(position, id);
     room_create_entity(position, id);

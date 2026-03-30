@@ -11,8 +11,8 @@
 // or a boss room.
 
 #define DEFAULT_WALL_HEIGHT 1.5f
-#define MAP_MAX_WIDTH   10000
-#define MAP_MAX_LENGTH  10000
+#define MAP_MAX_WIDTH   1000
+#define MAP_MAX_LENGTH  1000
 #define WHITE   0xFFFFFF
 #define GRAY    0x808080
 #define BLACK   0x000000
@@ -2593,116 +2593,6 @@ void map_destroy(Map* map)
     st_free(map);
 }
 
-static void map_collide_tilemap(Map* map)
-{
-    vec2 pos;
-    f32 r;
-    i32 i, x, z;
-    Tile* tile;
-    Wall* wall;
-    for (i = 0; i < map->entities->length; i++) {
-        Entity* entity = list_get(map->entities, i);
-        pos = entity->position;
-        r = entity->size / 2;
-        for (x = floor(pos.x-r); x <= ceil(pos.x+r); x++) {
-            for (z = floor(pos.z-r); z <= ceil(pos.z+r); z++) {
-                tile = map_get_tile(map, x, z);
-                wall = map_get_wall(map, x, z);
-                if (tile != NULL)
-                    collide_entity_tile(entity, tile);
-                if (wall != NULL)
-                    collide_entity_wall(entity, wall);
-            }
-        }
-    }
-    for (i = 0; i < map->projectiles->length; i++) {
-        Projectile* projectile = list_get(map->projectiles, i);
-        pos = projectile->position;
-        r = projectile->size / 2;
-        for (x = floor(pos.x-r); x <= ceil(pos.x+r); x++) {
-            for (z = floor(pos.z-r); z <= ceil(pos.z+r); z++) {
-                wall = map_get_wall(map, x, z);
-                if (wall != NULL)
-                    collide_projectile_wall(projectile, wall);
-            }
-        }
-    }
-}
-
-static void collide_entities_with_objects(List* entities, List* obstacles, List* free_walls, List* projectiles, List* triggers, List* aoes)
-{
-    i32 i, j;
-    for (i = 0; i < entities->length; i++) {
-        Entity* entity = list_get(entities, i);
-        for (j = 0; j < obstacles->length; j++) {
-            Obstacle* obstacle = list_get(obstacles, j);
-            collide_entity_obstacle(entity, obstacle);
-        }
-        for (j = 0; j < free_walls->length; j++) {
-            Wall* wall = list_get(free_walls, j);
-            collide_entity_wall(entity, wall);
-        }
-        for (j = 0; j < projectiles->length; j++) {
-            Projectile* projectile = list_get(projectiles, j);
-            collide_entity_projectile(entity, projectile);
-        }
-        for (j = 0; j < triggers->length; j++) {
-            Trigger* trigger = list_get(triggers, j);
-            collide_entity_trigger(entity, trigger);
-        }
-        for (j = 0; j < aoes->length; j++) {
-            AOE* aoe = list_get(aoes, j);
-            if  (aoe->timer >= 0) continue;
-            collide_entity_aoe(entity, aoe);
-        }
-    }
-}
-
-static void collide_projectiles_with_objects(List* projectiles, List* obstacles, List* free_walls)
-{
-    i32 i, j;
-    for (i = 0; i < projectiles->length; i++) {
-        Projectile* projectile = list_get(projectiles, i);
-        if (projectile->lifetime <= 0) continue;
-        for (j = 0; j < obstacles->length; j++) {
-            Obstacle* obstacle = list_get(obstacles, j);
-            collide_projectile_obstacle(projectile, obstacle);
-        }
-        for (j = 0; j < free_walls->length; j++) {
-            Wall* wall = list_get(free_walls, j);
-            collide_projectile_wall(projectile, wall);
-        }
-    }
-}
-
-void map_collide_objects_quadtree(Map* map)
-{
-}
-
-void map_collide_objects_spatial_hash(Map* map)
-{
-    SpatialHashData* data = &map->spatial_hash_data;
-    for (i32 i = 0; i < data->num_buckets; i++) {
-        Bucket* bucket = &data->buckets[i];
-        collide_entities_with_objects(bucket->entities, bucket->obstacles, bucket->free_walls, bucket->projectiles, bucket->triggers, bucket->aoes);
-        collide_projectiles_with_objects(bucket->projectiles, bucket->obstacles, bucket->free_walls);
-    }
-}
-
-void map_collide_objects(Map* map)
-{
-    if (map->collision_strategy == MAP_COLLIDE_QUADTREE) {
-        map_collide_objects_quadtree(map);
-        return;
-    }
-    if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH) {
-        map_collide_objects_spatial_hash(map);
-        return;
-    }
-    collide_entities_with_objects(map->entities, map->obstacles, map->free_walls, map->projectiles, map->triggers, map->aoes);
-    collide_projectiles_with_objects(map->projectiles, map->obstacles, map->free_walls);
-}
-
 static i32 spatial_hash_bucket_idx(SpatialHashData* data, vec2 position)
 {
     i32 idx_x = position.x / data->bucket_width;
@@ -2759,6 +2649,13 @@ static List* get_bucket_list_from_type(Bucket* bucket, i32 list_type)
     else if (list_type == BUCKET_AOES)
         return bucket->aoes;
     return NULL;
+}
+
+static i32 least_common_bucket_idx_assuming_same_bucket(SpatialHashData* data, MapInfo* map_info1, MapInfo* map_info2)
+{
+    IntPair bottom_left1 = spatial_hash_position(data, map_info1->bl_bucket_idx);
+    IntPair bottom_left2 = spatial_hash_position(data, map_info2->bl_bucket_idx);
+    return maxi(bottom_left1.idx_x, bottom_left2.idx_x) + maxi(bottom_left1.idx_z, bottom_left2.idx_z) * data->num_buckets_wide;
 }
 
 static void remove_object(void* object, i32 list_type, SpatialHashData* data, i32 bucket_idx)
@@ -3084,6 +2981,159 @@ static void map_update_objects(Map* map)
             i++;
     }
     player_update(&game_context.player, game_context.dt);
+}
+
+static void map_collide_tilemap(Map* map)
+{
+    vec2 pos;
+    f32 r;
+    i32 i, x, z;
+    Tile* tile;
+    Wall* wall;
+    for (i = 0; i < map->entities->length; i++) {
+        Entity* entity = list_get(map->entities, i);
+        pos = entity->position;
+        r = entity->size / 2;
+        for (x = floor(pos.x-r); x <= ceil(pos.x+r); x++) {
+            for (z = floor(pos.z-r); z <= ceil(pos.z+r); z++) {
+                tile = map_get_tile(map, x, z);
+                wall = map_get_wall(map, x, z);
+                if (tile != NULL)
+                    collide_entity_tile(entity, tile);
+                if (wall != NULL)
+                    collide_entity_wall(entity, wall);
+            }
+        }
+    }
+    for (i = 0; i < map->projectiles->length; i++) {
+        Projectile* projectile = list_get(map->projectiles, i);
+        pos = projectile->position;
+        r = projectile->size / 2;
+        for (x = floor(pos.x-r); x <= ceil(pos.x+r); x++) {
+            for (z = floor(pos.z-r); z <= ceil(pos.z+r); z++) {
+                wall = map_get_wall(map, x, z);
+                if (wall != NULL)
+                    collide_projectile_wall(projectile, wall);
+            }
+        }
+    }
+}
+
+static void map_collide_objects_quadtree(Map* map)
+{
+}
+
+static void map_collide_objects_spatial_hash(Map* map)
+{
+    SpatialHashData* data = &map->spatial_hash_data;
+    for (i32 bucket_idx = 0; bucket_idx < data->num_buckets; bucket_idx++) {
+        i32 i, j;
+        Bucket* bucket = &data->buckets[bucket_idx];
+        List* entities = bucket->entities;
+        List* obstacles = bucket->obstacles;
+        List* free_walls = bucket->free_walls;
+        List* projectiles = bucket->projectiles;
+        List* triggers = bucket->triggers;
+        List* aoes = bucket->aoes;
+        for (i = 0; i < entities->length; i++) {
+            Entity* entity = list_get(entities, i);
+            for (j = 0; j < obstacles->length; j++) {
+                Obstacle* obstacle = list_get(obstacles, j);
+                if (bucket_idx == least_common_bucket_idx_assuming_same_bucket(&map->spatial_hash_data, &entity->map_info, &obstacle->map_info))
+                    collide_entity_obstacle(entity, obstacle);
+            }
+            for (j = 0; j < free_walls->length; j++) {
+                Wall* wall = list_get(free_walls, j);
+                collide_entity_wall(entity, wall);
+            }
+            for (j = 0; j < projectiles->length; j++) {
+                Projectile* projectile = list_get(projectiles, j);
+                if (bucket_idx == least_common_bucket_idx_assuming_same_bucket(&map->spatial_hash_data, &entity->map_info, &projectile->map_info))
+                    collide_entity_projectile(entity, projectile);
+            }
+            for (j = 0; j < triggers->length; j++) {
+                Trigger* trigger = list_get(triggers, j);
+                if (bucket_idx == least_common_bucket_idx_assuming_same_bucket(&map->spatial_hash_data, &entity->map_info, &trigger->map_info))
+                    collide_entity_trigger(entity, trigger);
+            }
+            for (j = 0; j < aoes->length; j++) {
+                AOE* aoe = list_get(aoes, j);
+                if  (aoe->timer >= 0) continue;
+                if (bucket_idx == least_common_bucket_idx_assuming_same_bucket(&map->spatial_hash_data, &entity->map_info, &aoe->map_info))
+                    collide_entity_aoe(entity, aoe);
+            }
+        }
+        for (i = 0; i < projectiles->length; i++) {
+            Projectile* projectile = list_get(projectiles, i);
+            if (projectile->lifetime <= 0) continue;
+            for (j = 0; j < obstacles->length; j++) {
+                Obstacle* obstacle = list_get(obstacles, j);
+                if (bucket_idx == least_common_bucket_idx_assuming_same_bucket(&map->spatial_hash_data, &projectile->map_info, &obstacle->map_info))
+                    collide_projectile_obstacle(projectile, obstacle);
+            }
+            for (j = 0; j < free_walls->length; j++) {
+                Wall* wall = list_get(free_walls, j);
+                collide_projectile_wall(projectile, wall);
+            }
+        }
+    }
+}
+
+static void map_collide_objects_naive(Map* map)
+{
+    List* entities = map->entities;
+    List* obstacles = map->obstacles;
+    List* free_walls = map->free_walls;
+    List* projectiles = map->projectiles;
+    List* triggers = map->triggers;
+    List* aoes = map->aoes;
+    i32 i, j;
+    for (i = 0; i < entities->length; i++) {
+        Entity* entity = list_get(entities, i);
+        for (j = 0; j < obstacles->length; j++) {
+            Obstacle* obstacle = list_get(obstacles, j);
+            collide_entity_obstacle(entity, obstacle);
+        }
+        for (j = 0; j < free_walls->length; j++) {
+            Wall* wall = list_get(free_walls, j);
+            collide_entity_wall(entity, wall);
+        }
+        for (j = 0; j < projectiles->length; j++) {
+            Projectile* projectile = list_get(projectiles, j);
+            collide_entity_projectile(entity, projectile);
+        }
+        for (j = 0; j < triggers->length; j++) {
+            Trigger* trigger = list_get(triggers, j);
+            collide_entity_trigger(entity, trigger);
+        }
+        for (j = 0; j < aoes->length; j++) {
+            AOE* aoe = list_get(aoes, j);
+            if  (aoe->timer >= 0) continue;
+            collide_entity_aoe(entity, aoe);
+        }
+    }
+    for (i = 0; i < projectiles->length; i++) {
+        Projectile* projectile = list_get(projectiles, i);
+        if (projectile->lifetime <= 0) continue;
+        for (j = 0; j < obstacles->length; j++) {
+            Obstacle* obstacle = list_get(obstacles, j);
+            collide_projectile_obstacle(projectile, obstacle);
+        }
+        for (j = 0; j < free_walls->length; j++) {
+            Wall* wall = list_get(free_walls, j);
+            collide_projectile_wall(projectile, wall);
+        }
+    }
+}
+
+void map_collide_objects(Map* map)
+{
+    if (map->collision_strategy == MAP_COLLIDE_QUADTREE)
+        map_collide_objects_quadtree(map);
+    else if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH)
+        map_collide_objects_spatial_hash(map);
+    else if (map->collision_strategy == MAP_COLLIDE_NAIVE)
+        map_collide_objects_naive(map);
 }
 
 void map_update(Map* map)
