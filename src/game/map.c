@@ -1968,6 +1968,25 @@ Trigger* room_create_trigger(vec2 position, f32 radius)
     return trigger;
 }
 
+AOE* room_create_aoe(vec2 position, f32 lifetime)
+{
+    AOE* aoe;
+    Map* map = map_context.current_map;
+    MapNode* node = map_context.current_map_node;
+    if (!map->active)
+        return NULL;
+    if (node == NULL) {
+        log_write(WARNING, "AOE doesn't know its room");
+        return NULL;
+    }
+    vec2 new_position = room_to_map_position(position);
+    aoe = aoe_create(new_position, lifetime);
+    aoe->map_info.spawn_node = node;
+    list_append(map->aoes, aoe);
+    buckets_insert_aoe(map, aoe);
+    return aoe;
+}
+
 Parjicle* room_create_parjicle(vec3 position)
 {
     Map* map = map_context.current_map;
@@ -2013,6 +2032,7 @@ Obstacle* room_create_obstacle(vec2 position)
     }
     vec2 new_position = room_to_map_position(position);
     obstacle = obstacle_create(new_position);
+    obstacle->map_info.spawn_node = node;
     list_append(map->obstacles, obstacle);
     buckets_insert_obstacle(map, obstacle);
     return obstacle;
@@ -2048,6 +2068,7 @@ Projectile* room_create_projectile(vec2 position)
     }
     vec2 new_position = room_to_map_position(position);
     proj = projectile_create(new_position);
+    proj->map_info.spawn_node = node;
     list_append(map->projectiles, proj);
     buckets_insert_projectile(map, proj);
     return proj;
@@ -2870,8 +2891,8 @@ void buckets_insert_obstacle(Map* map, Obstacle* obstacle)
 {
     if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH) { 
         buckets_insert_object_spatial_hash(map, obstacle, BUCKET_OBSTACLES, obstacle->position, obstacle->size / 2);
-        obstacle->prev_position = obstacle->position;
-        obstacle->prev_size = obstacle->size;
+        obstacle->map_info.bucket_position = obstacle->position;
+        obstacle->map_info.bucket_radius = obstacle->size / 2;
     }
 }
 
@@ -2879,8 +2900,8 @@ void buckets_insert_aoe(Map* map, AOE* aoe)
 {
     if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH) {
         buckets_insert_object_spatial_hash(map, aoe, BUCKET_AOES, aoe->position, aoe->radius);
-        aoe->prev_position = aoe->position;
-        aoe->prev_radius = aoe->radius;
+        aoe->map_info.bucket_position = aoe->position;
+        aoe->map_info.bucket_radius = aoe->radius;
     }
 }
 
@@ -2919,14 +2940,22 @@ void buckets_update_projectile(Map* map, Projectile* projectile)
 
 void buckets_update_obstacle(Map* map, Obstacle* obstacle)
 {
-    if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH)
-        buckets_update_object_spatial_hash(map, obstacle, BUCKET_OBSTACLES, obstacle->prev_position, obstacle->prev_size / 2, obstacle->position, obstacle->size / 2);
+    if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH) {
+        buckets_update_object_spatial_hash(map, obstacle, BUCKET_OBSTACLES, obstacle->map_info.bucket_position, obstacle->map_info.bucket_radius, obstacle->position, obstacle->size / 2);
+        obstacle->map_info.bucket_position = obstacle->position;
+        obstacle->map_info.bucket_radius = obstacle->size / 2;
+    }
 }
 
 void buckets_update_aoe(Map* map, AOE* aoe)
 {
-    if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH)
-        buckets_update_object_spatial_hash(map, aoe, BUCKET_AOES, aoe->prev_position, aoe->prev_radius, aoe->position, aoe->radius);
+    if (vec2_equal(aoe->prev_position, aoe->position) && aoe->prev_radius == aoe->radius)
+        return;
+    if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH) {
+        buckets_update_object_spatial_hash(map, aoe, BUCKET_AOES, aoe->map_info.bucket_position, aoe->map_info.bucket_radius, aoe->position, aoe->radius);
+        aoe->map_info.bucket_position = aoe->position;
+        aoe->map_info.bucket_radius = aoe->radius;
+    }
 }
 
 void buckets_remove_trigger(Map* map, Trigger* trigger)
@@ -2950,13 +2979,13 @@ void buckets_remove_projectile(Map* map, Projectile* projectile)
 void buckets_remove_obstacle(Map* map, Obstacle* obstacle)
 {
     if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH)
-        buckets_remove_object_spatial_hash(map, obstacle, BUCKET_OBSTACLES, obstacle->prev_position, obstacle->prev_size / 2);
+        buckets_remove_object_spatial_hash(map, obstacle, BUCKET_OBSTACLES, obstacle->map_info.bucket_position, obstacle->map_info.bucket_radius);
 }
 
 void buckets_remove_aoe(Map* map, AOE* aoe)
 {
     if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH)
-        buckets_remove_object_spatial_hash(map, aoe, BUCKET_AOES, aoe->prev_position, aoe->prev_radius);
+        buckets_remove_object_spatial_hash(map, aoe, BUCKET_AOES, aoe->map_info.bucket_position, aoe->map_info.bucket_radius);
 }
 
 void buckets_insert_free_wall(Map* map, Wall* wall)
@@ -3045,16 +3074,13 @@ static void map_update_objects(Map* map)
     i = 0;
     while (i < map->aoes->length) {
         AOE* aoe = list_get(map->aoes, i);
-        if (!vec2_equal(aoe->prev_position, aoe->position) || aoe->prev_radius != aoe->radius)
-            buckets_update_aoe(map, aoe);
-        aoe->prev_position = aoe->position;
-        aoe->prev_radius = aoe->radius;
         aoe_update(aoe, game_context.dt);
         if ((!aoe_get_flag(aoe, AOE_FLAG_LINGER) && aoe_get_flag(aoe, AOE_FLAG_USED)) || (aoe_get_flag(aoe, AOE_FLAG_LINGER) && aoe->lifetime <= 0)) {
             buckets_remove_aoe(map, aoe);
             aoe_destroy(list_remove(map->aoes, i));
         } else {
             aoe_set_flag(aoe, AOE_FLAG_USED, true);
+            buckets_update_aoe(map, aoe);
             i++;
         }
     }

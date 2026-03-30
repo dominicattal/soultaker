@@ -374,6 +374,7 @@ Obstacle*       room_create_obstacle(vec2 position);
 Parstacle*      room_create_parstacle(vec2 position);
 Projectile*     room_create_projectile(vec2 position);
 Trigger*        room_create_trigger(vec2 position, f32 radius);
+AOE*            room_create_aoe(vec2 position, f32 lifetime);
 Wall*           room_create_wall(vec2 position, f32 height, f32 width, f32 length, u32 minimap_color);
 Trigger*        room_create_trigger(vec2 position, f32 radius);
 Parjicle*       room_create_parjicle(vec3 position);
@@ -780,6 +781,7 @@ typedef void (*AOEUpdateFuncPtr)(AOE*, f32);
 typedef void (*AOEDestroyFuncPtr)(AOE*);
 
 typedef struct AOE {
+    MapInfo map_info;
     AOEUpdateFuncPtr update;
     AOEDestroyFuncPtr destroy;
     void* data;
@@ -818,10 +820,9 @@ bool aoe_get_flag(AOE* proj, AOEFlagEnum flag);
 //**************************************************************************
 
 typedef struct Obstacle {
+    MapInfo map_info;
     vec2 position;
-    vec2 prev_position;
     f32 size;
-    f32 prev_size;
     i32 tex;
 } Obstacle;
 
