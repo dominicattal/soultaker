@@ -11,6 +11,7 @@ void wall_init(void)
 Wall* wall_create(vec2 position, f32 height, u32 minimap_color)
 {
     Wall* wall = st_malloc(sizeof(Wall));
+    wall->map_info = (MapInfo) {0};
     wall->position = position;
     wall->minimap_color = minimap_color;
     wall->size = vec2_create(1, 1);

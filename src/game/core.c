@@ -5,6 +5,9 @@
 
 GameContext game_context;
 
+#define MIN_DT  0.0001
+//#define MIN_DT  0.005
+
 void* game_loop(void* vargp)
 {
     f64 start, end;
@@ -28,7 +31,7 @@ void* game_loop(void* vargp)
             game_context.dt = 0;
             game_context.time = 0;
         }
-        if (end - start > 0.0001) {
+        if (end - start > MIN_DT) {
             game_context.dt = end - start;
             if (game_context.dt > 0.1)
                 game_context.dt = 0.1;

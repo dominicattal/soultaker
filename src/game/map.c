@@ -11,8 +11,8 @@
 // or a boss room.
 
 #define DEFAULT_WALL_HEIGHT 1.5f
-#define MAP_MAX_WIDTH   1000
-#define MAP_MAX_LENGTH  1000
+#define MAP_MAX_WIDTH   200
+#define MAP_MAX_LENGTH  200
 #define WHITE   0xFFFFFF
 #define GRAY    0x808080
 #define BLACK   0x000000
@@ -2097,6 +2097,7 @@ Wall* room_create_wall(vec2 position, f32 height, f32 width, f32 length, u32 min
     new_position.x = node->origin_x + minf(dx1, dx2);
     new_position.z = node->origin_z + minf(dz1, dz2);
     Wall* wall = wall_create(new_position, height, minimap_color);
+    wall->map_info.spawn_node = node;
     list_append(map->walls, wall);
     list_append(map->free_walls, wall);
     buckets_insert_free_wall(map, wall);
@@ -2340,13 +2341,6 @@ static void clear_previous_collision_strategy(Map* map)
             bucket_destroy(&map->spatial_hash_data.buckets[i]);
         st_free(map->spatial_hash_data.buckets);
     }
-}
-
-void map_use_quadtree(Map* map, i32 split_threshold)
-{
-    log_write(INFO, "Switching to quadtree strategy");
-    clear_previous_collision_strategy(map);
-    map->collision_strategy = MAP_COLLIDE_QUADTREE;
 }
 
 void map_use_spatial_hash(Map* map, i32 bucket_width)
@@ -2608,7 +2602,7 @@ static IntPair spatial_hash_position(SpatialHashData* data, i32 idx)
 {
     i32 idx_x = idx % data->num_buckets_wide;
     i32 idx_z = idx / data->num_buckets_wide;
-    return (IntPair) { idx_x, idx_z };
+    return (IntPair) { .idx_x = idx_x, .idx_z = idx_z };
 }
 
 static vec2 bucket_offsets[4] = {
@@ -2658,9 +2652,33 @@ static i32 least_common_bucket_idx_assuming_same_bucket(SpatialHashData* data, M
     return maxi(bottom_left1.idx_x, bottom_left2.idx_x) + maxi(bottom_left1.idx_z, bottom_left2.idx_z) * data->num_buckets_wide;
 }
 
+static IntPair compute_bucket_range(SpatialHashData* data, vec2 position, f32 radius)
+{
+    IntPair test;
+    IntPair top_right = (IntPair) { .idx_x = -1, .idx_z = -1 };
+    IntPair bottom_left = (IntPair) { .idx_x = data->num_buckets_wide, .idx_z = data->num_buckets_long };
+    vec2 corner;
+    i32 idx, i;
+    for (i = 0; i < 4; i++) {
+        corner = vec2_sub(position, vec2_scale(bucket_offsets[i], radius));
+        idx = spatial_hash_bucket_idx(data, corner);
+        if (idx != -1) {
+            test = spatial_hash_position(data, idx);
+            top_right.idx_x = maxi(top_right.idx_x, test.idx_x);
+            top_right.idx_z = maxi(top_right.idx_z, test.idx_z);
+            bottom_left.idx_x = mini(bottom_left.idx_x, test.idx_x);
+            bottom_left.idx_z = mini(bottom_left.idx_z, test.idx_z);
+        }
+    }
+    return (IntPair) {
+        .bl_bucket_idx = bottom_left.idx_x + data->num_buckets_wide * bottom_left.idx_z,
+        .tr_bucket_idx = top_right.idx_x + data->num_buckets_wide * top_right.idx_z
+    };
+}
+
 static void remove_object(void* object, i32 list_type, SpatialHashData* data, i32 bucket_idx)
 {
-    //log_write(DEBUG, "Remove: Removing %s %p into bucket %d", list_type_str[list_type], object, bucket_idx);
+    //log_write(DEBUG, "Remove: Removing %s %p from bucket %d", list_type_str[list_type], object, bucket_idx);
     Bucket* bucket = &data->buckets[bucket_idx];
     List* list = get_bucket_list_from_type(bucket, list_type);
     i32 list_idx = list_search(list, object);
@@ -2676,103 +2694,59 @@ static void add_object(void* object, i32 list_type, SpatialHashData* data, i32 b
     list_append(list, object);
 }
 
-static void buckets_insert_object_spatial_hash(Map* map, void* object, i32 list_type, MapInfo* map_info, vec2 object_position, f32 object_hitbox_radius)
+static void buckets_insert_object_spatial_hash(Map* map, void* object, i32 list_type, MapInfo* map_info, i32 bl_bucket_idx, i32 tr_bucket_idx)
 {
     SpatialHashData* data = &map->spatial_hash_data;
-    IntPair top_right = (IntPair) { -1, -1 };
-    IntPair bottom_left = (IntPair) { data->num_buckets_wide, data->num_buckets_long };
     i32 idx, i;
     vec2 position;
-    IntPair test;
     Bucket* bucket;
     List* list;
-    log_assert(list_type >= BUCKET_ENTITIES && list_type <= BUCKET_AOES, "invalid obj type");
-    for (i = 0; i < 4; i++) {
-        position = vec2_sub(object_position, vec2_scale(bucket_offsets[i], object_hitbox_radius));
-        idx = spatial_hash_bucket_idx(data, position);
-        if (idx != -1) {
-            test = spatial_hash_position(data, idx);
-            top_right.idx_x = maxi(top_right.idx_x, test.idx_x);
-            top_right.idx_z = maxi(top_right.idx_z, test.idx_z);
-            bottom_left.idx_x = mini(bottom_left.idx_x, test.idx_x);
-            bottom_left.idx_z = mini(bottom_left.idx_z, test.idx_z);
-        }
-    }
+    IntPair top_right = spatial_hash_position(data, tr_bucket_idx);
+    IntPair bottom_left = spatial_hash_position(data, bl_bucket_idx);
     for (i32 idx_z = bottom_left.idx_z; idx_z <= top_right.idx_z; idx_z++)
         for (i32 idx_x = bottom_left.idx_x; idx_x <= top_right.idx_x; idx_x++)
             add_object(object, list_type, data, idx_x + idx_z * data->num_buckets_wide);
-    map_info->bucket_position = object_position;
-    map_info->bucket_radius = object_hitbox_radius;
     map_info->tr_bucket_idx = top_right.idx_x + top_right.idx_z * data->num_buckets_wide;
     map_info->bl_bucket_idx = bottom_left.idx_x + bottom_left.idx_z * data->num_buckets_wide;
 }
 
-static void buckets_update_object_spatial_hash(Map* map, void* object, i32 list_type, MapInfo* map_info, vec2 object_position, f32 object_hitbox_radius)
+static void buckets_update_object_spatial_hash(Map* map, void* object, i32 list_type, MapInfo* map_info, i32 bl_bucket_idx, i32 tr_bucket_idx)
 {
+    if (bl_bucket_idx == map_info->bl_bucket_idx && tr_bucket_idx == map_info->tr_bucket_idx)
+        return;
+
     Bucket* bucket;
     List* list;
-    i32 i, idx, list_idx, idx_x, idx_z;
+    i32 i, idx, list_idx;
+    i32 idx_x, idx_z, prev_idx_x, prev_idx_z;
     vec2 position;
-    vec2 object_prev_position = map_info->bucket_position;
-    f32 object_prev_hitbox_radius = map_info->bucket_radius;
     SpatialHashData* data = &map->spatial_hash_data;
-    IntPair test;
-    IntPair top_right = (IntPair) { -1, -1 };
-    IntPair bottom_left = (IntPair) { data->num_buckets_wide, data->num_buckets_long };
-    log_assert(list_type >= BUCKET_ENTITIES && list_type <= BUCKET_AOES, "invalid obj type");
-    for (i = 0; i < 4; i++) {
-        position = vec2_sub(object_position, vec2_scale(bucket_offsets[i], object_hitbox_radius));
-        idx = spatial_hash_bucket_idx(data, position);
-        if (idx != -1) {
-            test = spatial_hash_position(data, idx);
-            top_right.idx_x = maxi(top_right.idx_x, test.idx_x);
-            top_right.idx_z = maxi(top_right.idx_z, test.idx_z);
-            bottom_left.idx_x = mini(bottom_left.idx_x, test.idx_x);
-            bottom_left.idx_z = mini(bottom_left.idx_z, test.idx_z);
-        }
-    }
+    IntPair top_right = spatial_hash_position(data, tr_bucket_idx);
+    IntPair bottom_left = spatial_hash_position(data, bl_bucket_idx);
     IntPair prev_top_right = spatial_hash_position(data, map_info->tr_bucket_idx);
     IntPair prev_bottom_left = spatial_hash_position(data, map_info->bl_bucket_idx);
 
     // get rid of everything in previous buckets not in current buckets
-    for (idx_x = prev_top_right.idx_x; idx_x > top_right.idx_x; idx_x--)
-        for (idx_z = prev_top_right.idx_z; idx_z >= prev_bottom_left.idx_z; idx_z--)
-            remove_object(object, list_type, data, idx_x + idx_z * data->num_buckets_wide);
-    for (idx_x = prev_bottom_left.idx_x; idx_x < bottom_left.idx_x; idx_x++)
-        for (idx_z = prev_bottom_left.idx_z; idx_z <= prev_top_right.idx_z; idx_z++)
-            remove_object(object, list_type, data, idx_x + idx_z * data->num_buckets_wide);
-    for (idx_z = prev_top_right.idx_z; idx_z > top_right.idx_z; idx_z--)
-        for (idx_x = top_right.idx_x; idx_x >= bottom_left.idx_x; idx_x--)
-            remove_object(object, list_type, data, idx_x + idx_z * data->num_buckets_wide);
-    for (idx_z = prev_bottom_left.idx_z; idx_z < bottom_left.idx_z; idx_z++)
-        for (idx_x = bottom_left.idx_x; idx_x <= top_right.idx_x; idx_x++)
-            remove_object(object, list_type, data, idx_x + idx_z * data->num_buckets_wide);
-    // add everything in current buckets not in previous buckets
-    for (idx_x = top_right.idx_x; idx_x > prev_top_right.idx_x; idx_x--)
-        for (idx_z = top_right.idx_z; idx_z >= bottom_left.idx_z; idx_z--)
-            add_object(object, list_type, data, idx_x + idx_z * data->num_buckets_wide);
-    for (idx_x = bottom_left.idx_x; idx_x < prev_bottom_left.idx_x; idx_x++)
-        for (idx_z = bottom_left.idx_z; idx_z <= top_right.idx_z; idx_z++)
-            add_object(object, list_type, data, idx_x + idx_z * data->num_buckets_wide);
-    for (idx_z = top_right.idx_z; idx_z > prev_top_right.idx_z; idx_z--)
-        for (idx_x = prev_top_right.idx_x; idx_x >= prev_bottom_left.idx_x; idx_x--)
-            add_object(object, list_type, data, idx_x + idx_z * data->num_buckets_wide);
-    for (idx_z = bottom_left.idx_z; idx_z < prev_bottom_left.idx_z; idx_z++)
-        for (idx_x = prev_bottom_left.idx_x; idx_x <= prev_top_right.idx_x; idx_x++)
-            add_object(object, list_type, data, idx_x + idx_z * data->num_buckets_wide);
+    for (prev_idx_x = prev_bottom_left.idx_x; prev_idx_x <= prev_top_right.idx_x; prev_idx_x++)
+        for (prev_idx_z = prev_bottom_left.idx_z; prev_idx_z <= prev_top_right.idx_z; prev_idx_z++)
+            if (prev_idx_x < bottom_left.idx_x || prev_idx_z < bottom_left.idx_z || prev_idx_x > top_right.idx_x || prev_idx_z > top_right.idx_z)
+                remove_object(object, list_type, data, prev_idx_x + prev_idx_z * data->num_buckets_wide);
 
-    map_info->bucket_position = object_position;
-    map_info->bucket_radius = object_hitbox_radius;
+    // add everything in current buckets not in previous buckets
+    for (idx_x = bottom_left.idx_x; idx_x <= top_right.idx_x; idx_x++)
+        for (idx_z = bottom_left.idx_z; idx_z <= top_right.idx_z; idx_z++)
+            if (idx_x < prev_bottom_left.idx_x || idx_z < prev_bottom_left.idx_z || idx_x > prev_top_right.idx_x || idx_z > prev_top_right.idx_z)
+                add_object(object, list_type, data, idx_x + idx_z * data->num_buckets_wide);
+
     map_info->tr_bucket_idx = top_right.idx_x + top_right.idx_z * data->num_buckets_wide;
     map_info->bl_bucket_idx = bottom_left.idx_x + bottom_left.idx_z * data->num_buckets_wide;
 }
 
-static void buckets_remove_object_spatial_hash(Map* map, void* object, i32 list_type, MapInfo* map_info, vec2 object_position, f32 object_hitbox_radius)
+static void buckets_remove_object_spatial_hash(Map* map, void* object, i32 list_type, MapInfo* map_info)
 {
     SpatialHashData* data = &map->spatial_hash_data;
     IntPair top_right = spatial_hash_position(data, map_info->tr_bucket_idx);
     IntPair bottom_left = spatial_hash_position(data, map_info->bl_bucket_idx);
-    log_assert(list_type >= BUCKET_ENTITIES && list_type <= BUCKET_AOES, "invalid obj type");
     for (i32 idx_z = bottom_left.idx_z; idx_z <= top_right.idx_z; idx_z++)
         for (i32 idx_x = bottom_left.idx_x; idx_x <= top_right.idx_x; idx_x++)
             remove_object(object, list_type, data, idx_x + idx_z * data->num_buckets_wide);
@@ -2780,115 +2754,124 @@ static void buckets_remove_object_spatial_hash(Map* map, void* object, i32 list_
 
 void buckets_insert_trigger(Map* map, Trigger* trigger)
 {
+    IntPair pair = compute_bucket_range(&map->spatial_hash_data, trigger->position, trigger->radius);
     if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH)
-        buckets_insert_object_spatial_hash(map, trigger, BUCKET_TRIGGERS, &trigger->map_info, trigger->position, trigger->radius);
+        buckets_insert_object_spatial_hash(map, trigger, BUCKET_TRIGGERS, &trigger->map_info, pair.bl_bucket_idx, pair.tr_bucket_idx);
 }
 
 void buckets_insert_entity(Map* map, Entity* entity)
 {
+    IntPair pair = compute_bucket_range(&map->spatial_hash_data, entity->position, entity->size / 2);
     if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH)
-        buckets_insert_object_spatial_hash(map, entity, BUCKET_ENTITIES, &entity->map_info, entity->position, entity->size / 2);
+        buckets_insert_object_spatial_hash(map, entity, BUCKET_ENTITIES, &entity->map_info, pair.bl_bucket_idx, pair.tr_bucket_idx);
 }
 
 void buckets_insert_projectile(Map* map, Projectile* projectile)
 {
+    IntPair pair = compute_bucket_range(&map->spatial_hash_data, projectile->position, projectile->size / 2);
     if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH)
-        buckets_insert_object_spatial_hash(map, projectile, BUCKET_PROJECTILES, &projectile->map_info, projectile->position, projectile->size / 2);
+        buckets_insert_object_spatial_hash(map, projectile, BUCKET_PROJECTILES, &projectile->map_info, pair.bl_bucket_idx, pair.tr_bucket_idx);
 }
 
 void buckets_insert_obstacle(Map* map, Obstacle* obstacle)
 {
+    IntPair pair = compute_bucket_range(&map->spatial_hash_data, obstacle->position, obstacle->size / 2);
     if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH) 
-        buckets_insert_object_spatial_hash(map, obstacle, BUCKET_OBSTACLES, &obstacle->map_info, obstacle->position, obstacle->size / 2);
+        buckets_insert_object_spatial_hash(map, obstacle, BUCKET_OBSTACLES, &obstacle->map_info, pair.bl_bucket_idx, pair.tr_bucket_idx);
 }
 
 void buckets_insert_aoe(Map* map, AOE* aoe)
 {
+    IntPair pair = compute_bucket_range(&map->spatial_hash_data, aoe->position, aoe->radius);
     if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH)
-        buckets_insert_object_spatial_hash(map, aoe, BUCKET_AOES, &aoe->map_info, aoe->position, aoe->radius);
+        buckets_insert_object_spatial_hash(map, aoe, BUCKET_AOES, &aoe->map_info, pair.bl_bucket_idx, pair.tr_bucket_idx);
 }
 
 void buckets_update_trigger(Map* map, Trigger* trigger)
 {
-    if (vec2_equal(trigger->map_info.bucket_position, trigger->position) && trigger->map_info.bucket_radius == trigger->radius)
-        return;
+    IntPair pair = compute_bucket_range(&map->spatial_hash_data, trigger->position, trigger->radius);
     if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH)
-        buckets_update_object_spatial_hash(map, trigger, BUCKET_TRIGGERS, &trigger->map_info, trigger->position, trigger->radius);
+        buckets_update_object_spatial_hash(map, trigger, BUCKET_TRIGGERS, &trigger->map_info, pair.bl_bucket_idx, pair.tr_bucket_idx);
 }
 
 void buckets_update_entity(Map* map, Entity* entity)
 {
-    if (vec2_equal(entity->map_info.bucket_position, entity->position) && entity->map_info.bucket_radius == entity->size / 2)
-        return;
+    IntPair pair = compute_bucket_range(&map->spatial_hash_data, entity->position, entity->size / 2);
     if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH)
-        buckets_update_object_spatial_hash(map, entity, BUCKET_ENTITIES, &entity->map_info, entity->position, entity->size / 2);
+        buckets_update_object_spatial_hash(map, entity, BUCKET_ENTITIES, &entity->map_info, pair.bl_bucket_idx, pair.tr_bucket_idx);
 }
 
 void buckets_update_projectile(Map* map, Projectile* projectile)
 {
-    if (vec2_equal(projectile->map_info.bucket_position, projectile->position) && projectile->map_info.bucket_radius != projectile->size)
-        return;
+    IntPair pair = compute_bucket_range(&map->spatial_hash_data, projectile->position, projectile->size / 2);
     if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH)
-        buckets_update_object_spatial_hash(map, projectile, BUCKET_PROJECTILES, &projectile->map_info, projectile->position, projectile->size / 2);
+        buckets_update_object_spatial_hash(map, projectile, BUCKET_PROJECTILES, &projectile->map_info, pair.bl_bucket_idx, pair.tr_bucket_idx);
 }
 
 void buckets_update_obstacle(Map* map, Obstacle* obstacle)
 {
+    IntPair pair = compute_bucket_range(&map->spatial_hash_data, obstacle->position, obstacle->size / 2);
     if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH)
-        buckets_update_object_spatial_hash(map, obstacle, BUCKET_OBSTACLES, &obstacle->map_info, obstacle->position, obstacle->size / 2);
+        buckets_update_object_spatial_hash(map, obstacle, BUCKET_OBSTACLES, &obstacle->map_info, pair.bl_bucket_idx, pair.tr_bucket_idx);
 }
 
 void buckets_update_aoe(Map* map, AOE* aoe)
 {
-    if (vec2_equal(aoe->prev_position, aoe->position) && aoe->prev_radius == aoe->radius)
-        return;
+    IntPair pair = compute_bucket_range(&map->spatial_hash_data, aoe->position, aoe->radius);
     if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH)
-        buckets_update_object_spatial_hash(map, aoe, BUCKET_AOES, &aoe->map_info, aoe->position, aoe->radius);
+        buckets_update_object_spatial_hash(map, aoe, BUCKET_AOES, &aoe->map_info, pair.bl_bucket_idx, pair.tr_bucket_idx);
 }
 
 void buckets_remove_trigger(Map* map, Trigger* trigger)
 {
     if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH)
-        buckets_remove_object_spatial_hash(map, trigger, BUCKET_TRIGGERS, &trigger->map_info, trigger->map_info.bucket_position, trigger->map_info.bucket_radius);
+        buckets_remove_object_spatial_hash(map, trigger, BUCKET_TRIGGERS, &trigger->map_info);
 }
 
 void buckets_remove_entity(Map* map, Entity* entity)
 {
     if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH)
-        buckets_remove_object_spatial_hash(map, entity, BUCKET_ENTITIES, &entity->map_info, entity->map_info.bucket_position, entity->map_info.bucket_radius);
+        buckets_remove_object_spatial_hash(map, entity, BUCKET_ENTITIES, &entity->map_info);
 }
 
 void buckets_remove_projectile(Map* map, Projectile* projectile)
 {
     if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH)
-        buckets_remove_object_spatial_hash(map, projectile, BUCKET_PROJECTILES, &projectile->map_info, projectile->map_info.bucket_position, projectile->map_info.bucket_radius);
+        buckets_remove_object_spatial_hash(map, projectile, BUCKET_PROJECTILES, &projectile->map_info);
 }
 
 void buckets_remove_obstacle(Map* map, Obstacle* obstacle)
 {
     if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH)
-        buckets_remove_object_spatial_hash(map, obstacle, BUCKET_OBSTACLES, &obstacle->map_info, obstacle->map_info.bucket_position, obstacle->map_info.bucket_radius);
+        buckets_remove_object_spatial_hash(map, obstacle, BUCKET_OBSTACLES, &obstacle->map_info);
 }
 
 void buckets_remove_aoe(Map* map, AOE* aoe)
 {
     if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH)
-        buckets_remove_object_spatial_hash(map, aoe, BUCKET_AOES, &aoe->map_info, aoe->map_info.bucket_position, aoe->map_info.bucket_radius);
+        buckets_remove_object_spatial_hash(map, aoe, BUCKET_AOES, &aoe->map_info);
 }
 
 void buckets_insert_free_wall(Map* map, Wall* wall)
 {
-    return;
+    i32 bl_bucket_idx = spatial_hash_bucket_idx(&map->spatial_hash_data, wall->position);
+    i32 tr_bucket_idx = spatial_hash_bucket_idx(&map->spatial_hash_data, vec2_add(wall->position, wall->size));
+    if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH)
+        buckets_insert_object_spatial_hash(map, wall, BUCKET_FREE_WALLS, &wall->map_info, bl_bucket_idx, tr_bucket_idx);
 }
 
 void buckets_update_free_wall(Map* map, Wall* wall)
 {
-    return;
+    i32 bl_bucket_idx = spatial_hash_bucket_idx(&map->spatial_hash_data, wall->position);
+    i32 tr_bucket_idx = spatial_hash_bucket_idx(&map->spatial_hash_data, vec2_add(wall->position, wall->size));
+    if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH)
+        buckets_update_object_spatial_hash(map, wall, BUCKET_FREE_WALLS, &wall->map_info, bl_bucket_idx, tr_bucket_idx);
 }
 
 void buckets_remove_free_wall(Map* map, Wall* wall)
 {
-    return;
+    if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH)
+        buckets_remove_object_spatial_hash(map, wall, BUCKET_FREE_WALLS, &wall->map_info);
 }
 
 static void map_update_objects(Map* map)
@@ -3019,10 +3002,6 @@ static void map_collide_tilemap(Map* map)
     }
 }
 
-static void map_collide_objects_quadtree(Map* map)
-{
-}
-
 static void map_collide_objects_spatial_hash(Map* map)
 {
     SpatialHashData* data = &map->spatial_hash_data;
@@ -3128,9 +3107,7 @@ static void map_collide_objects_naive(Map* map)
 
 void map_collide_objects(Map* map)
 {
-    if (map->collision_strategy == MAP_COLLIDE_QUADTREE)
-        map_collide_objects_quadtree(map);
-    else if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH)
+    if (map->collision_strategy == MAP_COLLIDE_SPATIAL_HASH)
         map_collide_objects_spatial_hash(map);
     else if (map->collision_strategy == MAP_COLLIDE_NAIVE)
         map_collide_objects_naive(map);

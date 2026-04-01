@@ -117,7 +117,14 @@ typedef struct LocalMapGenerationSettings {
 } LocalMapGenerationSettings;
 
 typedef struct {
-    i32 idx_x, idx_z;
+    union {
+        i32 idx_x;
+        i32 bl_bucket_idx;
+    };
+    union {
+        i32 idx_z;
+        i32 tr_bucket_idx;
+    };
 } IntPair;
 
 typedef struct MapInfo {
@@ -125,8 +132,6 @@ typedef struct MapInfo {
     MapNode* current_node;
     i32 tr_bucket_idx;
     i32 bl_bucket_idx;
-    vec2 bucket_position;
-    f32 bucket_radius;
 } MapInfo;
 
 typedef struct {
@@ -181,8 +186,6 @@ typedef struct {
 } Roomset;
 
 typedef enum {
-    MAP_COLLIDE_QUADTREE,
-
     // Partitions map into equal-sized buckets 
     MAP_COLLIDE_SPATIAL_HASH,
 
@@ -230,11 +233,8 @@ typedef struct Map {
     MapNode** map_nodes;
     Quadmask* tile_mask;
     Quadmask* fog_mask;
+    SpatialHashData spatial_hash_data;
     MapCollisionStrategy collision_strategy;
-    union {
-        SpatialHashData spatial_hash_data;
-        QuadtreeData quadtree_data;
-    };
     List* bosses;
     List* entities;
     List* tiles;
@@ -721,6 +721,7 @@ void tile_lava_collision(Entity* entity);
 //**************************************************************************
 
 typedef struct Wall {
+    MapInfo map_info;
     vec2 position;
     vec2 size;
     f32 height;

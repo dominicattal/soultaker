@@ -63,7 +63,7 @@ bool outpost1_generate_test(LocalMapGenerationSettings* settings)
 
 bool outpost1_generate(LocalMapGenerationSettings* settings)
 {
-    return outpost1_generate_final(settings);
+    return outpost1_generate_test(settings);
 }
 
 bool outpost1_branch(LocalMapGenerationSettings* settings)
