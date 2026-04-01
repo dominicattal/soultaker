@@ -6,24 +6,65 @@
 
 GUIContext gui_context;
 
+static void console_framebuffer(GUIComp* console, i32 width, i32 height)
+{
+    console->w = width;
+}
+
+static void console_key(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods)
+{
+    char* message;
+    if (key == GLFW_KEY_GRAVE_ACCENT && action == GLFW_PRESS) {
+        if (gui_event_comp_equal(GUI_COMP_TYPING, comp)) {
+            game_resume_input();
+            if (comp->text != NULL) {
+                message = gui_command_parse(comp->text);
+                gui_comp_set_text(comp, message);
+            }
+            gui_set_event_comp(GUI_COMP_TYPING, NULL);
+            gui_comp_set_color(comp, 255, 255, 255, 100);
+        }
+        else {
+            game_halt_input();
+            gui_comp_remove_text(comp);
+            gui_set_event_comp(GUI_COMP_TYPING, comp);
+            gui_comp_set_color(comp, 255, 255, 255, 200);
+        }
+    }
+}
+
+static void root_framebuffer(GUIComp* root, i32 width, i32 height)
+{
+    root->w = width;
+    root->h = height;
+}
+
 void gui_comp_init(void)
 { 
     gui_context.root = gui_comp_create(0, 0, window_resolution_x(), window_resolution_y());
-    for (i32 i = 0; i < NUM_GUI_EVENT_COMPS; i++)
-        gui_context.event_comps[i] = NULL;
+    gui_context.root->valign = ALIGN_BOTTOM;
+    gui_context.root->framebuffer = root_framebuffer;
     gui_context.root->r = 0;
     gui_context.root->g = 0;
     gui_context.root->b = 0;
     gui_context.root->a = 0;
-    gui_context.root->valign = ALIGN_BOTTOM;
     gui_comp_set_flag(gui_context.root, GUI_COMP_FLAG_CLICKABLE, true);
     gui_comp_set_flag(gui_context.root, GUI_COMP_FLAG_HOVERABLE, true);
     gui_comp_set_flag(gui_context.root, GUI_COMP_FLAG_IGNORE_MOUSE_BUTTON, true);
+
+    gui_context.console = gui_comp_create(0, 0, window_width(), 200);
+    gui_context.console->framebuffer = console_framebuffer;
+    gui_context.console->key = console_key;
+    gui_context.console->halign = ALIGN_CENTER;
+
+    for (i32 i = 0; i < NUM_GUI_EVENT_COMPS; i++)
+        gui_context.event_comps[i] = NULL;
 }
 
 void gui_comp_cleanup(void)
 {
     gui_comp_destroy(gui_context.root);
+    gui_comp_destroy(gui_context.console);
 }
 
 GUIComp* gui_comp_create(i16 x, i16 y, i16 w, i16 h)
@@ -237,7 +278,7 @@ void gui_comp_delete_char(GUIComp* comp, i32 idx)
         return;
     }
     char* new_text = st_malloc(length * sizeof(char));
-    if (idx == -1 || idx >= length) {
+    if (idx == STRING_END || idx >= length) {
         strncpy(new_text, comp->text, length-1);
     } else {
         strncpy(new_text, comp->text, idx);
@@ -292,6 +333,13 @@ void gui_comp_key(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods)
     if (comp->key == NULL)
         return;
     ((GUIKeyFPtr)(comp->key))(comp, key, scancode, action, mods);
+}
+
+void gui_comp_framebuffer(GUIComp* comp, i32 width, i32 height)
+{
+    if (comp->framebuffer == NULL)
+        return;
+    ((GUIFramebufferFPtr)(comp->framebuffer))(comp, width, height);
 }
 
 void gui_comp_control(GUIComp* comp, ControlEnum ctrl, i32 action)

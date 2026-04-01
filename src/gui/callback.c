@@ -3,10 +3,16 @@
 
 extern GUIContext gui_context;
 
+static void gui_framebuffer_size_callback_helper(GUIComp* comp, i32 width, i32 height)
+{
+    for (i32 i = 0; i < comp->num_children; i++)
+        gui_framebuffer_size_callback_helper(comp->children[i], width, height);
+    gui_comp_framebuffer(comp, width, height);
+}
+
 void gui_framebuffer_size_callback(i32 width, i32 height)
 {
-    gui_context.root->w = width;
-    gui_context.root->h = height;
+    gui_framebuffer_size_callback_helper(gui_context.root, width, height);
 }
 
 static bool gui_cursor_pos_callback_helper(GUIComp* comp, f64 xpos, f64 ypos, i32 position_x, i32 position_y, i32 size_x, i32 size_y)
@@ -53,32 +59,28 @@ bool gui_cursor_pos_callback(f64 xpos, f64 ypos)
     return comp_found;
 }
 
-static bool gui_key_callback_helper(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods)
+static void gui_key_callback_helper(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods)
 {
     for (i32 i = 0; i < comp->num_children; i++)
         gui_key_callback_helper(comp->children[i], key, scancode, action, mods);
     gui_comp_key(comp, key, scancode, action, mods);
-    return false;
 }
 
 static void process_typing_input(i32 key, i32 scancode, i32 action, i32 mods)
 {
-    if (key == GLFW_KEY_BACKSPACE && action != GLFW_RELEASE) {
-        gui_comp_delete_char(gui_get_event_comp(GUI_COMP_TYPING), -1);
-    }
+    if (key == GLFW_KEY_BACKSPACE && action != GLFW_RELEASE)
+        gui_comp_delete_char(gui_get_event_comp(GUI_COMP_TYPING), STRING_END);
     gui_comp_key(gui_get_event_comp(GUI_COMP_TYPING), key, scancode, action, mods);
 }
 
-bool gui_key_callback(i32 key, i32 scancode, i32 action, i32 mods)
+void gui_key_callback(i32 key, i32 scancode, i32 action, i32 mods)
 {
-    bool comp_found = true;
-    if (gui_get_event_comp(GUI_COMP_TYPING) == NULL)
-        comp_found = gui_key_callback_helper(gui_context.root, key, scancode, action, mods);
-    else
-        process_typing_input(key, scancode, action, mods);
-    if (!comp_found)
+    if (gui_get_event_comp(GUI_COMP_TYPING) == NULL) {
+        gui_key_callback_helper(gui_context.root, key, scancode, action, mods);
+        gui_key_callback_helper(gui_context.console, key, scancode, action, mods);
         game_key_callback(key, scancode, action, mods);
-    return comp_found;
+    } else
+        process_typing_input(key, scancode, action, mods);
 }
 
 static bool gui_mouse_button_callback_helper(GUIComp* comp, i32 xpos, i32 ypos, i32 button, i32 action, i32 mods, i32 position_x, i32 position_y, i32 size_x, i32 size_y)
@@ -139,7 +141,7 @@ bool gui_char_callback(u32 codepoint)
 {
     bool comp_found = false;
     if (gui_get_event_comp(GUI_COMP_TYPING) != NULL)
-        gui_comp_insert_char(gui_get_event_comp(GUI_COMP_TYPING), codepoint, -1);
+        gui_comp_insert_char(gui_get_event_comp(GUI_COMP_TYPING), codepoint, STRING_END);
     return comp_found;
 }
 

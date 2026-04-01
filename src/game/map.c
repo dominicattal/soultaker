@@ -11,8 +11,8 @@
 // or a boss room.
 
 #define DEFAULT_WALL_HEIGHT 1.5f
-#define MAP_MAX_WIDTH   200
-#define MAP_MAX_LENGTH  200
+#define MAP_MAX_WIDTH   1000
+#define MAP_MAX_LENGTH  1000
 #define WHITE   0xFFFFFF
 #define GRAY    0x808080
 #define BLACK   0x000000

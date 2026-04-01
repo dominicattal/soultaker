@@ -180,16 +180,8 @@ void hand_of_shaitan_destroy(Entity* entity)
 {
     HandData* data = entity->data;
     Entity* daddy = data->daddy;
-    if (daddy == NULL)
-        goto free;
-    // daddy is freed before this is called
-    //AdvisorData* daddys_data = daddy->data;
-    //if (entity == daddys_data->hand1)
-    //    daddys_data->hand1 = NULL;
-    //else if (entity == daddys_data->hand2)
-    //    daddys_data->hand2 = NULL;
-free:
-    st_free(entity->data);
+    if (daddy != NULL)
+        st_free(entity->data);
 }
 
 static void spawn_hands(Entity* advisor)

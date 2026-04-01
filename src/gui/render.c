@@ -383,6 +383,7 @@ void gui_update_vertex_data(void)
     gui_context.data_swap.instance_count = 0;
     gui_context.data_swap.length = 0;
     gui_update_vertex_data_helper(gui_context.root, 0, 0, 0, 0);
+    gui_update_vertex_data_helper(gui_context.console, 0, 0, window_width(), window_height());
 
     GUIData tmp;
     pthread_mutex_lock(&gui_context.data_mutex);

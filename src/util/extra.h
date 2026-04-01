@@ -12,8 +12,7 @@ char* string_copy(const char* string);
 // string_copy, but return the length of the string in len
 char* string_copy_len(const char* string, i32* len);
 
-// create a string with the format that is 
-// at most n characters long
+// create a string with the format
 char* string_create(const char* fmt, ...);
 
 // string_create, but return the length of the string
