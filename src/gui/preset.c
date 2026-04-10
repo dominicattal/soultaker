@@ -4,6 +4,7 @@
 #include "../state.h"
 #include "../window.h"
 #include "../event.h"
+#include "../command.h"
 #include <math.h>
 #include <string.h>
 
@@ -80,7 +81,7 @@ static void keyfunc(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods)
         if (gui_event_comp_equal(GUI_COMP_TYPING, comp)) {
             game_resume_input();
             if (comp->text != NULL) {
-                message = gui_command_parse(comp->text);
+                message = command_parse(comp->text);
                 gui_comp_set_text(comp, message);
             }
             gui_set_event_comp(GUI_COMP_TYPING, NULL);

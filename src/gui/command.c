@@ -9,9 +9,9 @@
 #include "../event.h"
 #include <ctype.h>
 
-char* gui_command_parse(char* command)
+char* command_parse(char* command)
 {
-    return string_copy("");
+    return string_copy("Hello World");
 }
 
 #endif

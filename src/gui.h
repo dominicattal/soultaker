@@ -58,9 +58,18 @@ typedef enum {
     GUI_COMP_FLAG_REVERSE_RENDER,
     GUI_COMP_FLAG_RENDER_CHILDREN_FIRST,
 
+    GUI_COMP_FLAG_GENERIC_1,
+    GUI_COMP_FLAG_GENERIC_2,
+    GUI_COMP_FLAG_GENERIC_3,
+    GUI_COMP_FLAG_GENERIC_4,
+    GUI_COMP_FLAG_GENERIC_5,
+    GUI_COMP_FLAG_GENERIC_6,
+
     // does not affect clickability, just if it is counted as found in the callback
     GUI_COMP_FLAG_IGNORE_MOUSE_BUTTON
 } GUICompFlagEnum;
+
+#define GUI_COMP_FLAG_TYPING_THIS_FRAME GUI_COMP_FLAG_GENERIC_1
 
 typedef struct GUIComp GUIComp;
 typedef void (*GUIHoverFPtr)(GUIComp* comp, bool status); 
@@ -137,13 +146,10 @@ void gui_framebuffer_size_callback(i32 width, i32 height);
 bool gui_cursor_pos_callback(f64 xpos, f64 ypos);
 void gui_key_callback(i32 key, i32 scancode, i32 action, i32 mods);
 bool gui_mouse_button_callback(i32 button, i32 action, i32 mods);
-bool gui_char_callback(u32 codepoint);
+void gui_char_callback(u32 codepoint);
 void gui_control_callback(ControlEnum ctrl, i32 action);
 
 void gui_preset_load(GUIPreset preset);
-
-// returns response from parsing command
-char* gui_command_parse(char* command);
 
 void gui_set_typing_comp(GUIComp* comp);
 

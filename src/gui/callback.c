@@ -137,12 +137,16 @@ bool gui_mouse_button_callback(i32 button, i32 action, i32 mods)
     return comp_found;
 }
 
-bool gui_char_callback(u32 codepoint)
+void gui_char_callback(u32 codepoint)
 {
-    bool comp_found = false;
-    if (gui_get_event_comp(GUI_COMP_TYPING) != NULL)
-        gui_comp_insert_char(gui_get_event_comp(GUI_COMP_TYPING), codepoint, STRING_END);
-    return comp_found;
+    GUIComp* comp = gui_get_event_comp(GUI_COMP_TYPING);
+    if (comp == NULL)
+        return;
+    if (gui_comp_get_flag(comp, GUI_COMP_FLAG_TYPING_THIS_FRAME)) {
+        gui_comp_set_flag(comp, GUI_COMP_FLAG_TYPING_THIS_FRAME, false);
+        return;
+    }
+    gui_comp_insert_char(comp, codepoint, STRING_END);
 }
 
 static void gui_control_callback_helper(GUIComp* comp, ControlEnum ctrl, i32 action)

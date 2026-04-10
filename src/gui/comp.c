@@ -1,5 +1,6 @@
 #include "../gui.h"
 #include "../window.h"
+#include "../command.h"
 #include "../game.h"
 #include <assert.h>
 #include <string.h>
@@ -14,22 +15,21 @@ static void console_framebuffer(GUIComp* console, i32 width, i32 height)
 static void console_key(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods)
 {
     char* message;
-    if (key == GLFW_KEY_GRAVE_ACCENT && action == GLFW_PRESS) {
-        if (gui_event_comp_equal(GUI_COMP_TYPING, comp)) {
-            game_resume_input();
-            if (comp->text != NULL) {
-                message = gui_command_parse(comp->text);
-                gui_comp_set_text(comp, message);
-            }
-            gui_set_event_comp(GUI_COMP_TYPING, NULL);
-            gui_comp_set_color(comp, 255, 255, 255, 100);
+    bool equal = gui_event_comp_equal(GUI_COMP_TYPING, comp);
+    if (key == GLFW_KEY_GRAVE_ACCENT && action == GLFW_PRESS && !equal) {
+        game_halt_input();
+        gui_comp_remove_text(comp);
+        gui_set_event_comp(GUI_COMP_TYPING, comp);
+        gui_comp_set_color(comp, 255, 255, 255, 200);
+    }
+    if (key == GLFW_KEY_ENTER && action == GLFW_PRESS && equal) {
+        game_resume_input();
+        if (comp->text != NULL) {
+            message = command_parse(comp->text);
+            gui_comp_set_text(comp, message);
         }
-        else {
-            game_halt_input();
-            gui_comp_remove_text(comp);
-            gui_set_event_comp(GUI_COMP_TYPING, comp);
-            gui_comp_set_color(comp, 255, 255, 255, 200);
-        }
+        gui_set_event_comp(GUI_COMP_TYPING, NULL);
+        gui_comp_set_color(comp, 255, 255, 255, 100);
     }
 }
 
@@ -305,6 +305,10 @@ void gui_set_event_comp(GUIEventCompEnum type, GUIComp* comp)
     if (comp != NULL) {
         log_assert(comp->event_id == GUI_COMP_DEFAULT, "cannot assign event comp to another event comp");
         comp->event_id = type;
+
+        // because key and char callback happen at same time, must ignore the first character pressed
+        if (type == GUI_COMP_TYPING)
+            gui_comp_set_flag(comp, GUI_COMP_FLAG_TYPING_THIS_FRAME, true);
     }
 }
 

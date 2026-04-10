@@ -2372,7 +2372,7 @@ void map_use_spatial_hash(Map* map, i32 bucket_width)
         buckets_insert_aoe(map, list_get(map->aoes, i));
 
     Line* line;
-    f32 h = 1.0;
+    f32 h = 0;
     f32 w = 0.25;
     for (i32 i = 0; i <= data->num_buckets_wide; i++) {
         line = map_create_line();
