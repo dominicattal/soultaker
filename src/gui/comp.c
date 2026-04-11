@@ -7,29 +7,53 @@
 
 GUIContext gui_context;
 
+typedef struct {
+    i32 height_prefix;
+} ConsoleData;
+
 static void console_framebuffer(GUIComp* console, i32 width, i32 height)
 {
     console->w = width;
 }
 
+static void push_message_to_console(GUIComp* console, char* message)
+{
+    ConsoleData* data = console->data;
+    GUIComp* history = console->children[1];
+    GUIComp* comp = gui_comp_create(0, 0, console->w, 0);
+    gui_comp_set_color(comp, 255, 0, 0, 150);
+    gui_comp_set_text(comp, message);
+    comp->font_size = 24;
+    i32 text_height = gui_comp_compute_text_height(comp);
+    comp->h = text_height;
+    comp->y = data->height_prefix;
+    data->height_prefix += text_height;
+    gui_comp_attach(history, comp);
+}
+
 static void console_key(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods)
 {
+    GUIComp* console_root = comp->parent;
     char* message;
     bool equal = gui_event_comp_equal(GUI_COMP_TYPING, comp);
     if (key == GLFW_KEY_GRAVE_ACCENT && action == GLFW_PRESS && !equal) {
         game_halt_input();
         gui_comp_remove_text(comp);
         gui_set_event_comp(GUI_COMP_TYPING, comp);
-        gui_comp_set_color(comp, 255, 255, 255, 200);
+        // because key and char callback happen at same time, must ignore the first character pressed
+        // this won't be the case if the control isnt a codepoint
+        gui_comp_set_flag(comp, GUI_COMP_FLAG_TYPING_THIS_FRAME, true);
+        gui_comp_set_color(comp, 200, 200, 200, 255);
     }
     if (key == GLFW_KEY_ENTER && action == GLFW_PRESS && equal) {
         game_resume_input();
         if (comp->text != NULL) {
             message = command_parse(comp->text);
-            gui_comp_set_text(comp, message);
+            push_message_to_console(console_root, message);
+            gui_comp_remove_text(comp);
         }
         gui_set_event_comp(GUI_COMP_TYPING, NULL);
-        gui_comp_set_color(comp, 255, 255, 255, 100);
+        gui_comp_set_color(comp, 200, 200, 200, 255);
     }
 }
 
@@ -37,6 +61,34 @@ static void root_framebuffer(GUIComp* root, i32 width, i32 height)
 {
     root->w = width;
     root->h = height;
+}
+
+static GUIComp* create_console(void)
+{
+    GUIComp* console_root;
+    console_root = gui_comp_create(0, 0, window_width(), 200);
+    console_root->framebuffer = console_framebuffer;
+    console_root->halign = ALIGN_CENTER;
+    console_root->font_size = 24;
+    console_root->data = st_calloc(1, sizeof(ConsoleData));
+
+    GUIComp* console_input;
+    console_input = gui_comp_create(0, 0, window_width(), 40);
+    gui_comp_set_color(console_input, 200, 200, 200, 255);
+    console_input->key = console_key;
+    console_input->font_size = 24;
+    console_input->valign = ALIGN_BOTTOM;
+
+    GUIComp* console_history;
+    console_history = gui_comp_create(0, 0, window_width(), 160);
+    gui_comp_set_color(console_history, 230, 230, 230, 255);
+    console_history->font_size = 24;
+
+    gui_comp_attach(console_root, console_input);
+    gui_comp_attach(console_root, console_history);
+
+    return console_root;
+
 }
 
 void gui_comp_init(void)
@@ -52,10 +104,7 @@ void gui_comp_init(void)
     gui_comp_set_flag(gui_context.root, GUI_COMP_FLAG_HOVERABLE, true);
     gui_comp_set_flag(gui_context.root, GUI_COMP_FLAG_IGNORE_MOUSE_BUTTON, true);
 
-    gui_context.console = gui_comp_create(0, 0, window_width(), 200);
-    gui_context.console->framebuffer = console_framebuffer;
-    gui_context.console->key = console_key;
-    gui_context.console->halign = ALIGN_CENTER;
+    gui_context.console = create_console();
 
     for (i32 i = 0; i < NUM_GUI_EVENT_COMPS; i++)
         gui_context.event_comps[i] = NULL;
@@ -305,10 +354,6 @@ void gui_set_event_comp(GUIEventCompEnum type, GUIComp* comp)
     if (comp != NULL) {
         log_assert(comp->event_id == GUI_COMP_DEFAULT, "cannot assign event comp to another event comp");
         comp->event_id = type;
-
-        // because key and char callback happen at same time, must ignore the first character pressed
-        if (type == GUI_COMP_TYPING)
-            gui_comp_set_flag(comp, GUI_COMP_FLAG_TYPING_THIS_FRAME, true);
     }
 }
 
