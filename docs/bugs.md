@@ -54,10 +54,13 @@
 - text rendering had weird spacing when trying to center with monospace font
 - problem was in calculations i was subtracting the right side bearing for no reason
 
-### 2023-3-23
+### 2026-3-23
 - pixel perfect drawing only some of the times
 - figured out this happens when window height is not a multiple of 2.
 - should be fine to leave, but i can potentially fix by round of up nearest multiple of 2 for framebuffer height on framebuffer resize
 
-### 2023-3-23
+### 2026-3-23
 - entity shoot animation timing inconsistent 
+
+### 2026-4-10
+- reverse order when rendering but not fofr callbacks

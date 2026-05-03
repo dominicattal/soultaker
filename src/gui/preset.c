@@ -1076,6 +1076,10 @@ static void load_preset_test(GUIComp* root)
     test->font_size = 16;
     gui_comp_set_text_align(test, ALIGN_CENTER, ALIGN_CENTER);
     gui_comp_attach(root, test);
+
+    test = gui_comp_create(100, 100, 100, 100);
+    gui_comp_set_color(test, 255, 0, 0, 255);
+    gui_comp_attach(root, test);
 }
 
 // **************************************************

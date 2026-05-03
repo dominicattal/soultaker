@@ -18,10 +18,10 @@ void* game_loop(void* vargp)
     game_context.time = 0;
     gui_comp_init();
     pthread_mutex_unlock(init_mutex);
-    gui_preset_load(GUI_PRESET_GAME);
+    gui_preset_load(GUI_PRESET_TEST);
     game_resume_loop();
     game_resume_render();
-    map_create(map_get_id("outpost1"));
+    //map_create(map_get_id("outpost1"));
     while (!game_context.kill_thread)
     {
         if (game_context.halt_game_loop) {
@@ -38,9 +38,9 @@ void* game_loop(void* vargp)
             game_context.time += game_context.dt;
             start = get_time();
             gui_update_comps(game_context.dt);
-            map_update(game_context.current_map);
+            //map_update(game_context.current_map);
             event_queue_flush();
-            game_update_vertex_data();
+            //game_update_vertex_data();
             gui_update_vertex_data();
         }
         end = get_time();

@@ -2311,7 +2311,8 @@ void map_init(void)
 void map_cleanup(void)
 {
     st_free(map_context.names);
-    map_destroy(game_context.current_map);
+    if (game_context.current_map != NULL)
+        map_destroy(game_context.current_map);
 }
 
 void bucket_create(Bucket* bucket)
@@ -2585,6 +2586,7 @@ void map_destroy(Map* map)
     map_node_destroy(map->root);
     roomset_destroy(map->roomset);
     st_free(map);
+    map_context.current_map = NULL;
 }
 
 static i32 spatial_hash_bucket_idx(SpatialHashData* data, vec2 position)
