@@ -81,6 +81,12 @@ typedef void (*GUIFramebufferFPtr)(GUIComp* comp, i32 width, i32 height);
 typedef void (*GUIControlFPtr)(GUIComp* comp, ControlEnum ctrl, i32 action);
 typedef void (*GUICompDestroyFPtr)(GUIComp* comp);
 
+typedef struct GUIData {
+    GLsizei instance_count;
+    GLint length, capacity;
+    GLfloat* buffer;
+} GUIData;
+
 typedef struct GUIComp {
     GUIUpdateFPtr update;
     GUIHoverFPtr hover;
@@ -90,6 +96,7 @@ typedef struct GUIComp {
     GUIFramebufferFPtr framebuffer;
     GUIControlFPtr control;
     GUIEventCompEnum event_id;
+    GUIData* vertex_data;
     void* data;
     char* name;
     char* text;
@@ -109,12 +116,6 @@ typedef struct GUIComp {
     i32 font_size;
     u32 flags;
 } GUIComp;
-
-typedef struct GUIData {
-    GLsizei instance_count;
-    GLint length, capacity;
-    GLfloat* buffer;
-} GUIData;
 
 typedef struct GUIContext {
     GUIData data;

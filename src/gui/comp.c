@@ -129,6 +129,7 @@ GUIComp* gui_comp_create(i16 x, i16 y, i16 w, i16 h)
     comp->font_size = 16;
     comp->font = FONT_MONOSPACE;
     comp->destroy = NULL;
+    comp->vertex_data = st_calloc(1, sizeof(GUIData));
     gui_comp_set_color(comp, 255, 255, 255, 255);
     gui_comp_set_flag(comp, GUI_COMP_FLAG_VISIBLE, true);
     gui_comp_set_flag(comp, GUI_COMP_FLAG_RELATIVE, true);
@@ -229,6 +230,8 @@ void gui_comp_destroy(GUIComp* comp)
         string_free(comp->name);
     if (gui_comp_get_flag(comp, GUI_COMP_FLAG_AUTO_FREE_DATA))
         st_free(comp->data);
+    st_free(comp->vertex_data->buffer);
+    st_free(comp->vertex_data);
     st_free(comp->children);
     st_free(comp);
 }

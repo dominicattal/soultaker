@@ -380,14 +380,14 @@ static void render_comp(GUIComp* comp, i32 x, i32 y, i32 w, i32 h)
     quad.u1 = u; quad.v1 = v; quad.u2 = u+du; quad.v2 = v+dv;
     quad.location = loc;
 
-    GUIData* data = st_calloc(1, sizeof(GUIData));
+    GUIData* data = comp->vertex_data;
+    data->instance_count = 0;
+    data->length = 0;
     push_quad_data(data, &quad);
     push_text_data(data, comp, x, y, w, h);
     GLsizei instance_count = data->instance_count;
     glBufferData(GL_ARRAY_BUFFER, data->length * sizeof(GLfloat), data->buffer, GL_STATIC_DRAW);
     glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, instance_count);
-    st_free(data->buffer);
-    st_free(data);
 }
 
 static void gui_render_helper(GUIComp* comp, i32 position_x, i32 position_y, i32 size_x, i32 size_y);
@@ -459,7 +459,5 @@ void gui_render_cleanup(void)
         glDeleteBuffers(1, &render_context.vbo);
     if (render_context.instance_vbo != 0)
         glDeleteBuffers(1, &render_context.instance_vbo);
-    st_free(gui_context.data.buffer);
-    st_free(gui_context.data_swap.buffer);
 }
 

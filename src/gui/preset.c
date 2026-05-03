@@ -1037,8 +1037,12 @@ static void test_update(GUIComp* comp, f32 dt)
             gui_comp_point_to_text(comp, "4");
         else
             gui_comp_point_to_text(comp, "6");
+        i32 r = randi_range(0, 255);
+        i32 g = randi_range(0, 255);
+        i32 b = randi_range(0, 255);
+        gui_comp_set_color(comp, r, g, b, 255);
         data->flag = !data->flag;
-        //data->timer += 1.0;
+        data->timer += 0.1;
     }
 }
 
@@ -1085,7 +1089,9 @@ static void load_preset_test2(GUIComp* root)
 static void load_preset_test(GUIComp* root)
 {
     GUIComp* parent = gui_comp_create(0, 0, 200, 200);
+    parent->data = st_malloc(sizeof(TestData));
     parent->font_size = 16;
+    parent->update = test_update;
     gui_comp_set_color(parent, 255, 255, 255, 255);
     gui_comp_set_align(parent, ALIGN_CENTER, ALIGN_CENTER);
     gui_comp_set_flag(parent, GUI_COMP_FLAG_SCISSOR, true);
