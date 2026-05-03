@@ -1049,7 +1049,7 @@ static void test_hover(GUIComp* comp, bool status)
     log_write(DEBUG, "%d %d", x, y);
 }
 
-static void load_preset_test(GUIComp* root)
+static void load_preset_test2(GUIComp* root)
 {
     GUIComp* test = gui_comp_create(0, 0, 400, 400);
     test->font_size = 16;
@@ -1080,6 +1080,22 @@ static void load_preset_test(GUIComp* root)
     test = gui_comp_create(100, 100, 100, 100);
     gui_comp_set_color(test, 255, 0, 0, 255);
     gui_comp_attach(root, test);
+}
+
+static void load_preset_test(GUIComp* root)
+{
+    GUIComp* parent = gui_comp_create(0, 0, 200, 200);
+    parent->font_size = 16;
+    gui_comp_set_color(parent, 255, 255, 255, 255);
+    gui_comp_set_align(parent, ALIGN_CENTER, ALIGN_CENTER);
+    gui_comp_set_flag(parent, GUI_COMP_FLAG_SCISSOR, true);
+    gui_comp_attach(root, parent);
+
+    GUIComp* child = gui_comp_create(0, 0, 300, 300);
+    child->font_size = 16;
+    gui_comp_set_color(child, 255, 0, 0, 100);
+    gui_comp_point_to_text(child, "The quick brown fox jumps over the lazy dog");
+    gui_comp_attach(parent, child);
 }
 
 // **************************************************

@@ -71,6 +71,7 @@ static GUIComp* create_console(void)
     console_root->halign = ALIGN_CENTER;
     console_root->font_size = 24;
     console_root->data = st_calloc(1, sizeof(ConsoleData));
+    gui_comp_set_flag(console_root, GUI_COMP_FLAG_VISIBLE, false);
 
     GUIComp* console_input;
     console_input = gui_comp_create(0, 0, window_width(), 40);
