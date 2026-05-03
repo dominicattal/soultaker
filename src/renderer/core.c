@@ -68,6 +68,7 @@ void renderer_init(void)
     glDebugMessageCallback(message_callback, 0);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_SCISSOR_TEST);
     glEnable(GL_STENCIL_TEST);
     glEnable(GL_CULL_FACE);
     shader_init();

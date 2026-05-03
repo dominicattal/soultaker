@@ -20,7 +20,7 @@ typedef struct {
 static RenderContext render_context;
 extern GUIContext gui_context;
 
-static void resize_data_buffer(GUIData* data, i32 num_comps)
+static void resize_data_buffer(GUIVertexData* data, i32 num_comps)
 {
     size_t size;
     data->capacity += FLOATS_PER_COMP * (num_comps+100);
@@ -35,7 +35,7 @@ static void resize_data_buffer(GUIData* data, i32 num_comps)
     }
 }
 
-static void push_quad_data(GUIData* data, Quad* quad)
+static void push_quad_data(GUIVertexData* data, Quad* quad)
 {
     if (data->length + FLOATS_PER_COMP >= data->capacity)
         resize_data_buffer(data, 1);
@@ -156,7 +156,7 @@ i32 gui_comp_compute_text_height(GUIComp* comp)
     return (ascent - descent) * num_lines + line_gap * (num_lines - 1);
 }
 
-static void push_text_data(GUIData* data, GUIComp* comp, i32 cx, i32 cy, i32 cw, i32 ch)
+static void push_text_data(GUIVertexData* data, GUIComp* comp, i32 cx, i32 cy, i32 cw, i32 ch)
 {
     if (comp->text == NULL)
         return;
@@ -318,7 +318,7 @@ void gui_update_vertex_data(void)
     //gui_update_vertex_data_helper(gui_context.root, 0, 0, 0, 0);
     //gui_update_vertex_data_helper(gui_context.console, 0, 0, window_width(), window_height());
 
-    //GUIData tmp;
+    //GUIVertexData tmp;
     //pthread_mutex_lock(&gui_context.data_mutex);
     //tmp = gui_context.data;
     //gui_context.data = gui_context.data_swap;
@@ -380,7 +380,7 @@ static void render_comp(GUIComp* comp, i32 x, i32 y, i32 w, i32 h)
     quad.u1 = u; quad.v1 = v; quad.u2 = u+du; quad.v2 = v+dv;
     quad.location = loc;
 
-    GUIData* data = comp->vertex_data;
+    GUIVertexData* data = comp->vertex_data;
     data->instance_count = 0;
     data->length = 0;
     push_quad_data(data, &quad);
@@ -394,12 +394,36 @@ static void gui_render_helper(GUIComp* comp, i32 position_x, i32 position_y, i32
 
 static void render_comp_children(GUIComp* comp, i32 position_x, i32 position_y, i32 size_x, i32 size_y)
 {
+    struct {
+        i32 x, y, w, h;
+    } scissor;
+
+    if (gui_comp_get_flag(comp, GUI_COMP_FLAG_SCISSOR)) {
+        scissor.x = gui_context.scissor.x;
+        scissor.y = gui_context.scissor.y;
+        scissor.w = gui_context.scissor.w;
+        scissor.h = gui_context.scissor.h;
+        gui_context.scissor.x = position_x;
+        gui_context.scissor.y = position_y;
+        gui_context.scissor.w = size_x;
+        gui_context.scissor.h = size_y;
+        glScissor(gui_context.scissor.x, gui_context.scissor.y, gui_context.scissor.w, gui_context.scissor.h);
+    }
+
     if (gui_comp_get_flag(comp, GUI_COMP_FLAG_REVERSE_RENDER))
         for (i32 i = comp->num_children-1; i >= 0; i--)
             gui_render_helper(comp->children[i], position_x, position_y, size_x, size_y);
     else
         for (i32 i = 0; i < comp->num_children; i++)
             gui_render_helper(comp->children[i], position_x, position_y, size_x, size_y);
+
+    if (gui_comp_get_flag(comp, GUI_COMP_FLAG_SCISSOR)) {
+        gui_context.scissor.x = scissor.x;
+        gui_context.scissor.y = scissor.y;
+        gui_context.scissor.w = scissor.w;
+        gui_context.scissor.h = scissor.h;
+        glScissor(gui_context.scissor.x, gui_context.scissor.y, gui_context.scissor.w, gui_context.scissor.h);
+    }
 }
 
 static void gui_render_helper(GUIComp* comp, i32 position_x, i32 position_y, i32 size_x, i32 size_y)
@@ -440,6 +464,11 @@ void gui_render(void)
     glBindVertexArray(render_context.vao);
     glBindBuffer(GL_ARRAY_BUFFER, render_context.instance_vbo);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    gui_context.scissor.x = 0;
+    gui_context.scissor.y = 0;
+    gui_context.scissor.w = window_width();
+    gui_context.scissor.h = window_height();
 
     gui_render_helper(gui_context.root, 0, 0, window_width(), window_height());
 
