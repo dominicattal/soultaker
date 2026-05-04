@@ -1053,6 +1053,12 @@ static void test_hover(GUIComp* comp, bool status)
     log_write(DEBUG, "%d %d", x, y);
 }
 
+static void test_scroll(GUIComp* comp, f64 xoffset, f64 yoffset)
+{
+    log_write(DEBUG, "%f %f", xoffset, yoffset);
+    comp->scroll_y += (i32)roundf(3*yoffset);
+}
+
 static void load_preset_test2(GUIComp* root)
 {
     GUIComp* test = gui_comp_create(0, 0, 400, 400);
@@ -1091,11 +1097,14 @@ static void load_preset_test(GUIComp* root)
     GUIComp* parent = gui_comp_create(0, 0, 200, 200);
     parent->data = st_malloc(sizeof(TestData));
     parent->font_size = 16;
-    parent->update = test_update;
+    parent->scroll = test_scroll;
+    //parent->update = test_update;
     gui_comp_set_color(parent, 255, 255, 255, 255);
     gui_comp_set_align(parent, ALIGN_CENTER, ALIGN_CENTER);
     gui_comp_set_flag(parent, GUI_COMP_FLAG_SCISSOR, true);
+    gui_comp_set_flag(parent, GUI_COMP_FLAG_SCROLLABLE, true);
     gui_comp_attach(root, parent);
+    parent->scroll_y = -50;
 
     GUIComp* child = gui_comp_create(0, 0, 300, 300);
     child->font_size = 16;

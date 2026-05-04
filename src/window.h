@@ -48,6 +48,7 @@ extern WindowContext window_context;
 void window_error_callback(i32 x, const char* message); 
 void window_framebuffer_size_callback(GLFWwindow* window, i32 width, i32 height);
 void window_cursor_pos_callback(GLFWwindow* window, f64 xpos, f64 ypos);
+void window_scroll_callback(GLFWwindow* window, f64 xoffset, f64 yoffset);
 void window_mouse_button_callback(GLFWwindow* window, i32 button, i32 action, i32 mods);
 void window_key_callback(GLFWwindow* window, i32 key, i32 scancode, i32 action, i32 mods);
 void window_control_callback(i32 glfw_enum, i32 action, i32 mods);

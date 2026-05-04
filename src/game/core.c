@@ -40,8 +40,7 @@ void* game_loop(void* vargp)
             gui_update_comps(game_context.dt);
             //map_update(game_context.current_map);
             event_queue_flush();
-            //game_update_vertex_data();
-            gui_update_vertex_data();
+            game_update_vertex_data();
         }
         end = get_time();
     }

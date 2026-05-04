@@ -71,7 +71,6 @@ static GUIComp* create_console(void)
     console_root->halign = ALIGN_CENTER;
     console_root->font_size = 24;
     console_root->data = st_calloc(1, sizeof(ConsoleData));
-    gui_comp_set_flag(console_root, GUI_COMP_FLAG_VISIBLE, false);
 
     GUIComp* console_input;
     console_input = gui_comp_create(0, 0, window_width(), 40);
@@ -82,6 +81,7 @@ static GUIComp* create_console(void)
 
     GUIComp* console_history;
     console_history = gui_comp_create(0, 0, window_width(), 160);
+    gui_comp_set_flag(console_history, GUI_COMP_FLAG_SCISSOR, true);
     gui_comp_set_color(console_history, 230, 230, 230, 255);
     console_history->font_size = 24;
 
@@ -379,6 +379,13 @@ void gui_comp_click(GUIComp* comp, i32 button, i32 action, i32 mods)
     if (comp->click == NULL)
         return;
     ((GUIClickFPtr)(comp->click))(comp, button, action, mods);
+}
+
+void gui_comp_scroll(GUIComp* comp, f64 xoffset, f64 yoffset)
+{
+    if (comp->scroll == NULL)
+        return;
+    ((GUIScrollFPtr)(comp->scroll))(comp, xoffset, yoffset);
 }
 
 void gui_comp_key(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods)

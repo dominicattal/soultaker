@@ -30,6 +30,7 @@ void event_create_game_change_map(i32 id);
 // Gui events
 void event_create_gui_framebuffer_size_callback(u32 width, u32 height);
 void event_create_gui_cursor_pos_callback(i32 xpos, i32 ypos);
+void event_create_gui_scroll_callback(f64 xoffset, f64 yoffset);
 void event_create_gui_mouse_button_callback(i32 button, i32 action, i32 mods);
 void event_create_gui_key_callback(i32 key, i32 scancode, i32 action, i32 mods);
 void event_create_gui_control_callback(ControlEnum ctrl, i32 action);

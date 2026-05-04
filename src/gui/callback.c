@@ -59,6 +59,49 @@ bool gui_cursor_pos_callback(f64 xpos, f64 ypos)
     return comp_found;
 }
 
+static bool gui_scroll_callback_helper(GUIComp* comp, f64 xoffset, f64 yoffset, i32 position_x, i32 position_y, i32 size_x, i32 size_y)
+{
+    i32 x, y, w, h;
+    f64 xpos, ypos;
+    u8 halign, valign;
+    bool scrollable, child_scrolled, in_bounds;
+    
+    x = comp->x;
+    y = comp->y;
+    w = comp->w;
+    h = comp->h;
+    halign = comp->halign;
+    valign = comp->valign;
+    scrollable = gui_comp_get_flag(comp, GUI_COMP_FLAG_SCROLLABLE);
+    
+    align_comp_position_x(&position_x, halign, size_x, x, w);
+    align_comp_position_y(&position_y, valign, size_y, y, h);
+
+    xpos = window_cursor_position_x();
+    ypos = window_cursor_position_y();
+
+    in_bounds = xpos >= position_x && xpos <= position_x + w 
+             && ypos >= position_y && ypos <= position_y + h;
+
+    child_scrolled = false;
+    for (i32 i = 0; i < comp->num_children; i++)
+        if (gui_scroll_callback_helper(comp->children[i], xoffset, yoffset, position_x, position_y, w, h))
+            child_scrolled = true;
+
+    if (!scrollable)
+        return false;
+
+    if (in_bounds && !child_scrolled)
+        gui_comp_scroll(comp, xoffset, yoffset);
+
+    return in_bounds || child_scrolled;
+}
+
+void gui_scroll_callback(f64 xoffset, f64 yoffset)
+{
+    gui_scroll_callback_helper(gui_context.root, xoffset, yoffset, 0, 0, 0, 0);
+}
+
 static void gui_key_callback_helper(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods)
 {
     for (i32 i = 0; i < comp->num_children; i++)
@@ -113,15 +156,8 @@ static bool gui_mouse_button_callback_helper(GUIComp* comp, i32 xpos, i32 ypos, 
     if (in_bounds && (allow_child_click || !child_clicked))
         gui_comp_click(comp, button, action, mods);
 
-    if (gui_comp_get_flag(comp, GUI_COMP_FLAG_IGNORE_MOUSE_BUTTON)) {
-        //log_write(DEBUG, "%d %d %d", position_x, in_bounds, child_clicked);
+    if (gui_comp_get_flag(comp, GUI_COMP_FLAG_IGNORE_MOUSE_BUTTON))
         return false;
-    }
-
-    //if (in_bounds || child_clicked) {
-    //    log_write(DEBUG, "%d %d %d", position_x, in_bounds, child_clicked);
-    //    gui_comp_print(comp);
-    //}
 
     return in_bounds || child_clicked;
 }

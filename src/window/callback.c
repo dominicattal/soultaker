@@ -134,6 +134,11 @@ void window_cursor_pos_callback(GLFWwindow* window, f64 xpos, f64 ypos)
     event_create_gui_cursor_pos_callback(window_context.cursor.x, window_context.cursor.y);
 }
 
+void window_scroll_callback(GLFWwindow* window, f64 xoffset, f64 yoffset)
+{
+    event_create_gui_scroll_callback(xoffset, yoffset);
+}
+
 void window_key_callback(GLFWwindow* window, i32 key, i32 scancode, i32 action, i32 mods)
 {
     if (key == GLFW_KEY_F11 && action == GLFW_PRESS)

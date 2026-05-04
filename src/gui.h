@@ -51,6 +51,7 @@ typedef enum {
     GUI_COMP_FLAG_CLICKABLE,
     GUI_COMP_FLAG_VISIBLE,
     GUI_COMP_FLAG_RELATIVE,
+    GUI_COMP_FLAG_SCROLLABLE,
     GUI_COMP_FLAG_ALLOW_CHILD_CLICK,
     GUI_COMP_FLAG_ALLOW_OUT_OF_BOUNDS_CLICK,
     GUI_COMP_FLAG_POINT_TO_TEXT,
@@ -75,6 +76,7 @@ typedef enum {
 typedef struct GUIComp GUIComp;
 typedef void (*GUIHoverFPtr)(GUIComp* comp, bool status); 
 typedef void (*GUIClickFPtr)(GUIComp* comp, i32 button, i32 action, i32 mods);
+typedef void (*GUIScrollFPtr)(GUIComp* comp, f64 xoffset, f64 yoffset);
 typedef void (*GUIKeyFPtr)(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods);
 typedef void (*GUIUpdateFPtr)(GUIComp* comp, f32 dt);
 typedef void (*GUIFramebufferFPtr)(GUIComp* comp, i32 width, i32 height);
@@ -91,6 +93,7 @@ typedef struct GUIComp {
     GUIUpdateFPtr update;
     GUIHoverFPtr hover;
     GUIClickFPtr click;
+    GUIScrollFPtr scroll;
     GUIKeyFPtr key;
     GUICompDestroyFPtr destroy;
     GUIFramebufferFPtr framebuffer;
@@ -105,6 +108,7 @@ typedef struct GUIComp {
     i32 num_children;
     FontEnum font;
     i32 x, y, w, h;
+    i32 scroll_x, scroll_y;
     i32 r, g, b, a;
     i32 tex;
     i32 halign;
@@ -147,6 +151,7 @@ void gui_refresh_inventory(void);
 
 void gui_framebuffer_size_callback(i32 width, i32 height);
 bool gui_cursor_pos_callback(f64 xpos, f64 ypos);
+void gui_scroll_callback(f64 xoffset, f64 yoffset);
 void gui_key_callback(i32 key, i32 scancode, i32 action, i32 mods);
 bool gui_mouse_button_callback(i32 button, i32 action, i32 mods);
 void gui_char_callback(u32 codepoint);
@@ -157,7 +162,6 @@ void gui_preset_load(GUIPreset preset);
 void gui_set_typing_comp(GUIComp* comp);
 
 void gui_render_init(void);
-void gui_update_vertex_data(void);
 void gui_render_cleanup(void);
 
 void align_comp_position_x(i32* position_x, u8 halign, i32 size_x, i32 x, i32 w);
@@ -165,6 +169,7 @@ void align_comp_position_y(i32* position_y, u8 valign, i32 size_y, i32 y, i32 h)
 
 void gui_comp_hover(GUIComp* comp, bool status);
 void gui_comp_click(GUIComp* comp, i32 button, i32 action, i32 mods);
+void gui_comp_scroll(GUIComp* comp, f64 xoffset, f64 yoffset);
 void gui_comp_key(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods);
 void gui_comp_framebuffer(GUIComp* comp, i32 width, i32 height);
 void gui_comp_control(GUIComp* comp, ControlEnum ctrl, i32 action);

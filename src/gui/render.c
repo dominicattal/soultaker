@@ -311,24 +311,9 @@ static void push_text_data(GUIVertexData* data, GUIComp* comp, i32 cx, i32 cy, i
     }
 }
 
-void gui_update_vertex_data(void)
-{
-    //gui_context.data_swap.instance_count = 0;
-    //gui_context.data_swap.length = 0;
-    //gui_update_vertex_data_helper(gui_context.root, 0, 0, 0, 0);
-    //gui_update_vertex_data_helper(gui_context.console, 0, 0, window_width(), window_height());
-
-    //GUIVertexData tmp;
-    //pthread_mutex_lock(&gui_context.data_mutex);
-    //tmp = gui_context.data;
-    //gui_context.data = gui_context.data_swap;
-    //gui_context.data_swap = tmp;
-    //pthread_mutex_unlock(&gui_context.data_mutex);
-}
-
-
 void gui_render_init(void)
 {
+    pthread_mutex_init(&gui_context.data_mutex, NULL);
     glGenVertexArrays(1, &render_context.vao);
     glGenBuffers(1, &render_context.vbo);
     glGenBuffers(1, &render_context.instance_vbo);
@@ -412,10 +397,10 @@ static void render_comp_children(GUIComp* comp, i32 position_x, i32 position_y, 
 
     if (gui_comp_get_flag(comp, GUI_COMP_FLAG_REVERSE_RENDER))
         for (i32 i = comp->num_children-1; i >= 0; i--)
-            gui_render_helper(comp->children[i], position_x, position_y, size_x, size_y);
+            gui_render_helper(comp->children[i], position_x + comp->scroll_x, position_y + comp->scroll_y, size_x, size_y);
     else
         for (i32 i = 0; i < comp->num_children; i++)
-            gui_render_helper(comp->children[i], position_x, position_y, size_x, size_y);
+            gui_render_helper(comp->children[i], position_x + comp->scroll_x, position_y + comp->scroll_y, size_x, size_y);
 
     if (gui_comp_get_flag(comp, GUI_COMP_FLAG_SCISSOR)) {
         gui_context.scissor.x = scissor.x;
@@ -465,19 +450,17 @@ void gui_render(void)
     glBindBuffer(GL_ARRAY_BUFFER, render_context.instance_vbo);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+    pthread_mutex_lock(&gui_context.data_mutex);
+    glEnable(GL_SCISSOR_TEST);
     gui_context.scissor.x = 0;
     gui_context.scissor.y = 0;
     gui_context.scissor.w = window_width();
     gui_context.scissor.h = window_height();
-
-    gui_render_helper(gui_context.root, 0, 0, window_width(), window_height());
-
-    //pthread_mutex_lock(&gui_context.data_mutex);
-    //GLsizei instance_count = gui_context.data.instance_count;
-    //glBufferData(GL_ARRAY_BUFFER, gui_context.data.length * sizeof(GLfloat), gui_context.data.buffer, GL_DYNAMIC_DRAW);
-    //pthread_mutex_unlock(&gui_context.data_mutex);
-    //glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    //glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, instance_count);
+    glScissor(gui_context.scissor.x, gui_context.scissor.y, gui_context.scissor.w, gui_context.scissor.h);
+    gui_render_helper(gui_context.root, 0, 0, gui_context.scissor.w, gui_context.scissor.h);
+    gui_render_helper(gui_context.console, 0, 0, gui_context.scissor.w, gui_context.scissor.h);
+    glDisable(GL_SCISSOR_TEST);
+    pthread_mutex_unlock(&gui_context.data_mutex);
 }
 
 void gui_render_cleanup(void)
@@ -488,5 +471,6 @@ void gui_render_cleanup(void)
         glDeleteBuffers(1, &render_context.vbo);
     if (render_context.instance_vbo != 0)
         glDeleteBuffers(1, &render_context.instance_vbo);
+    pthread_mutex_destroy(&gui_context.data_mutex);
 }
 
