@@ -55,7 +55,7 @@ static bool gui_cursor_pos_callback_helper(GUIComp* comp, f64 xpos, f64 ypos, i3
 bool gui_cursor_pos_callback(f64 xpos, f64 ypos)
 {
     bool comp_found = false;
-    comp_found = gui_cursor_pos_callback_helper(gui_context.root, xpos, ypos, 0, 0, 0, 0);
+    comp_found = gui_cursor_pos_callback_helper(gui_context.root, xpos, ypos, 0, 0, window_context.width, window_context.height);
     return comp_found;
 }
 
@@ -99,7 +99,8 @@ static bool gui_scroll_callback_helper(GUIComp* comp, f64 xoffset, f64 yoffset, 
 
 void gui_scroll_callback(f64 xoffset, f64 yoffset)
 {
-    gui_scroll_callback_helper(gui_context.root, xoffset, yoffset, 0, 0, 0, 0);
+    gui_scroll_callback_helper(gui_context.root, xoffset, yoffset, 0, 0, window_context.width, window_context.height);
+    gui_scroll_callback_helper(gui_context.console, xoffset, yoffset, 0, 0, window_context.width, window_context.height);
 }
 
 static void gui_key_callback_helper(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods)
@@ -168,7 +169,7 @@ bool gui_mouse_button_callback(i32 button, i32 action, i32 mods)
     bool comp_found = false;
     xpos = window_cursor_position_x();
     ypos = window_cursor_position_y();
-    comp_found = gui_mouse_button_callback_helper(gui_context.root, xpos, ypos, button, action, mods, 0, 0, 0, 0);
+    comp_found = gui_mouse_button_callback_helper(gui_context.root, xpos, ypos, button, action, mods, 0, 0, window_context.width, window_context.height);
     game_mouse_button_callback(button, action, mods);
     return comp_found;
 }

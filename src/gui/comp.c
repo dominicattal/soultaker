@@ -9,26 +9,60 @@ GUIContext gui_context;
 
 typedef struct {
     i32 height_prefix;
-} ConsoleData;
+    i32 message_idx;
+} HistoryData;
+
+typedef struct {
+    i32 height_prefix;
+} HistoryEntryData;
 
 static void console_framebuffer(GUIComp* console, i32 width, i32 height)
 {
     console->w = width;
 }
 
-static void push_message_to_console(GUIComp* console, char* message)
+static void push_message_to_console_history(GUIComp* console, char* message)
 {
-    ConsoleData* data = console->data;
     GUIComp* history = console->children[1];
-    GUIComp* comp = gui_comp_create(0, 0, console->w, 0);
-    gui_comp_set_color(comp, 255, 0, 0, 150);
-    gui_comp_set_text(comp, message);
-    comp->font_size = 24;
-    i32 text_height = gui_comp_compute_text_height(comp);
-    comp->h = text_height;
-    comp->y = data->height_prefix;
-    data->height_prefix += text_height;
-    gui_comp_attach(history, comp);
+    HistoryData* history_data = history->data;
+    GUIComp* history_entry = gui_comp_create(0, 0, console->w, 0);
+    history_entry->data = st_calloc(1, sizeof(HistoryEntryData));
+    HistoryEntryData* history_entry_data = history_entry->data;
+    gui_comp_set_color(history_entry, 255, 0, 0, 150);
+    gui_comp_set_text(history_entry, message);
+    history_entry->font_size = 24;
+    i32 text_height = gui_comp_compute_text_height(history_entry);
+    history_entry->h = text_height;
+    history_entry->y = history_data->height_prefix;
+    history_entry_data->height_prefix = history_data->height_prefix;
+    history_data->height_prefix += text_height;
+    history->scroll_y = history_data->height_prefix - history->h;
+    history_data->message_idx += 1;
+    gui_comp_attach(history, history_entry);
+}
+
+static void console_history_scroll(GUIComp* history, f64 xoffset, f64 yoffset)
+{
+    i32 offset = -(i32)roundf(yoffset);
+    i32 height_prefix = 0;
+    HistoryData* history_data = history->data;
+    HistoryEntryData* history_entry_data;
+    if (offset > 0 && history_data->message_idx < history->num_children) {
+        history_data->message_idx++;
+        if (history_data->message_idx != history->num_children) {
+            history_entry_data = history->children[history_data->message_idx]->data;
+            height_prefix = history_entry_data->height_prefix;
+        } else {
+            height_prefix = history_data->height_prefix;
+        }
+    } else if (offset < 0 && history_data->message_idx > 0) {
+        history_data->message_idx--;
+        history_entry_data = history->children[history_data->message_idx]->data;
+        height_prefix = history_entry_data->height_prefix;
+    } else {
+        return;
+    }
+    history->scroll_y = height_prefix - history->h;
 }
 
 static void console_key(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods)
@@ -49,7 +83,7 @@ static void console_key(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mo
         game_resume_input();
         if (comp->text != NULL) {
             message = command_parse(comp->text);
-            push_message_to_console(console_root, message);
+            push_message_to_console_history(console_root, message);
             gui_comp_remove_text(comp);
         }
         gui_set_event_comp(GUI_COMP_TYPING, NULL);
@@ -70,7 +104,6 @@ static GUIComp* create_console(void)
     console_root->framebuffer = console_framebuffer;
     console_root->halign = ALIGN_CENTER;
     console_root->font_size = 24;
-    console_root->data = st_calloc(1, sizeof(ConsoleData));
 
     GUIComp* console_input;
     console_input = gui_comp_create(0, 0, window_width(), 40);
@@ -81,7 +114,10 @@ static GUIComp* create_console(void)
 
     GUIComp* console_history;
     console_history = gui_comp_create(0, 0, window_width(), 160);
+    console_history->data = st_calloc(1, sizeof(HistoryData));
+    console_history->scroll = console_history_scroll;
     gui_comp_set_flag(console_history, GUI_COMP_FLAG_SCISSOR, true);
+    gui_comp_set_flag(console_history, GUI_COMP_FLAG_SCROLLABLE, true);
     gui_comp_set_color(console_history, 230, 230, 230, 255);
     console_history->font_size = 24;
 
@@ -106,6 +142,13 @@ void gui_comp_init(void)
     gui_comp_set_flag(gui_context.root, GUI_COMP_FLAG_IGNORE_MOUSE_BUTTON, true);
 
     gui_context.console = create_console();
+
+    push_message_to_console_history(gui_context.console, string_copy("The1"));
+    push_message_to_console_history(gui_context.console, string_copy("The2"));
+    push_message_to_console_history(gui_context.console, string_copy("The3"));
+    push_message_to_console_history(gui_context.console, string_copy("The4"));
+    push_message_to_console_history(gui_context.console, string_copy("The5"));
+    push_message_to_console_history(gui_context.console, string_copy("The6"));
 
     for (i32 i = 0; i < NUM_GUI_EVENT_COMPS; i++)
         gui_context.event_comps[i] = NULL;
