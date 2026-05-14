@@ -2191,7 +2191,7 @@ i32 map_get_id(const char* name)
         else
             return m;
     }
-    log_write(WARNING, "Could not map map %s", name);
+    log_write(WARNING, "Could not get map id for [%s]", name);
     return -1;
 }
 

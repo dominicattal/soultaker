@@ -7,11 +7,119 @@
 #include "window.h"
 #include "renderer.h"
 #include "event.h"
+#include <string.h>
 #include <ctype.h>
+
+typedef struct {
+    i32 l, r;
+} StringView;
+
+static bool string_view_cmp(StringView* string_view, const char* command, const char* string)
+{
+    i32 length = string_view->r - string_view->l + 1;
+    i32 i;
+    for (i = 0; i < length && string[i] != '\0'; i++) {
+        if (command[i] > string[i])
+            return 1;
+        else if (command[i] < string[i])
+            return -1;
+    }
+    if (i == length && string[i] != '\0')
+        return 1;
+    if (i != length && string[i] == '\0')
+        return -1;
+    return 0;
+}
+
+static char* string_view_c_str(StringView* string_view, const char* command)
+{
+    i32 length = string_view->r - string_view->l + 1;
+    char* string = st_malloc((length + 1) * sizeof(char));
+    memcpy(string, command + string_view->l, length);
+    string[length] = '\0';
+    return string;
+}
+
+static void string_view_log(StringView* string_view, const char* command)
+{
+    char* string = string_view_c_str(string_view, command);
+    log_write(DEBUG, string);
+    st_free(string);
+}
+
+static char* parse_map(List* string_views, const char* command)
+{
+    i32 map_id;
+    StringView* string_view;
+    char* map_name = NULL;
+    char* response = NULL;
+    if (string_views->length < 2) {
+        response = string_copy("not enough arguments for map");
+        goto fail;
+    }
+    string_view = list_get(string_views, 1);
+    string_view_log(string_view, command);
+    map_name = string_view_c_str(string_view, command);
+    log_write(DEBUG, map_name);
+    map_id = map_get_id(map_name);
+    if (map_id == -1) {
+        response = string_create("unrecognized map %s", map_name);
+        goto fail;
+    }
+    event_create_game_change_map(map_id);
+    response = string_create("Loaded map %s", map_name);
+fail:
+    log_assert(response != NULL, "response null for map parsing");
+    if (map_name != NULL)
+        st_free(map_name);
+    return response;
+}
 
 char* command_parse(char* command)
 {
-    return string_copy(command);
+    List* string_views = list_create();
+    char* response = NULL;
+    StringView* string_view;
+    i32 i, l, r;
+    for (l = r = 0; command[r] != '\0'; r++) {
+        if (command[r] == ' ') {
+            if (l != r) {
+                string_view = st_malloc(sizeof(StringView));
+                string_view->l = l;
+                string_view->r = r-1;
+                list_append(string_views, string_view);
+            }
+            l = r+1;
+        }
+    }
+    if (l != r) {
+        string_view = st_malloc(sizeof(StringView));
+        string_view->l = l;
+        string_view->r = r-1;
+        list_append(string_views, string_view);
+    }
+    l = r+1;
+
+    if (string_views->length == 0) {
+        response = string_copy("no arguments given");
+        goto destroy;
+    }
+
+    string_view = list_get(string_views, 0);
+    if (string_view_cmp(string_view, command, "map") == 0)
+        response = parse_map(string_views, command);
+    else if (string_view_cmp(string_view, command, "defog") == 0) {
+        map_fog_clear(game_context.current_map);
+        response = string_copy("defogged map");
+    } else
+        response = string_create("Unrecognized command %s", command);
+
+destroy:
+    for (i = 0; i < string_views->length; i++)
+        st_free(list_get(string_views, i));
+    list_destroy(string_views);
+    log_assert(response != NULL, "could not get response from command");
+    return response;
 }
 
 #endif

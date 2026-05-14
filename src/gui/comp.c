@@ -65,29 +65,39 @@ static void console_history_scroll(GUIComp* history, f64 xoffset, f64 yoffset)
     history->scroll_y = height_prefix - history->h;
 }
 
-static void console_key(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods)
+static void console_key(GUIComp* console_input, i32 key, i32 scancode, i32 action, i32 mods)
 {
-    GUIComp* console_root = comp->parent;
+    GUIComp* console = console_input->parent;
     char* message;
-    bool equal = gui_event_comp_equal(GUI_COMP_TYPING, comp);
-    if (key == GLFW_KEY_GRAVE_ACCENT && action == GLFW_PRESS && !equal) {
-        game_halt_input();
-        gui_comp_remove_text(comp);
-        gui_set_event_comp(GUI_COMP_TYPING, comp);
-        // because key and char callback happen at same time, must ignore the first character pressed
-        // this won't be the case if the control isnt a codepoint
-        gui_comp_set_flag(comp, GUI_COMP_FLAG_TYPING_THIS_FRAME, true);
-        gui_comp_set_color(comp, 200, 200, 200, 255);
-    }
-    if (key == GLFW_KEY_ENTER && action == GLFW_PRESS && equal) {
-        game_resume_input();
-        if (comp->text != NULL) {
-            message = command_parse(comp->text);
-            push_message_to_console_history(console_root, message);
-            gui_comp_remove_text(comp);
+    bool is_typing_comp = gui_event_comp_equal(GUI_COMP_TYPING, console_input);
+    bool is_visible = gui_comp_get_flag(console, GUI_COMP_FLAG_VISIBLE);
+    if (key == GLFW_KEY_GRAVE_ACCENT && action == GLFW_PRESS) {
+        if (!is_typing_comp) {
+            game_halt_input();
+            gui_comp_remove_text(console_input);
+            gui_set_event_comp(GUI_COMP_TYPING, console_input);
+            // because key and char callback happen at same time, must ignore the first character pressed
+            // this won't be the case if the control isnt a codepoint
+            gui_comp_set_flag(console_input, GUI_COMP_FLAG_TYPING_THIS_FRAME, true);
+            gui_comp_set_flag(console, GUI_COMP_FLAG_VISIBLE, true);
+            gui_comp_set_color(console_input, 200, 200, 200, 255);
+        } 
+        if (is_visible) {
+            game_resume_input();
+            log_write(DEBUG, "A");
+            gui_set_event_comp(GUI_COMP_TYPING, NULL);
+            gui_comp_set_flag(console, GUI_COMP_FLAG_VISIBLE, false);
+            if (console_input->text != NULL)
+                gui_comp_remove_text(console_input);
         }
-        gui_set_event_comp(GUI_COMP_TYPING, NULL);
-        gui_comp_set_color(comp, 200, 200, 200, 255);
+    }
+    else if (key == GLFW_KEY_ENTER && action == GLFW_PRESS && is_typing_comp) {
+        if (console_input->text != NULL) {
+            message = command_parse(console_input->text);
+            push_message_to_console_history(console, message);
+            gui_comp_remove_text(console_input);
+        }
+        gui_comp_set_color(console, 200, 200, 200, 255);
     }
 }
 
@@ -99,11 +109,12 @@ static void root_framebuffer(GUIComp* root, i32 width, i32 height)
 
 static GUIComp* create_console(void)
 {
-    GUIComp* console_root;
-    console_root = gui_comp_create(0, 0, window_width(), 200);
-    console_root->framebuffer = console_framebuffer;
-    console_root->halign = ALIGN_CENTER;
-    console_root->font_size = 24;
+    GUIComp* console;
+    console= gui_comp_create(0, 0, window_width(), 200);
+    gui_comp_set_flag(console, GUI_COMP_FLAG_VISIBLE, false);
+    console->framebuffer = console_framebuffer;
+    console->halign = ALIGN_CENTER;
+    console->font_size = 24;
 
     GUIComp* console_input;
     console_input = gui_comp_create(0, 0, window_width(), 40);
@@ -121,10 +132,10 @@ static GUIComp* create_console(void)
     gui_comp_set_color(console_history, 230, 230, 230, 255);
     console_history->font_size = 24;
 
-    gui_comp_attach(console_root, console_input);
-    gui_comp_attach(console_root, console_history);
+    gui_comp_attach(console, console_input);
+    gui_comp_attach(console, console_history);
 
-    return console_root;
+    return console;
 
 }
 

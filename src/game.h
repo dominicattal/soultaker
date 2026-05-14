@@ -277,6 +277,7 @@ void map_boss_update(Entity* entity);
 void map_unmake_boss(Entity* entity);
 
 void map_init(void);
+i32 map_get_id(const char* name);
 Map* map_create(i32 id);
 void map_update(Map* map);
 void map_set_active(Map* map);
@@ -986,7 +987,6 @@ void collide_projectile_obstacle(Projectile* projectile, Obstacle* obstacle);
 //**************************************************************************
 
 i32 entity_get_id(const char* name);
-i32 map_get_id(const char* name);
 
 f32 game_get_dt(void);
 f32 game_get_boss_health(void);
