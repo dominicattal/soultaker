@@ -6,9 +6,6 @@ extern GameContext game_context;
 
 void game_process_input()
 {
-    if (game_context.halt_game_loop)
-        return;
-
     vec2 move_mag = vec2_create(0, 0);
     f32 rotate_mag = 0;
     f32 tilt_mag = 0; 

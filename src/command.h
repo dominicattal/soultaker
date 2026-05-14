@@ -9,6 +9,20 @@ char* command_parse(char* command);
 /*
 One of the thing that annoyed me about the Quake2 source code was the lack of good documentation for it, so im gonna be sure to make it good here :)
 
+map [map_name]
+> load selected map
+
+toggle [flag]
+> toggle a flag, which can be one of
+    spatial_hash_lines
+    debug
+
+pause
+> pause the game
+
+resume
+> resume the game
+
 */
 
 #endif

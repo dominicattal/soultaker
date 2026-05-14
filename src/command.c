@@ -60,7 +60,6 @@ static char* parse_map(List* string_views, const char* command)
     string_view = list_get(string_views, 1);
     string_view_log(string_view, command);
     map_name = string_view_c_str(string_view, command);
-    log_write(DEBUG, map_name);
     map_id = map_get_id(map_name);
     if (map_id == -1) {
         response = string_create("unrecognized map %s", map_name);
@@ -72,6 +71,37 @@ fail:
     log_assert(response != NULL, "response null for map parsing");
     if (map_name != NULL)
         st_free(map_name);
+    return response;
+}
+
+static char* parse_toggle(List* string_views, const char* command)
+{
+    i32 map_id;
+    StringView* string_view;
+    char* flag_name = NULL;
+    char* response = NULL;
+    if (string_views->length < 2) {
+        response = string_copy("not enough arguments for toggle");
+        goto fail;
+    }
+    string_view = list_get(string_views, 1);
+    string_view_log(string_view, command);
+    flag_name = string_view_c_str(string_view, command);
+    if (strcmp(flag_name, "spatial_hash_lines") == 0) {
+        map_toggle_spatial_hash_lines(game_context.current_map);
+        response = string_copy("Toggled spatial has lines");
+    }
+    if (strcmp(flag_name, "debug") == 0) {
+        if (gui_toggle_debug())
+            response = string_copy("Toggled debug");
+        else
+            response = string_copy("could not toggle debug");
+    }
+fail:
+    if (response == NULL)
+        response = string_copy("Invalid toggle argument");
+    if (flag_name != NULL)
+        st_free(flag_name);
     return response;
 }
 
@@ -108,7 +138,15 @@ char* command_parse(char* command)
     string_view = list_get(string_views, 0);
     if (string_view_cmp(string_view, command, "map") == 0)
         response = parse_map(string_views, command);
-    else if (string_view_cmp(string_view, command, "defog") == 0) {
+    else if (string_view_cmp(string_view, command, "toggle") == 0)
+        response = parse_toggle(string_views, command);
+    else if (string_view_cmp(string_view, command, "pause") == 0) {
+        game_pause();
+        response = string_create("Paused game");
+    } else if (string_view_cmp(string_view, command, "resume") == 0) {
+        game_resume();
+        response = string_create("Resumed game");
+    } else if (string_view_cmp(string_view, command, "deog") == 0) {
         map_fog_clear(game_context.current_map);
         response = string_copy("defogged map");
     } else

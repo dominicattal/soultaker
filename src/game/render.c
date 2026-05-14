@@ -613,6 +613,8 @@ static void update_line_vertex_data(Map* map)
    
     for (i = j = 0; i < lines->length; i++) {
         line = list_get(lines, i);
+        if (line->is_spatial_hash_line && !map->show_spatial_hash_lines)
+            continue;
         vb->buffer[j++] = line->width;
         vb->buffer[j++] = line->pos1.x;
         vb->buffer[j++] = line->pos1.y;

@@ -249,6 +249,7 @@ typedef struct Map {
     List* aoes;
     List* lines;
     bool active;
+    bool show_spatial_hash_lines;
 } Map;
 
 typedef struct MapNode {
@@ -343,6 +344,8 @@ void map_fog_explore(Map* map, vec2 position);
 // clears all the fog
 void map_fog_clear(Map* map);
 
+void map_toggle_spatial_hash_lines(Map* map);
+
 void map_handle_trigger_enter(Trigger* trigger, Entity* entity);
 void map_handle_trigger_stay(Trigger* trigger, Entity* entity);
 void map_handle_trigger_leave(Trigger* trigger, Entity* entity);
@@ -402,6 +405,7 @@ typedef struct Line {
     f32 width;
     f32 lifetime;
     bool use_lifetime;
+    bool is_spatial_hash_line;
 } Line;
 
 Line*   line_create(void);
@@ -927,12 +931,10 @@ typedef struct {
     Camera camera;
     pthread_t thread_id;
     pthread_mutex_t getter_mutex;
-    sem_t game_loop_sem;
     f64 time;
     f32 dt;
     bool kill_thread;
     bool halt_input;
-    bool halt_game_loop;
     bool halt_render;
     bool paused;
 } GameContext;
@@ -992,12 +994,12 @@ f32 game_get_dt(void);
 f32 game_get_boss_health(void);
 f32 game_get_boss_max_health(void);
 
-void game_halt_loop(void);
-void game_resume_loop(void);
 void game_halt_input(void);
 void game_resume_input(void);
 void game_halt_render(void);
 void game_resume_render(void);
+void game_pause(void);
+void game_resume(void);
 
 void game_init(void);
 void game_cleanup(void);

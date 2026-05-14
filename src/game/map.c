@@ -1693,6 +1693,11 @@ void map_fog_clear(Map* map)
     game_render_update_parstacles();
 }
 
+void map_toggle_spatial_hash_lines(Map* map)
+{
+    map->show_spatial_hash_lines = !map->show_spatial_hash_lines;
+}
+
 void map_handle_trigger_enter(Trigger* trigger, Entity* entity)
 {
     map_context.current_map_node = trigger->map_info.spawn_node;
@@ -2377,6 +2382,7 @@ void map_use_spatial_hash(Map* map, i32 bucket_width)
     f32 w = 0.25;
     for (i32 i = 0; i <= data->num_buckets_wide; i++) {
         line = map_create_line();
+        line->is_spatial_hash_line = true;
         line->width = w;
         line->use_lifetime = false;
         line->pos1 = vec3_create(i * bucket_width, h, 0);
@@ -2384,6 +2390,7 @@ void map_use_spatial_hash(Map* map, i32 bucket_width)
     }
     for (i32 i = 0; i <= data->num_buckets_long; i++) {
         line = map_create_line();
+        line->is_spatial_hash_line = true;
         line->width = w;
         line->use_lifetime = false;
         line->pos1 = vec3_create(0, h, i * bucket_width);

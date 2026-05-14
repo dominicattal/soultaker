@@ -177,6 +177,9 @@ void gui_comp_update(GUIComp* comp, f32 dt);
 void gui_update_comps_helper(GUIComp* comp, f32 dt);
 void gui_update_comps(f32 dt);
 
+// toggle debug comp. returns true if successfully toggled, false if it doesnt exist
+bool gui_toggle_debug(void);
+
 // returns the x and y coordinates of the bottom left corner of the component in the screen
 void gui_comp_get_true_position(GUIComp* comp, i32* x, i32* y);
 

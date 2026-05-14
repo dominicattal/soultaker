@@ -74,28 +74,6 @@ static GUIComp* create_help_screen(void)
     return help;
 }
 
-static void keyfunc(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods)
-{
-    char* message;
-    if (key == GLFW_KEY_ENTER && action == GLFW_PRESS) {
-        if (gui_event_comp_equal(GUI_COMP_TYPING, comp)) {
-            game_resume_input();
-            if (comp->text != NULL) {
-                message = command_parse(comp->text);
-                gui_comp_set_text(comp, message);
-            }
-            gui_set_event_comp(GUI_COMP_TYPING, NULL);
-            gui_comp_set_color(comp, 255, 255, 255, 100);
-        }
-        else {
-            game_halt_input();
-            gui_comp_remove_text(comp);
-            gui_set_event_comp(GUI_COMP_TYPING, comp);
-            gui_comp_set_color(comp, 255, 255, 255, 200);
-        }
-    }
-}
-
 #define STAT_POINT_WIDTH 350
 
 static void update_player_health(GUIComp* comp, f32 dt)
@@ -812,17 +790,9 @@ static void load_preset_game(GUIComp* root)
     gui_comp_attach(boss_stats, boss_health);
     gui_comp_attach(root, boss_stats);
 
-    GUIComp* textbox = gui_comp_create(0, 50, 400, 50);
-    gui_comp_set_color(textbox, 255, 255, 255, 100);
-    textbox->valign = ALIGN_BOTTOM;
-    textbox->font_size = 16;
-    textbox->font = FONT_MONOSPACE;
-    textbox->key = keyfunc;
-    gui_comp_set_flag(textbox, GUI_COMP_FLAG_CLICKABLE, true);
-    gui_comp_attach(root, textbox);
-
     GUIComp* comp_debug = gui_comp_create(0, 0, 150, 300);
     comp_debug->data = st_malloc(sizeof(CompFpsData));
+    gui_comp_set_name(comp_debug, "debug");
     ((CompFpsData*)comp_debug->data)->timer = 0;
     comp_debug->update = update_debug;
     gui_comp_set_align(comp_debug, ALIGN_RIGHT, ALIGN_CENTER);
@@ -848,6 +818,15 @@ static void load_preset_game(GUIComp* root)
 
     GUIComp* inventory = create_inventory();
     gui_comp_attach(root, inventory);
+}
+
+bool gui_toggle_debug(void)
+{
+    GUIComp* comp_debug = gui_comp_get_by_name("debug");
+    if (comp_debug == NULL)
+        return false;
+    gui_comp_toggle_flag(comp_debug, GUI_COMP_FLAG_VISIBLE);
+    return true;
 }
 
 // **************************************************
@@ -946,7 +925,6 @@ static void load_preset_options(GUIComp* root)
 
 static void load_save(void)
 {
-    game_resume_loop();
     game_resume_render();
     i32 id = map_get_id("level_1");
     game_change_map(id);
