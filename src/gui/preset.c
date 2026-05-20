@@ -145,12 +145,14 @@ static void update_debug(GUIComp* comp, f32 dt)
 {
     CompFpsData* data = comp->data;
     Map* map = game_context.current_map;
+    vec2 camera_target = camera_get_target_position();
     data->timer -= dt;
     if (map != NULL && map->entities != NULL && data->timer < 0) {
         char* string = string_create(
             "Game dt: %.3f\n"
             "State dt: %.3f\n"
             "State fps: %.0f\n"
+            "Camera target: %.2f %.2f\n"
             "Triggers: %d\n"
             "Entities: %d\n"
             "Projectiles: %d\n"
@@ -167,6 +169,7 @@ static void update_debug(GUIComp* comp, f32 dt)
         1000 * game_get_dt(),
         1000 * state_dt(),
         1 / state_dt(),
+        camera_target.x, camera_target.z,
         map->triggers->length,
         map->entities->length,
         map->projectiles->length,

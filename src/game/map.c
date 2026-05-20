@@ -2430,21 +2430,6 @@ Map* map_create(i32 id)
 
     game_context.current_map = map;
 
-    //Line* line = map_create_line();
-    //line->width = 2;
-    //line->pos1 = vec3_create(MAP_MAX_WIDTH/2, 0.0, MAP_MAX_WIDTH/2);
-    //line->color1 = vec3_create(0, 0, 1);
-    //line->pos2 = vec3_create(MAP_MAX_WIDTH/2+1, 0.0, MAP_MAX_WIDTH/2+1);
-    //line->color2 = vec3_create(1, 0, 0);
-    //for (i32 i = 0; i <= MAP_MAX_WIDTH; i++) {
-    //    Line* line = map_create_line();
-    //    line->width = 0.3;
-    //    line->pos1 = vec3_create(i, 0.0, 0);
-    //    line->color1 = vec3_create(0, 0, 1);
-    //    line->pos2 = vec3_create(i, 0.0, MAP_MAX_WIDTH);
-    //    line->color2 = vec3_create(1, 0, 0);
-    //}
-
     map_use_spatial_hash(map, sqrt(MAP_MAX_WIDTH));
     log_write(DEBUG, "loaded");
 
@@ -3129,7 +3114,6 @@ void map_update(Map* map)
     map_update_objects(map);
     map_collide_tilemap(map);
     map_collide_objects(map);
-    camera_update();
 }
 
 void map_set_active(Map* map)

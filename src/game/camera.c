@@ -14,11 +14,11 @@
 #define DEFAULT_ZOOM_LEVEL  3
 #define DEFAULT_ROTSPEED    3.5
 #define DEFAULT_TILTSPEED   3.5
-#define DEFAULT_MOVESPEED   3.5
+#define DEFAULT_MOVESPEED   2500
 #define DEFAULT_POSITION    vec3_create(0, 5, 0)
 #define Y_AXIS              vec3_create(0, 1, 0)
 
-#define DISTANCE_FROM_PLAYER 100
+#define DISTANCE_FROM_TARGET 100
 
 extern GameContext game_context;
 
@@ -30,17 +30,20 @@ static void update_orientation_vectors(void)
     game_context.camera.right = vec3_normalize(vec3_cross(Y_AXIS, game_context.camera.facing));
     game_context.camera.up = vec3_cross(game_context.camera.facing, game_context.camera.right);
 }
+
 static void lock_onto_target(void)
 {
-    if (!game_context.camera.follow)
-        return;
-    if (game_context.player.entity == NULL)
-        return;
     vec3 position;
-    vec2 pos2 = game_context.player.entity->position;
-    position = vec3_create(pos2.x, 0.0f, pos2.z);
-    game_context.camera.position = vec3_sub(position, vec3_scale(game_context.camera.facing, DISTANCE_FROM_PLAYER));
-    game_context.camera.target = pos2;
+    vec2 pos2;
+    if (game_context.camera.follow && game_context.player.entity != NULL) {
+        pos2 = game_context.player.entity->position;
+        position = vec3_create(pos2.x, 0.0f, pos2.z);
+        game_context.camera.position = vec3_sub(position, vec3_scale(game_context.camera.facing, DISTANCE_FROM_TARGET));
+        game_context.camera.target = pos2;
+    } else if (!game_context.camera.follow) {
+        position = vec3_create(game_context.camera.target.x, 0, game_context.camera.target.y);
+        game_context.camera.position = vec3_sub(position, vec3_scale(game_context.camera.facing, DISTANCE_FROM_TARGET));
+    }
 }
 
 void camera_init(void)
@@ -71,22 +74,22 @@ void camera_update(void)
 
 void camera_update_direction(vec2 mag)
 {
+    Camera* camera = &game_context.camera;
     Entity* entity = game_context.player.entity;
     if (game_context.camera.follow && entity == NULL)
         return;
     vec2 direction = vec2_create(0, 0);
     vec2 facing, right;
-    facing.x = game_context.camera.facing.x;
-    facing.y = game_context.camera.facing.z;
+    facing.x = camera->facing.x;
+    facing.y = camera->facing.z;
     facing = vec2_normalize(facing);
-    right.x = game_context.camera.right.x;
-    right.y = game_context.camera.right.z;
+    right.x = camera->right.x;
+    right.y = camera->right.z;
     right = vec2_normalize(right);
     direction = vec2_add(direction, vec2_scale(facing, mag.x));
     direction = vec2_add(direction, vec2_scale(right, mag.z));
     direction = vec2_normalize(direction);
-    vec3 dir3 = vec3_create(direction.x, 0, direction.z);
-    if (game_context.camera.follow) {
+    if (camera->follow) {
         game_context.player.entity->direction = direction;
         if (vec2_mag(direction) != 0) {
             entity_set_flag(entity, ENTITY_FLAG_MOVING, true);
@@ -95,8 +98,9 @@ void camera_update_direction(vec2 mag)
         } 
         else
             entity_set_flag(entity, ENTITY_FLAG_MOVING, false);
-    } else
-        game_context.camera.position = vec3_add(game_context.camera.position, dir3);
+    } else {
+        camera->target = vec2_add(camera->target, vec2_scale(direction, camera->move_speed * game_context.dt));
+    }
 }
 
 void camera_update_rotation(f32 mag)
@@ -156,6 +160,11 @@ vec3 camera_get_position(void)
     return game_context.camera.position;
 }
 
+vec2 camera_get_target_position(void)
+{
+    return game_context.camera.target;
+}
+
 vec3 camera_get_facing(void)
 {
     return game_context.camera.facing;
@@ -176,3 +185,12 @@ f32 camera_get_zoom(void)
     return game_context.camera.zoom;
 }
 
+bool camera_toggle_lock(void)
+{
+    return game_context.camera.follow = !game_context.camera.follow;
+}
+
+void camera_set_target(vec2 target)
+{
+    game_context.camera.target = target;
+}

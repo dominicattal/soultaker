@@ -16,6 +16,12 @@ toggle [flag]
 > toggle a flag, which can be one of
     spatial_hash_lines
     debug
+    camera_lock
+
+set [var_name] [arg1] [arg2] ... 
+> set a variable. different types require different args
+> var_name can be one of
+    camera_target: vec2
 
 pause
 > pause the game
