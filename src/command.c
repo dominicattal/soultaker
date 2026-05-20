@@ -150,7 +150,7 @@ char* command_parse(char* command)
         map_fog_clear(game_context.current_map);
         response = string_copy("defogged map");
     } else
-        response = string_create("Unrecognized command %s", command);
+        response = string_create("Unrecognized command `%s`", command);
 
 destroy:
     for (i = 0; i < string_views->length; i++)

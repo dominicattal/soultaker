@@ -139,6 +139,7 @@ void player_reset(Entity* entity)
     entity->speed = 20;
     entity->frame_speed = 2;
     entity->health = entity->max_health = player->base_stats[STAT_MAX_HP];
+    entity->player = player;
     entity_set_flag(entity, ENTITY_FLAG_FRIENDLY, true);
     entity_set_flag(entity, ENTITY_FLAG_PLAYER, true);
     //entity_set_flag(entity, ENTITY_FLAG_INVULNERABLE, true);

@@ -112,7 +112,7 @@ static GUIComp* create_console(void)
     GUIComp* console;
     console= gui_comp_create(0, 0, window_width(), 200);
     gui_comp_set_flag(console, GUI_COMP_FLAG_VISIBLE, false);
-    console->framebuffer = console_framebuffer;
+    console->framebuffer_callback = console_framebuffer;
     console->halign = ALIGN_CENTER;
     console->font_size = 24;
 
@@ -143,7 +143,7 @@ void gui_comp_init(void)
 { 
     gui_context.root = gui_comp_create(0, 0, window_resolution_x(), window_resolution_y());
     gui_context.root->valign = ALIGN_BOTTOM;
-    gui_context.root->framebuffer = root_framebuffer;
+    gui_context.root->framebuffer_callback = root_framebuffer;
     gui_context.root->r = 0;
     gui_context.root->g = 0;
     gui_context.root->b = 0;
@@ -451,9 +451,9 @@ void gui_comp_key(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods)
 
 void gui_comp_framebuffer(GUIComp* comp, i32 width, i32 height)
 {
-    if (comp->framebuffer == NULL)
+    if (comp->framebuffer_callback == NULL)
         return;
-    ((GUIFramebufferFPtr)(comp->framebuffer))(comp, width, height);
+    ((GUIFramebufferFPtr)(comp->framebuffer_callback))(comp, width, height);
 }
 
 void gui_comp_control(GUIComp* comp, ControlEnum ctrl, i32 action)

@@ -42,8 +42,7 @@ static GUIComp* create_help_screen(void)
     gui_comp_set_align(help, ALIGN_CENTER, ALIGN_CENTER);
     gui_comp_set_color(help, 255, 255, 255, 255);
     GUIComp* exit = gui_comp_create(0, 350, 200, 75);
-    char* string = "Exit";
-    gui_comp_copy_text(exit, string);
+    gui_comp_copy_text(exit, "Exit");
     gui_comp_set_text_align(exit, ALIGN_CENTER, ALIGN_CENTER);
     gui_comp_set_color(exit, 255, 0, 255, 255);
     gui_comp_set_flag(exit, GUI_COMP_FLAG_CLICKABLE, true);
@@ -52,6 +51,9 @@ static GUIComp* create_help_screen(void)
     exit->click = help_screen_exit_click;
     gui_comp_attach(help, exit);
     GUIComp* main_menu = gui_comp_create(0, 250, 200, 75);
+    gui_comp_copy_text(main_menu, "Main Menu");
+    gui_comp_set_flag(main_menu, GUI_COMP_FLAG_CLICKABLE, true);
+    gui_comp_set_text_align(main_menu, ALIGN_CENTER, ALIGN_CENTER);
     main_menu->halign = ALIGN_CENTER;
     main_menu->font_size = 32;
     gui_comp_set_color(main_menu, 255, 0, 255, 255);
@@ -61,9 +63,8 @@ static GUIComp* create_help_screen(void)
     options->font_size = 32;
     gui_comp_set_color(options, 255, 0, 255, 255);
     gui_comp_attach(help, options);
-    string = "Continue";
     GUIComp* continue1 = gui_comp_create(0, 50, 200, 75);
-    gui_comp_copy_text(continue1, string);
+    gui_comp_copy_text(continue1, "Continue");
     gui_comp_set_flag(continue1, GUI_COMP_FLAG_CLICKABLE, true);
     gui_comp_set_text_align(continue1, ALIGN_CENTER, ALIGN_CENTER);
     continue1->click = help_screen_continue_click;

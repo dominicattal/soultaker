@@ -361,15 +361,6 @@ void entity_init(void)
     load_entity_info();
 }
 
-void entity_clear(void)
-{
-    //if (game_context.entities == NULL)
-    //    return;
-    //while (game_context.entities->length > 0)
-    //    entity_destroy(list_remove(game_context.entities, 0));
-    //game_context.player.entity = NULL;
-}
-
 Entity* entity_create(vec2 position, i32 id)
 {
     Entity* entity = st_malloc(sizeof(Entity));
@@ -517,6 +508,8 @@ void entity_destroy(Entity* entity)
         destroy(entity);
     if (entity_get_flag(entity, ENTITY_FLAG_AUTO_FREE_DATA))
         st_free(entity->data);
+    if (entity->player != NULL)
+        entity->player->entity = NULL;
     st_free(entity);
 }
 

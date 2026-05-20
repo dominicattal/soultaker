@@ -597,6 +597,7 @@ typedef struct Stats {
 
 typedef struct Entity {
     MapInfo map_info;
+    Player* player;
     void* data;
     vec2 position;
     vec2 prev_position;

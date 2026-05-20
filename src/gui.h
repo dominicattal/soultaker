@@ -96,7 +96,7 @@ typedef struct GUIComp {
     GUIScrollFPtr scroll;
     GUIKeyFPtr key;
     GUICompDestroyFPtr destroy;
-    GUIFramebufferFPtr framebuffer;
+    GUIFramebufferFPtr framebuffer_callback;
     GUIControlFPtr control;
     GUIEventCompEnum event_id;
     GUIVertexData* vertex_data;
