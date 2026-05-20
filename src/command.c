@@ -14,7 +14,7 @@ typedef struct {
     i32 l, r;
 } StringView;
 
-static bool string_view_cmp(StringView* string_view, const char* command, const char* string)
+static i32 string_view_cmp(StringView* string_view, const char* command, const char* string)
 {
     i32 length = string_view->r - string_view->l + 1;
     i32 i;
@@ -29,6 +29,11 @@ static bool string_view_cmp(StringView* string_view, const char* command, const 
     if (i != length && string[i] == '\0')
         return -1;
     return 0;
+}
+
+static bool string_view_eq(StringView* string_view, const char* command, const char* string)
+{
+    return string_view_cmp(string_view, command, string) == 0;
 }
 
 static char* string_view_c_str(StringView* string_view, const char* command)
@@ -97,11 +102,48 @@ static char* parse_toggle(List* string_views, const char* command)
         else
             response = string_copy("could not toggle debug");
     }
+    if (strcmp(flag_name, "camera_lock") == 0) {
+        bool status = camera_toggle_lock();
+        if (status)
+            response = string_copy("Camera lock is on");
+        else
+            response = string_copy("Camera lock is off");
+    }
 fail:
     if (response == NULL)
         response = string_copy("Invalid toggle argument");
     if (flag_name != NULL)
         st_free(flag_name);
+    return response;
+}
+
+static char* parse_set(List* string_views, const char* command)
+{
+    char* response = NULL;
+    char* var_name = NULL;
+    StringView* string_view;
+    if (string_views->length < 2) {
+        response = string_copy("Missing argument for set");
+        goto fail;
+    }
+    string_view = list_get(string_views, 1);
+    string_view_log(string_view, command);
+    var_name = string_view_c_str(string_view, command);
+    if (strcmp(var_name, "camera_target") == 0) {
+        if (string_views->length < 4) {
+            response = string_copy("camera_target requires 2 numbers");
+            goto fail;
+        }
+        string_view = list_get(string_views, 2);
+        f32 x = atof(string_view_c_str(string_view, command));
+        string_view = list_get(string_views, 3);
+        f32 z = atof(string_view_c_str(string_view, command));
+        camera_set_target(vec2_create(x, z));
+        response = string_create("set camera target to %.3f %.3f", x, z);
+    }
+fail:
+    if (response == NULL)
+        response = string_copy("Invalid set argument");
     return response;
 }
 
@@ -136,19 +178,24 @@ char* command_parse(char* command)
     }
 
     string_view = list_get(string_views, 0);
-    if (string_view_cmp(string_view, command, "map") == 0)
+    if (string_view_eq(string_view, command, "map"))
         response = parse_map(string_views, command);
-    else if (string_view_cmp(string_view, command, "toggle") == 0)
+    else if (string_view_eq(string_view, command, "toggle"))
         response = parse_toggle(string_views, command);
-    else if (string_view_cmp(string_view, command, "pause") == 0) {
+    else if (string_view_eq(string_view, command, "set"))
+        response = parse_set(string_views, command);
+    else if (string_view_eq(string_view, command, "pause")) {
         game_pause();
         response = string_create("Paused game");
-    } else if (string_view_cmp(string_view, command, "resume") == 0) {
+    } else if (string_view_eq(string_view, command, "resume")) {
         game_resume();
         response = string_create("Resumed game");
-    } else if (string_view_cmp(string_view, command, "deog") == 0) {
+    } else if (string_view_eq(string_view, command, "defog")) {
         map_fog_clear(game_context.current_map);
         response = string_copy("defogged map");
+    } else if (string_view_eq(string_view, command, "pos")) {
+        vec2 target_position = camera_get_target_position();
+        response = string_create("%f %f", target_position.x, target_position.z);
     } else
         response = string_create("Unrecognized command `%s`", command);
 

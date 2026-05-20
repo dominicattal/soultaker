@@ -32,6 +32,7 @@ void* game_loop(void* vargp)
         start = end;
         gui_update_comps(game_context.dt);
         event_queue_flush();
+        camera_update();
         if (game_context.current_map != NULL) {
             if (!game_context.paused)
                 map_update(game_context.current_map);

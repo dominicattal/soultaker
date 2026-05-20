@@ -1025,10 +1025,13 @@ void game_control_callback(ControlEnum ctrl, i32 action);
 void game_framebuffer_size_callback(void);
 
 vec3 camera_get_position(void);
+vec2 camera_get_target_position(void);
 vec3 camera_get_facing(void);
 f32  camera_get_pitch(void);
 f32  camera_get_yaw(void);
 f32  camera_get_pitch(void);
 f32  camera_get_zoom(void);
+bool camera_toggle_lock(void);
+void camera_set_target(vec2 target);
 
 #endif

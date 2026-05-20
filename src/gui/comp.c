@@ -84,7 +84,6 @@ static void console_key(GUIComp* console_input, i32 key, i32 scancode, i32 actio
         } 
         if (is_visible) {
             game_resume_input();
-            log_write(DEBUG, "A");
             gui_set_event_comp(GUI_COMP_TYPING, NULL);
             gui_comp_set_flag(console, GUI_COMP_FLAG_VISIBLE, false);
             if (console_input->text != NULL)
