@@ -11,6 +11,11 @@
 #define GRAVITY                 -9.8
 #define PROJ_PIERCE_COOLDOWN    1
 
+typedef enum PacketEnum {
+    PACKET_TEST,
+    NUM_PACKET_TYPES
+} PacketEnum;
+
 //**************************************************************************
 // Forward Declarations
 //**************************************************************************
@@ -37,6 +42,8 @@ typedef struct Map Map;
 typedef struct MapNode MapNode;
 typedef struct MapInfo MapInfo;
 typedef struct LocalMapGenerationSettings LocalMapGenerationSettings;
+typedef struct Connection Connection;
+typedef struct Client Client;
 
 typedef void (*TileCreateFuncPtr)(Tile*);
 typedef void (*TileCollideFuncPtr)(Entity* entity);
@@ -917,16 +924,36 @@ void parjicle_destroy(Parjicle* parjicle);
 // Game Context
 //**************************************************************************
 
-// contains copy of values for thread-safety
-// in getters
-typedef struct {
-    Stats player_stats;
-    f32 boss_health;
-    f32 boss_max_health;
-    i32 num_bosses;
-} GetterValues;
+typedef struct Connection {
+    Socket* tcp_socket;
+    Socket* udp_socket;
+    Socket* other_tcp_socket;
+    Socket* other_udp_socket;
+} Connection;
+
+typedef struct Client {
+    Camera camera;
+    Player player;
+    Connection conn;
+    u32 uid;
+} Client;
+
+void client_create(void);
+void client_destroy(Client* client);
+
+//**************************************************************************
+// Game Context
+//**************************************************************************
 
 typedef struct {
+
+    NetContext* net;
+    char* ip;
+    char* port;
+    List* clients;
+    Connection host;
+
+    pthread_t net_thread_id;
     Map* current_map;
     Player player;
     Camera camera;
@@ -938,11 +965,17 @@ typedef struct {
     bool halt_input;
     bool halt_render;
     bool paused;
+
 } GameContext;
 
 // global game_context that everything on the game
 // thread can access
 extern GameContext game_context;
+
+// manage networking
+void game_net_start_hosting(char* ip, char* port);
+void game_net_stop_hosting(void);
+void game_net_join(char* ip, char* port);
 
 // setup and cleanup opengl buffers. this is
 // done on the main thread on program creation

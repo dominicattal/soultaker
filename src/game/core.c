@@ -18,9 +18,9 @@ void* game_loop(void* vargp)
     game_context.time = 0;
     gui_comp_init();
     pthread_mutex_unlock(init_mutex);
-    gui_preset_load(GUI_PRESET_GAME);
+    gui_preset_load(GUI_PRESET_MP);
     game_resume_render();
-    map_create(map_get_id("outpost1"));
+    //map_create(map_get_id("outpost1"));
     while (!game_context.kill_thread)
     {
         while (end - start < MIN_DT)
@@ -32,8 +32,8 @@ void* game_loop(void* vargp)
         start = end;
         gui_update_comps(game_context.dt);
         event_queue_flush();
-        camera_update();
         if (game_context.current_map != NULL) {
+            camera_update();
             if (!game_context.paused)
                 map_update(game_context.current_map);
             game_update_vertex_data();
@@ -101,6 +101,9 @@ void game_init(void)
 
 void game_cleanup(void)
 {
+    if (game_context.net != NULL)
+        game_net_stop_hosting();
+
     game_context.kill_thread = true;
     game_context.halt_input = false;
     pthread_join(game_context.thread_id, NULL);

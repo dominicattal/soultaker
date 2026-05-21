@@ -961,6 +961,12 @@ static void exit_onclick(GUIComp* comp, i32 button, i32 action, i32 mods)
     window_close();
 }
 
+static void mp_onclick(GUIComp* comp, i32 button, i32 action, i32 mods)
+{
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+        gui_preset_load(GUI_PRESET_MP); 
+}
+
 static void play_onclick(GUIComp* comp, i32 button, i32 action, i32 mods)
 {
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
@@ -975,7 +981,7 @@ static void options_onclick(GUIComp* comp, i32 button, i32 action, i32 mods)
 
 static void load_preset_main_menu(GUIComp* root)
 {
-    GUIComp* play = gui_comp_create(45, 50, 100, 30);
+    GUIComp* play = gui_comp_create(45, 60, 100, 30);
     play->click = play_onclick;
     const char* play_text = "Play";
     gui_comp_set_flag(play, GUI_COMP_FLAG_CLICKABLE, true);
@@ -984,7 +990,16 @@ static void load_preset_main_menu(GUIComp* root)
     gui_comp_copy_text(play, play_text);
     gui_comp_attach(root, play);
 
-    GUIComp* options = gui_comp_create(45, 110, 100, 30);
+    GUIComp* mp = gui_comp_create(45, 110, 100, 30);
+    mp->click = mp_onclick;
+    const char* mp_text = "MP";
+    gui_comp_set_flag(mp, GUI_COMP_FLAG_CLICKABLE, true);
+    gui_comp_set_color(mp, 255, 255, 255, 255);
+    gui_comp_set_text_align(mp, ALIGN_CENTER, ALIGN_CENTER);
+    gui_comp_copy_text(mp, mp_text);
+    gui_comp_attach(root, mp);
+
+    GUIComp* options = gui_comp_create(45, 160, 100, 30);
     options->click = options_onclick;
     const char* options_text = "Options";
     gui_comp_set_flag(options, GUI_COMP_FLAG_CLICKABLE, true);
@@ -993,7 +1008,7 @@ static void load_preset_main_menu(GUIComp* root)
     gui_comp_copy_text(options, options_text);
     gui_comp_attach(root, options);
     
-    GUIComp* exit = gui_comp_create(45, 170, 100, 30);
+    GUIComp* exit = gui_comp_create(45, 210, 100, 30);
     exit->click = exit_onclick;
     const char* exit_text = "Exit";
     gui_comp_set_flag(exit, GUI_COMP_FLAG_CLICKABLE, true);
@@ -1001,6 +1016,41 @@ static void load_preset_main_menu(GUIComp* root)
     gui_comp_set_text_align(exit, ALIGN_CENTER, ALIGN_CENTER);
     gui_comp_copy_text(exit, exit_text);
     gui_comp_attach(root, exit);
+}
+
+// **************************************************
+
+static void host_onclick(GUIComp* comp, i32 button, i32 action, i32 mods)
+{
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+        game_net_start_hosting("0.0.0.0", "6969");
+}
+
+static void join_onclick(GUIComp* comp, i32 button, i32 action, i32 mods)
+{
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+        game_net_join("127.0.0.1", "6969");
+}
+
+static void load_preset_mp(GUIComp* root)
+{
+    GUIComp* host = gui_comp_create(45, 60, 100, 30);
+    host->click = host_onclick;
+    const char* host_text = "Host";
+    gui_comp_set_flag(host, GUI_COMP_FLAG_CLICKABLE, true);
+    gui_comp_set_color(host, 255, 255, 255, 255);
+    gui_comp_set_text_align(host, ALIGN_CENTER, ALIGN_CENTER);
+    gui_comp_copy_text(host, host_text);
+    gui_comp_attach(root, host);
+
+    GUIComp* join = gui_comp_create(45, 110, 100, 30);
+    join->click = join_onclick;
+    const char* join_text = "Join";
+    gui_comp_set_flag(join, GUI_COMP_FLAG_CLICKABLE, true);
+    gui_comp_set_color(join, 255, 255, 255, 255);
+    gui_comp_set_text_align(join, ALIGN_CENTER, ALIGN_CENTER);
+    gui_comp_copy_text(join, join_text);
+    gui_comp_attach(root, join);
 }
 
 // **************************************************
@@ -1117,6 +1167,9 @@ void gui_preset_load(GUIPreset preset)
             break;
         case GUI_PRESET_TEST:
             load_preset_test(gui_context.root);
+            break;
+        case GUI_PRESET_MP:
+            load_preset_mp(gui_context.root);
             break;
         default:
             break;

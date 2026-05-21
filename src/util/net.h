@@ -1,18 +1,15 @@
 #ifndef NETWORKING_H
 #define NETWORKING_H
 
+#include "type.h"
 #include <stdbool.h>
 #include <stdlib.h>
 
+#define BIT_UDP  0x0
 #define BIT_TCP  0x1
-#define BIT_UDP  0x2
-
-typedef enum {
-    PACKET_TEST
-} PacketEnum;
 
 typedef struct {
-    PacketEnum id;
+    u32 id;
     char* buffer;
     size_t length;
 } Packet;
@@ -74,7 +71,7 @@ void    socket_set_thread_id(Socket* socket, pthread_t thread_id);
 
 // Create a packet with id with a buffer of length. buffer can be NULL iff length is 0.
 // Returns NULL if buffer is NULL and length is not 0
-Packet* packet_create(PacketEnum id, int length, const char* buffer);
+Packet* packet_create(u32 id, int length, const char* buffer);
 
 // Frees memory from packet
 void    packet_destroy(Packet* packet);
