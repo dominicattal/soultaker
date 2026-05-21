@@ -12,6 +12,7 @@
 #include "util/bitset.h"
 #include "util/trie.h"
 #include "util/json.h"
+#include "util/net.h"
 #include <pthread.h>
 #include <semaphore.h>
 #include <stdlib.h>

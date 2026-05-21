@@ -1,6 +1,7 @@
 #ifdef __linux__
 
 #include "net.h"
+#include "malloc.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -28,6 +29,7 @@ typedef struct Socket {
     int fd;
     bool has_thread;
     bool connected;
+    bool tcp;
 } Socket;
 
 typedef struct NetContext {
@@ -39,7 +41,7 @@ typedef struct NetContext {
 
 NetContext* networking_init(void)
 {
-    NetContext* ctx = malloc(sizeof(NetContext));
+    NetContext* ctx = st_malloc(sizeof(NetContext));
     ctx->head = ctx->tail = NULL;
     pthread_mutex_init(&ctx->mutex, NULL);
     ctx->active = true;
@@ -85,15 +87,15 @@ void networking_cleanup(NetContext* ctx)
         sock = next;
     }
     pthread_mutex_destroy(&ctx->mutex);
-    free(ctx);
+    st_free(ctx);
 }
 
-static Socket* get_free_socket(NetContext* ctx)
+static Socket* get_st_free_socket(NetContext* ctx)
 {
     Socket* sock = NULL;
     pthread_mutex_lock(&ctx->mutex);
     if (!ctx->active) goto unlock;
-    sock = malloc(sizeof(Socket));
+    sock = st_malloc(sizeof(Socket));
     sock->ctx = ctx;
     sock->connected = false;
     sock->next = NULL;
@@ -116,11 +118,17 @@ Socket* socket_create(NetContext* ctx, const char* ip, const char* port_str, int
     int port;
     port = atoi(port_str);
 
-    sock = get_free_socket(ctx);
+    sock = get_st_free_socket(ctx);
     if (sock == NULL)
         goto fail;
 
-    sock->fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (flags & BIT_TCP) {
+        sock->fd = socket(AF_INET, SOCK_STREAM, 0);
+        sock->tcp = true;
+    } else {
+        sock->fd = socket(AF_INET, SOCK_DGRAM, 0);
+        sock->tcp = false;
+    }
     sock->addr.sin_family = AF_INET;
     if (ip == NULL)
         ip = "0.0.0.0";
@@ -155,7 +163,7 @@ Socket* socket_accept(Socket* sock)
     fd = accept(sock->fd, (struct sockaddr*)&sock->addr, &addrlen);
     if (fd == -1)
         return NULL;
-    new_sock = get_free_socket(sock->ctx);
+    new_sock = get_st_free_socket(sock->ctx);
     if (new_sock == NULL) {
         shutdown(fd, SHUT_RDWR);
         return NULL;
@@ -193,7 +201,7 @@ void socket_destroy(Socket* sock)
         ctx->tail = sock->prev;
     else
         sock->next->prev = sock->prev;
-    free(sock);
+    st_free(sock);
     pthread_mutex_unlock(&ctx->mutex);
 }
 
@@ -220,31 +228,31 @@ Packet* socket_recv(Socket* sock)
     Packet* packet;
     size_t length;
     unsigned char* buffer;
-    buffer = malloc(6 * sizeof(char));
+    buffer = st_malloc(6 * sizeof(char));
     length = read(sock->fd, buffer, 6);
     if (length <= 0) {
         sock->connected = false;
-        free(buffer);
+        st_free(buffer);
         return NULL;
     }
-    packet = malloc(sizeof(Packet));
+    packet = st_malloc(sizeof(Packet));
     packet->id = (buffer[4]<<8) + buffer[5];
     packet->length = (buffer[0]<<24)+(buffer[1]<<16)+(buffer[2]<<8)+buffer[3];
     if (packet->length == 0) {
         packet->buffer = NULL;
-        free(buffer);
+        st_free(buffer);
         return packet;
     }
-    packet->buffer = malloc(packet->length * sizeof(char));
+    packet->buffer = st_malloc(packet->length * sizeof(char));
     length = read(sock->fd, packet->buffer, packet->length);
     if (length != packet->length) {
         printf("Unexpected packet length %lu vs %lu\n", length, packet->length);
-        free(packet->buffer);
-        free(packet);
-        free(buffer);
+        st_free(packet->buffer);
+        st_free(packet);
+        st_free(buffer);
         return NULL;
     }
-    free(buffer);
+    st_free(buffer);
     return packet;
 }
 

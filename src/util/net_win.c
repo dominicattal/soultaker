@@ -43,10 +43,10 @@ static WSADATA wsa_startup_if_not(void)
 
 NetContext* networking_init(void)
 {
-    NetContext* ctx = malloc(sizeof(NetContext));
+    NetContext* ctx = st_malloc(sizeof(NetContext));
     ctx->wsa_data = wsa_startup_if_not();
     if (!startup) {
-        free(ctx);
+        st_free(ctx);
         return NULL;
     }
     ctx->head = ctx->tail = NULL;
@@ -88,12 +88,12 @@ int networking_get_last_error(void)
     return WSAGetLastError();
 }
 
-static Socket* get_free_socket(NetContext* ctx)
+static Socket* get_st_free_socket(NetContext* ctx)
 {
     Socket* sock = NULL;
     pthread_mutex_lock(&ctx->mutex);
     if (!ctx->active) goto unlock;
-    sock = malloc(sizeof(Socket));
+    sock = st_malloc(sizeof(Socket));
     sock->ctx = ctx;
     sock->connected = false;
     sock->next = NULL;
@@ -118,7 +118,7 @@ Socket* socket_create(NetContext* ctx, const char* ip, const char* port, int fla
     SOCKET* new_socket;
     Socket* res_socket;
 
-    res_socket = get_free_socket(ctx);
+    res_socket = get_st_free_socket(ctx);
     if (res_socket == NULL)
         return NULL;
 
@@ -132,10 +132,10 @@ Socket* socket_create(NetContext* ctx, const char* ip, const char* port, int fla
     hints.ai_flags = (will_bind) ? AI_PASSIVE : 0;
     if (getaddrinfo(ip, port, &hints, &result))
         goto fail;
-    new_socket = malloc(sizeof(SOCKET));
+    new_socket = st_malloc(sizeof(SOCKET));
     *new_socket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
     if (*new_socket == INVALID_SOCKET)
-        goto fail_free_addr_info;
+        goto fail_st_free_addr_info;
 
     //BOOL opt_val = TRUE;
     //int opt_len = sizeof(BOOL);
@@ -151,8 +151,8 @@ Socket* socket_create(NetContext* ctx, const char* ip, const char* port, int fla
 
     return res_socket;
 
-fail_free_addr_info:
-    freeaddrinfo(result);
+fail_st_free_addr_info:
+    st_freeaddrinfo(result);
 fail:
     return NULL;
 }
@@ -172,13 +172,13 @@ Socket* socket_accept(Socket* sock)
     Socket* client_socket;
     SOCKET* new_socket;
 
-    client_socket = get_free_socket(sock->ctx);
+    client_socket = get_st_free_socket(sock->ctx);
     if (client_socket == NULL)
         return NULL;
-    new_socket = malloc(sizeof(SOCKET));
+    new_socket = st_malloc(sizeof(SOCKET));
     *new_socket = accept(*sock->sock, NULL, NULL);
     if (*new_socket == INVALID_SOCKET) {
-        free(new_socket);
+        st_free(new_socket);
         return NULL;
     }
     client_socket->sock = new_socket;
@@ -210,7 +210,7 @@ void socket_destroy(Socket* sock)
         closesocket(*sock->sock);
     }
     if (sock->info != NULL)
-        freeaddrinfo(sock->info);
+        st_freeaddrinfo(sock->info);
     sock->connected = false;
     sock->sock = NULL;
     sock->info = NULL;
@@ -223,7 +223,7 @@ void socket_destroy(Socket* sock)
     else
         sock->next->prev = sock->prev;
     pthread_mutex_unlock(&sock->ctx->mutex);
-    free(sock);
+    st_free(sock);
 }
 
 bool socket_send(Socket* sock, Packet* packet)
@@ -254,31 +254,31 @@ Packet* socket_recv(Socket* sock)
     Packet* packet;
     int length;
     unsigned char* buffer;
-    buffer = malloc(6 * sizeof(unsigned char));
+    buffer = st_malloc(6 * sizeof(unsigned char));
     length = recv(*sock->sock, (char*)buffer, 6, 0);
     if (length == SOCKET_ERROR || length == 0) {
         sock->connected = false;
-        free(buffer);
+        st_free(buffer);
         return NULL;
     }
-    packet = malloc(sizeof(Packet));
+    packet = st_malloc(sizeof(Packet));
     packet->id = (buffer[4]<<8) + buffer[5];
     packet->length = (buffer[0]<<24)+(buffer[1]<<16)+(buffer[2]<<8)+buffer[3];
     if (packet->length == 0) {
         packet->buffer = NULL;
-        free(packet->buffer);
+        st_free(packet->buffer);
         return packet;
     }
-    packet->buffer = malloc(packet->length * sizeof(char));
+    packet->buffer = st_malloc(packet->length * sizeof(char));
     length = recv(*sock->sock, packet->buffer, packet->length, 0);
     if ((size_t)length != packet->length) {
         printf("Unexpected packet length %u vs %llu\n", length, packet->length);
-        free(packet->buffer);
-        free(packet);
-        free(buffer);
+        st_free(packet->buffer);
+        st_free(packet);
+        st_free(buffer);
         return NULL;
     }
-    free(buffer);
+    st_free(buffer);
     return packet;
 }
 
