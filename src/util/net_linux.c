@@ -262,4 +262,22 @@ void socket_set_thread_id(Socket* sock, pthread_t thread_id)
     sock->thread_id = thread_id;
 }
 
+const char* socket_ip(Socket* socket)
+{
+    // https://stackoverflow.com/questions/3060950/how-to-get-ip-address-from-sock-structure-in-c
+    char str[INET_ADDRSTRLEN+1];
+    str[INET_ADDRSTRLEN] = '\0';
+    struct sockaddr_in* pv4addr = (struct sockaddr_in*)&socket->addr;
+    struct in_addr ipaddr = pv4addr->sin_addr;
+    inet_ntop(AF_INET, &ipaddr, str, INET_ADDRSTRLEN);
+    puts(str);
+    printf("IP address is: %s\n", inet_ntoa(socket->addr.sin_addr));
+    return "";
+}
+
+const char* socket_port(Socket* socket)
+{
+    return "";
+}
+
 #endif
