@@ -292,4 +292,16 @@ void socket_set_thread_id(Socket* socket, pthread_t thread_id)
     puts("socket_set_thread_id not implemented on windows");
 }
 
+const char* socket_ip(Socket* socket)
+{
+    log_write(WARNING, "not implemented");
+    return "";
+}
+
+const char* socket_port(Socket* socket)
+{
+    log_write(WARNING, "not implemented");
+    return "";
+}
+
 #endif

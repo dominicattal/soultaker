@@ -69,6 +69,10 @@ Packet* socket_recv(Socket* socket);
 // Keep track of a socket's handler thread. 
 void    socket_set_thread_id(Socket* socket, pthread_t thread_id);
 
+// Get info from socket
+const char* socket_ip(Socket* socket);
+const char* socket_port(Socket* socket);
+
 // Create a packet with id with a buffer of length. buffer can be NULL iff length is 0.
 // Returns NULL if buffer is NULL and length is not 0
 Packet* packet_create(u32 id, int length, const char* buffer);

@@ -36,6 +36,11 @@ static void* net_host_listener(void* vargp)
             }
             break;
         }
+
+        const char* client_ip = socket_ip(client_socket);
+        const char* client_port = socket_port(client_socket);
+        log_write(DEBUG, "connected to %s:%s", client_ip, client_port);
+
         packet = socket_recv(client_socket);
         log_write(DEBUG, packet->buffer);
         packet_destroy(packet);
