@@ -928,17 +928,10 @@ void parjicle_destroy(Parjicle* parjicle);
 // Game Context
 //**************************************************************************
 
-typedef struct Connection {
-    Socket* tcp_socket;
-    Socket* udp_socket;
-    Socket* other_tcp_socket;
-    Socket* other_udp_socket;
-} Connection;
-
 typedef struct Client {
     Camera camera;
     Player player;
-    Connection conn;
+    Socket* tcp_socket;
     char* username;
     u32 uid;
 } Client;
@@ -961,9 +954,9 @@ typedef struct {
     List* clients;
     Client* this_client;
     Client* host_client;
-    Connection host;
 
-    pthread_t net_thread_id;
+    pthread_t net_tcp_listen_thread_id;
+    pthread_t net_udp_listen_thread_id;
     Map* current_map;
     Player player;
     Camera camera;
