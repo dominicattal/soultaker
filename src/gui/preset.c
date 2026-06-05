@@ -1022,14 +1022,39 @@ static void load_preset_main_menu(GUIComp* root)
 
 static void host_onclick(GUIComp* comp, i32 button, i32 action, i32 mods)
 {
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
         game_net_start_hosting("0.0.0.0", "6969");
+        gui_preset_load(GUI_PRESET_LOBBY);
+    }
 }
 
 static void join_onclick(GUIComp* comp, i32 button, i32 action, i32 mods)
 {
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
         game_net_join("127.0.0.1", "6969");
+        gui_preset_load(GUI_PRESET_LOBBY);
+    }
+}
+
+static void name_box_onclick(GUIComp* comp, i32 button, i32 action, i32 mods)
+{
+    GUIComp* username = comp->data;
+    GUIComp* typing_comp = gui_get_event_comp(GUI_COMP_TYPING);
+    if (action == GLFW_PRESS) {
+        if (typing_comp != comp) {
+            log_write(DEBUG, "A");
+            gui_set_event_comp(GUI_COMP_TYPING, comp);
+        } else {
+            log_write(DEBUG, "B");
+            if (comp->text_length > 0) {
+                log_write(DEBUG, comp->text);
+                client_set_username(game_context.this_client, comp->text);
+                gui_comp_point_to_text(username, game_context.this_client->username);
+            }
+            gui_comp_reset_text(comp);
+            gui_set_event_comp(GUI_COMP_TYPING, NULL);
+        }
+    }
 }
 
 static void load_preset_mp(GUIComp* root)
@@ -1051,6 +1076,18 @@ static void load_preset_mp(GUIComp* root)
     gui_comp_set_text_align(join, ALIGN_CENTER, ALIGN_CENTER);
     gui_comp_copy_text(join, join_text);
     gui_comp_attach(root, join);
+
+    GUIComp* username = gui_comp_create(200, 160, 200, 50);
+    gui_comp_point_to_text(username, game_context.this_client->username);
+    gui_comp_attach(root, username);
+
+    GUIComp* name_box = gui_comp_create(200, 100, 200, 50);
+    name_box->data = username;
+    gui_comp_set_flag(name_box, GUI_COMP_FLAG_AUTO_FREE_DATA, false);
+    name_box->click = name_box_onclick;
+    gui_comp_set_flag(name_box, GUI_COMP_FLAG_CLICKABLE, true);
+    gui_comp_set_color(name_box, 255, 255, 255, 255);
+    gui_comp_attach(root, name_box);
 }
 
 // **************************************************
@@ -1147,6 +1184,39 @@ static void load_preset_test(GUIComp* root)
 
 // **************************************************
 
+typedef struct {
+    i32 index;
+} PlayerCardData;
+
+static void player_card_update(GUIComp* card, f32 dt)
+{
+    Client* client;
+    PlayerCardData* data = card->data;
+    if (game_context.clients->length <= data->index) {
+        gui_comp_point_to_text(card, "Waiting for player to join...");
+    } else {
+        client = list_get(game_context.clients, data->index);
+        gui_comp_point_to_text(card, client->username);
+    }
+}
+
+static void load_preset_lobby(GUIComp* root)
+{
+    GUIComp* player_card;
+    PlayerCardData* data;
+    for (i32 i = 0; i < 4; i++) {
+        player_card = gui_comp_create(200, 200 + 75*i, 200, 50);
+        player_card->update = player_card_update;
+        data = player_card->data = st_malloc(sizeof(PlayerCardData));
+        data->index = i;
+        gui_comp_set_color(player_card, 255, 255, 255, 255);
+        gui_comp_point_to_text(player_card, "Waiting for player to join...");
+        gui_comp_attach(root, player_card);
+    }
+}
+
+// **************************************************
+
 extern GUIContext gui_context;
 
 void gui_preset_load(GUIPreset preset)
@@ -1170,6 +1240,9 @@ void gui_preset_load(GUIPreset preset)
             break;
         case GUI_PRESET_MP:
             load_preset_mp(gui_context.root);
+            break;
+        case GUI_PRESET_LOBBY:
+            load_preset_lobby(gui_context.root);
             break;
         default:
             break;

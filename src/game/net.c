@@ -8,11 +8,13 @@ static bool kill_net_host_thread;
 static void* net_host_listener(void* vargp)
 {
     NetContext* net_ctx = game_context.net;
+    Client* this_client = game_context.this_client;
     char* ip = game_context.ip;
     char* port = game_context.port;
     Socket* listen_socket;
     Socket* client_socket;
     Packet* packet;
+    char uint_buf[32];
     while (!kill_net_host_thread) {
         listen_socket = socket_create(net_ctx, ip, port, BIT_TCP);
         if (listen_socket == NULL) {
@@ -41,13 +43,26 @@ static void* net_host_listener(void* vargp)
         const char* client_port = socket_port(client_socket);
         log_write(DEBUG, "connected to %s:%s", client_ip, client_port);
 
-        packet = socket_recv(client_socket);
-        log_write(DEBUG, packet->buffer);
+        Client* client = client_create();
+        list_append(game_context.clients, client);
+
+        packet = packet_create(PACKET_HOST_TO_CLIENT_USERNAME, strlen(this_client->username)+1, this_client->username);
+        socket_send(client_socket, packet);
         packet_destroy(packet);
 
-        char* msg = "hello from server";
-        packet = packet_create(PACKET_TEST, strlen(msg)+1, msg);
+        sprintf(uint_buf, "%u", this_client->uid);
+        packet = packet_create(PACKET_HOST_TO_CLIENT_HOST_UID, sizeof(this_client->uid)+1, uint_buf);
         socket_send(client_socket, packet);
+        packet_destroy(packet);
+
+        sprintf(uint_buf, "%u", client->uid);
+        packet = packet_create(PACKET_HOST_TO_CLIENT_CLIENT_UID, sizeof(client->uid)+1, uint_buf);
+        socket_send(client_socket, packet);
+        packet_destroy(packet);
+
+        packet = socket_recv(client_socket);
+        log_assert(packet->id == PACKET_CLIENT_TO_HOST_USERNAME, "");
+        client->username = string_copy(packet->buffer);
         packet_destroy(packet);
     }
     networking_join_sockets(game_context.net);
@@ -55,38 +70,6 @@ static void* net_host_listener(void* vargp)
 fail:
     game_net_stop_hosting();
     return NULL;
-}
-
-void game_net_start_hosting(char* ip, char* port)
-{
-    if (game_context.net != NULL) {
-        log_write(WARNING, "game is already hosting, ignoring");
-        return;
-    }
-
-    game_context.net = networking_init();
-    game_context.ip = ip;
-    game_context.port = port;
-    game_context.clients = list_create();
-    kill_net_host_thread = false;
-    pthread_create(&game_context.net_thread_id, NULL, net_host_listener, NULL);
-
-    log_write(DEBUG, "hosting");
-}
-
-void game_net_stop_hosting(void)
-{
-    if (game_context.net == NULL) {
-        log_write(WARNING, "game is not hosting");
-        return;
-    }
-
-    kill_net_host_thread = true;
-    networking_shutdown_sockets(game_context.net);
-    pthread_join(game_context.net_thread_id, NULL);
-    networking_cleanup(game_context.net);
-    if (game_context.clients != NULL)
-        list_destroy(game_context.clients);
 }
 
 void game_net_join(char* ip, char* port)
@@ -108,15 +91,56 @@ void game_net_join(char* ip, char* port)
 
     game_context.ip = ip;
     game_context.port = port;
-    game_context.clients = list_create();
 
-    log_write(DEBUG, "connected");
-    char* msg = "hello from client";
-    Packet* packet = packet_create(PACKET_TEST, strlen(msg)+1, msg);
+    Packet* packet;
+    Client* this_client = game_context.this_client;
+
+    game_context.host_client = client_create();
+    list_append(game_context.clients, game_context.host_client);
+    packet = socket_recv(server_socket);
+    log_assert(packet->id == PACKET_HOST_TO_CLIENT_USERNAME, "");
+    game_context.host_client->username = string_copy(packet->buffer);
+    packet_destroy(packet);
+    packet = socket_recv(server_socket);
+    log_assert(packet->id == PACKET_HOST_TO_CLIENT_HOST_UID, "");
+    game_context.host_client->uid = atoi(packet->buffer);
+    packet_destroy(packet);
+    packet = socket_recv(server_socket);
+    log_assert(packet->id == PACKET_HOST_TO_CLIENT_CLIENT_UID, "");
+    this_client->uid = atoi(packet->buffer);
+    packet_destroy(packet);
+
+    packet = packet_create(PACKET_CLIENT_TO_HOST_USERNAME, strlen(this_client->username)+1, this_client->username);
     socket_send(server_socket, packet);
     packet_destroy(packet);
-
-    packet = socket_recv(server_socket);
-    log_write(DEBUG, packet->buffer);
-    packet_destroy(packet);
 }
+
+void game_net_start_hosting(char* ip, char* port)
+{
+    if (game_context.net != NULL) {
+        log_write(WARNING, "game is already hosting, ignoring");
+        return;
+    }
+
+    game_context.net = networking_init();
+    game_context.ip = ip;
+    game_context.port = port;
+    kill_net_host_thread = false;
+    pthread_create(&game_context.net_thread_id, NULL, net_host_listener, NULL);
+
+    log_write(DEBUG, "hosting");
+}
+
+void game_net_stop_hosting(void)
+{
+    if (game_context.net == NULL) {
+        log_write(WARNING, "game is not hosting");
+        return;
+    }
+
+    kill_net_host_thread = true;
+    networking_shutdown_sockets(game_context.net);
+    pthread_join(game_context.net_thread_id, NULL);
+    networking_cleanup(game_context.net);
+}
+

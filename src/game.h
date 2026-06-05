@@ -13,6 +13,10 @@
 
 typedef enum PacketEnum {
     PACKET_TEST,
+    PACKET_HOST_TO_CLIENT_USERNAME,
+    PACKET_HOST_TO_CLIENT_HOST_UID,
+    PACKET_HOST_TO_CLIENT_CLIENT_UID,
+    PACKET_CLIENT_TO_HOST_USERNAME,
     NUM_PACKET_TYPES
 } PacketEnum;
 
@@ -935,11 +939,15 @@ typedef struct Client {
     Camera camera;
     Player player;
     Connection conn;
+    char* username;
     u32 uid;
 } Client;
 
-void client_create(void);
+Client* client_create(void);
 void client_destroy(Client* client);
+
+// client owns username
+void client_set_username(Client* client, char* username);
 
 //**************************************************************************
 // Game Context
@@ -951,6 +959,8 @@ typedef struct {
     char* ip;
     char* port;
     List* clients;
+    Client* this_client;
+    Client* host_client;
     Connection host;
 
     pthread_t net_thread_id;
