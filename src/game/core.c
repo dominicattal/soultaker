@@ -10,12 +10,18 @@ GameContext game_context;
 
 void* game_loop(void* vargp)
 {
+    Client* client;
     f64 start, end;
     pthread_mutex_t* init_mutex = vargp;
     thread_link("Game");
     end = start = get_time();
     game_context.dt = 0;
     game_context.time = 0;
+    game_context.clients = list_create();
+    client = client_create();
+    client_set_username(client, string_copy("fancy"));
+    game_context.this_client = client;
+    list_append(game_context.clients, client);
     gui_comp_init();
     pthread_mutex_unlock(init_mutex);
     gui_preset_load(GUI_PRESET_MP);
@@ -40,6 +46,12 @@ void* game_loop(void* vargp)
         }
     }
     gui_comp_cleanup();
+    for (i32 i = 0; i < game_context.clients->length; i++) {
+        client = list_get(game_context.clients, i);
+        client_destroy(client);
+    }
+    list_destroy(game_context.clients);
+    game_context.this_client = NULL;
     return NULL;
 }
 

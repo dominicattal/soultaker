@@ -34,6 +34,7 @@ typedef enum {
     GUI_PRESET_RUNS,
     GUI_PRESET_TEST,
     GUI_PRESET_MP,
+    GUI_PRESET_LOBBY,
     NUM_GUI_PRESETS
 } GUIPreset;
 
@@ -160,8 +161,6 @@ void gui_control_callback(ControlEnum ctrl, i32 action);
 
 void gui_preset_load(GUIPreset preset);
 
-void gui_set_typing_comp(GUIComp* comp);
-
 void gui_render_init(void);
 void gui_render_cleanup(void);
 
@@ -238,6 +237,9 @@ void gui_comp_point_to_text(GUIComp* comp, char* text);
 
 // removes the comp's current text, freeing it and setting it to NULL
 void gui_comp_remove_text(GUIComp* comp);
+
+// removes the comp's current text and sets it to NULL, dpes not free it
+void gui_comp_reset_text(GUIComp* comp);
 
 void gui_comp_insert_char(GUIComp* comp, const char character, i32 idx);
 void gui_comp_delete_char(GUIComp* comp, i32 idx);

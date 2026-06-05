@@ -353,6 +353,12 @@ void gui_comp_remove_text(GUIComp* comp)
     comp->text = NULL;
 }
 
+void gui_comp_reset_text(GUIComp* comp)
+{
+    comp->text = NULL;
+    comp->text_length = 0;
+}
+
 void gui_comp_insert_char(GUIComp* comp, const char c, i32 idx)
 {
     log_assert(idx >= -1, "Invalid index for string insertion %d", idx);
