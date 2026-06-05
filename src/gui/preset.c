@@ -1213,6 +1213,10 @@ static void load_preset_lobby(GUIComp* root)
         gui_comp_point_to_text(player_card, "Waiting for player to join...");
         gui_comp_attach(root, player_card);
     }
+
+    GUIComp* start_button = gui_comp_create(500, 400, 200, 50);
+    gui_comp_point_to_text(start_button, "Start Game");
+    gui_comp_attach(root, start_button);
 }
 
 // **************************************************

@@ -249,6 +249,10 @@ void socket_send_all(NetContext* ctx, Packet* packet)
     pthread_mutex_unlock(&ctx->mutex);
 }
 
+void socket_sendto(Socket* src_socket, SockAddr* addr, Packet* packet)
+{
+}
+
 Packet* socket_recv(Socket* sock)
 {
     Packet* packet;
@@ -280,6 +284,11 @@ Packet* socket_recv(Socket* sock)
     }
     st_free(buffer);
     return packet;
+}
+
+Packet* socket_recvfrom(Socket* src_socket, SockAddr* addr)
+{
+    return NULL;
 }
 
 bool socket_connected(Socket* sock)

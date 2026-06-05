@@ -9,10 +9,15 @@
 #define BIT_TCP  0x1
 
 typedef struct {
-    u32 id;
-    char* buffer;
     size_t length;
+    char* buffer;
+    u32 id;
 } Packet;
+
+typedef struct {
+    char ip[64];
+    char port[16];
+} SockAddr;
 
 // OS dependent structs
 typedef struct Socket Socket;
@@ -63,8 +68,14 @@ bool    socket_send(Socket* socket, Packet* packet);
 // Send packet to all connected clients in context
 void    socket_send_all(NetContext* ctx, Packet* packet);
 
+// Send packet to explicit address. should be used for UDP socket
+void    socket_sendto(Socket* src_socket, SockAddr* addr, Packet* packet);
+
 // Receive a packet from a socket
 Packet* socket_recv(Socket* socket);
+
+// Receive a packet from a socket with specified addr. should be used for UDP socket
+Packet* socket_recvfrom(Socket* src_socket, SockAddr* addr);
 
 // Keep track of a socket's handler thread. 
 void    socket_set_thread_id(Socket* socket, pthread_t thread_id);

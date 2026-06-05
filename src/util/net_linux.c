@@ -223,6 +223,15 @@ void socket_send_all(NetContext* ctx, Packet* packet)
     pthread_mutex_unlock(&ctx->mutex);
 }
 
+void socket_sendto(Socket* src_socket, SockAddr* addr, Packet* packet)
+{
+    //struct sockaddr_in dst_addr = {0};
+    //dst_addr.sin_family = AF_INET;
+    //dst_addr.sin_port = addr->port;
+    //inet_pton(AF_INET, addr->ip, &dst_addr.sin_addr);
+    //return sendto(src_socket->fd, packet->buffer, packet->length, 0, (struct sockaddr*)&dst_addr, sizeof(dst_addr) != -1;
+}
+
 Packet* socket_recv(Socket* sock)
 {
     Packet* packet;
@@ -254,6 +263,12 @@ Packet* socket_recv(Socket* sock)
     }
     st_free(buffer);
     return packet;
+}
+
+Packet* socket_recvfrom(Socket* src_socket, SockAddr* addr)
+{
+    //size_t bytes = recvfrom(
+    return NULL;
 }
 
 void socket_set_thread_id(Socket* sock, pthread_t thread_id)

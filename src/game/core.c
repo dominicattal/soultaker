@@ -57,7 +57,6 @@ void* game_loop(void* vargp)
 
 void game_change_map(i32 id)
 {
-    log_assert(game_context.current_map != NULL, "should not have happened");
     gui_preset_load(GUI_PRESET_GAME);
     map_create(id);
 }
