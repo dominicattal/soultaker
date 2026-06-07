@@ -1,7 +1,7 @@
 #include "../game.h"
 #include "../renderer.h"
 #include "../event.h"
-#include "../gui/../game.h"
+#include <string.h>
 
 GameContext game_context;
 
@@ -81,6 +81,12 @@ void game_change_map(i32 id)
 {
     gui_preset_load(GUI_PRESET_GAME);
     map_create(id);
+    if (game_context.hosting) {
+        char* msg = "starting game";
+        Packet* packet = packet_create(69, strlen(msg)+1, msg);
+        socket_send_all(game_context.net, packet);
+        packet_destroy(packet);
+    }
 }
 
 void game_halt_input(void)

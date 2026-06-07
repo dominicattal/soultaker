@@ -4,6 +4,7 @@
 extern GameContext game_context;
 
 static bool kill_net_host_thread;
+static bool kill_net_handler_threads;
 
 void game_net_set_host_ip(const char* ip)
 {
@@ -123,6 +124,20 @@ fail:
     return NULL;
 }
 
+static void* client_tcp_handler(void* vargp)
+{
+    Socket* server_socket = vargp;
+    Packet* packet;
+    while (!kill_net_handler_threads) {
+        packet = socket_recv(server_socket);
+        if (packet == NULL)
+            continue;
+        log_write(DEBUG, packet->buffer);
+        packet_destroy(packet);
+    }
+    return NULL;
+}
+
 void game_net_join(const char* ip, const char* port)
 {
     if (game_context.net != NULL) {
@@ -180,6 +195,10 @@ void game_net_join(const char* ip, const char* port)
     packet = packet_create(PACKET_CLIENT_TO_HOST_USERNAME, strlen(this_client->username)+1, this_client->username);
     socket_send(server_socket, packet);
     packet_destroy(packet);
+
+    pthread_t thread_id;
+    pthread_create(&thread_id, NULL, client_tcp_handler, server_socket);
+    socket_set_thread_id(server_socket, thread_id);
 }
 
 void game_net_start_hosting(const char* ip, const char* port)
@@ -194,6 +213,7 @@ void game_net_start_hosting(const char* ip, const char* port)
     game_net_set_host_tcp_port(port);
     game_context.hosting = true;
     kill_net_host_thread = false;
+    kill_net_handler_threads = false;
 
     pthread_barrier_t net_listen_barrier;
     pthread_barrier_init(&net_listen_barrier, NULL, 3);
@@ -213,6 +233,7 @@ void game_net_stop_hosting(void)
     }
 
     kill_net_host_thread = true;
+    kill_net_handler_threads = true;
     game_context.hosting = false;
     networking_shutdown_sockets(game_context.net);
     pthread_join(game_context.net_tcp_listen_thread_id, NULL);
@@ -230,6 +251,7 @@ void game_net_cleanup(void)
     if (game_context.hosting)
         game_net_stop_hosting();
     else if (game_context.net != NULL) {
+        kill_net_handler_threads = true;
         networking_cleanup(game_context.net);
         game_context.hosting = false;
         game_context.net = NULL;
