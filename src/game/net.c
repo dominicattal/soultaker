@@ -137,6 +137,7 @@ void game_net_start_hosting(char* ip, char* port)
     game_context.net = networking_init();
     game_context.ip = ip;
     game_context.port = port;
+    game_context.hosting = true;
     kill_net_host_thread = false;
     pthread_create(&game_context.net_tcp_listen_thread_id, NULL, net_host_tcp_listener, NULL);
     pthread_create(&game_context.net_udp_listen_thread_id, NULL, net_host_udp_listener, NULL);
@@ -146,15 +147,28 @@ void game_net_start_hosting(char* ip, char* port)
 
 void game_net_stop_hosting(void)
 {
-    if (game_context.net == NULL) {
+    if (!game_context.hosting) {
         log_write(WARNING, "game is not hosting");
         return;
     }
 
     kill_net_host_thread = true;
+    game_context.hosting = false;
     networking_shutdown_sockets(game_context.net);
     pthread_join(game_context.net_tcp_listen_thread_id, NULL);
     pthread_join(game_context.net_udp_listen_thread_id, NULL);
     networking_cleanup(game_context.net);
+    game_context.net = NULL;
+}
+
+void game_net_cleanup(void)
+{
+    if (game_context.hosting)
+        game_net_stop_hosting();
+    if (game_context.net != NULL) {
+        networking_cleanup(game_context.net);
+        game_context.hosting = false;
+        game_context.net = NULL;
+    }
 }
 

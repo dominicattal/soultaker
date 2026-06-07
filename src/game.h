@@ -968,6 +968,7 @@ typedef struct {
     bool halt_input;
     bool halt_render;
     bool paused;
+    bool hosting;
 
 } GameContext;
 
@@ -979,6 +980,7 @@ extern GameContext game_context;
 void game_net_start_hosting(char* ip, char* port);
 void game_net_stop_hosting(void);
 void game_net_join(char* ip, char* port);
+void game_net_cleanup(void);
 
 // setup and cleanup opengl buffers. this is
 // done on the main thread on program creation
