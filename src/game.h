@@ -10,6 +10,7 @@
 
 #define GRAVITY                 -9.8
 #define PROJ_PIERCE_COOLDOWN    1
+#define MAX_UID 65535
 
 typedef enum PacketEnum {
     PACKET_TEST,
@@ -20,6 +21,13 @@ typedef enum PacketEnum {
     PACKET_CLIENT_TO_HOST_USERNAME,
     NUM_PACKET_TYPES
 } PacketEnum;
+
+typedef enum GameObj {
+    GAME_OBJ_LINE,
+    GAME_OBJ_TRIGGER,
+    NUM_GAME_OBJS,
+    GAME_OBJ_NONE
+} GameObj;
 
 //**************************************************************************
 // Forward Declarations
@@ -222,20 +230,6 @@ typedef struct {
     Bucket* buckets;
 } SpatialHashData;
 
-typedef struct QtNode QtNode;
-typedef struct QtNode {
-    Bucket* bucket;
-    QtNode* top_left;
-    QtNode* top_right;
-    QtNode* bottom_left;
-    QtNode* bottom_right;
-} QtNode;
-
-typedef struct {
-    i32 split_threshold;
-    QtNode* root;
-} QuadtreeData;
-
 typedef struct Map {
     i32 width, length;
     vec2 spawn_point;
@@ -416,6 +410,7 @@ typedef struct Line {
     vec3 color2;
     f32 width;
     f32 lifetime;
+    i32 uid;
     bool use_lifetime;
     bool is_spatial_hash_line;
 } Line;
@@ -440,6 +435,7 @@ typedef struct Trigger {
     vec2 position;
     f32 radius;
     u32 flags;
+    i32 uid;
 } Trigger;
 
 typedef enum {
@@ -934,7 +930,7 @@ typedef struct Client {
     Player player;
     Socket* tcp_socket;
     char* username;
-    u32 uid;
+    i32 uid;
 } Client;
 
 Client* client_create(void);
@@ -948,6 +944,10 @@ void client_set_username(Client* client, char* username);
 //**************************************************************************
 
 typedef struct {
+
+    void* uid_map[MAX_UID]; 
+    GameObj uid_map_type[MAX_UID];
+    i32 uid_cursor;
 
     NetContext* net;
     char* host_ip;
@@ -977,6 +977,12 @@ typedef struct {
 // global game_context that everything on the game
 // thread can access
 extern GameContext game_context;
+
+// map an object to a uid and return assigned uid. 
+// returns assigned uid and puts obj in game_context.uid_map
+// returns -1 and doesnt do anything if each uid is in use
+i32  game_map_uid(void* obj, GameObj type);
+void game_free_uid(i32 uid);
 
 // manage networking
 void game_net_start_hosting(const char* ip, const char* port);

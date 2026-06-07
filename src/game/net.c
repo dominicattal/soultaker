@@ -160,7 +160,6 @@ void game_net_join(const char* ip, const char* port)
     socket_destroy(udp_socket);
     packet_destroy(packet);
 
-
     game_context.host_client = client_create();
     list_append(game_context.clients, game_context.host_client);
     packet = socket_recv(server_socket);

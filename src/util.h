@@ -21,5 +21,6 @@
 #include <sndfile.h>
 #include <assert.h>
 #include <math.h>
+#include <stdatomic.h>
 
 #endif
