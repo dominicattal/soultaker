@@ -10,6 +10,12 @@
 
 // compatible on linux and windows
 
+/*
+   4 bytes -> length of packet
+   2 bytes -> id of packet
+   length bytes -> buffer
+*/
+
 Packet* packet_create(u32 id, int length, const char* buffer)
 {
     Packet* packet;

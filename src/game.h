@@ -13,6 +13,7 @@
 
 typedef enum PacketEnum {
     PACKET_TEST,
+    PACKET_HOST_UDP_PORT,
     PACKET_HOST_TO_CLIENT_USERNAME,
     PACKET_HOST_TO_CLIENT_HOST_UID,
     PACKET_HOST_TO_CLIENT_CLIENT_UID,
@@ -949,8 +950,9 @@ void client_set_username(Client* client, char* username);
 typedef struct {
 
     NetContext* net;
-    char* ip;
-    char* port;
+    char* host_ip;
+    char* host_tcp_port;
+    char* host_udp_port;
     List* clients;
     Client* this_client;
     Client* host_client;
@@ -977,10 +979,13 @@ typedef struct {
 extern GameContext game_context;
 
 // manage networking
-void game_net_start_hosting(char* ip, char* port);
+void game_net_start_hosting(const char* ip, const char* port);
 void game_net_stop_hosting(void);
-void game_net_join(char* ip, char* port);
+void game_net_join(const char* ip, const char* port);
 void game_net_cleanup(void);
+void game_net_set_host_ip(const char* ip);
+void game_net_set_host_tcp_port(const char* port);
+void game_net_set_host_udp_port(const char* port);
 
 // setup and cleanup opengl buffers. this is
 // done on the main thread on program creation
