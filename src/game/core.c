@@ -112,9 +112,7 @@ void game_init(void)
 
 void game_cleanup(void)
 {
-    if (game_context.net != NULL)
-        game_net_stop_hosting();
-
+    game_net_cleanup();
     game_context.kill_thread = true;
     game_context.halt_input = false;
     pthread_join(game_context.thread_id, NULL);
