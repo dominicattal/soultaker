@@ -2,6 +2,7 @@
 
 #include "net.h"
 #include "malloc.h"
+#include "extra.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -26,6 +27,8 @@ typedef struct Socket {
     struct Socket* next;
     struct sockaddr_in addr;
     pthread_t thread_id;
+    char* ip;
+    char* port;
     int fd;
     bool has_thread;
     bool connected;
@@ -101,6 +104,8 @@ static Socket* get_st_free_socket(NetContext* ctx)
     sock->next = NULL;
     sock->prev = ctx->tail;
     sock->has_thread = false;
+    sock->ip = NULL;
+    sock->port = NULL;
     if (ctx->head == NULL) {
         ctx->head = sock;
     } else {
@@ -116,8 +121,13 @@ Socket* socket_create(NetContext* ctx, const char* ip, const char* port_str, int
 {
     Socket* sock;
     int port;
-    port = atoi(port_str);
 
+    if (ip == NULL)
+        return NULL;
+    if (port_str == NULL)
+        return NULL;
+
+    port = atoi(port_str);
     sock = get_st_free_socket(ctx);
     if (sock == NULL)
         goto fail;
@@ -130,8 +140,8 @@ Socket* socket_create(NetContext* ctx, const char* ip, const char* port_str, int
         sock->tcp = false;
     }
     sock->addr.sin_family = AF_INET;
-    if (ip == NULL)
-        ip = "0.0.0.0";
+    sock->ip = string_copy(ip);
+    sock->port = string_copy(port_str);
     inet_pton(AF_INET, ip, &sock->addr.sin_addr);
     sock->addr.sin_port = htons(port);
     setsockopt(sock->fd, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int));
@@ -170,6 +180,9 @@ Socket* socket_accept(Socket* sock)
     }
     new_sock->fd = fd;
     new_sock->connected = true;
+    new_sock->ip = string_create("%s", inet_ntoa(sock->addr.sin_addr));
+    new_sock->port = string_create("%d", ntohs(sock->addr.sin_port));
+
     return new_sock;
 }
 
@@ -201,6 +214,10 @@ void socket_destroy(Socket* sock)
         ctx->tail = sock->prev;
     else
         sock->next->prev = sock->prev;
+    if (sock->ip != NULL)
+        string_free(sock->ip);
+    if (sock->port != NULL)
+        string_free(sock->port);
     st_free(sock);
     pthread_mutex_unlock(&ctx->mutex);
 }
@@ -279,20 +296,12 @@ void socket_set_thread_id(Socket* sock, pthread_t thread_id)
 
 const char* socket_ip(Socket* socket)
 {
-    // https://stackoverflow.com/questions/3060950/how-to-get-ip-address-from-sock-structure-in-c
-    char str[INET_ADDRSTRLEN+1];
-    str[INET_ADDRSTRLEN] = '\0';
-    struct sockaddr_in* pv4addr = (struct sockaddr_in*)&socket->addr;
-    struct in_addr ipaddr = pv4addr->sin_addr;
-    inet_ntop(AF_INET, &ipaddr, str, INET_ADDRSTRLEN);
-    puts(str);
-    printf("IP address is: %s\n", inet_ntoa(socket->addr.sin_addr));
-    return "";
+    return socket->ip;
 }
 
 const char* socket_port(Socket* socket)
 {
-    return "";
+    return socket->port;
 }
 
 #endif
