@@ -39,9 +39,9 @@ void* game_loop(void* vargp)
         gui_update_comps(game_context.dt);
         event_queue_flush();
         if (game_context.current_map != NULL) {
-            camera_update();
             if (!game_context.paused)
                 map_update(game_context.current_map);
+            camera_update();
             game_update_vertex_data();
         }
     }
