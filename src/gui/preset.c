@@ -1200,6 +1200,13 @@ static void player_card_update(GUIComp* card, f32 dt)
     }
 }
 
+static void start_button_onclick(GUIComp* comp, i32 button, i32 action, i32 mods)
+{
+    if (game_context.hosting) {
+        event_create_game_change_map(map_get_id("outpost1"));
+    }
+}
+
 static void load_preset_lobby(GUIComp* root)
 {
     GUIComp* player_card;
@@ -1215,6 +1222,8 @@ static void load_preset_lobby(GUIComp* root)
     }
 
     GUIComp* start_button = gui_comp_create(500, 400, 200, 50);
+    gui_comp_set_flag(start_button, GUI_COMP_FLAG_CLICKABLE, true);
+    start_button->click = start_button_onclick;
     gui_comp_point_to_text(start_button, "Start Game");
     gui_comp_attach(root, start_button);
 }

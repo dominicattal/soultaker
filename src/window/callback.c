@@ -123,7 +123,6 @@ void window_control_callback(i32 glfw_enum, i32 action, i32 mods)
 
 void window_mouse_button_callback(GLFWwindow* window, i32 button, i32 action, i32 mods)
 {
-    log_write(DEBUG, "%d %d %d", button, action, mods);
     event_create_gui_mouse_button_callback(button, action, mods);
     window_control_callback(button, action, mods);
 }

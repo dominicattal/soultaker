@@ -1,5 +1,6 @@
 #include "malloc.h"
 #include "log.h"
+#include <stdatomic.h>
 #include <pthread.h>
 #include <string.h>
 
@@ -124,7 +125,7 @@ void* _st_malloc(size_t size, const char* file, int line)
         return NULL;
     }
     log_write(MEMORY, "%s:%d\nmemory allocation\naddr: %p\nsize: %llx", file, line, sptr+1, size);
-    __atomic_fetch_add(&heap_size, size, __ATOMIC_SEQ_CST);
+    atomic_fetch_add(&heap_size, size);
     sptr[0] = size;
     add_pointer(file, line, size, (void*)(sptr+1));
     return (void*)(sptr+1);
@@ -142,7 +143,7 @@ void* _st_realloc(void* ptr, size_t size, const char* file, int line)
         return NULL;
     }
     log_write(MEMORY, "%s:%d\nmemory reallocation\nold_addr: %p\nnew_addr: %p\nsize: %llx", file, line, old_addr+sizeof(size_t), new_sptr+1, size);
-    __atomic_fetch_add(&heap_size, size - new_sptr[0], __ATOMIC_SEQ_CST);
+    atomic_fetch_add(&heap_size, size - new_sptr[0]);
     new_sptr[0] = size;
     remove_pointer(ptr);
     add_pointer(file, line, size, (void*)(new_sptr+1));
@@ -159,7 +160,7 @@ void* _st_calloc(int cnt, size_t size, const char* file, int line)
         return NULL;
     }
     log_write(MEMORY, "%s:%d\nmemory callocation\naddr: %p\nsize: %llx", file, line, sptr+1, size);
-    __atomic_fetch_add(&heap_size, size, __ATOMIC_SEQ_CST);
+    atomic_fetch_add(&heap_size, size);
     sptr[0] = size;
     add_pointer(file, line, size, (void*)(sptr+1));
     return (void*)(sptr+1);

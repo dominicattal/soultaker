@@ -55,6 +55,28 @@ void* game_loop(void* vargp)
     return NULL;
 }
 
+i32 game_map_uid(void* obj, GameObj type)
+{
+    i32 uid, cnt;
+    cnt = 0;
+    while (game_context.uid_map[game_context.uid_cursor] != NULL && cnt < MAX_UID) {
+        game_context.uid_cursor = (game_context.uid_cursor+1) % MAX_UID;
+        cnt++;
+    }
+    uid = game_context.uid_cursor;
+    if (cnt == MAX_UID) 
+        return -1;
+    game_context.uid_map[uid] = obj;
+    game_context.uid_map_type[uid] = type;
+    return uid;
+}
+
+void game_free_uid(i32 uid)
+{
+    game_context.uid_map[uid] = NULL;
+    game_context.uid_map_type[uid] = GAME_OBJ_NONE;
+}
+
 void game_change_map(i32 id)
 {
     gui_preset_load(GUI_PRESET_GAME);

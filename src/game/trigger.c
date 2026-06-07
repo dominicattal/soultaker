@@ -14,6 +14,7 @@ Trigger* trigger_create(vec2 position, f32 radius)
     trigger->destroy = NULL;
     trigger->data = NULL;
     trigger->flags = 0;
+    trigger->uid = game_map_uid(trigger, GAME_OBJ_TRIGGER);
     return trigger;
 }
 
@@ -53,5 +54,6 @@ void trigger_destroy(Trigger* trigger)
         trigger->destroy(trigger);
     bitset_destroy(trigger->bitset);
     list_destroy(trigger->entities);
+    game_free_uid(trigger->uid);
     st_free(trigger);
 }
