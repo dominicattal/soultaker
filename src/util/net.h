@@ -8,20 +8,16 @@
 #define BIT_UDP  0x0
 #define BIT_TCP  0x1
 
-typedef struct {
+typedef struct Packet {
     size_t length;
     char* buffer;
     u32 id;
 } Packet;
 
-typedef struct {
-    char ip[64];
-    char port[16];
-} SockAddr;
-
 // OS dependent structs
 typedef struct Socket Socket;
 typedef struct NetContext NetContext;
+typedef struct SocketAddr SocketAddr;
 
 // initialize a net context. each net context has their own singly-linked list of in use sockets
 NetContext* networking_init(void);
@@ -40,9 +36,16 @@ int         networking_get_last_error(void);
 
 // Create a new socket
 // ip   -> ip to create socket for. NULL to create on host
-// port -> number from 0-65535 in string format. Undefined if NULL.
+// port -> number from 0-65535 in string format. If port is NULL, OS chooses port
 // tcp  -> whether the socket support tcp or udp
 Socket* socket_create(NetContext* ctx, const char* ip, const char* port, int flags);
+
+// get the opaque address of a socket
+SocketAddr* socket_get_address(Socket* socket);
+
+// create standalone socket addresses
+SocketAddr* socket_address_create(const char* ip, const char* port);
+void    socket_address_destroy(SocketAddr* addr);
 
 // Bind a socket so clients can access. Returns true if successful
 bool    socket_bind(Socket* socket);
@@ -69,13 +72,14 @@ bool    socket_send(Socket* socket, Packet* packet);
 void    socket_send_all(NetContext* ctx, Packet* packet);
 
 // Send packet to explicit address. should be used for UDP socket
-void    socket_sendto(Socket* src_socket, SockAddr* addr, Packet* packet);
+bool    socket_sendto(Socket* src_socket, SocketAddr* dst_addr, Packet* packet);
 
 // Receive a packet from a socket
 Packet* socket_recv(Socket* socket);
 
 // Receive a packet from a socket with specified addr. should be used for UDP socket
-Packet* socket_recvfrom(Socket* src_socket, SockAddr* addr);
+// The memory for dst_addr must be freed with st_free
+Packet* socket_recvfrom(Socket* src_socket, SocketAddr** dst_addr);
 
 // Keep track of a socket's handler thread. 
 void    socket_set_thread_id(Socket* socket, pthread_t thread_id);
@@ -88,7 +92,7 @@ const char* socket_port(Socket* socket);
 // Returns NULL if buffer is NULL and length is not 0
 Packet* packet_create(u32 id, int length, const char* buffer);
 
-// Frees memory from packet
+// Frees memory from packet. Undefined if packet is NULL
 void    packet_destroy(Packet* packet);
 
 #endif

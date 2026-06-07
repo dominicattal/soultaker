@@ -21,6 +21,10 @@
 #include <pthread.h>
 #include <fcntl.h>
 
+typedef struct SocketAddr {
+    struct sockaddr_in addr;
+} SocketAddr;
+
 typedef struct Socket {
     NetContext* ctx;
     struct Socket* prev;
@@ -124,10 +128,8 @@ Socket* socket_create(NetContext* ctx, const char* ip, const char* port_str, int
 
     if (ip == NULL)
         return NULL;
-    if (port_str == NULL)
-        return NULL;
 
-    port = atoi(port_str);
+    port = (port_str == NULL) ? 0 : atoi(port_str);
     sock = get_st_free_socket(ctx);
     if (sock == NULL)
         goto fail;
@@ -140,10 +142,8 @@ Socket* socket_create(NetContext* ctx, const char* ip, const char* port_str, int
         sock->tcp = false;
     }
     sock->addr.sin_family = AF_INET;
-    sock->ip = string_copy(ip);
-    sock->port = string_copy(port_str);
-    inet_pton(AF_INET, ip, &sock->addr.sin_addr);
     sock->addr.sin_port = htons(port);
+    inet_pton(AF_INET, ip, &sock->addr.sin_addr);
     setsockopt(sock->fd, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int));
     setsockopt(sock->fd, SOL_SOCKET, SO_REUSEPORT, &(int){1}, sizeof(int));
 
@@ -154,9 +154,39 @@ fail:
     return NULL;
 }
 
+SocketAddr* socket_get_address(Socket* socket)
+{
+    return (SocketAddr*)&socket->addr;
+}
+
+SocketAddr* socket_address_create(const char* ip, const char* port)
+{
+    SocketAddr* sock_addr = st_malloc(sizeof(SocketAddr));
+    struct sockaddr_in addr = {0};
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(atoi(port));
+    inet_pton(AF_INET, ip, &addr.sin_addr);
+    sock_addr->addr = addr;
+    return sock_addr;
+}
+
+void socket_address_destroy(SocketAddr* addr)
+{
+    st_free(addr);
+}
+
 bool socket_bind(Socket* sock)
 {
-    return bind(sock->fd, (struct sockaddr*)&sock->addr, sizeof(sock->addr)) == 0;
+    bool result = bind(sock->fd, (struct sockaddr*)&sock->addr, sizeof(sock->addr)) != -1;
+    socklen_t len = sizeof(struct sockaddr);
+    getsockname(sock->fd, (struct sockaddr*)&sock->addr, &len);
+    if (sock->ip != NULL)
+        string_free(sock->ip);
+    sock->ip = string_create("%s", inet_ntoa(sock->addr.sin_addr));
+    if (sock->port != NULL)
+        string_free(sock->port);
+    sock->port = string_create("%d", ntohs(sock->addr.sin_port));
+    return result;
 }
 
 bool socket_listen(Socket* sock)
@@ -240,13 +270,9 @@ void socket_send_all(NetContext* ctx, Packet* packet)
     pthread_mutex_unlock(&ctx->mutex);
 }
 
-void socket_sendto(Socket* src_socket, SockAddr* addr, Packet* packet)
+bool socket_sendto(Socket* src_socket, SocketAddr* dst_addr, Packet* packet)
 {
-    //struct sockaddr_in dst_addr = {0};
-    //dst_addr.sin_family = AF_INET;
-    //dst_addr.sin_port = addr->port;
-    //inet_pton(AF_INET, addr->ip, &dst_addr.sin_addr);
-    //return sendto(src_socket->fd, packet->buffer, packet->length, 0, (struct sockaddr*)&dst_addr, sizeof(dst_addr) != -1;
+    return sendto(src_socket->fd, packet->buffer, packet->length, 0, (struct sockaddr*)&dst_addr->addr, sizeof(dst_addr->addr)) != -1;
 }
 
 Packet* socket_recv(Socket* sock)
@@ -282,10 +308,29 @@ Packet* socket_recv(Socket* sock)
     return packet;
 }
 
-Packet* socket_recvfrom(Socket* src_socket, SockAddr* addr)
+Packet* socket_recvfrom(Socket* src_socket, SocketAddr** dst_addr)
 {
-    //size_t bytes = recvfrom(
-    return NULL;
+    Packet* packet;
+    socklen_t sender_len = sizeof(struct sockaddr_in);
+    ssize_t len = recvfrom(src_socket->fd, NULL, 0, MSG_PEEK | MSG_TRUNC, NULL, NULL);
+    *dst_addr = NULL;
+    if (len < 6)
+        return NULL;
+    char* buffer = st_malloc(len);
+    *dst_addr = st_malloc(sizeof(SocketAddr));
+    recvfrom(src_socket->fd, buffer, len, 0, (struct sockaddr*)&((*dst_addr)->addr), &sender_len);
+    packet = st_malloc(sizeof(Packet));
+    packet->id = (buffer[4]<<8) + buffer[5];
+    packet->length = (buffer[0]<<24)+(buffer[1]<<16)+(buffer[2]<<8)+buffer[3];
+    if (packet->length == 0) {
+        packet->buffer = NULL;
+        st_free(buffer);
+        return packet;
+    }
+    packet->buffer = st_malloc(packet->length * sizeof(char));
+    memcpy(packet->buffer, buffer+6, packet->length);
+    st_free(buffer);
+    return packet;
 }
 
 void socket_set_thread_id(Socket* sock, pthread_t thread_id)
@@ -296,11 +341,15 @@ void socket_set_thread_id(Socket* sock, pthread_t thread_id)
 
 const char* socket_ip(Socket* socket)
 {
+    if (socket->ip == NULL)
+        return "not_bounded";
     return socket->ip;
 }
 
 const char* socket_port(Socket* socket)
 {
+    if (socket->ip == NULL)
+        return "not_bounded";
     return socket->port;
 }
 

@@ -5,27 +5,62 @@ extern GameContext game_context;
 
 static bool kill_net_host_thread;
 
+void game_net_set_host_ip(const char* ip)
+{
+    if (game_context.host_ip != NULL)
+        string_free(game_context.host_ip);
+    game_context.host_ip = string_copy(ip);
+}
+
+void game_net_set_host_tcp_port(const char* port)
+{
+    if (game_context.host_tcp_port != NULL)
+        string_free(game_context.host_tcp_port);
+    game_context.host_tcp_port = string_copy(port);
+}
+
+void game_net_set_host_udp_port(const char* port)
+{
+    if (game_context.host_udp_port != NULL)
+        string_free(game_context.host_udp_port);
+    game_context.host_udp_port = string_copy(port);
+}
+
 static void* net_host_udp_listener(void* vargp)
 {
+    pthread_barrier_t* net_listen_barrier = vargp;
     NetContext* net_ctx = game_context.net;
-    char* ip = game_context.ip;
-    char* port = game_context.port;
-    Socket* listen_socket;
+    char* ip = game_context.host_ip;
+    Socket* listen_socket = socket_create(net_ctx, ip, NULL, BIT_UDP);
+    SocketAddr* addr = NULL;
+    Packet* packet;
+    socket_bind(listen_socket);
+    game_net_set_host_udp_port(socket_port(listen_socket));
+    log_write(DEBUG, "Listening over UDP on %s:%s", socket_ip(listen_socket), socket_port(listen_socket));
+    pthread_barrier_wait(net_listen_barrier);
     while (!kill_net_host_thread) {
+        packet = socket_recvfrom(listen_socket, &addr);
+        if (packet != NULL && packet->buffer != NULL)
+            log_write(DEBUG, packet->buffer);
+        st_free(addr);
+        if (packet != NULL)
+            packet_destroy(packet);
     }
     return NULL;
 }
 
 static void* net_host_tcp_listener(void* vargp)
 {
+    pthread_barrier_t* net_listen_barrier = vargp;
     NetContext* net_ctx = game_context.net;
     Client* this_client = game_context.this_client;
-    char* ip = game_context.ip;
-    char* port = game_context.port;
+    char* ip = game_context.host_ip;
+    char* port = game_context.host_tcp_port;
     Socket* listen_socket;
     Socket* client_socket;
     Packet* packet;
     char uint_buf[32];
+    pthread_barrier_wait(net_listen_barrier);
     while (!kill_net_host_thread) {
         listen_socket = socket_create(net_ctx, ip, port, BIT_TCP);
         if (listen_socket == NULL) {
@@ -58,6 +93,10 @@ static void* net_host_tcp_listener(void* vargp)
         list_append(game_context.clients, client);
         client->tcp_socket = client_socket;
 
+        packet = packet_create(PACKET_HOST_UDP_PORT, strlen(game_context.host_udp_port)+1, game_context.host_udp_port);
+        socket_send(client_socket, packet);
+        packet_destroy(packet);
+
         packet = packet_create(PACKET_HOST_TO_CLIENT_USERNAME, strlen(this_client->username)+1, this_client->username);
         socket_send(client_socket, packet);
         packet_destroy(packet);
@@ -84,7 +123,7 @@ fail:
     return NULL;
 }
 
-void game_net_join(char* ip, char* port)
+void game_net_join(const char* ip, const char* port)
 {
     if (game_context.net != NULL) {
         log_write(WARNING, "game already joined, ignoring");
@@ -93,6 +132,7 @@ void game_net_join(char* ip, char* port)
 
     game_context.net = networking_init();
 
+    Packet* packet;
     Socket* server_socket = socket_create(game_context.net, ip, port, BIT_TCP);
     if (!socket_connect(server_socket)) {
         log_write(WARNING, "could not connect to server");
@@ -101,11 +141,25 @@ void game_net_join(char* ip, char* port)
         return;
     }
 
-    game_context.ip = ip;
-    game_context.port = port;
+    game_net_set_host_ip(ip);
+    game_net_set_host_tcp_port(port);
 
-    Packet* packet;
     Client* this_client = game_context.this_client;
+
+    packet = socket_recv(server_socket);
+    log_assert(packet->id == PACKET_HOST_UDP_PORT, "");
+    game_net_set_host_udp_port(packet->buffer);
+    packet_destroy(packet);
+
+    char* buf = "Hello From UDP";
+    packet = packet_create(11, strlen(buf)+1, buf);
+    Socket* udp_socket = socket_create(game_context.net, "127.0.0.1", NULL, BIT_UDP);
+    SocketAddr* server_addr = socket_address_create(ip, game_context.host_udp_port);
+    socket_sendto(udp_socket, server_addr, packet);
+    socket_address_destroy(server_addr);
+    socket_destroy(udp_socket);
+    packet_destroy(packet);
+
 
     game_context.host_client = client_create();
     list_append(game_context.clients, game_context.host_client);
@@ -113,10 +167,12 @@ void game_net_join(char* ip, char* port)
     log_assert(packet->id == PACKET_HOST_TO_CLIENT_USERNAME, "");
     game_context.host_client->username = string_copy(packet->buffer);
     packet_destroy(packet);
+
     packet = socket_recv(server_socket);
     log_assert(packet->id == PACKET_HOST_TO_CLIENT_HOST_UID, "");
     game_context.host_client->uid = atoi(packet->buffer);
     packet_destroy(packet);
+
     packet = socket_recv(server_socket);
     log_assert(packet->id == PACKET_HOST_TO_CLIENT_CLIENT_UID, "");
     this_client->uid = atoi(packet->buffer);
@@ -127,7 +183,7 @@ void game_net_join(char* ip, char* port)
     packet_destroy(packet);
 }
 
-void game_net_start_hosting(char* ip, char* port)
+void game_net_start_hosting(const char* ip, const char* port)
 {
     if (game_context.net != NULL) {
         log_write(WARNING, "game is already hosting, ignoring");
@@ -135,12 +191,17 @@ void game_net_start_hosting(char* ip, char* port)
     }
 
     game_context.net = networking_init();
-    game_context.ip = ip;
-    game_context.port = port;
+    game_net_set_host_ip(ip);
+    game_net_set_host_tcp_port(port);
     game_context.hosting = true;
     kill_net_host_thread = false;
-    pthread_create(&game_context.net_tcp_listen_thread_id, NULL, net_host_tcp_listener, NULL);
-    pthread_create(&game_context.net_udp_listen_thread_id, NULL, net_host_udp_listener, NULL);
+
+    pthread_barrier_t net_listen_barrier;
+    pthread_barrier_init(&net_listen_barrier, NULL, 3);
+    pthread_create(&game_context.net_tcp_listen_thread_id, NULL, net_host_tcp_listener, &net_listen_barrier);
+    pthread_create(&game_context.net_udp_listen_thread_id, NULL, net_host_udp_listener, &net_listen_barrier);
+    pthread_barrier_wait(&net_listen_barrier);
+    pthread_barrier_destroy(&net_listen_barrier);
 
     log_write(DEBUG, "hosting");
 }
@@ -159,16 +220,23 @@ void game_net_stop_hosting(void)
     pthread_join(game_context.net_udp_listen_thread_id, NULL);
     networking_cleanup(game_context.net);
     game_context.net = NULL;
+
+    string_free(game_context.host_ip);
+    string_free(game_context.host_tcp_port);
+    string_free(game_context.host_udp_port);
 }
 
 void game_net_cleanup(void)
 {
     if (game_context.hosting)
         game_net_stop_hosting();
-    if (game_context.net != NULL) {
+    else if (game_context.net != NULL) {
         networking_cleanup(game_context.net);
         game_context.hosting = false;
         game_context.net = NULL;
+        string_free(game_context.host_ip);
+        string_free(game_context.host_tcp_port);
+        string_free(game_context.host_udp_port);
     }
 }
 
