@@ -3169,7 +3169,10 @@ found:
 Binary format:
     4 bytes - number of tiles
     foreach tile
-        x bytes - entity info
+        x bytes - tile info
+    4 bytes - number of walls
+    foreach tile
+        x bytes - wall info
 */
 Map* map_create_from_binary(i32 buffer_len, char* buffer)
 {
@@ -3205,8 +3208,16 @@ Map* map_create_from_binary(i32 buffer_len, char* buffer)
     buffer += sizeof(i32);
     for (i32 i = 0; i < num_tiles; i++) {
         Tile* tile = tile_read(&buffer);
-        log_write(DEBUG, "%p %f %f", buffer, tile->position.x, tile->position.z);
         list_append(map->tiles, tile);
+    }
+
+    i32 num_walls;
+    memcpy(&num_walls, buffer, sizeof(i32));
+    buffer += sizeof(i32);
+    for (i32 i = 0; i < num_walls; i++) {
+        Wall* wall = wall_read(&buffer);
+        log_write(DEBUG, "%f %f", wall->position.x, wall->position.z);
+        list_append(map->walls, wall);
     }
 
     return map;

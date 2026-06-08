@@ -763,6 +763,9 @@ typedef enum {
     WALL_FLAG_ACTIVE
 } WallFlagEnum;
 
+size_t  wall_sizeof(void);
+char*   wall_write(Wall* wall, char* buffer);
+Wall*   wall_read(char** buffer);
 Wall* wall_create(vec2 position, f32 height, u32 minimap_color);
 void wall_set_flag(Wall* wall, WallFlagEnum flag, bool val);
 bool wall_get_flag(Wall* wall, WallFlagEnum flag);

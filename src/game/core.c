@@ -85,13 +85,20 @@ static void write_map_data_and_send(Map* map)
     char* org_buffer;
     size_t buffer_len = 0;
     i32 tile_length = map->tiles->length;
+    i32 wall_length = map->walls->length;
     buffer_len += sizeof(i32);
     buffer_len += tile_length * tile_sizeof();
+    buffer_len += sizeof(i32);
+    buffer_len += wall_length * wall_sizeof();
     mut_buffer = org_buffer = st_malloc(buffer_len);
-    memcpy(mut_buffer, (char*)&tile_length, sizeof(i32));
+    memcpy(mut_buffer, &tile_length, sizeof(i32));
     mut_buffer += sizeof(i32);
     for (i32 i = 0; i < tile_length; i++)
         mut_buffer = tile_write(list_get(map->tiles, i), mut_buffer);
+    memcpy(mut_buffer, &wall_length, sizeof(i32));
+    mut_buffer += sizeof(i32);
+    for (i32 i = 0; i < wall_length; i++)
+        mut_buffer = wall_write(list_get(map->walls, i), mut_buffer);
     Packet* packet = packet_create(PACKET_LOAD_GAME, buffer_len, org_buffer);
     socket_send_all(game_context.net, packet);
     packet_destroy(packet);

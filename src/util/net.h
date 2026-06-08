@@ -8,6 +8,10 @@
 #define BIT_UDP  0x0
 #define BIT_TCP  0x1
 
+#define PACKET_HEADER_BYTES 6
+#define PACKET_MAX_SIZE (1024 * 1024)
+
+
 typedef struct Packet {
     size_t length;
     char* buffer;

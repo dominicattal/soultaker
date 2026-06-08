@@ -278,33 +278,42 @@ bool socket_sendto(Socket* src_socket, SocketAddr* dst_addr, Packet* packet)
 Packet* socket_recv(Socket* sock)
 {
     Packet* packet;
-    size_t length;
+    ssize_t length;
+    ssize_t received = 0;
     unsigned char* buffer;
-    buffer = st_malloc(6 * sizeof(char));
-    length = read(sock->fd, buffer, 6);
-    if (length <= 0) {
-        sock->connected = false;
-        st_free(buffer);
-        return NULL;
+    buffer = st_malloc(PACKET_HEADER_BYTES * sizeof(char));
+    while (received < PACKET_HEADER_BYTES) {
+        length = read(sock->fd, buffer + received, PACKET_HEADER_BYTES - received);
+        if (length <= 0) {
+            st_free(buffer);
+            return NULL;
+        }
+        received += length;
     }
+
     packet = st_malloc(sizeof(Packet));
     packet->id = (buffer[4]<<8) + buffer[5];
     packet->length = (buffer[0]<<24)+(buffer[1]<<16)+(buffer[2]<<8)+buffer[3];
-    if (packet->length == 0) {
-        packet->buffer = NULL;
-        st_free(buffer);
-        return packet;
-    }
-    packet->buffer = st_malloc(packet->length * sizeof(char));
-    length = read(sock->fd, packet->buffer, packet->length);
-    if (length != packet->length) {
-        printf("Unexpected packet length %lu vs %lu\n", length, packet->length);
-        st_free(packet->buffer);
-        st_free(packet);
-        st_free(buffer);
-        return NULL;
-    }
+    packet->buffer = NULL;
     st_free(buffer);
+
+    if (packet->length == 0)
+        return packet;
+
+    packet->buffer = st_malloc(packet->length * sizeof(char));
+
+    received = 0;
+    while (received < (ssize_t)packet->length) {
+        length = read(sock->fd, packet->buffer + received, packet->length - received);
+        if (length <= 0) {
+            st_free(packet->buffer);
+            st_free(packet);
+            return NULL;
+        }
+        received += length;
+        puts("A");
+    }
+    puts("B");
     return packet;
 }
 
@@ -314,7 +323,6 @@ Packet* socket_recvfrom(Socket* src_socket, SocketAddr** dst_addr)
     socklen_t sender_len = sizeof(struct sockaddr_in);
     ssize_t len = recvfrom(src_socket->fd, NULL, 0, MSG_PEEK | MSG_TRUNC, NULL, NULL);
     *dst_addr = NULL;
-    printf("AAAAAA: %ld\n", len);
     if (len == (ssize_t)-1)
         return NULL;
     if (len < 6)

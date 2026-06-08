@@ -1,6 +1,7 @@
 #include "../game.h"
 #include "../renderer.h"
 #include <math.h>
+#include <string.h>
 
 extern GameContext game_context;
 
@@ -42,3 +43,53 @@ void wall_cleanup(void)
 {
 }
 
+size_t wall_sizeof(void)
+{
+    Wall wall;
+    return sizeof(wall.position)
+        +  sizeof(wall.size)
+        +  sizeof(wall.height)
+        +  sizeof(wall.top_tex)
+        +  sizeof(wall.side_tex)
+        +  sizeof(wall.minimap_color)
+        +  sizeof(wall.flags);
+}
+
+char* wall_write(Wall* wall, char* buffer)
+{
+    memcpy(buffer, &wall->position, sizeof(wall->position));
+    buffer += sizeof(wall->position);
+    memcpy(buffer, &wall->size, sizeof(wall->size));
+    buffer += sizeof(wall->size);
+    memcpy(buffer, &wall->height, sizeof(wall->height));
+    buffer += sizeof(wall->height);
+    memcpy(buffer, &wall->top_tex, sizeof(wall->top_tex));
+    buffer += sizeof(wall->top_tex);
+    memcpy(buffer, &wall->side_tex, sizeof(wall->side_tex));
+    buffer += sizeof(wall->side_tex);
+    memcpy(buffer, &wall->minimap_color, sizeof(wall->minimap_color));
+    buffer += sizeof(wall->minimap_color);
+    memcpy(buffer, &wall->flags, sizeof(wall->flags));
+    buffer += sizeof(wall->flags);
+    return buffer;
+}
+
+Wall* wall_read(char** buffer)
+{
+    Wall* wall = st_calloc(1, sizeof(Wall));
+    memcpy(&wall->position, *buffer, sizeof(wall->position));
+    *buffer += sizeof(wall->position);
+    memcpy(&wall->size, *buffer, sizeof(wall->size));
+    *buffer += sizeof(wall->size);
+    memcpy(&wall->height, *buffer, sizeof(wall->height));
+    *buffer += sizeof(wall->height);
+    memcpy(&wall->top_tex, *buffer, sizeof(wall->top_tex));
+    *buffer += sizeof(wall->top_tex);
+    memcpy(&wall->side_tex, *buffer, sizeof(wall->side_tex));
+    *buffer += sizeof(wall->side_tex);
+    memcpy(&wall->minimap_color, *buffer, sizeof(wall->minimap_color));
+    *buffer += sizeof(wall->minimap_color);
+    memcpy(&wall->flags, *buffer, sizeof(wall->flags));
+    *buffer += sizeof(wall->flags);
+    return wall;
+}
