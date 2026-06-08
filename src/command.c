@@ -122,6 +122,7 @@ static char* parse_set(List* string_views, const char* command)
     char* response = NULL;
     char* var_name = NULL;
     StringView* string_view;
+    char* c_str;
     if (string_views->length < 2) {
         response = string_copy("Missing argument for set");
         goto fail;
@@ -135,13 +136,19 @@ static char* parse_set(List* string_views, const char* command)
             goto fail;
         }
         string_view = list_get(string_views, 2);
-        f32 x = atof(string_view_c_str(string_view, command));
+        c_str = string_view_c_str(string_view, command);
+        f32 x = atof(c_str);
+        st_free(c_str);
         string_view = list_get(string_views, 3);
-        f32 z = atof(string_view_c_str(string_view, command));
+        c_str = string_view_c_str(string_view, command);
+        f32 z = atof(c_str);
+        st_free(c_str);
         camera_set_target(vec2_create(x, z));
         response = string_create("set camera target to %.3f %.3f", x, z);
     }
 fail:
+    if (var_name != NULL)
+        st_free(var_name);
     if (response == NULL)
         response = string_copy("Invalid set argument");
     return response;

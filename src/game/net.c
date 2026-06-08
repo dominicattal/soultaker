@@ -124,6 +124,18 @@ fail:
     return NULL;
 }
 
+static void handle_packet(Packet* packet)
+{
+    switch (packet->id) {
+        case PACKET_LOAD_GAME:
+            log_write(DEBUG, "Loading game");
+            game_change_map_from_binary(packet->length, packet->buffer);
+            break;
+        default:
+            log_write(WARNING, "Received unknown packed: %d", packet->id);
+    }
+}
+
 static void* client_tcp_handler(void* vargp)
 {
     Socket* server_socket = vargp;
@@ -132,7 +144,9 @@ static void* client_tcp_handler(void* vargp)
         packet = socket_recv(server_socket);
         if (packet == NULL)
             continue;
-        log_write(DEBUG, packet->buffer);
+        pthread_mutex_lock(&game_context.handler_thread_mutex);
+        handle_packet(packet);
+        pthread_mutex_unlock(&game_context.handler_thread_mutex);
         packet_destroy(packet);
     }
     return NULL;
