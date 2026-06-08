@@ -409,10 +409,10 @@ static void update_wall_vertex_data(Map* map)
 
     for (i = j = 0; i < walls->length; i++) {
         wall = list_get(walls, i);
-        if (!wall_get_flag(wall, WALL_FLAG_ACTIVE))
-            continue;
-        if (map_fog_contains_wall(map, wall))
-            continue;
+        //if (!wall_get_flag(wall, WALL_FLAG_ACTIVE))
+        //    continue;
+        //if (map_fog_contains_wall(map, wall))
+        //    continue;
         texture_info(wall->side_tex, &location, &u, &v, &w, &h, &pivot, &stretch);
         for (i32 side = 0; side < 4; side++) {
             for (k = 0; k < 6; k++) {
@@ -445,10 +445,10 @@ static void update_wall_vertex_data(Map* map)
 
     for (i = j = 0; i < walls->length; i++) {
         wall = list_get(walls, i);
-        if (!wall_get_flag(wall, WALL_FLAG_ACTIVE))
-            continue;
-        if (map_fog_contains_wall(map, wall))
-            continue;
+        //if (!wall_get_flag(wall, WALL_FLAG_ACTIVE))
+        //    continue;
+        //if (map_fog_contains_wall(map, wall))
+        //    continue;
         map_vb->buffer[j++] = wall->position.x;
         map_vb->buffer[j++] = wall->position.z;
         map_vb->buffer[j++] = wall->size.x;

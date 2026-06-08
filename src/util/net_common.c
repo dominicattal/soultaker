@@ -6,8 +6,6 @@
 #include <assert.h>
 #include <pthread.h>
 
-#define PACKET_HEADER_BYTES 6
-
 // compatible on linux and windows
 
 /*

@@ -86,7 +86,9 @@ static void update_player_health(GUIComp* comp, f32 dt)
     current_health->w = width;
 
     GUIComp* hp_text = comp->children[1];
-    gui_comp_set_text(hp_text, string_create("%.0f/%.0f", health, max_health));
+    char* text = string_create("%.0f/%.0f", health, max_health);
+    //log_write(DEBUG, text);
+    gui_comp_set_text(hp_text, text);
 }
 
 static void update_player_mana(GUIComp* comp, f32 dt)
@@ -98,7 +100,9 @@ static void update_player_mana(GUIComp* comp, f32 dt)
     current_mana->w = width;
 
     GUIComp* mp_text = comp->children[1];
-    gui_comp_set_text(mp_text, string_create("%.0f/%.0f", mana, max_mana));
+    char* text = string_create("%.0f/%.0f", mana, max_mana);
+    //log_write(DEBUG, text);
+    gui_comp_set_text(mp_text, text);
 }
 
 static void update_player_souls(GUIComp* comp, f32 dt)

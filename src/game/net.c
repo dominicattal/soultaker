@@ -124,7 +124,7 @@ fail:
     return NULL;
 }
 
-static void handle_packet(Packet* packet)
+static void handle_tcp_packet(Packet* packet)
 {
     switch (packet->id) {
         case PACKET_LOAD_GAME:
@@ -145,7 +145,7 @@ static void* client_tcp_handler(void* vargp)
         if (packet == NULL)
             continue;
         pthread_mutex_lock(&game_context.handler_thread_mutex);
-        handle_packet(packet);
+        handle_tcp_packet(packet);
         pthread_mutex_unlock(&game_context.handler_thread_mutex);
         packet_destroy(packet);
     }
