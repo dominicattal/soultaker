@@ -26,6 +26,7 @@ typedef enum PacketEnum {
 typedef enum GameObj {
     GAME_OBJ_LINE,
     GAME_OBJ_TRIGGER,
+    GAME_OBJ_TILE,
     NUM_GAME_OBJS,
     GAME_OBJ_NONE
 } GameObj;
@@ -285,13 +286,20 @@ void map_boss_update(Entity* entity);
 void map_unmake_boss(Entity* entity);
 
 void map_init(void);
-i32 map_get_id(const char* name);
+i32  map_get_id(const char* name);
 Map* map_create(i32 id);
 void map_update(Map* map);
 void map_set_active(Map* map);
 void map_set_inactive(Map* map);
 void map_destroy(Map* map);
 void map_cleanup(void);
+
+// functions for sending map data over networking
+// clients only care about objs on screen, so things like nodes, palettes, etc
+// are not sent. collision is only done on the server, so they also do not need info
+// for that
+Map*  map_create_from_binary(i32 buffer_len, char* buffer);
+char* map_write_to_binary(Map* map, i32* buffer_len);
 
 // switch collision strategy for map
 void map_use_quadtree(Map* map, i32 split_threshold);
@@ -606,8 +614,8 @@ typedef struct Stats {
 
 typedef struct Entity {
     MapInfo map_info;
-    Player* player;
     void* data;
+    Player* player;
     vec2 position;
     vec2 prev_position;
     vec2 direction;
@@ -624,9 +632,11 @@ typedef struct Entity {
     f32 frame_timer;
     f32 frame_speed;
     u32 flags;
-    i32 id;
     i32 state;
     i32 frame;
+    // id = type, uid = unique identifier, should rename these at some point
+    i32 id;
+    i32 uid;
 } Entity;
 
 typedef struct Player {
@@ -708,6 +718,7 @@ typedef struct Tile {
     i32 tex;
     u32 minimap_color;
     u32 flags;
+    i32 uid;
 } Tile;
 
 typedef enum {
@@ -725,11 +736,14 @@ typedef enum {
     TILE_FLAG_ACTIVE
 } TileFlagEnum;
  
-void tile_set_flag(Tile* tile, TileFlagEnum flag, bool val);
-bool tile_get_flag(Tile* tile, TileFlagEnum flag);
-Tile* tile_create(vec2 position, u32 minimap_color);
-void tile_destroy(Tile* tile);
-void tile_lava_collision(Entity* entity);
+size_t  tile_sizeof(void);
+char*   tile_write(Tile* tile, char* buffer);
+Tile*   tile_read(char** buffer);
+void    tile_set_flag(Tile* tile, TileFlagEnum flag, bool val);
+bool    tile_get_flag(Tile* tile, TileFlagEnum flag);
+Tile*   tile_create(vec2 position, u32 minimap_color);
+void    tile_destroy(Tile* tile);
+void    tile_lava_collision(Entity* entity);
 
 //**************************************************************************
 // Wall definitions
@@ -964,6 +978,7 @@ typedef struct {
     Player player;
     Camera camera;
     pthread_t thread_id;
+    pthread_mutex_t handler_thread_mutex;
     pthread_mutex_t getter_mutex;
     f64 time;
     f32 dt;
@@ -1021,6 +1036,7 @@ void game_render_update_walls(void);
 void game_update_vertex_data(void);
 
 void game_change_map(i32 id);
+void game_change_map_from_binary(i32 buffer_len, char* buffer);
 
 //**************************************************************************
 // Collision functions

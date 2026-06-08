@@ -337,10 +337,10 @@ static void update_tile_vertex_data(Map* map)
 
     for (i = j = 0; i < tiles->length; i++) {
         tile = list_get(tiles, i);
-        if (!tile_get_flag(tile, TILE_FLAG_ACTIVE))
-            continue;
-        if (map_fog_contains_tile(map, tile))
-            continue;
+        //if (!tile_get_flag(tile, TILE_FLAG_ACTIVE))
+        //    continue;
+        //if (map_fog_contains_tile(map, tile))
+        //    continue;
         animate_horizontal_pos = tile_get_flag(tile, TILE_FLAG_ANIMATE_HORIZONTAL_POS);
         animate_vertical_pos = tile_get_flag(tile, TILE_FLAG_ANIMATE_VERTICAL_POS);
         animate_horizontal_neg = tile_get_flag(tile, TILE_FLAG_ANIMATE_HORIZONTAL_NEG);
@@ -360,10 +360,10 @@ static void update_tile_vertex_data(Map* map)
 
     for (i = j = 0; i < tiles->length; i++) {
         tile = list_get(tiles, i);
-        if (!tile_get_flag(tile, TILE_FLAG_ACTIVE))
-            continue;
-        if (map_fog_contains_tile(map, tile))
-            continue;
+        //if (!tile_get_flag(tile, TILE_FLAG_ACTIVE))
+        //    continue;
+        //if (map_fog_contains_tile(map, tile))
+        //    continue;
         map_vb->buffer[j++] = tile->position.x;
         map_vb->buffer[j++] = tile->position.z;
         map_vb->buffer[j++] = 1.0f; // tile width and height
@@ -1043,6 +1043,11 @@ static void copy_buffers(void)
 void game_render(void)
 {
     GLuint loc, unit;
+
+    game_render_update_obstacles();
+    game_render_update_parstacles();
+    game_render_update_tiles();
+    game_render_update_walls();
 
     if (game_context.halt_render)
         return;

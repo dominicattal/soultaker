@@ -2575,8 +2575,10 @@ void map_destroy(Map* map)
     st_free(map->map_nodes);
     quadmask_destroy(map->tile_mask);
     quadmask_destroy(map->fog_mask);
-    map_node_destroy(map->root);
-    roomset_destroy(map->roomset);
+    if (map->root != NULL)
+        map_node_destroy(map->root);
+    if (map->roomset != NULL)
+        roomset_destroy(map->roomset);
     st_free(map);
     map_context.current_map = NULL;
 }
@@ -3111,6 +3113,8 @@ void map_update(Map* map)
 {
     if (map == NULL)
         return;
+    if (!game_context.hosting)
+        return;
     map_update_objects(map);
     map_collide_tilemap(map);
     map_collide_objects(map);
@@ -3160,3 +3164,55 @@ found:
     pthread_mutex_unlock(&game_context.getter_mutex);
 }
 
+
+/*
+Binary format:
+    4 bytes - number of tiles
+    foreach tile
+        x bytes - entity info
+*/
+Map* map_create_from_binary(i32 buffer_len, char* buffer)
+{
+    game_render_update_obstacles();
+    game_render_update_parstacles();
+    game_render_update_tiles();
+    game_render_update_walls();
+
+    clear_map();
+    game_context.player.entity = NULL;
+
+    Map* map = st_calloc(1, sizeof(Map));
+    map->bosses = list_create();
+    map->entities = list_create();
+    map->tiles = list_create();
+    map->walls = list_create();
+    map->free_walls = list_create();
+    map->projectiles = list_create();
+    map->obstacles = list_create();
+    map->parstacles = list_create();
+    map->particles = list_create();
+    map->parjicles = list_create();
+    map->triggers = list_create();
+    map->aoes = list_create();
+    map->lines = list_create();
+    map->tile_mask = quadmask_create(1000, 1000);
+    map->fog_mask = quadmask_create(1000, 1000);
+
+    game_context.current_map = map;
+
+    i32 num_tiles;
+    memcpy(&num_tiles, buffer, sizeof(i32));
+    buffer += sizeof(i32);
+    for (i32 i = 0; i < num_tiles; i++) {
+        Tile* tile = tile_read(&buffer);
+        log_write(DEBUG, "%p %f %f", buffer, tile->position.x, tile->position.z);
+        list_append(map->tiles, tile);
+    }
+
+    return map;
+}
+
+char* map_write_to_binary(Map* map, i32* buffer_len)
+{
+    return NULL;
+}

@@ -36,14 +36,16 @@ void* game_loop(void* vargp)
             game_context.dt = 0.1;
         game_context.time += game_context.dt;
         start = end;
-        gui_update_comps(game_context.dt);
+        pthread_mutex_lock(&game_context.handler_thread_mutex);
         event_queue_flush();
+        gui_update_comps(game_context.dt);
         if (game_context.current_map != NULL) {
             if (!game_context.paused)
                 map_update(game_context.current_map);
             camera_update();
             game_update_vertex_data();
         }
+        pthread_mutex_unlock(&game_context.handler_thread_mutex);
     }
     gui_comp_cleanup();
     for (i32 i = 0; i < game_context.clients->length; i++) {
@@ -77,16 +79,37 @@ void game_free_uid(i32 uid)
     game_context.uid_map_type[uid] = GAME_OBJ_NONE;
 }
 
+static void write_map_data_and_send(Map* map)
+{
+    char* mut_buffer;
+    char* org_buffer;
+    size_t buffer_len = 0;
+    i32 tile_length = map->tiles->length;
+    buffer_len += sizeof(i32);
+    buffer_len += tile_length * tile_sizeof();
+    mut_buffer = org_buffer = st_malloc(buffer_len);
+    memcpy(mut_buffer, (char*)&tile_length, sizeof(i32));
+    mut_buffer += sizeof(i32);
+    for (i32 i = 0; i < tile_length; i++)
+        mut_buffer = tile_write(list_get(map->tiles, i), mut_buffer);
+    Packet* packet = packet_create(PACKET_LOAD_GAME, buffer_len, org_buffer);
+    socket_send_all(game_context.net, packet);
+    packet_destroy(packet);
+    st_free(org_buffer);
+}
+
 void game_change_map(i32 id)
 {
     gui_preset_load(GUI_PRESET_GAME);
-    map_create(id);
-    if (game_context.hosting) {
-        char* msg = "starting game";
-        Packet* packet = packet_create(69, strlen(msg)+1, msg);
-        socket_send_all(game_context.net, packet);
-        packet_destroy(packet);
-    }
+    Map* map = map_create(id);
+    if (game_context.hosting)
+        write_map_data_and_send(map);
+}
+
+void game_change_map_from_binary(i32 buffer_len, char* buffer)
+{
+    gui_preset_load(GUI_PRESET_GAME);
+    map_create_from_binary(buffer_len, buffer);
 }
 
 void game_halt_input(void)
