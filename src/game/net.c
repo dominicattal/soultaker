@@ -170,6 +170,8 @@ void game_net_join(const char* ip, const char* port)
         return;
     }
 
+    game_context.singleplayer = false;
+
     game_net_set_host_ip(ip);
     game_net_set_host_tcp_port(port);
 
@@ -226,6 +228,7 @@ void game_net_start_hosting(const char* ip, const char* port)
     game_net_set_host_ip(ip);
     game_net_set_host_tcp_port(port);
     game_context.hosting = true;
+    game_context.singleplayer = false;
     kill_net_host_thread = false;
     kill_net_handler_threads = false;
 
@@ -249,6 +252,7 @@ void game_net_stop_hosting(void)
     kill_net_host_thread = true;
     kill_net_handler_threads = true;
     game_context.hosting = false;
+    game_context.singleplayer = true;
     networking_shutdown_sockets(game_context.net);
     pthread_join(game_context.net_tcp_listen_thread_id, NULL);
     pthread_join(game_context.net_udp_listen_thread_id, NULL);
@@ -268,6 +272,7 @@ void game_net_cleanup(void)
         kill_net_handler_threads = true;
         networking_cleanup(game_context.net);
         game_context.hosting = false;
+        game_context.singleplayer = true;
         game_context.net = NULL;
         string_free(game_context.host_ip);
         string_free(game_context.host_tcp_port);

@@ -6,7 +6,6 @@
 GameContext game_context;
 
 #define MIN_DT  0.0001
-//#define MIN_DT  0.005
 
 void* game_loop(void* vargp)
 {
@@ -25,8 +24,10 @@ void* game_loop(void* vargp)
     gui_comp_init();
     pthread_mutex_unlock(init_mutex);
     gui_preset_load(GUI_PRESET_MP);
+    //gui_preset_load(GUI_PRESET_GAME);
     game_resume_render();
     //map_create(map_get_id("outpost1"));
+    game_context.singleplayer = true;
     while (!game_context.kill_thread)
     {
         while (end - start < MIN_DT)
@@ -73,6 +74,12 @@ i32 game_map_uid(void* obj, GameObj type)
     return uid;
 }
 
+void game_set_uid(void* obj, GameObj type, i32 uid)
+{
+    game_context.uid_map[uid] = obj;
+    game_context.uid_map_type[uid] = type;
+}
+
 void game_free_uid(i32 uid)
 {
     game_context.uid_map[uid] = NULL;
@@ -99,6 +106,8 @@ static void write_map_data_and_send(Map* map)
     mut_buffer += sizeof(i32);
     for (i32 i = 0; i < wall_length; i++)
         mut_buffer = wall_write(list_get(map->walls, i), mut_buffer);
+
+    log_write(DEBUG, "%p %p", mut_buffer, org_buffer + buffer_len);
     Packet* packet = packet_create(PACKET_LOAD_GAME, buffer_len, org_buffer);
     socket_send_all(game_context.net, packet);
     packet_destroy(packet);

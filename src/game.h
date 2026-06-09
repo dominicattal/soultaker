@@ -27,6 +27,7 @@ typedef enum GameObj {
     GAME_OBJ_LINE,
     GAME_OBJ_TRIGGER,
     GAME_OBJ_TILE,
+    GAME_OBJ_WALL,
     NUM_GAME_OBJS,
     GAME_OBJ_NONE
 } GameObj;
@@ -757,6 +758,7 @@ typedef struct Wall {
     i32 top_tex, side_tex;
     u32 minimap_color;
     u32 flags;
+    i32 uid;
 } Wall;
 
 typedef enum {
@@ -990,6 +992,7 @@ typedef struct {
     bool halt_render;
     bool paused;
     bool hosting;
+    bool singleplayer;
 
 } GameContext;
 
@@ -1001,6 +1004,7 @@ extern GameContext game_context;
 // returns assigned uid and puts obj in game_context.uid_map
 // returns -1 and doesnt do anything if each uid is in use
 i32  game_map_uid(void* obj, GameObj type);
+void game_set_uid(void* obj, GameObj type, i32 uid);
 void game_free_uid(i32 uid);
 
 // manage networking

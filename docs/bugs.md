@@ -67,3 +67,6 @@
 
 ### 2026-6-07
 - Unexpected packet length 18446744073709551615 vs 18446744073693233152
+
+### 2026-6-08
+- 'malloc invalid size` after sending packet with tile and wall data
