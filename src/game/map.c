@@ -3113,11 +3113,11 @@ void map_update(Map* map)
 {
     if (map == NULL)
         return;
-    if (!game_context.hosting)
-        return;
-    map_update_objects(map);
-    map_collide_tilemap(map);
-    map_collide_objects(map);
+    if (game_context.singleplayer || game_context.hosting) {
+        map_update_objects(map);
+        map_collide_tilemap(map);
+        map_collide_objects(map);
+    }
 }
 
 void map_set_active(Map* map)
@@ -3173,6 +3173,10 @@ Binary format:
     4 bytes - number of walls
     foreach tile
         x bytes - wall info
+    4 bytes - number of entities
+    foreach entitiy
+        x bytes - entity info
+    4 bytes - uid of entity for this client
 */
 Map* map_create_from_binary(i32 buffer_len, char* buffer)
 {
@@ -3208,6 +3212,7 @@ Map* map_create_from_binary(i32 buffer_len, char* buffer)
     buffer += sizeof(i32);
     for (i32 i = 0; i < num_tiles; i++) {
         Tile* tile = tile_read(&buffer);
+        game_set_uid(tile, GAME_OBJ_TILE, tile->uid);
         list_append(map->tiles, tile);
     }
 
@@ -3216,7 +3221,7 @@ Map* map_create_from_binary(i32 buffer_len, char* buffer)
     buffer += sizeof(i32);
     for (i32 i = 0; i < num_walls; i++) {
         Wall* wall = wall_read(&buffer);
-        log_write(DEBUG, "%f %f", wall->position.x, wall->position.z);
+        game_set_uid(wall, GAME_OBJ_WALL, wall->uid);
         list_append(map->walls, wall);
     }
 
