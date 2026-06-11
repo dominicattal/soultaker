@@ -24,6 +24,7 @@ typedef enum PacketEnum {
 } PacketEnum;
 
 typedef enum GameObj {
+    GAME_OBJ_CLIENT,
     GAME_OBJ_LINE,
     GAME_OBJ_TRIGGER,
     GAME_OBJ_TILE,
@@ -108,21 +109,19 @@ typedef struct Camera {
     bool follow;
 } Camera;
 
-void camera_init(void);
-void camera_update(void);
-void camera_cleanup(void);
+void camera_update(Camera* camera, f32 dt);
 
 // It is only necessary to change the projection matrix
 // when the framebuffer is changed
 void camera_framebuffer_size_callback(void);
-void camera_zoom(i32 mag);
-void camera_minimap_zoom(i32 mag);
+void camera_zoom(Camera* camera, i32 mag);
+void camera_minimap_zoom(Camera* camera, i32 mag);
 
-void camera_update_direction(vec2 mag);
-void camera_update_rotation(f32 mag);
-void camera_update_tilt(f32 mag);
-void camera_rotate(void);
-void camera_tilt(void);
+void camera_update_direction(i32 client_uid, vec2 mag);
+void camera_update_rotation(i32 client_uid, f32 mag);
+void camera_update_tilt(i32 client_uid, f32 mag);
+void camera_rotate(Camera* camera, f32 dt);
+void camera_tilt(Camera* camera, f32 dt);
 
 //**************************************************************************
 // Maps. See docs/maps.md for more information
@@ -300,7 +299,7 @@ void map_cleanup(void);
 // are not sent. collision is only done on the server, so they also do not need info
 // for that
 Map*  map_create_from_binary(i32 buffer_len, char* buffer);
-char* map_write_to_binary(Map* map, i32* buffer_len);
+void map_write_data_and_send(Map* map);
 
 // switch collision strategy for map
 void map_use_quadtree(Map* map, i32 split_threshold);
@@ -954,6 +953,7 @@ typedef struct Client {
 } Client;
 
 Client* client_create(void);
+void client_update(Client* client, f32 dt);
 void client_destroy(Client* client);
 
 // client owns username
@@ -980,8 +980,6 @@ typedef struct {
     pthread_t net_tcp_listen_thread_id;
     pthread_t net_udp_listen_thread_id;
     Map* current_map;
-    Player player;
-    Camera camera;
     pthread_t thread_id;
     pthread_mutex_t handler_thread_mutex;
     pthread_mutex_t getter_mutex;
@@ -1045,6 +1043,8 @@ void game_update_vertex_data(void);
 void game_change_map(i32 id);
 void game_change_map_from_binary(i32 buffer_len, char* buffer);
 
+// camera functions that pass through game to map the client's camera
+
 //**************************************************************************
 // Collision functions
 //**************************************************************************
@@ -1097,6 +1097,7 @@ void game_mouse_button_callback(i32 button, i32 action, i32 mods);
 void game_control_callback(ControlEnum ctrl, i32 action);
 void game_framebuffer_size_callback(void);
 
+void camera_set_defaults(Camera* camera);
 vec3 camera_get_position(void);
 vec2 camera_get_target_position(void);
 vec3 camera_get_facing(void);

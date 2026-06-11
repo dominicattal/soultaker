@@ -43,12 +43,13 @@ void* game_loop(void* vargp)
         if (game_context.current_map != NULL) {
             if (!game_context.paused)
                 map_update(game_context.current_map);
-            camera_update();
+            client_update(game_context.this_client, game_context.dt);
             game_update_vertex_data();
         }
         pthread_mutex_unlock(&game_context.handler_thread_mutex);
     }
     gui_comp_cleanup();
+    player_cleanup(&game_context.this_client->player);
     for (i32 i = 0; i < game_context.clients->length; i++) {
         client = list_get(game_context.clients, i);
         client_destroy(client);
@@ -86,40 +87,12 @@ void game_free_uid(i32 uid)
     game_context.uid_map_type[uid] = GAME_OBJ_NONE;
 }
 
-static void write_map_data_and_send(Map* map)
-{
-    char* mut_buffer;
-    char* org_buffer;
-    size_t buffer_len = 0;
-    i32 tile_length = map->tiles->length;
-    i32 wall_length = map->walls->length;
-    buffer_len += sizeof(i32);
-    buffer_len += tile_length * tile_sizeof();
-    buffer_len += sizeof(i32);
-    buffer_len += wall_length * wall_sizeof();
-    mut_buffer = org_buffer = st_malloc(buffer_len);
-    memcpy(mut_buffer, &tile_length, sizeof(i32));
-    mut_buffer += sizeof(i32);
-    for (i32 i = 0; i < tile_length; i++)
-        mut_buffer = tile_write(list_get(map->tiles, i), mut_buffer);
-    memcpy(mut_buffer, &wall_length, sizeof(i32));
-    mut_buffer += sizeof(i32);
-    for (i32 i = 0; i < wall_length; i++)
-        mut_buffer = wall_write(list_get(map->walls, i), mut_buffer);
-
-    log_write(DEBUG, "%p %p", mut_buffer, org_buffer + buffer_len);
-    Packet* packet = packet_create(PACKET_LOAD_GAME, buffer_len, org_buffer);
-    socket_send_all(game_context.net, packet);
-    packet_destroy(packet);
-    st_free(org_buffer);
-}
-
 void game_change_map(i32 id)
 {
     gui_preset_load(GUI_PRESET_GAME);
     Map* map = map_create(id);
     if (game_context.hosting)
-        write_map_data_and_send(map);
+        map_write_data_and_send(map);
 }
 
 void game_change_map_from_binary(i32 buffer_len, char* buffer)
@@ -167,7 +140,6 @@ void game_init(void)
     item_init();
     entity_init();
     synergy_init();
-    camera_init();
     game_halt_render();
     game_render_init();
     gui_render_init();
@@ -184,10 +156,8 @@ void game_cleanup(void)
     game_context.halt_input = false;
     pthread_join(game_context.thread_id, NULL);
     pthread_mutex_destroy(&game_context.getter_mutex);
-    player_cleanup(&game_context.player);
     game_render_cleanup();
     gui_render_cleanup();
-    camera_cleanup();
     map_cleanup();
     item_cleanup();
     synergy_cleanup();

@@ -287,7 +287,7 @@ i32 item_get_tex_id(i32 item_id)
 
 void inventory_refresh(void)
 {
-    Inventory* inventory = &game_context.player.inventory;
+    Inventory* inventory = &game_context.this_client->player.inventory;
 
     for (i32 i = 0; i < inventory->num_armor_slots; i++) {
         Item* item = *inventory->armor_slots[i];
@@ -389,7 +389,7 @@ next_synergy:
 
 void inventory_swap_items(Item** slot1, Item** slot2)
 {
-    Inventory* inventory = &game_context.player.inventory;
+    Inventory* inventory = &game_context.this_client->player.inventory;
     log_assert(inventory != NULL, "inventory is null for some reason");
 
     for (i32 i = 0; i < 2; i++) {
@@ -438,7 +438,7 @@ next:
 
 void inventory_move_item(Item** slot)
 {
-    Inventory* inventory = &game_context.player.inventory;
+    Inventory* inventory = &game_context.this_client->player.inventory;
     Item* item = *slot;
     i32 i;
     log_assert(inventory != NULL, "inventory is null for some reason");

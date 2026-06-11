@@ -106,13 +106,13 @@ static void execute_event(Event event)
 
         // Game events
         case GAME_EVENT_CAMERA_UPDATE_DIRECTION:
-            camera_update_direction(vec2_create(arg1._flt, arg2._flt));
+            camera_update_direction(arg1._int, vec2_create(arg2._flt, arg3._flt));
             break;
         case GAME_EVENT_CAMERA_UPDATE_ROTATE:
-            camera_update_rotation(arg1._flt);
+            camera_update_rotation(arg1._int, arg2._flt);
             break;
         case GAME_EVENT_CAMERA_UPDATE_TILT:
-            camera_update_tilt(arg1._flt);
+            camera_update_tilt(arg1._int, arg2._flt);
             break;
         case GAME_EVENT_SUMMON:
             //game_summon(arg1._int);
@@ -175,32 +175,35 @@ void event_queue_flush(void)
 // Game Events
 //**************************************************************************
 
-void event_create_game_camera_update_direction(vec2 mag)
+void event_create_game_camera_update_direction(i32 client_id, vec2 mag)
 {
     Event event = (Event) {
         .type = GAME_EVENT_CAMERA_UPDATE_DIRECTION,
-        .arg1._flt = mag.x,
-        .arg2._flt = mag.y
+        .arg1._int = client_id,
+        .arg2._flt = mag.x,
+        .arg3._flt = mag.y
     };
     EventList* list = get_event_list("Game");
     event_enqueue(list, event);
 }
 
-void event_create_game_camera_update_rotation(f32 mag)
+void event_create_game_camera_update_rotation(i32 client_id, f32 mag)
 {
     Event event = (Event) {
         .type = GAME_EVENT_CAMERA_UPDATE_ROTATE,
-        .arg1._flt = mag,
+        .arg1._int = client_id,
+        .arg2._flt = mag,
     };
     EventList* list = get_event_list("Game");
     event_enqueue(list, event);
 }
 
-void event_create_game_camera_update_tilt(f32 mag)
+void event_create_game_camera_update_tilt(i32 client_id, f32 mag)
 {
     Event event = (Event) {
         .type = GAME_EVENT_CAMERA_UPDATE_TILT,
-        .arg1._flt = mag,
+        .arg1._int = client_id,
+        .arg2._flt = mag,
     };
     EventList* list = get_event_list("Game");
     event_enqueue(list, event);

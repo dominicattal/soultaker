@@ -2421,7 +2421,7 @@ Map* map_create(i32 id)
     game_render_update_walls();
 
     clear_map();
-    game_context.player.entity = NULL;
+    game_context.this_client->player.entity = NULL;
 
     map = generate_map(id);
     entity = map_create_entity(map->spawn_point, 0);
@@ -2959,7 +2959,7 @@ static void map_update_objects(Map* map)
         else
             i++;
     }
-    player_update(&game_context.player, game_context.dt);
+    player_update(&game_context.this_client->player, game_context.dt);
 }
 
 static void map_collide_tilemap(Map* map)
@@ -3186,7 +3186,7 @@ Map* map_create_from_binary(i32 buffer_len, char* buffer)
     game_render_update_walls();
 
     clear_map();
-    game_context.player.entity = NULL;
+    game_context.this_client->player.entity = NULL;
 
     Map* map = st_calloc(1, sizeof(Map));
     map->bosses = list_create();
@@ -3228,7 +3228,30 @@ Map* map_create_from_binary(i32 buffer_len, char* buffer)
     return map;
 }
 
-char* map_write_to_binary(Map* map, i32* buffer_len)
+void map_write_data_and_send(Map* map)
 {
-    return NULL;
+    char* mut_buffer;
+    char* org_buffer;
+    size_t buffer_len = 0;
+    i32 tile_length = map->tiles->length;
+    i32 wall_length = map->walls->length;
+    buffer_len += sizeof(i32);
+    buffer_len += tile_length * tile_sizeof();
+    buffer_len += sizeof(i32);
+    buffer_len += wall_length * wall_sizeof();
+    mut_buffer = org_buffer = st_malloc(buffer_len);
+    memcpy(mut_buffer, &tile_length, sizeof(i32));
+    mut_buffer += sizeof(i32);
+    for (i32 i = 0; i < tile_length; i++)
+        mut_buffer = tile_write(list_get(map->tiles, i), mut_buffer);
+    memcpy(mut_buffer, &wall_length, sizeof(i32));
+    mut_buffer += sizeof(i32);
+    for (i32 i = 0; i < wall_length; i++)
+        mut_buffer = wall_write(list_get(map->walls, i), mut_buffer);
+
+    log_write(DEBUG, "%p %p", mut_buffer, org_buffer + buffer_len);
+    Packet* packet = packet_create(PACKET_LOAD_GAME, buffer_len, org_buffer);
+    socket_send_all(game_context.net, packet);
+    packet_destroy(packet);
+    st_free(org_buffer);
 }
