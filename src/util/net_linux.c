@@ -311,9 +311,7 @@ Packet* socket_recv(Socket* sock)
             return NULL;
         }
         received += length;
-        puts("A");
     }
-    puts("B");
     return packet;
 }
 

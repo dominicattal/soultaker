@@ -621,7 +621,7 @@ static GUIComp* create_inventory_slot(i32 x, i32 y, Item** item_slot, i32 defaul
 
 void gui_refresh_inventory(void)
 {
-    Inventory* inventory = &game_context.player.inventory;
+    Inventory* inventory = &game_context.this_client->player.inventory;
     GUIComp* inventory_comp = gui_comp_get_by_name("inventory");
     log_assert(inventory_comp != NULL, "inventory comp is null");
     log_assert(inventory->num_armor_slots == 3, "invalid number of armor slots");
@@ -673,7 +673,7 @@ static void inventory_key(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 
 
 static void inventory_update(GUIComp* comp, f32 dt)
 {
-    //Inventory* inventory = &game_context.player.inventory;
+    //Inventory* inventory = &game_context.this_client->player.inventory;
     vec2 cursor_position = window_cursor_position();
     InventoryData* data = comp->data;
     //Weapon* weapon;

@@ -149,7 +149,7 @@ static void update_proj_matrix(void)
 
 static void copy_camera(void)
 {
-    Camera* game_cam = &game_context.camera;
+    Camera* game_cam = &game_context.this_client->camera;
     RenderCamera* render_cam = &render_context.camera;
     render_cam->yaw          = game_cam->yaw;
     render_cam->pitch        = game_cam->pitch;

@@ -7,26 +7,26 @@ extern GameContext game_context;
 
 vec2 game_get_player_position(void)
 {
-    log_assert(game_context.player.entity != NULL, "");
-    return game_context.player.entity->position;
+    log_assert(game_context.this_client->player.entity != NULL, "");
+    return game_context.this_client->player.entity->position;
 }
 
 vec2 game_get_player_direction(void)
 {
-    log_assert(game_context.player.entity != NULL, "");
-    return game_context.player.entity->direction;
+    log_assert(game_context.this_client->player.entity != NULL, "");
+    return game_context.this_client->player.entity->direction;
 }
 
 vec2 game_get_player_facing(void)
 {
-    log_assert(game_context.player.entity != NULL, "");
-    return game_context.player.entity->facing;
+    log_assert(game_context.this_client->player.entity != NULL, "");
+    return game_context.this_client->player.entity->facing;
 }
 
 void game_set_player_position(vec2 position)
 {
-    log_assert(game_context.player.entity != NULL, "");
-    game_context.player.entity->position = position;
+    log_assert(game_context.this_client->player.entity != NULL, "");
+    game_context.this_client->player.entity->position = position;
 }
 
 void inventory_init(Inventory* inventory)
@@ -120,7 +120,7 @@ void player_cleanup(Player* player)
 
 void player_reset(Entity* entity)
 {
-    Player* player = &game_context.player;
+    Player* player = &game_context.this_client->player;
     inventory_destroy(&player->inventory);
     if (player->entity != NULL) {
         log_write(WARNING, "Did not destroy player entity before resetting");
@@ -150,9 +150,9 @@ void player_reset(Entity* entity)
 
 vec2 game_get_nearest_player_position(void)
 {
-    if (game_context.player.entity == NULL)
+    if (game_context.this_client->player.entity == NULL)
         return vec2_create(0, 0);
-    return game_context.player.entity->position;
+    return game_context.this_client->player.entity->position;
 }
 
 static void update_player_state(Player* player, f32 dt)
@@ -307,40 +307,40 @@ void player_cast(Player* player)
 
 bool player_is_shooting(void)
 {
-    return game_context.player.shooting_primary;
+    return game_context.this_client->player.shooting_primary;
 }
 
 vec2 player_position(void)
 {
-    return game_context.player.position;
+    return game_context.this_client->player.position;
 }
 
 f32 player_health(void)
 {
-    return game_context.player.stats[STAT_HP];
+    return game_context.this_client->player.stats[STAT_HP];
 }
 
 f32 player_mana(void)
 {
-    return game_context.player.stats[STAT_MP];
+    return game_context.this_client->player.stats[STAT_MP];
 }
 
 f32 player_souls(void)
 {
-    return game_context.player.stats[STAT_SP];
+    return game_context.this_client->player.stats[STAT_SP];
 }
 
 f32 player_max_health(void)
 {
-    return game_context.player.stats[STAT_MAX_HP];
+    return game_context.this_client->player.stats[STAT_MAX_HP];
 }
 
 f32 player_max_mana(void)
 {
-    return game_context.player.stats[STAT_MAX_MP];
+    return game_context.this_client->player.stats[STAT_MAX_MP];
 }
 
 f32 player_max_souls(void)
 {
-    return game_context.player.stats[STAT_MAX_SP];
+    return game_context.this_client->player.stats[STAT_MAX_SP];
 }

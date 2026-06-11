@@ -478,7 +478,7 @@ static i32 get_direction_2(f32 rad)
 i32 entity_get_direction(Entity* entity)
 {
     f32 entity_rad = vec2_radians(entity->facing);
-    f32 camera_rad = game_context.camera.yaw;
+    f32 camera_rad = game_context.this_client->camera.yaw;
     f32 rad = get_direction_4(entity_rad - camera_rad);
     if (entity_context.infos[entity->id].bidirectional)
         return get_direction_2(rad);

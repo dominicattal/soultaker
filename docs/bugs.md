@@ -70,3 +70,4 @@
 
 ### 2026-6-08
 - 'malloc invalid size` after sending packet with tile and wall data
+- wall_sizeof was returning less than total amount

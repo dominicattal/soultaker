@@ -16,14 +16,17 @@ void game_key_callback(i32 key, i32 scancode, i32 action, i32 mods)
     char* test2 = "This is a notification that wraps and requires more lines blah blah blah";
     if (game_context.halt_input)
         return;
+    if (game_context.this_client == NULL)
+        return;
+    Camera* camera = &game_context.this_client->camera;
     if (key == GLFW_KEY_O && action == GLFW_PRESS)
-        camera_zoom(1);
+        camera_zoom(camera, 1);
     if (key == GLFW_KEY_P && action == GLFW_PRESS)
-        camera_zoom(-1);
+        camera_zoom(camera, -1);
     if (key == GLFW_KEY_RIGHT_BRACKET && (action == GLFW_PRESS || action == GLFW_REPEAT))
-        camera_minimap_zoom(1);
+        camera_minimap_zoom(camera, 1);
     if (key == GLFW_KEY_LEFT_BRACKET && (action == GLFW_PRESS || action == GLFW_REPEAT))
-        camera_minimap_zoom(-1);
+        camera_minimap_zoom(camera, -1);
     if (key == GLFW_KEY_I && action == GLFW_PRESS)
         game_context.paused = 1-game_context.paused;
     if (key == GLFW_KEY_G && action == GLFW_PRESS)
@@ -31,7 +34,7 @@ void game_key_callback(i32 key, i32 scancode, i32 action, i32 mods)
     if (key == GLFW_KEY_H && action == GLFW_PRESS)
         gui_create_notification(test2);
     if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
-        player_cast(&game_context.player);
+        player_cast(&game_context.this_client->player);
 }
 
 void game_mouse_button_callback(i32 button, i32 action, i32 mods)
