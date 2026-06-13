@@ -484,7 +484,9 @@ void gui_update_comps_helper(GUIComp* comp, f32 dt)
 
 void gui_update_comps(f32 dt)
 {
+    pthread_mutex_lock(&gui_context.data_mutex);
     gui_update_comps_helper(gui_context.root, dt);
+    pthread_mutex_unlock(&gui_context.data_mutex);
 }
 
 void align_comp_position_x(i32* position_x, u8 halign, i32 size_x, i32 x, i32 w)

@@ -393,6 +393,7 @@ void inventory_swap_items(Item** slot1, Item** slot2)
     log_assert(inventory != NULL, "inventory is null for some reason");
 
     for (i32 i = 0; i < 2; i++) {
+        Item** tmp;
         Item* item1 = *slot1;
 
         if (item1 == NULL)
@@ -424,7 +425,7 @@ void inventory_swap_items(Item** slot1, Item** slot2)
         }
 
 next:
-        Item** tmp = slot1;
+        tmp = slot1;
         slot1 = slot2;
         slot2 = tmp;
     }

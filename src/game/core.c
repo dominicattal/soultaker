@@ -21,7 +21,13 @@ void* game_loop(void* vargp)
     client_set_username(client, string_copy("fancy"));
     game_context.this_client = client;
     list_append(game_context.clients, client);
+
+    map_init();
+    item_init();
+    entity_init();
+    synergy_init();
     gui_comp_init();
+
     pthread_mutex_unlock(init_mutex);
     gui_preset_load(GUI_PRESET_MP);
     //gui_preset_load(GUI_PRESET_GAME);
@@ -49,7 +55,11 @@ void* game_loop(void* vargp)
         pthread_mutex_unlock(&game_context.handler_thread_mutex);
     }
     gui_comp_cleanup();
-    player_cleanup(&game_context.this_client->player);
+    map_cleanup();
+    item_cleanup();
+    synergy_cleanup();
+    entity_cleanup();
+    game_net_cleanup();
     for (i32 i = 0; i < game_context.clients->length; i++) {
         client = list_get(game_context.clients, i);
         client_destroy(client);
@@ -136,10 +146,6 @@ void game_init(void)
     pthread_mutex_t init_mutex;
     pthread_mutex_init(&init_mutex, NULL);
 
-    map_init();
-    item_init();
-    entity_init();
-    synergy_init();
     game_halt_render();
     game_render_init();
     gui_render_init();
@@ -151,17 +157,12 @@ void game_init(void)
 
 void game_cleanup(void)
 {
-    game_net_cleanup();
     game_context.kill_thread = true;
     game_context.halt_input = false;
     pthread_join(game_context.thread_id, NULL);
     pthread_mutex_destroy(&game_context.getter_mutex);
     game_render_cleanup();
     gui_render_cleanup();
-    map_cleanup();
-    item_cleanup();
-    synergy_cleanup();
-    entity_cleanup();
 }
 
 f32 game_get_dt(void)

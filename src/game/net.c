@@ -1,5 +1,6 @@
 #include "../game.h"
 #include <string.h>
+#include <pthread.h>
 
 extern GameContext game_context;
 

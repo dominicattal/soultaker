@@ -113,7 +113,7 @@ f32 lerp(f32 low, f32 high, f32 max_t, f32 t)
 
 f32 randf(void)
 {
-    return (f32)(rand()) / RAND_MAX;
+    return (f32)(rand()) / (f32)RAND_MAX;
 }
 
 i32 randi_range(i32 low, i32 high)
@@ -123,7 +123,7 @@ i32 randi_range(i32 low, i32 high)
 
 f32 randf_range(f32 low, f32 high)
 {
-    return (f32)(rand()) / RAND_MAX * (high-low) + low;
+    return (f32)(rand()) / (f32)RAND_MAX * (high-low) + low;
 }
 
 f32 guass_dist(f32 mean, f32 std)

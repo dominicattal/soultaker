@@ -118,9 +118,10 @@ void player_cleanup(Player* player)
     inventory_destroy(&player->inventory);
 }
 
-void player_reset(Entity* entity)
+void player_reset(i32 client_uid, Entity* entity)
 {
-    Player* player = &game_context.this_client->player;
+    Client* client = game_context.uid_map[client_uid];
+    Player* player = &client->player;
     inventory_destroy(&player->inventory);
     if (player->entity != NULL) {
         log_write(WARNING, "Did not destroy player entity before resetting");

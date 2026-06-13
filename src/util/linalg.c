@@ -270,6 +270,7 @@ bool intersect_aabb_hexahedron(AABB aabb, Hexahedron hexahedron)
         }
         return true;
         next_point1:
+        continue;
     }
 
     static u8 triangles[] = {
