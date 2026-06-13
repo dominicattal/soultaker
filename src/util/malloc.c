@@ -112,7 +112,7 @@ static void _print_pointers(void)
 
 #ifdef DEBUG_BUILD
 
-static size_t heap_size;
+static _Atomic size_t heap_size;
 
 void* _st_malloc(size_t size, const char* file, int line)
 {
@@ -173,7 +173,7 @@ void _st_free(void* ptr, const char* file, int line)
         return;
     }
     size_t size = sptr[0];
-    __atomic_fetch_sub(&heap_size, size, __ATOMIC_SEQ_CST);
+    atomic_fetch_sub(&heap_size, size);
     log_write(MEMORY, "%s:%d\nfreed memory %p with size %llx", file, line, ptr, size);
     free(sptr);
     remove_pointer(ptr);

@@ -337,10 +337,10 @@ static void update_tile_vertex_data(Map* map)
 
     for (i = j = 0; i < tiles->length; i++) {
         tile = list_get(tiles, i);
-        //if (!tile_get_flag(tile, TILE_FLAG_ACTIVE))
-        //    continue;
-        //if (map_fog_contains_tile(map, tile))
-        //    continue;
+        if (!tile_get_flag(tile, TILE_FLAG_ACTIVE))
+            continue;
+        if (map_fog_contains_tile(map, tile))
+            continue;
         animate_horizontal_pos = tile_get_flag(tile, TILE_FLAG_ANIMATE_HORIZONTAL_POS);
         animate_vertical_pos = tile_get_flag(tile, TILE_FLAG_ANIMATE_VERTICAL_POS);
         animate_horizontal_neg = tile_get_flag(tile, TILE_FLAG_ANIMATE_HORIZONTAL_NEG);
@@ -360,10 +360,10 @@ static void update_tile_vertex_data(Map* map)
 
     for (i = j = 0; i < tiles->length; i++) {
         tile = list_get(tiles, i);
-        //if (!tile_get_flag(tile, TILE_FLAG_ACTIVE))
-        //    continue;
-        //if (map_fog_contains_tile(map, tile))
-        //    continue;
+        if (!tile_get_flag(tile, TILE_FLAG_ACTIVE))
+            continue;
+        if (map_fog_contains_tile(map, tile))
+            continue;
         map_vb->buffer[j++] = tile->position.x;
         map_vb->buffer[j++] = tile->position.z;
         map_vb->buffer[j++] = 1.0f; // tile width and height
@@ -409,10 +409,10 @@ static void update_wall_vertex_data(Map* map)
 
     for (i = j = 0; i < walls->length; i++) {
         wall = list_get(walls, i);
-        //if (!wall_get_flag(wall, WALL_FLAG_ACTIVE))
-        //    continue;
-        //if (map_fog_contains_wall(map, wall))
-        //    continue;
+        if (!wall_get_flag(wall, WALL_FLAG_ACTIVE))
+            continue;
+        if (map_fog_contains_wall(map, wall))
+            continue;
         texture_info(wall->side_tex, &location, &u, &v, &w, &h, &pivot, &stretch);
         for (i32 side = 0; side < 4; side++) {
             for (k = 0; k < 6; k++) {
@@ -445,10 +445,10 @@ static void update_wall_vertex_data(Map* map)
 
     for (i = j = 0; i < walls->length; i++) {
         wall = list_get(walls, i);
-        //if (!wall_get_flag(wall, WALL_FLAG_ACTIVE))
-        //    continue;
-        //if (map_fog_contains_wall(map, wall))
-        //    continue;
+        if (!wall_get_flag(wall, WALL_FLAG_ACTIVE))
+            continue;
+        if (map_fog_contains_wall(map, wall))
+            continue;
         map_vb->buffer[j++] = wall->position.x;
         map_vb->buffer[j++] = wall->position.z;
         map_vb->buffer[j++] = wall->size.x;

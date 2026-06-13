@@ -203,7 +203,7 @@ f32 camera_get_zoom(void)
 bool camera_toggle_lock(void)
 {
     if (game_context.this_client != NULL)
-        return game_context.this_client->camera.follow = !game_context.this_client->camera.follow ;
+        return game_context.this_client->camera.follow = !game_context.this_client->camera.follow;
     return false;
 }
 

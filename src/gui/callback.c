@@ -12,7 +12,9 @@ static void gui_framebuffer_size_callback_helper(GUIComp* comp, i32 width, i32 h
 
 void gui_framebuffer_size_callback(i32 width, i32 height)
 {
+    pthread_mutex_lock(&gui_context.data_mutex);
     gui_framebuffer_size_callback_helper(gui_context.root, width, height);
+    pthread_mutex_unlock(&gui_context.data_mutex);
 }
 
 static bool gui_cursor_pos_callback_helper(GUIComp* comp, f64 xpos, f64 ypos, i32 position_x, i32 position_y, i32 size_x, i32 size_y)
@@ -55,7 +57,9 @@ static bool gui_cursor_pos_callback_helper(GUIComp* comp, f64 xpos, f64 ypos, i3
 bool gui_cursor_pos_callback(f64 xpos, f64 ypos)
 {
     bool comp_found = false;
+    pthread_mutex_lock(&gui_context.data_mutex);
     comp_found = gui_cursor_pos_callback_helper(gui_context.root, xpos, ypos, 0, 0, window_context.width, window_context.height);
+    pthread_mutex_unlock(&gui_context.data_mutex);
     return comp_found;
 }
 
@@ -99,8 +103,10 @@ static bool gui_scroll_callback_helper(GUIComp* comp, f64 xoffset, f64 yoffset, 
 
 void gui_scroll_callback(f64 xoffset, f64 yoffset)
 {
+    pthread_mutex_lock(&gui_context.data_mutex);
     gui_scroll_callback_helper(gui_context.root, xoffset, yoffset, 0, 0, window_context.width, window_context.height);
     gui_scroll_callback_helper(gui_context.console, xoffset, yoffset, 0, 0, window_context.width, window_context.height);
+    pthread_mutex_unlock(&gui_context.data_mutex);
 }
 
 static void gui_key_callback_helper(GUIComp* comp, i32 key, i32 scancode, i32 action, i32 mods)
@@ -120,11 +126,16 @@ static void process_typing_input(i32 key, i32 scancode, i32 action, i32 mods)
 void gui_key_callback(i32 key, i32 scancode, i32 action, i32 mods)
 {
     if (gui_get_event_comp(GUI_COMP_TYPING) == NULL) {
+        pthread_mutex_lock(&gui_context.data_mutex);
         gui_key_callback_helper(gui_context.root, key, scancode, action, mods);
         gui_key_callback_helper(gui_context.console, key, scancode, action, mods);
+        pthread_mutex_unlock(&gui_context.data_mutex);
         game_key_callback(key, scancode, action, mods);
-    } else
+    } else {
+        pthread_mutex_lock(&gui_context.data_mutex);
         process_typing_input(key, scancode, action, mods);
+        pthread_mutex_unlock(&gui_context.data_mutex);
+    }
 }
 
 static bool gui_mouse_button_callback_helper(GUIComp* comp, i32 xpos, i32 ypos, i32 button, i32 action, i32 mods, i32 position_x, i32 position_y, i32 size_x, i32 size_y)
@@ -169,7 +180,9 @@ bool gui_mouse_button_callback(i32 button, i32 action, i32 mods)
     bool comp_found = false;
     xpos = window_cursor_position_x();
     ypos = window_cursor_position_y();
+    pthread_mutex_lock(&gui_context.data_mutex);
     comp_found = gui_mouse_button_callback_helper(gui_context.root, xpos, ypos, button, action, mods, 0, 0, window_context.width, window_context.height);
+    pthread_mutex_unlock(&gui_context.data_mutex);
     game_mouse_button_callback(button, action, mods);
     return comp_found;
 }
@@ -183,7 +196,9 @@ void gui_char_callback(u32 codepoint)
         gui_comp_set_flag(comp, GUI_COMP_FLAG_TYPING_THIS_FRAME, false);
         return;
     }
+    pthread_mutex_lock(&gui_context.data_mutex);
     gui_comp_insert_char(comp, codepoint, STRING_END);
+    pthread_mutex_unlock(&gui_context.data_mutex);
 }
 
 static void gui_control_callback_helper(GUIComp* comp, ControlEnum ctrl, i32 action)
@@ -197,5 +212,7 @@ void gui_control_callback(ControlEnum ctrl, i32 action)
 {
     if (gui_get_event_comp(GUI_COMP_TYPING) != NULL)
         return;
+    pthread_mutex_lock(&gui_context.data_mutex);
     gui_control_callback_helper(gui_context.root, ctrl, action);
+    pthread_mutex_unlock(&gui_context.data_mutex);
 }

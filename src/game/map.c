@@ -479,6 +479,7 @@ static bool verify_room_alternate_list(VerifyRoomAltArgs* args)
             log_write(CRITICAL, "%s alternate not found for %d %d", string, u, v);
             return false;
             found:
+            continue;
         }
     }
 
@@ -2318,6 +2319,10 @@ void map_cleanup(void)
     st_free(map_context.names);
     if (game_context.current_map != NULL)
         map_destroy(game_context.current_map);
+    for (i32 i = 0; i < game_context.clients->length; i++) {
+        Client* client = list_get(game_context.clients, i);
+        player_cleanup(&client->player);
+    }
 }
 
 void bucket_create(Bucket* bucket)
@@ -2424,9 +2429,12 @@ Map* map_create(i32 id)
     game_context.this_client->player.entity = NULL;
 
     map = generate_map(id);
-    entity = map_create_entity(map->spawn_point, 0);
-    player_reset(entity);
-    entity->max_health = 101;
+    for (i32 i = 0; i < game_context.clients->length; i++) {
+        Client* client = list_get(game_context.clients, i);
+        entity = map_create_entity(map->spawn_point, 0);
+        player_reset(client->uid, entity);
+        entity->max_health = 101;
+    }
 
     game_context.current_map = map;
 
@@ -3176,7 +3184,10 @@ Binary format:
     4 bytes - number of entities
     foreach entitiy
         x bytes - entity info
-    4 bytes - uid of entity for this client
+    4 bytes - number of clients
+    foreach client
+        4 bytes - uid of the client
+        4 bytes - uid of entity for the client
 */
 Map* map_create_from_binary(i32 buffer_len, char* buffer)
 {
@@ -3225,31 +3236,88 @@ Map* map_create_from_binary(i32 buffer_len, char* buffer)
         list_append(map->walls, wall);
     }
 
+    i32 num_entities;
+    memcpy(&num_entities, buffer, sizeof(i32));
+    buffer += sizeof(i32);
+    for (i32 i = 0; i < num_entities; i++) {
+        Entity* entity = entity_read(&buffer);
+        game_set_uid(entity, GAME_OBJ_ENTITY, entity->uid);
+        list_append(map->entities, entity);
+    }
+
+    Client* this_client = game_context.this_client;
+    log_write(DEBUG, "client_id=%d", game_context.this_client->uid);
+    i32 num_clients, client_uid, entity_uid;
+    memcpy(&num_clients, buffer, sizeof(i32));
+    buffer += sizeof(i32);
+    log_write(DEBUG, "num_clients=%d", num_clients);
+    for (i32 i = 0; i < num_clients; i++) {
+        memcpy(&client_uid, buffer, sizeof(i32));
+        buffer += sizeof(i32);
+        memcpy(&entity_uid, buffer, sizeof(i32));
+        buffer += sizeof(i32);
+        log_write(DEBUG, "%d %d", client_uid, entity_uid);
+        if (client_uid == this_client->uid) {
+            Entity* entity = game_context.uid_map[entity_uid];
+            player_reset(this_client->uid, entity);
+        }
+    }
+
     return map;
 }
 
 void map_write_data_and_send(Map* map)
 {
+    if (game_context.clients->length <= 1)
+        return;
     char* mut_buffer;
     char* org_buffer;
     size_t buffer_len = 0;
     i32 tile_length = map->tiles->length;
     i32 wall_length = map->walls->length;
+    i32 entity_length = map->entities->length;
+    // tile
     buffer_len += sizeof(i32);
     buffer_len += tile_length * tile_sizeof();
+    // wall
     buffer_len += sizeof(i32);
     buffer_len += wall_length * wall_sizeof();
+    // entity
+    buffer_len += sizeof(i32);
+    buffer_len += entity_length * entity_sizeof();
+    // clients
+    buffer_len += sizeof(i32);
+    buffer_len += game_context.clients->length * sizeof(i32);
+    buffer_len += game_context.clients->length * sizeof(i32);
     mut_buffer = org_buffer = st_malloc(buffer_len);
+
     memcpy(mut_buffer, &tile_length, sizeof(i32));
     mut_buffer += sizeof(i32);
     for (i32 i = 0; i < tile_length; i++)
         mut_buffer = tile_write(list_get(map->tiles, i), mut_buffer);
+
     memcpy(mut_buffer, &wall_length, sizeof(i32));
     mut_buffer += sizeof(i32);
     for (i32 i = 0; i < wall_length; i++)
         mut_buffer = wall_write(list_get(map->walls, i), mut_buffer);
 
-    log_write(DEBUG, "%p %p", mut_buffer, org_buffer + buffer_len);
+    memcpy(mut_buffer, &entity_length, sizeof(i32));
+    mut_buffer += sizeof(i32);
+    for (i32 i = 0; i < entity_length; i++)
+        mut_buffer = entity_write(list_get(map->entities, i), mut_buffer);
+    
+    memcpy(mut_buffer, &game_context.clients->length, sizeof(i32));
+    mut_buffer += sizeof(i32);
+    for (i32 i = 0; i < game_context.clients->length; i++) {
+        Client* client = list_get(game_context.clients, i);
+        log_write(DEBUG, "A: %d %d", client->uid, client->player.entity->uid);
+        memcpy(mut_buffer, &client->uid, sizeof(i32));
+        mut_buffer += sizeof(i32);
+        memcpy(mut_buffer, &client->player.entity->uid, sizeof(i32));
+        mut_buffer += sizeof(i32);
+    }
+
+    log_assert(mut_buffer, org_buffer + buffer_len, "pointers do not match");
     Packet* packet = packet_create(PACKET_LOAD_GAME, buffer_len, org_buffer);
     socket_send_all(game_context.net, packet);
     packet_destroy(packet);

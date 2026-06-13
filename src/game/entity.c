@@ -363,7 +363,7 @@ void entity_init(void)
 
 Entity* entity_create(vec2 position, i32 id)
 {
-    Entity* entity = st_malloc(sizeof(Entity));
+    Entity* entity = st_calloc(1, sizeof(Entity));
     entity->map_info = (MapInfo) {0};
     entity->position = position;
     entity->prev_position = position;
@@ -375,6 +375,7 @@ Entity* entity_create(vec2 position, i32 id)
     entity->frame_timer = 0;
     entity->tile_timer = 0;
     entity->frame_speed = 1;
+    entity->uid = game_map_uid(entity, GAME_OBJ_ENTITY);
 
     entity->health = 1;
     entity->speed = 7.0f;
@@ -525,4 +526,120 @@ void entity_cleanup(void)
         st_free(entity_context.infos[i].states);
     }
     st_free(entity_context.infos);
+}
+
+size_t entity_sizeof(void)
+{
+    Entity entity;
+    return sizeof(entity.position)
+         + sizeof(entity.direction)
+         + sizeof(entity.facing)
+         + sizeof(entity.health)
+         + sizeof(entity.max_health)
+         + sizeof(entity.speed)
+         + sizeof(entity.armor)
+         + sizeof(entity.magic_resistance)
+         + sizeof(entity.elevation)
+         + sizeof(entity.size)
+         + sizeof(entity.hitbox_radius)
+         + sizeof(entity.state_timer)
+         + sizeof(entity.tile_timer)
+         + sizeof(entity.frame_timer)
+         + sizeof(entity.frame_speed)
+         + sizeof(entity.flags)
+         + sizeof(entity.state)
+         + sizeof(entity.frame)
+         + sizeof(entity.id)
+         + sizeof(entity.uid);
+}
+
+char* entity_write(Entity* entity, char* buffer)
+{
+    memcpy(buffer, &entity->position, sizeof(entity->position));
+    buffer += sizeof(entity->position);
+    memcpy(buffer, &entity->direction, sizeof(entity->direction));
+    buffer += sizeof(entity->direction);
+    memcpy(buffer, &entity->facing, sizeof(entity->facing));
+    buffer += sizeof(entity->facing);
+    memcpy(buffer, &entity->health, sizeof(entity->health));
+    buffer += sizeof(entity->health);
+    memcpy(buffer, &entity->max_health, sizeof(entity->max_health));
+    buffer += sizeof(entity->max_health);
+    memcpy(buffer, &entity->speed, sizeof(entity->speed));
+    buffer += sizeof(entity->speed);
+    memcpy(buffer, &entity->armor, sizeof(entity->armor));
+    buffer += sizeof(entity->armor);
+    memcpy(buffer, &entity->magic_resistance, sizeof(entity->magic_resistance));
+    buffer += sizeof(entity->magic_resistance);
+    memcpy(buffer, &entity->elevation, sizeof(entity->elevation));
+    buffer += sizeof(entity->elevation);
+    memcpy(buffer, &entity->size, sizeof(entity->size));
+    buffer += sizeof(entity->size);
+    memcpy(buffer, &entity->state_timer, sizeof(entity->state_timer));
+    buffer += sizeof(entity->state_timer);
+    memcpy(buffer, &entity->tile_timer, sizeof(entity->tile_timer));
+    buffer += sizeof(entity->tile_timer);
+    memcpy(buffer, &entity->tile_timer, sizeof(entity->tile_timer));
+    buffer += sizeof(entity->tile_timer);
+    memcpy(buffer, &entity->frame_timer, sizeof(entity->frame_timer));
+    buffer += sizeof(entity->frame_timer);
+    memcpy(buffer, &entity->frame_speed, sizeof(entity->frame_speed));
+    buffer += sizeof(entity->frame_speed);
+    memcpy(buffer, &entity->flags, sizeof(entity->flags));
+    buffer += sizeof(entity->flags);
+    memcpy(buffer, &entity->state, sizeof(entity->state));
+    buffer += sizeof(entity->state);
+    memcpy(buffer, &entity->frame, sizeof(entity->frame));
+    buffer += sizeof(entity->frame);
+    memcpy(buffer, &entity->id, sizeof(entity->id));
+    buffer += sizeof(entity->id);
+    memcpy(buffer, &entity->uid, sizeof(entity->uid));
+    buffer += sizeof(entity->uid);
+    return buffer;
+}
+
+Entity* entity_read(char** buffer)
+{
+    Entity* entity = st_calloc(1, sizeof(Entity));
+    memcpy(&entity->position, *buffer, sizeof(entity->position));
+    *buffer += sizeof(entity->position);
+    memcpy(&entity->direction, *buffer, sizeof(entity->direction));
+    *buffer += sizeof(entity->direction);
+    memcpy(&entity->facing, *buffer, sizeof(entity->facing));
+    *buffer += sizeof(entity->facing);
+    memcpy(&entity->health, *buffer, sizeof(entity->health));
+    *buffer += sizeof(entity->health);
+    memcpy(&entity->max_health, *buffer, sizeof(entity->max_health));
+    *buffer += sizeof(entity->max_health);
+    memcpy(&entity->speed, *buffer, sizeof(entity->speed));
+    *buffer += sizeof(entity->speed);
+    memcpy(&entity->armor, *buffer, sizeof(entity->armor));
+    *buffer += sizeof(entity->armor);
+    memcpy(&entity->magic_resistance, *buffer, sizeof(entity->magic_resistance));
+    *buffer += sizeof(entity->magic_resistance);
+    memcpy(&entity->elevation, *buffer, sizeof(entity->elevation));
+    *buffer += sizeof(entity->elevation);
+    memcpy(&entity->size, *buffer, sizeof(entity->size));
+    *buffer += sizeof(entity->size);
+    memcpy(&entity->state_timer, *buffer, sizeof(entity->state_timer));
+    *buffer += sizeof(entity->state_timer);
+    memcpy(&entity->tile_timer, *buffer, sizeof(entity->tile_timer));
+    *buffer += sizeof(entity->tile_timer);
+    memcpy(&entity->tile_timer, *buffer, sizeof(entity->tile_timer));
+    *buffer += sizeof(entity->tile_timer);
+    memcpy(&entity->frame_timer, *buffer, sizeof(entity->frame_timer));
+    *buffer += sizeof(entity->frame_timer);
+    memcpy(&entity->frame_speed, *buffer, sizeof(entity->frame_speed));
+    *buffer += sizeof(entity->frame_speed);
+    memcpy(&entity->flags, *buffer, sizeof(entity->flags));
+    *buffer += sizeof(entity->flags);
+    memcpy(&entity->state, *buffer, sizeof(entity->state));
+    *buffer += sizeof(entity->state);
+    memcpy(&entity->frame, *buffer, sizeof(entity->frame));
+    *buffer += sizeof(entity->frame);
+    memcpy(&entity->id, *buffer, sizeof(entity->id));
+    *buffer += sizeof(entity->id);
+    memcpy(&entity->uid, *buffer, sizeof(entity->uid));
+    *buffer += sizeof(entity->uid);
+    return entity;
 }

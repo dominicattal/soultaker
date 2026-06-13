@@ -25,6 +25,7 @@ typedef enum PacketEnum {
 
 typedef enum GameObj {
     GAME_OBJ_CLIENT,
+    GAME_OBJ_ENTITY,
     GAME_OBJ_LINE,
     GAME_OBJ_TRIGGER,
     GAME_OBJ_TILE,
@@ -671,6 +672,10 @@ typedef enum {
 void entity_init(void);
 void entity_cleanup(void);
 
+size_t  entity_sizeof(void);
+char*   entity_write(Entity* entity, char* buffer);
+Entity* entity_read(char** buffer);
+
 // Destroy every entity
 void entity_clear(void);
 
@@ -698,7 +703,7 @@ void entity_destroy(Entity* entity);
 void entity_damage(Entity* entity, f32 damage);
 
 // Assigns default entity for the player
-void player_reset(Entity* entity);
+void player_reset(i32 client_uid, Entity* entity);
 void player_update(Player* player, f32 dt);
 void player_shoot_primary(Player* player);
 void player_shoot_secondary(Player* player);

@@ -4,6 +4,7 @@
 #include "type.h"
 #include <stdbool.h>
 #include <stdlib.h>
+#include <pthread.h>
 
 #define BIT_UDP  0x0
 #define BIT_TCP  0x1

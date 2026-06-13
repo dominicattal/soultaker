@@ -37,7 +37,7 @@ static void resize_data_buffer(GUIVertexData* data, i32 num_comps)
 
 static void push_quad_data(GUIVertexData* data, Quad* quad)
 {
-    if (data->length + FLOATS_PER_COMP >= data->capacity)
+    if (data->buffer == NULL || data->length + FLOATS_PER_COMP >= data->capacity)
         resize_data_buffer(data, 1);
     data->buffer[data->length++] = quad->x;
     data->buffer[data->length++] = quad->y;
