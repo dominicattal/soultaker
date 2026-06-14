@@ -3223,6 +3223,7 @@ Map* map_create_from_binary(i32 buffer_len, char* buffer)
     buffer += sizeof(i32);
     for (i32 i = 0; i < num_tiles; i++) {
         Tile* tile = tile_read(&buffer);
+        log_write(DEBUG, "%d", tile->uid);
         game_set_uid(tile, GAME_OBJ_TILE, tile->uid);
         list_append(map->tiles, tile);
     }

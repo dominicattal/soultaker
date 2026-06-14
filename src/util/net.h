@@ -9,6 +9,8 @@
 #define BIT_UDP  0x0
 #define BIT_TCP  0x1
 
+#define UDP_MAX_PAYLOAD 65535
+
 #define PACKET_HEADER_BYTES 6
 #define PACKET_MAX_SIZE (1024 * 1024)
 
