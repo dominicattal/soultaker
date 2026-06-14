@@ -108,6 +108,7 @@ void networking_cleanup(NetContext* ctx)
     }
     pthread_mutex_destroy(&ctx->mutex);
     WSACleanup();
+    startup = false;
     st_free(ctx);
 }
 
@@ -199,7 +200,7 @@ SocketAddr* socket_address_create(const char* ip, const char* port)
     hints.ai_protocol = IPPROTO_TCP;
     int rc = getaddrinfo(ip, port, &hints, &sock_addr);
     if (rc != 0)
-        log_write(FATAL, "getaddrinfo failed: %d\n", rc);
+        log_write(FATAL, "getaddrinfo failed %s %s (%d): %s\n", ip, port, rc, gai_strerror(rc));
     return (SocketAddr*)sock_addr;
 }
 
@@ -268,6 +269,7 @@ bool socket_connect(Socket* sock)
             return false;
         if (connect(*sock->sock, ptr->ai_addr, (int)ptr->ai_addrlen) != SOCKET_ERROR) {
             sock->connected = true;
+            socket_set_ip_and_port(sock);
             return true;
         }
     }
@@ -309,12 +311,7 @@ void socket_destroy(Socket* sock)
 
 bool socket_send(Socket* sock, Packet* packet)
 {
-    return send(*sock->sock, packet->buffer, packet->length, 0) != SOCKET_ERROR;
-}
-
-bool socket_send_web(Socket* socket, Packet* packet)
-{
-    return false;
+    return send(*sock->sock, packet->buffer - PACKET_HEADER_BYTES, packet->length + PACKET_HEADER_BYTES, 0) != SOCKET_ERROR;
 }
 
 void socket_send_all(NetContext* ctx, Packet* packet)
@@ -330,48 +327,68 @@ void socket_send_all(NetContext* ctx, Packet* packet)
     pthread_mutex_unlock(&ctx->mutex);
 }
 
-bool socket_sendto(Socket* src_socket, SocketAddr* addr, Packet* packet)
+bool socket_sendto(Socket* src_socket, SocketAddr* dst_addr, Packet* packet)
 {
-    return true;
+    return sendto(*src_socket->sock, packet->buffer - PACKET_HEADER_BYTES, packet->length + PACKET_HEADER_BYTES, 0, (struct sockaddr*)&dst_addr->addr, sizeof(dst_addr->addr)) != SOCKET_ERROR;
 }
 
-// need to redo this function like net_linux.c
 Packet* socket_recv(Socket* sock)
 {
     Packet* packet;
-    int length;
-    unsigned char* buffer;
-    buffer = st_malloc(6 * sizeof(unsigned char));
-    length = recv(*sock->sock, (char*)buffer, 6, 0);
-    if (length == SOCKET_ERROR || length == 0) {
-        sock->connected = false;
-        st_free(buffer);
+    ssize_t length;
+    ssize_t received = 0;
+    char buffer[PACKET_HEADER_BYTES];
+    while (received < PACKET_HEADER_BYTES) {
+        length = recv(*sock->sock, buffer + received, PACKET_HEADER_BYTES - received, 0);
+        if (length == SOCKET_ERROR) {
+            log_write(CRITICAL, "recvfailed: WsaGetLastError() = %d", WSAGetLastError());
+            return NULL;
+        }
+        if (length <= 0)
+            return NULL;
+        received += length;
+    }
+
+    packet = st_malloc(sizeof(Packet));
+    packet->id = (buffer[4]<<8) + buffer[5];
+    packet->length = (buffer[0]<<24)+(buffer[1]<<16)+(buffer[2]<<8)+buffer[3];
+    packet->buffer = st_malloc((packet->length + PACKET_HEADER_BYTES) * sizeof(char));
+    memcpy(packet->buffer, buffer, PACKET_HEADER_BYTES);
+
+    received = 0;
+    while (received < (ssize_t)packet->length) {
+        length = recv(*sock->sock, packet->buffer + PACKET_HEADER_BYTES - received, packet->length - received, 0);
+        if (length == SOCKET_ERROR) {
+            log_write(CRITICAL, "recvfailed: WsaGetLastError() = %d", WSAGetLastError());
+            st_free(packet->buffer);
+            st_free(packet);
+            return NULL;
+        }
+        received += length;
+    }
+    packet->buffer += PACKET_HEADER_BYTES;
+    return packet;
+}
+
+Packet* socket_recvfrom(Socket* src_socket, SocketAddr** dst_addr)
+{
+    Packet* packet;
+    socklen_t client_len = sizeof(struct sockaddr);
+    char buffer[PACKET_HEADER_BYTES];
+    *dst_addr = st_malloc(sizeof(SocketAddr));
+    ssize_t len = recvfrom(*src_socket->sock, buffer, sizeof(buffer), 0, (struct sockaddr*)&(*dst_addr)->addr, &client_len);
+    if (len == SOCKET_ERROR) {
+        log_write(CRITICAL, "recvfrom failed: WsaGetLastError() = %d", WSAGetLastError());
         return NULL;
     }
     packet = st_malloc(sizeof(Packet));
     packet->id = (buffer[4]<<8) + buffer[5];
     packet->length = (buffer[0]<<24)+(buffer[1]<<16)+(buffer[2]<<8)+buffer[3];
-    if (packet->length == 0) {
-        packet->buffer = NULL;
-        st_free(packet->buffer);
-        return packet;
-    }
-    packet->buffer = st_malloc(packet->length * sizeof(char));
-    length = recv(*sock->sock, packet->buffer, packet->length, 0);
-    if ((size_t)length != packet->length) {
-        printf("Unexpected packet length %u vs %llu\n", length, packet->length);
-        st_free(packet->buffer);
-        st_free(packet);
-        st_free(buffer);
-        return NULL;
-    }
-    st_free(buffer);
+    packet->buffer = st_malloc((packet->length + PACKET_HEADER_BYTES) * sizeof(char));
+    memcpy(packet->buffer, buffer, PACKET_HEADER_BYTES);
+    recvfrom(*src_socket->sock, packet->buffer + PACKET_HEADER_BYTES, packet->length - PACKET_HEADER_BYTES, 0, (struct sockaddr*)&(*dst_addr)->addr, &client_len);
+    packet->buffer += PACKET_HEADER_BYTES;
     return packet;
-}
-
-Packet* socket_recvfrom(Socket* src_socket, SocketAddr** addr)
-{
-    return NULL;
 }
 
 bool socket_connected(Socket* sock)

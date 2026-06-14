@@ -21,20 +21,21 @@ Packet* packet_create(u32 id, int length, const char* buffer)
         return NULL;
     packet = st_malloc(sizeof(Packet));
     packet->id = id;
-    packet->length = length + PACKET_HEADER_BYTES;
-    packet->buffer = st_malloc(packet->length * sizeof(char));
+    packet->length = length;
+    packet->buffer = st_malloc((length + PACKET_HEADER_BYTES) * sizeof(char));
     packet->buffer[0] = (length>>24) & 0xFF;
     packet->buffer[1] = (length>>16) & 0xFF;
     packet->buffer[2] = (length>>8) & 0xFF;
     packet->buffer[3] = length & 0xFF;
     packet->buffer[4] = (id>>8) & 0xFF;
     packet->buffer[5] = id & 0xFF;
-    memcpy(packet->buffer+PACKET_HEADER_BYTES, buffer, length);
+    memcpy(packet->buffer + PACKET_HEADER_BYTES, buffer, length);
+    packet->buffer += PACKET_HEADER_BYTES;
     return packet;
 }
 
 void packet_destroy(Packet* packet)
 {
-    st_free(packet->buffer);
+    st_free(packet->buffer - PACKET_HEADER_BYTES);
     st_free(packet);
 }
