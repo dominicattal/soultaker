@@ -350,8 +350,6 @@ Packet* socket_recv(Socket* sock)
             log_write(CRITICAL, "recvfailed: WsaGetLastError() = %d", WSAGetLastError());
             return NULL;
         }
-        if (length <= 0)
-            return NULL;
         received += length;
     }
 

@@ -536,10 +536,10 @@ static void inventory_slot_click(GUIComp* comp, i32 button, i32 action, i32 mods
     InventoryData* inventory_data = parent->data;
     SlotData* slot_data = comp->data;
     SlotData* other_data;
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && mods == GLFW_MOD_SHIFT) {
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && MODS_SHIFT(mods)) {
         inventory_move_item(slot_data->item_slot);
     }
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && mods == 0) {
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && MODS_NONE(mods)) {
         if (inventory_data->held_comp == NULL && *slot_data->item_slot != NULL)
             inventory_data->held_comp = comp;
     }   

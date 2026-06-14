@@ -3,6 +3,9 @@
 
 #include "util.h"
 
+#define MODS_NONE(x) ((x&(GLFW_MOD_SHIFT|GLFW_MOD_CONTROL|GLFW_MOD_ALT|GLFW_MOD_SUPER))==0)
+#define MODS_SHIFT(x) (x&GLFW_MOD_SHIFT)
+
 typedef enum {
     CTRL_INTERACT = 0,
     CTRL_TEST1,

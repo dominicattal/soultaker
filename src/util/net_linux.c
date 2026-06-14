@@ -3,6 +3,7 @@
 #include "net.h"
 #include "malloc.h"
 #include "extra.h"
+#include "log.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -20,6 +21,7 @@
 #include <signal.h>
 #include <pthread.h>
 #include <fcntl.h>
+#include <errno.h>
 
 typedef struct SocketAddr {
     struct sockaddr_in addr;
@@ -175,9 +177,8 @@ void socket_address_destroy(SocketAddr* addr)
     st_free(addr);
 }
 
-bool socket_bind(Socket* sock)
+static void socket_set_ip_and_port(Socket* sock)
 {
-    bool result = bind(sock->fd, (struct sockaddr*)&sock->addr, sizeof(sock->addr)) != -1;
     socklen_t len = sizeof(struct sockaddr);
     getsockname(sock->fd, (struct sockaddr*)&sock->addr, &len);
     if (sock->ip != NULL)
@@ -186,6 +187,12 @@ bool socket_bind(Socket* sock)
     if (sock->port != NULL)
         string_free(sock->port);
     sock->port = string_create("%d", ntohs(sock->addr.sin_port));
+}
+
+bool socket_bind(Socket* sock)
+{
+    bool result = bind(sock->fd, (struct sockaddr*)&sock->addr, sizeof(sock->addr)) != -1;
+    socket_set_ip_and_port(sock);
     return result;
 }
 
@@ -210,8 +217,9 @@ Socket* socket_accept(Socket* sock)
     }
     new_sock->fd = fd;
     new_sock->connected = true;
-    new_sock->ip = string_create("%s", inet_ntoa(sock->addr.sin_addr));
-    new_sock->port = string_create("%d", ntohs(sock->addr.sin_port));
+    socket_set_ip_and_port(new_sock);
+    //new_sock->ip = string_create("%s", inet_ntoa(sock->addr.sin_addr));
+    //new_sock->port = string_create("%d", ntohs(sock->addr.sin_port));
 
     return new_sock;
 }
@@ -254,7 +262,7 @@ void socket_destroy(Socket* sock)
 
 bool socket_send(Socket* sock, Packet* packet)
 {
-    return send(sock->fd, packet->buffer, packet->length, 0) != -1;
+    return send(sock->fd, packet->buffer - PACKET_HEADER_BYTES, packet->length + PACKET_HEADER_BYTES, 0) != -1;
 }
 
 void socket_send_all(NetContext* ctx, Packet* packet)
@@ -272,7 +280,12 @@ void socket_send_all(NetContext* ctx, Packet* packet)
 
 bool socket_sendto(Socket* src_socket, SocketAddr* dst_addr, Packet* packet)
 {
-    return sendto(src_socket->fd, packet->buffer, packet->length, 0, (struct sockaddr*)&dst_addr->addr, sizeof(dst_addr->addr)) != -1;
+    return sendto(src_socket->fd, 
+                  packet->buffer - PACKET_HEADER_BYTES, 
+                  packet->length + PACKET_HEADER_BYTES, 
+                  0, 
+                  (struct sockaddr*)&dst_addr->addr, 
+                  sizeof(dst_addr->addr)) != -1;
 }
 
 Packet* socket_recv(Socket* sock)
@@ -280,41 +293,38 @@ Packet* socket_recv(Socket* sock)
     Packet* packet;
     ssize_t length;
     ssize_t received = 0;
-    unsigned char* buffer;
-    buffer = st_malloc(PACKET_HEADER_BYTES * sizeof(char));
+    char buffer[PACKET_HEADER_BYTES];
     while (received < PACKET_HEADER_BYTES) {
         length = read(sock->fd, buffer + received, PACKET_HEADER_BYTES - received);
-        if (length <= 0) {
-            st_free(buffer);
+        if (length == -1) {
+            log_write(CRITICAL, "read failed: errno = %d", errno);
             return NULL;
         }
         received += length;
     }
 
     packet = st_malloc(sizeof(Packet));
-    packet->id = (buffer[4]<<8) + buffer[5];
-    packet->length = (buffer[0]<<24)+(buffer[1]<<16)+(buffer[2]<<8)+buffer[3];
-    packet->buffer = NULL;
-    st_free(buffer);
-
-    if (packet->length == 0)
-        return packet;
-
-    packet->buffer = st_malloc(packet->length * sizeof(char));
+    packet->id = ((u8)buffer[4]<<8)|(u8)buffer[5];
+    packet->length = ((u8)buffer[0]<<24)|((u8)buffer[1]<<16)|((u8)buffer[2]<<8)|(u8)buffer[3];
+    packet->buffer = st_malloc((packet->length + PACKET_HEADER_BYTES) * sizeof(char));
+    memcpy(packet->buffer, buffer, PACKET_HEADER_BYTES);
 
     received = 0;
     while (received < (ssize_t)packet->length) {
-        length = read(sock->fd, packet->buffer + received, packet->length - received);
-        if (length <= 0) {
+        length = read(sock->fd, packet->buffer + PACKET_HEADER_BYTES + received, packet->length - received);
+        if (length == -1) {
+            log_write(CRITICAL, "read failed: errno = %d", errno);
             st_free(packet->buffer);
             st_free(packet);
             return NULL;
         }
         received += length;
     }
+    packet->buffer += PACKET_HEADER_BYTES;
     return packet;
 }
 
+/*
 Packet* socket_recvfrom(Socket* src_socket, SocketAddr** dst_addr)
 {
     Packet* packet;
@@ -340,6 +350,27 @@ Packet* socket_recvfrom(Socket* src_socket, SocketAddr** dst_addr)
     st_free(buffer);
     return packet;
 }
+*/
+
+Packet* socket_recvfrom(Socket* src_socket, SocketAddr** dst_addr)
+{
+    Packet* packet;
+    socklen_t client_len = sizeof(struct sockaddr);
+    char buffer[UDP_MAX_PAYLOAD];
+    *dst_addr = st_malloc(sizeof(SocketAddr));
+    ssize_t len = recvfrom(src_socket->fd, buffer, sizeof(buffer), 0, (struct sockaddr*)&(*dst_addr)->addr, &client_len);
+    if (len == -1) {
+        log_write(CRITICAL, "recvfrom failed: errono = %d", errno);
+        return NULL;
+    }
+    packet = st_malloc(sizeof(Packet));
+    packet->id = ((u8)buffer[4]<<8)|(u8)buffer[5];
+    packet->length = ((u8)buffer[0]<<24)|((u8)buffer[1]<<16)|((u8)buffer[2]<<8)|(u8)buffer[3];
+    packet->buffer = st_malloc((packet->length + PACKET_HEADER_BYTES) * sizeof(char));
+    memcpy(packet->buffer, buffer, packet->length + PACKET_HEADER_BYTES);
+    packet->buffer += PACKET_HEADER_BYTES;
+    return packet;
+}
 
 void socket_set_thread_id(Socket* sock, pthread_t thread_id)
 {
@@ -349,15 +380,11 @@ void socket_set_thread_id(Socket* sock, pthread_t thread_id)
 
 const char* socket_ip(Socket* socket)
 {
-    if (socket->ip == NULL)
-        return "not_bounded";
     return socket->ip;
 }
 
 const char* socket_port(Socket* socket)
 {
-    if (socket->ip == NULL)
-        return "not_bounded";
     return socket->port;
 }
 

@@ -72,7 +72,7 @@ void    socket_destroy(Socket* socket);
 // Check if socket still connected. Returns true if successful
 bool    socket_connected(Socket* socket);
 
-// Send a packet over a socket. Returns true if successful
+// Send a packet over a socket. Returns true if successful. Socked should be TCP
 bool    socket_send(Socket* socket, Packet* packet);
 
 // Send packet to all connected clients in context
@@ -81,7 +81,7 @@ void    socket_send_all(NetContext* ctx, Packet* packet);
 // Send packet to explicit address. should be used for UDP socket
 bool    socket_sendto(Socket* src_socket, SocketAddr* dst_addr, Packet* packet);
 
-// Receive a packet from a socket
+// Receive a packet from a socket. Socket should be TCP
 Packet* socket_recv(Socket* socket);
 
 // Receive a packet from a socket with specified addr. should be used for UDP socket
