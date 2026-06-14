@@ -97,7 +97,7 @@ void networking_cleanup(NetContext* ctx)
     st_free(ctx);
 }
 
-static Socket* get_st_free_socket(NetContext* ctx)
+static Socket* get_free_socket(NetContext* ctx)
 {
     Socket* sock = NULL;
     pthread_mutex_lock(&ctx->mutex);
@@ -130,7 +130,7 @@ Socket* socket_create(NetContext* ctx, const char* ip, const char* port_str, int
         return NULL;
 
     port = (port_str == NULL) ? 0 : atoi(port_str);
-    sock = get_st_free_socket(ctx);
+    sock = get_free_socket(ctx);
     if (sock == NULL)
         goto fail;
 
@@ -203,7 +203,7 @@ Socket* socket_accept(Socket* sock)
     fd = accept(sock->fd, (struct sockaddr*)&sock->addr, &addrlen);
     if (fd == -1)
         return NULL;
-    new_sock = get_st_free_socket(sock->ctx);
+    new_sock = get_free_socket(sock->ctx);
     if (new_sock == NULL) {
         shutdown(fd, SHUT_RDWR);
         return NULL;

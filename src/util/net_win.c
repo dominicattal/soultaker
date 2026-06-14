@@ -1,6 +1,9 @@
 #ifdef __WIN32
 
 #include "net.h"
+#include "log.h"
+#include "malloc.h"
+#include "extra.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -10,13 +13,21 @@
 #include <ws2tcpip.h>
 #include <windows.h>
 
+typedef struct SocketAddr {
+    struct addrinfo addr;
+} SocketAddr;
+
 typedef struct Socket {
     NetContext* ctx;
     struct addrinfo* info;
     struct Socket* prev;
     struct Socket* next;
+    char* ip;
+    char* port;
     SOCKET* sock;
+    pthread_t thread_id;
     bool connected;
+    bool has_thread;
 } Socket;
 
 typedef struct NetContext {
@@ -61,14 +72,30 @@ void networking_shutdown_sockets(NetContext* ctx)
     pthread_mutex_lock(&ctx->mutex);
     sock = ctx->head;
     while (sock != NULL) {
-        if (sock->sock != NULL)
+        if (sock->sock != NULL) {
             closesocket(*sock->sock);
-        sock->sock = NULL;
+            st_free(sock->sock);
+            sock->sock = NULL;
+        }
         sock = sock->next;
     }
     ctx->active = false;
     pthread_mutex_unlock(&ctx->mutex);
 }
+
+void networking_join_sockets(NetContext* ctx)
+{
+    Socket* sock;
+    pthread_mutex_lock(&ctx->mutex);
+    sock = ctx->head;
+    while (sock != NULL) {
+        if (sock->has_thread)
+            pthread_kill(sock->thread_id, 0);
+        sock = sock->next;
+    }
+    pthread_mutex_unlock(&ctx->mutex);
+}
+
 
 void networking_cleanup(NetContext* ctx)
 {
@@ -81,6 +108,7 @@ void networking_cleanup(NetContext* ctx)
     }
     pthread_mutex_destroy(&ctx->mutex);
     WSACleanup();
+    st_free(ctx);
 }
 
 int networking_get_last_error(void)
@@ -88,12 +116,12 @@ int networking_get_last_error(void)
     return WSAGetLastError();
 }
 
-static Socket* get_st_free_socket(NetContext* ctx)
+static Socket* get_free_socket(NetContext* ctx)
 {
     Socket* sock = NULL;
     pthread_mutex_lock(&ctx->mutex);
     if (!ctx->active) goto unlock;
-    sock = st_malloc(sizeof(Socket));
+    sock = st_calloc(1, sizeof(Socket));
     sock->ctx = ctx;
     sock->connected = false;
     sock->next = NULL;
@@ -115,10 +143,10 @@ Socket* socket_create(NetContext* ctx, const char* ip, const char* port, int fla
 {
     struct addrinfo* result = NULL;
     struct addrinfo hints;
-    SOCKET* new_socket;
-    Socket* res_socket;
+    SOCKET* new_socket = NULL;
+    Socket* res_socket = NULL;
 
-    res_socket = get_st_free_socket(ctx);
+    res_socket = get_free_socket(ctx);
     if (res_socket == NULL)
         return NULL;
 
@@ -135,7 +163,7 @@ Socket* socket_create(NetContext* ctx, const char* ip, const char* port, int fla
     new_socket = st_malloc(sizeof(SOCKET));
     *new_socket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
     if (*new_socket == INVALID_SOCKET)
-        goto fail_st_free_addr_info;
+        goto fail_free_addr_info;
 
     //BOOL opt_val = TRUE;
     //int opt_len = sizeof(BOOL);
@@ -151,15 +179,60 @@ Socket* socket_create(NetContext* ctx, const char* ip, const char* port, int fla
 
     return res_socket;
 
-fail_st_free_addr_info:
-    st_freeaddrinfo(result);
+fail_free_addr_info:
+    freeaddrinfo(result);
 fail:
     return NULL;
 }
 
+SocketAddr* socket_get_address(Socket* socket)
+{
+    return (SocketAddr*)socket->info;
+}
+
+SocketAddr* socket_address_create(const char* ip, const char* port)
+{
+    struct addrinfo hints = {0};
+    struct addrinfo* sock_addr = NULL;
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+    int rc = getaddrinfo(ip, port, &hints, &sock_addr);
+    if (rc != 0)
+        log_write(FATAL, "getaddrinfo failed: %d\n", rc);
+    return (SocketAddr*)sock_addr;
+}
+
+void socket_address_destroy(SocketAddr* addr)
+{
+    freeaddrinfo(&addr->addr); 
+}
+
+static void socket_set_ip_and_port(Socket* sock)
+{
+    if (sock->ip != NULL)
+        st_free(sock->ip);
+    sock->ip = st_malloc(NI_MAXHOST * sizeof(char));
+    if (sock->port != NULL)
+        st_free(sock->port);
+    sock->port = st_malloc(NI_MAXSERV * sizeof(char));
+    struct sockaddr_storage addr;
+    socklen_t len = sizeof(addr);
+    getsockname(*sock->sock, (struct sockaddr*)&addr, &len);
+    getnameinfo((struct sockaddr*)&addr,
+                len,
+                sock->ip,
+                NI_MAXHOST * sizeof(char),
+                sock->port,
+                NI_MAXSERV * sizeof(char),
+                NI_NUMERICHOST | NI_NUMERICSERV);
+}
+
 bool socket_bind(Socket* sock)
 {
-    return bind(*sock->sock, sock->info->ai_addr, (int)sock->info->ai_addrlen) != SOCKET_ERROR;
+    bool result = bind(*sock->sock, sock->info->ai_addr, (int)sock->info->ai_addrlen) != SOCKET_ERROR;
+    socket_set_ip_and_port(sock);
+    return result;
 }
 
 bool socket_listen(Socket* sock)
@@ -172,7 +245,7 @@ Socket* socket_accept(Socket* sock)
     Socket* client_socket;
     SOCKET* new_socket;
 
-    client_socket = get_st_free_socket(sock->ctx);
+    client_socket = get_free_socket(sock->ctx);
     if (client_socket == NULL)
         return NULL;
     new_socket = st_malloc(sizeof(SOCKET));
@@ -182,6 +255,7 @@ Socket* socket_accept(Socket* sock)
         return NULL;
     }
     client_socket->sock = new_socket;
+    socket_set_ip_and_port(client_socket);
     return client_socket;
 }
 
@@ -210,9 +284,12 @@ void socket_destroy(Socket* sock)
         closesocket(*sock->sock);
     }
     if (sock->info != NULL)
-        st_freeaddrinfo(sock->info);
+        freeaddrinfo(sock->info);
     sock->connected = false;
-    sock->sock = NULL;
+    if (sock->sock != NULL) {
+        st_free(sock->sock);
+        sock->sock = NULL;
+    }
     sock->info = NULL;
     if (sock == ctx->head)
         ctx->head = sock->next;
@@ -222,8 +299,12 @@ void socket_destroy(Socket* sock)
         ctx->tail = sock->prev;
     else
         sock->next->prev = sock->prev;
-    pthread_mutex_unlock(&sock->ctx->mutex);
+    if (sock->ip != NULL)
+        st_free(sock->ip);
+    if (sock->port != NULL)
+        st_free(sock->port);
     st_free(sock);
+    pthread_mutex_unlock(&ctx->mutex);
 }
 
 bool socket_send(Socket* sock, Packet* packet)
@@ -249,8 +330,9 @@ void socket_send_all(NetContext* ctx, Packet* packet)
     pthread_mutex_unlock(&ctx->mutex);
 }
 
-void socket_sendto(Socket* src_socket, SockAddr* addr, Packet* packet)
+bool socket_sendto(Socket* src_socket, SocketAddr* addr, Packet* packet)
 {
+    return true;
 }
 
 // need to redo this function like net_linux.c
@@ -287,7 +369,7 @@ Packet* socket_recv(Socket* sock)
     return packet;
 }
 
-Packet* socket_recvfrom(Socket* src_socket, SockAddr* addr)
+Packet* socket_recvfrom(Socket* src_socket, SocketAddr** addr)
 {
     return NULL;
 }
@@ -297,21 +379,20 @@ bool socket_connected(Socket* sock)
     return sock->connected;
 }
 
-void socket_set_thread_id(Socket* socket, pthread_t thread_id)
+void socket_set_thread_id(Socket* sock, pthread_t thread_id)
 {
-    puts("socket_set_thread_id not implemented on windows");
+    sock->has_thread = true;
+    sock->thread_id = thread_id;
 }
 
-const char* socket_ip(Socket* socket)
+const char* socket_ip(Socket* sock)
 {
-    log_write(WARNING, "not implemented");
-    return "";
+    return sock->ip;
 }
 
-const char* socket_port(Socket* socket)
+const char* socket_port(Socket* sock)
 {
-    log_write(WARNING, "not implemented");
-    return "";
+    return sock->port;
 }
 
 #endif

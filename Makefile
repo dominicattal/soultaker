@@ -1,10 +1,10 @@
 CC = gcc
 CFLAGS = -fPIC -Wall -Wextra -Werror -Wfatal-errors -Wno-unused-parameter -finline-functions \
-		 -fopenmp -pthread -Wno-unused-function -Iinclude -Wno-unused-result -Wno-maybe-uninitialized -Wno-unused-but-set-variable -Wno-unused-variable
+		 -fopenmp -pthread -Wno-unused-function -Iinclude -Wno-unused-result -Wno-maybe-uninitialized -Wno-unused-but-set-variable -Wno-unused-variable 
 CFLAGS_DEV = -g3 -D DEBUG_BUILD
 CFLAGS_RELEASE = -O2 -D RELEASE_BUILD
 ifeq ($(OS), Windows_NT)
-	LINKER_FLAGS=-Llib glfw3.dll
+	LINKER_FLAGS=-Llib glfw3.dll -lws2_32
 	SHARED_EXT=dll
 else
 	LINKER_FLAGS=-lm lib/libglfw3.a
