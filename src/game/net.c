@@ -28,7 +28,7 @@ void game_net_set_host_udp_port(const char* port)
     game_context.host_udp_port = string_copy(port);
 }
 
-static void* net_host_udp_listener(void* vargp)
+static void* host_udp_listener(void* vargp)
 {
     pthread_barrier_t* net_listen_barrier = vargp;
     NetContext* net_ctx = game_context.net;
@@ -51,7 +51,7 @@ static void* net_host_udp_listener(void* vargp)
     return NULL;
 }
 
-static void* net_host_tcp_listener(void* vargp)
+static void* host_tcp_listener(void* vargp)
 {
     pthread_barrier_t* net_listen_barrier = vargp;
     NetContext* net_ctx = game_context.net;
@@ -117,6 +117,11 @@ static void* net_host_tcp_listener(void* vargp)
         log_assert(packet->id == PACKET_CLIENT_TO_HOST_USERNAME, "");
         client->username = string_copy(packet->buffer);
         packet_destroy(packet);
+
+        char* buf = "Hello from host TCP";
+        packet = packet_create(PACKET_MESSAGE, strlen(buf)+1, buf);
+        socket_send(client_socket, packet);
+        packet_destroy(packet);
     }
     networking_join_sockets(game_context.net);
     return NULL;
@@ -125,12 +130,15 @@ fail:
     return NULL;
 }
 
-static void handle_tcp_packet(Packet* packet)
+static void client_handle_tcp_packet(Packet* packet)
 {
     switch (packet->id) {
         case PACKET_LOAD_GAME:
             log_write(DEBUG, "Loading game");
             game_change_map_from_binary(packet->length, packet->buffer);
+            break;
+        case PACKET_MESSAGE:
+            log_write(DEBUG, packet->buffer);
             break;
         default:
             log_write(WARNING, "Received unknown packed: %d", packet->id);
@@ -141,12 +149,14 @@ static void* client_tcp_handler(void* vargp)
 {
     Socket* server_socket = vargp;
     Packet* packet;
+    log_write(DEBUG, "initalized client tcp handler");
     while (!kill_net_handler_threads) {
         packet = socket_recv(server_socket);
         if (packet == NULL)
             continue;
+        log_write(DEBUG, "Received packet id=%d", packet->id);
         pthread_mutex_lock(&game_context.handler_thread_mutex);
-        handle_tcp_packet(packet);
+        client_handle_tcp_packet(packet);
         pthread_mutex_unlock(&game_context.handler_thread_mutex);
         packet_destroy(packet);
     }
@@ -236,8 +246,8 @@ void game_net_start_hosting(const char* ip, const char* port)
 
     pthread_barrier_t net_listen_barrier;
     pthread_barrier_init(&net_listen_barrier, NULL, 3);
-    pthread_create(&game_context.net_tcp_listen_thread_id, NULL, net_host_tcp_listener, &net_listen_barrier);
-    pthread_create(&game_context.net_udp_listen_thread_id, NULL, net_host_udp_listener, &net_listen_barrier);
+    pthread_create(&game_context.net_tcp_listen_thread_id, NULL, host_tcp_listener, &net_listen_barrier);
+    pthread_create(&game_context.net_udp_listen_thread_id, NULL, host_udp_listener, &net_listen_barrier);
     pthread_barrier_wait(&net_listen_barrier);
     pthread_barrier_destroy(&net_listen_barrier);
 

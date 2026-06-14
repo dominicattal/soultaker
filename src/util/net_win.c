@@ -196,8 +196,8 @@ SocketAddr* socket_address_create(const char* ip, const char* port)
     struct addrinfo hints = {0};
     struct addrinfo* sock_addr = NULL;
     hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_protocol = IPPROTO_TCP;
+    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_protocol = IPPROTO_UDP;
     int rc = getaddrinfo(ip, port, &hints, &sock_addr);
     if (rc != 0)
         log_write(FATAL, "getaddrinfo failed %s %s (%d): %s\n", ip, port, rc, gai_strerror(rc));
@@ -256,6 +256,7 @@ Socket* socket_accept(Socket* sock)
         return NULL;
     }
     client_socket->sock = new_socket;
+    client_socket->connected = true;
     socket_set_ip_and_port(client_socket);
     return client_socket;
 }
@@ -329,7 +330,12 @@ void socket_send_all(NetContext* ctx, Packet* packet)
 
 bool socket_sendto(Socket* src_socket, SocketAddr* dst_addr, Packet* packet)
 {
-    return sendto(*src_socket->sock, packet->buffer - PACKET_HEADER_BYTES, packet->length + PACKET_HEADER_BYTES, 0, (struct sockaddr*)&dst_addr->addr, sizeof(dst_addr->addr)) != SOCKET_ERROR;
+    return sendto(*src_socket->sock, 
+                  packet->buffer - PACKET_HEADER_BYTES, 
+                  packet->length + PACKET_HEADER_BYTES, 
+                  0, 
+                  dst_addr->addr.ai_addr,
+                  (int)dst_addr->addr.ai_addrlen) != SOCKET_ERROR;
 }
 
 Packet* socket_recv(Socket* sock)
@@ -350,8 +356,8 @@ Packet* socket_recv(Socket* sock)
     }
 
     packet = st_malloc(sizeof(Packet));
-    packet->id = (buffer[4]<<8) + buffer[5];
-    packet->length = (buffer[0]<<24)+(buffer[1]<<16)+(buffer[2]<<8)+buffer[3];
+    packet->id = ((u8)buffer[4]<<8)|(u8)buffer[5];
+    packet->length = ((u8)buffer[0]<<24)|((u8)buffer[1]<<16)|((u8)buffer[2]<<8)|(u8)buffer[3];
     packet->buffer = st_malloc((packet->length + PACKET_HEADER_BYTES) * sizeof(char));
     memcpy(packet->buffer, buffer, PACKET_HEADER_BYTES);
 
@@ -374,7 +380,7 @@ Packet* socket_recvfrom(Socket* src_socket, SocketAddr** dst_addr)
 {
     Packet* packet;
     socklen_t client_len = sizeof(struct sockaddr);
-    char buffer[PACKET_HEADER_BYTES];
+    char buffer[UDP_MAX_PAYLOAD];
     *dst_addr = st_malloc(sizeof(SocketAddr));
     ssize_t len = recvfrom(*src_socket->sock, buffer, sizeof(buffer), 0, (struct sockaddr*)&(*dst_addr)->addr, &client_len);
     if (len == SOCKET_ERROR) {
@@ -382,11 +388,10 @@ Packet* socket_recvfrom(Socket* src_socket, SocketAddr** dst_addr)
         return NULL;
     }
     packet = st_malloc(sizeof(Packet));
-    packet->id = (buffer[4]<<8) + buffer[5];
-    packet->length = (buffer[0]<<24)+(buffer[1]<<16)+(buffer[2]<<8)+buffer[3];
+    packet->id = ((u8)buffer[4]<<8)|(u8)buffer[5];
+    packet->length = ((u8)buffer[0]<<24)|((u8)buffer[1]<<16)|((u8)buffer[2]<<8)|(u8)buffer[3];
     packet->buffer = st_malloc((packet->length + PACKET_HEADER_BYTES) * sizeof(char));
-    memcpy(packet->buffer, buffer, PACKET_HEADER_BYTES);
-    recvfrom(*src_socket->sock, packet->buffer + PACKET_HEADER_BYTES, packet->length - PACKET_HEADER_BYTES, 0, (struct sockaddr*)&(*dst_addr)->addr, &client_len);
+    memcpy(packet->buffer, buffer, packet->length + PACKET_HEADER_BYTES);
     packet->buffer += PACKET_HEADER_BYTES;
     return packet;
 }
