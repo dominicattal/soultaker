@@ -320,7 +320,6 @@ Packet* socket_recvfrom(Socket* src_socket, SocketAddr** dst_addr)
     Packet* packet;
     socklen_t sender_len = sizeof(struct sockaddr_in);
     ssize_t len = recvfrom(src_socket->fd, NULL, 0, MSG_PEEK | MSG_TRUNC, NULL, NULL);
-    *dst_addr = NULL;
     if (len == (ssize_t)-1)
         return NULL;
     if (len < 6)

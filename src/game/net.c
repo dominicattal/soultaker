@@ -181,6 +181,7 @@ void game_net_join(const char* ip, const char* port)
     packet = socket_recv(server_socket);
     log_assert(packet->id == PACKET_HOST_UDP_PORT, "");
     game_net_set_host_udp_port(packet->buffer);
+    log_write(DEBUG, "udp port: %s", packet->buffer);
     packet_destroy(packet);
 
     char* buf = "Hello From UDP";
