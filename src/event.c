@@ -14,7 +14,6 @@ typedef enum {
 
     // Gui Events
     GUI_EVENT_FRAMEBUFFER_SIZE_CALLBACK,
-    GUI_EVENT_CURSOR_POS_CALLBACK,
     GUI_EVENT_SCROLL_CALLBACK,
     GUI_EVENT_MOUSE_BUTTON_CALLBACK,
     GUI_EVENT_KEY_CALLBACK,
@@ -113,9 +112,6 @@ static void execute_event(Event event)
             break;
 
         // Gui 
-        case GUI_EVENT_CURSOR_POS_CALLBACK:
-            gui_cursor_pos_callback(arg1._int, arg2._int);
-            break;
         case GUI_EVENT_SCROLL_CALLBACK:
             gui_scroll_callback(arg1._flt, arg2._flt);
             break;
@@ -202,17 +198,6 @@ void event_create_gui_framebuffer_size_callback(u32 width, u32 height)
         .type = GUI_EVENT_FRAMEBUFFER_SIZE_CALLBACK,
         .arg1._int = width,
         .arg2._int = height
-    };
-    EventList* list = get_event_list("Game");
-    event_enqueue(list, event);
-}
-
-void event_create_gui_cursor_pos_callback(i32 xpos, i32 ypos)
-{
-    Event event = (Event) {
-        .type = GUI_EVENT_CURSOR_POS_CALLBACK,
-        .arg1._int = xpos,
-        .arg2._int = ypos
     };
     EventList* list = get_event_list("Game");
     event_enqueue(list, event);

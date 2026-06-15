@@ -725,8 +725,10 @@ static void boss_start(Trigger* trigger, Entity* entity)
     data->boundary_swords_timer = 0.0;
     data->phase_pattern = 0;
     data->invulnerable_timer = 6.0;
-    entity_set_state(boss, "phase1");
-    gui_create_notification("phase1 attack1");
+    //entity_set_state(boss, "phase1");
+    //gui_create_notification("phase1 attack1");
+    entity_set_state(boss, "phase2");
+    gui_create_notification("phase2 attack1");
     map_make_boss("Asgore", boss);
     data->attack = 0;
     Wall* wall;
@@ -749,12 +751,11 @@ static void boss_start(Trigger* trigger, Entity* entity)
 
 void outpost1_boss_create(Entity* entity)
 {
-    entity->direction = vec2_create(1,0);
     Trigger* trigger = room_create_trigger(vec2_create(0,0), 10.0f);
     trigger->position = entity->position;
     trigger_set_flag(trigger, TRIGGER_FLAG_ONCE, true);
     trigger_set_flag(trigger, TRIGGER_FLAG_PLAYER, true);
-    //trigger->enter = boss_start;
+    trigger->enter = boss_start;
     entity->size = 3.0;
     entity->health = entity->max_health = 100;
     entity->speed = 10.0;
@@ -817,11 +818,7 @@ void outpost1_boss_update(Entity* entity, f32 dt)
 {
     BossData* data = entity->data;
     vec2 origin, direction;
-    data->boundary_swords_timer -= dt;
-    if (data->boundary_swords_timer < 0) {
-        entity->direction.x = -entity->direction.x;
-        data->boundary_swords_timer += 1;
-    }
+
     if (!data->started)
         return;
     data->boundary_swords_timer -= dt;

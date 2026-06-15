@@ -131,7 +131,8 @@ void window_cursor_pos_callback(GLFWwindow* window, f64 xpos, f64 ypos)
 {
     window_context.cursor.x = xpos;
     window_context.cursor.y = window_context.height - ypos;
-    event_create_gui_cursor_pos_callback(window_context.cursor.x, window_context.cursor.y);
+    game_context.cursor_moved = true;
+    //event_create_gui_cursor_pos_callback(window_context.cursor.x, window_context.cursor.y);
 }
 
 void window_scroll_callback(GLFWwindow* window, f64 xoffset, f64 yoffset)
