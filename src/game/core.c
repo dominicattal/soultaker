@@ -15,12 +15,14 @@ void* game_loop(void* vargp)
 {
     Client* client;
     f64 start, end;
+    f64 real_start;
     f32 dt;
     pthread_mutex_t* init_mutex = vargp;
     thread_link("Game");
     end = start = get_time();
     game_context.time = 0;
-    game_context.timestep = 1.0 / 400.0;
+    game_context.tps = 144;
+    game_context.timestep = 1.0 / game_context.tps;
     game_context.clients = list_create();
     client = client_create();
     client_set_username(client, string_copy("fancy"));
@@ -43,10 +45,11 @@ void* game_loop(void* vargp)
     {
         while (end - start < game_context.timestep)
             end = get_time();
-        dt = end - start;
+        dt = game_context.timestep;
         game_context.time += dt;
         start = end;
         pthread_mutex_lock(&game_context.handler_thread_mutex);
+        real_start = get_time();
         handle_callback();
         event_queue_flush();
         gui_update_comps(dt);
@@ -57,6 +60,7 @@ void* game_loop(void* vargp)
             client_update(game_context.this_client, dt);
             game_update_vertex_data();
         }
+        game_context.real_dt = get_time() - real_start;
         pthread_mutex_unlock(&game_context.handler_thread_mutex);
     }
     gui_comp_cleanup();
@@ -168,11 +172,6 @@ void game_cleanup(void)
     pthread_mutex_destroy(&game_context.getter_mutex);
     game_render_cleanup();
     gui_render_cleanup();
-}
-
-f32 game_get_dt(void)
-{
-    return 0;
 }
 
 void game_summon(i32 id)

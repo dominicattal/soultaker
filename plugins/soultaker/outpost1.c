@@ -728,8 +728,8 @@ static void boss_start(Trigger* trigger, Entity* entity)
     data->invulnerable_timer = 6.0;
     //entity_set_state(boss, "phase1");
     //gui_create_notification("phase1 attack1");
-    entity_set_state(boss, "phase4");
-    gui_create_notification("phase4 attack1");
+    entity_set_state(boss, "phase2");
+    gui_create_notification("phase2 attack1");
     map_make_boss("Asgore", boss);
     data->attack = 0;
     Wall* wall;
@@ -770,6 +770,7 @@ void outpost1_boss_create(Entity* entity)
 
 void outpost1_boss_destroy(Entity* entity)
 {
+    map_destroy_projectiles_with_owner_id(entity->uid);
 }
 
 static void spawn_parjicles(void)
@@ -1150,7 +1151,7 @@ void outpost1_boss_phase3_update(Entity* entity, f32 dt)
     }
 }
 
-static void spawn_phase4_circle_sword(f32 start_rad, vec2 origin, f32 dist_from_origin, f32 speed_per_rad, bool clockwise)
+static void spawn_phase4_circle_sword(f32 start_rad, vec2 origin, f32 dist_from_origin, f32 speed_per_rad, bool clockwise, i32 owner_uid)
 {
     for (size_t i = 0; i < sizeof(sword_offsets) / sizeof(SwordOffset); i++) {
         SwordOffset sword_offset = sword_offsets[i];
@@ -1165,6 +1166,7 @@ static void spawn_phase4_circle_sword(f32 start_rad, vec2 origin, f32 dist_from_
         proj->facing = start_rad + sword_offset.rotation;
         proj->update = sword_circle_proj_update;
         proj->data = st_malloc(sizeof(ProjCircleData));
+        proj->owner_uid = owner_uid;
         projectile_set_flag(proj, PROJECTILE_FLAG_IGNORE_LIFETIME, true);
         projectile_set_flag(proj, PROJECTILE_FLAG_AUTO_FREE_DATA, true);
         projectile_set_flag(proj, PROJECTILE_FLAG_PIERCE, true);
@@ -1201,9 +1203,9 @@ void outpost1_boss_phase4_update(Entity* entity, f32 dt)
             entity->direction = vec2_create(0, 0);
             data->phase_pattern = 2;
             for (i32 i = 0; i < 2; i++)
-                spawn_phase4_circle_sword(i*PI, entity->position, 0, 1, true);
+                spawn_phase4_circle_sword(i*PI, entity->position, 0, 1, true, entity->uid);
             for (i32 i = 0; i < 8; i++)
-                spawn_phase4_circle_sword(i*PI/4, entity->position, 8.5, 0.7, false);
+                spawn_phase4_circle_sword(i*PI/4, entity->position, 8.5, 0.7, false, entity->uid);
         }
         return;
     }

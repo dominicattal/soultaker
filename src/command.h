@@ -22,6 +22,7 @@ set [var_name] [arg1] [arg2] ...
 > set a variable. different types require different args
 > var_name can be one of
     camera_target: vec2
+    tps: i32
 
 pause
 > pause the game

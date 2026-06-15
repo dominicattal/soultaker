@@ -2325,6 +2325,18 @@ void map_cleanup(void)
     }
 }
 
+void map_destroy_projectiles_with_owner_id(i32 uid)
+{
+    Map* map = game_context.current_map;
+    if (map == NULL)
+        return;
+    for (i32 i = 0; i < map->projectiles->length; i++) {
+        Projectile* proj = list_get(map->projectiles, i);
+        if (proj->owner_uid == uid)
+            proj->lifetime = -1;
+    }
+}
+
 void bucket_create(Bucket* bucket)
 {
     bucket->entities = list_create();

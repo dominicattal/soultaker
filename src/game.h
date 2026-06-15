@@ -296,6 +296,8 @@ void map_set_inactive(Map* map);
 void map_destroy(Map* map);
 void map_cleanup(void);
 
+void map_destroy_projectiles_with_owner_id(i32 uid);
+
 // functions for sending map data over networking
 // clients only care about objs on screen, so things like nodes, palettes, etc
 // are not sent. collision is only done on the server, so they also do not need info
@@ -999,7 +1001,8 @@ typedef struct {
     pthread_mutex_t getter_mutex;
     f64 time;
     f32 timestep;
-    f32 dt;
+    i32 tps;
+    f32 real_dt;
     bool kill_thread;
     bool halt_input;
     bool halt_render;
@@ -1080,7 +1083,6 @@ void collide_projectile_obstacle(Projectile* projectile, Obstacle* obstacle);
 
 i32 entity_get_id(const char* name);
 
-f32 game_get_dt(void);
 f32 game_get_boss_health(void);
 f32 game_get_boss_max_health(void);
 
