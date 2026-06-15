@@ -70,7 +70,7 @@ void camera_update(Camera* camera, f32 dt)
     lock_onto_target(camera);
 }
 
-void camera_update_direction(i32 client_uid, vec2 mag)
+void camera_update_direction(i32 client_uid, vec2 mag, f32 dt)
 {
     Client* client = game_context.uid_map[client_uid];
     Camera* camera = &client->camera;
@@ -99,7 +99,7 @@ void camera_update_direction(i32 client_uid, vec2 mag)
         else
             entity_set_flag(entity, ENTITY_FLAG_MOVING, false);
     } else {
-        camera->target = vec2_add(camera->target, vec2_scale(direction, camera->move_speed * game_context.dt));
+        camera->target = vec2_add(camera->target, vec2_scale(direction, camera->move_speed * dt));
     }
 }
 

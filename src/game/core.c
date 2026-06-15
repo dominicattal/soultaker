@@ -5,8 +5,6 @@
 
 GameContext game_context;
 
-#define MIN_DT  (1.0 / 144.0)
-
 void handle_callback(void)
 {
     if (game_context.cursor_moved)
@@ -17,11 +15,12 @@ void* game_loop(void* vargp)
 {
     Client* client;
     f64 start, end;
+    f32 dt;
     pthread_mutex_t* init_mutex = vargp;
     thread_link("Game");
     end = start = get_time();
-    game_context.dt = 0;
     game_context.time = 0;
+    game_context.timestep = 1.0 / 400.0;
     game_context.clients = list_create();
     client = client_create();
     client_set_username(client, string_copy("fancy"));
@@ -42,22 +41,20 @@ void* game_loop(void* vargp)
     game_context.singleplayer = true;
     while (!game_context.kill_thread)
     {
-        while (end - start < MIN_DT)
+        while (end - start < game_context.timestep)
             end = get_time();
-        game_context.dt = end - start;
-        if (game_context.dt > 0.1)
-            game_context.dt = 0.1;
-        game_context.time += game_context.dt;
+        dt = end - start;
+        game_context.time += dt;
         start = end;
         pthread_mutex_lock(&game_context.handler_thread_mutex);
         handle_callback();
         event_queue_flush();
-        gui_update_comps(game_context.dt);
-        game_process_input();
+        gui_update_comps(dt);
+        game_process_input(dt);
         if (game_context.current_map != NULL) {
             if (!game_context.paused)
-                map_update(game_context.current_map);
-            client_update(game_context.this_client, game_context.dt);
+                map_update(game_context.current_map, dt);
+            client_update(game_context.this_client, dt);
             game_update_vertex_data();
         }
         pthread_mutex_unlock(&game_context.handler_thread_mutex);
@@ -175,7 +172,7 @@ void game_cleanup(void)
 
 f32 game_get_dt(void)
 {
-    return game_context.dt;
+    return 0;
 }
 
 void game_summon(i32 id)

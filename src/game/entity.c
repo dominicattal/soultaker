@@ -8,13 +8,9 @@
 
 extern GameContext game_context;
 
-typedef void (*CreateFuncPtr)(Entity*);
-typedef void (*DestroyFuncPtr)(Entity*);
-typedef void (*UpdateFuncPtr)(Entity*, f32);
-
 typedef struct {
     char* name;
-    UpdateFuncPtr update;
+    EntityUpdateFuncPtr update;
     i32 num_frames;
     f32* frame_lengths;
     i32* frames;
@@ -22,9 +18,9 @@ typedef struct {
 
 typedef struct {
     char* name;
-    CreateFuncPtr create;
-    DestroyFuncPtr destroy;
-    UpdateFuncPtr update;
+    EntityCreateFuncPtr create;
+    EntityDestroyFuncPtr destroy;
+    EntityUpdateFuncPtr update;
     EntityState* states;
     i32 num_states;
     bool bidirectional;
@@ -385,14 +381,14 @@ Entity* entity_create(vec2 position, i32 id)
     entity->state = 0;
     entity->frame = 0;
 
-    CreateFuncPtr create = entity_context.infos[id].create;
+    EntityCreateFuncPtr create = entity_context.infos[id].create;
     if (create != NULL)
         create(entity);
 
     return entity;
 }
 
-static void handle_lava(Entity* entity, f32 dt)
+static void handle_lava(Entity* entity, f64 dt)
 {
     if (entity_get_flag(entity, ENTITY_FLAG_IN_LAVA)) {
         entity->tile_timer += dt;
@@ -425,7 +421,7 @@ void entity_update(Entity* entity, f32 dt)
     }
     handle_lava(entity, dt);
 
-    UpdateFuncPtr update;
+    EntityUpdateFuncPtr update;
     update = entity_context.infos[entity->id].update;
     if (update != NULL)
         update(entity, dt);
@@ -504,7 +500,7 @@ i32 entity_get_texture(Entity* entity)
 
 void entity_destroy(Entity* entity)
 {
-    DestroyFuncPtr destroy = entity_context.infos[entity->id].destroy;
+    EntityDestroyFuncPtr destroy = entity_context.infos[entity->id].destroy;
     if (destroy != NULL)
         destroy(entity);
     if (entity_get_flag(entity, ENTITY_FLAG_AUTO_FREE_DATA))

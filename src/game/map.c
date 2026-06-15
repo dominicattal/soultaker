@@ -2878,7 +2878,7 @@ void buckets_remove_free_wall(Map* map, Wall* wall)
         buckets_remove_object_spatial_hash(map, wall, BUCKET_FREE_WALLS, &wall->map_info);
 }
 
-static void map_update_objects(Map* map)
+static void map_update_objects(Map* map, f32 dt)
 {
     i32 i, once, used, delete;
     // trigger updates MUST be before entity updates since trigger updates
@@ -2904,7 +2904,7 @@ static void map_update_objects(Map* map)
     while (i < map->entities->length) {
         Entity* entity = list_get(map->entities, i);
         map_context.current_map_node = entity->map_info.spawn_node;
-        entity_update(entity, game_context.dt);
+        entity_update(entity, dt);
         if (entity->health <= 0) {
             if (entity_get_flag(entity, ENTITY_FLAG_BOSS))
                 map_unmake_boss(entity);
@@ -2919,7 +2919,7 @@ static void map_update_objects(Map* map)
     i = 0;
     while (i < map->projectiles->length) {
         Projectile* projectile = list_get(map->projectiles, i);
-        projectile_update(projectile, game_context.dt);
+        projectile_update(projectile, dt);
         if (projectile->lifetime <= 0) {
             buckets_remove_projectile(map, projectile);
             projectile_destroy(list_remove(map->projectiles, i));
@@ -2931,7 +2931,7 @@ static void map_update_objects(Map* map)
     i = 0;
     while (i < map->particles->length) {
         Particle* particle = list_get(map->particles, i);
-        particle_update(particle, game_context.dt);
+        particle_update(particle, dt);
         if (particle->lifetime <= 0)
             particle_destroy(list_remove(map->particles, i));
         else
@@ -2940,7 +2940,7 @@ static void map_update_objects(Map* map)
     i = 0;
     while (i < map->parjicles->length) {
         Parjicle* parjicle = list_get(map->parjicles, i);
-        parjicle_update(parjicle, game_context.dt);
+        parjicle_update(parjicle, dt);
         if (parjicle->lifetime <= 0)
             parjicle_destroy(list_remove(map->parjicles, i));
         else
@@ -2949,7 +2949,7 @@ static void map_update_objects(Map* map)
     i = 0;
     while (i < map->aoes->length) {
         AOE* aoe = list_get(map->aoes, i);
-        aoe_update(aoe, game_context.dt);
+        aoe_update(aoe, dt);
         if ((!aoe_get_flag(aoe, AOE_FLAG_LINGER) && aoe_get_flag(aoe, AOE_FLAG_USED)) || (aoe_get_flag(aoe, AOE_FLAG_LINGER) && aoe->lifetime <= 0)) {
             buckets_remove_aoe(map, aoe);
             aoe_destroy(list_remove(map->aoes, i));
@@ -2961,13 +2961,13 @@ static void map_update_objects(Map* map)
     }
     while  (i < map->lines->length) {
         Line* line = list_get(map->lines, i);
-        line_update(line, game_context.dt);
+        line_update(line, dt);
         if (line->lifetime <= 0)
             line_destroy(list_remove(map->lines, i));
         else
             i++;
     }
-    player_update(&game_context.this_client->player, game_context.dt);
+    player_update(&game_context.this_client->player, dt);
 }
 
 static void map_collide_tilemap(Map* map)
@@ -3117,12 +3117,12 @@ void map_collide_objects(Map* map)
         map_collide_objects_naive(map);
 }
 
-void map_update(Map* map)
+void map_update(Map* map, f32 dt)
 {
     if (map == NULL)
         return;
     if (game_context.singleplayer || game_context.hosting) {
-        map_update_objects(map);
+        map_update_objects(map, dt);
         map_collide_tilemap(map);
         map_collide_objects(map);
     }
