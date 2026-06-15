@@ -41,7 +41,7 @@ static void lock_onto_target(Camera* camera)
         camera->position = vec3_sub(position, vec3_scale(camera->facing, DISTANCE_FROM_TARGET));
         camera->target = pos2;
     } else if (!camera->follow) {
-        position = vec3_create(camera->target.x, 0, camera->target.y);
+        position = vec3_create(camera->target.x, 0.0f, camera->target.y);
         camera->position = vec3_sub(position, vec3_scale(camera->facing, DISTANCE_FROM_TARGET));
     }
 }

@@ -5,7 +5,13 @@
 
 GameContext game_context;
 
-#define MIN_DT  0.1
+#define MIN_DT  (1.0 / 144.0)
+
+void handle_callback(void)
+{
+    if (game_context.cursor_moved)
+        gui_cursor_pos_callback(window_context.cursor.x, window_context.cursor.y);
+}
 
 void* game_loop(void* vargp)
 {
@@ -44,9 +50,10 @@ void* game_loop(void* vargp)
         game_context.time += game_context.dt;
         start = end;
         pthread_mutex_lock(&game_context.handler_thread_mutex);
-        game_process_input();
+        handle_callback();
         event_queue_flush();
         gui_update_comps(game_context.dt);
+        game_process_input();
         if (game_context.current_map != NULL) {
             if (!game_context.paused)
                 map_update(game_context.current_map);

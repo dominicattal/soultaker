@@ -992,13 +992,14 @@ typedef struct {
     pthread_mutex_t handler_thread_mutex;
     pthread_mutex_t getter_mutex;
     f64 time;
-    f32 dt;
+    f64 dt;
     bool kill_thread;
     bool halt_input;
     bool halt_render;
     bool paused;
     bool hosting;
     bool singleplayer;
+    bool cursor_moved;
 
 } GameContext;
 

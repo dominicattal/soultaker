@@ -74,3 +74,7 @@
 
 ### 2026-6-11
 - `map level_1` -> `map outpost` causes seg fault
+
+### 2026-6-14
+- position of player and camera target not synced when rendering but is synced in code
+- needed to move lock before updating data swap, for some reason. still dont understand the reason, commit 19f203fd17889db74c5fd50d85c780bb1cbab5de 
