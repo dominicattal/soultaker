@@ -66,19 +66,19 @@ char* tile_write(Tile* tile, char* buffer)
     return buffer;
 }
 
-Tile* tile_read(char** buffer)
+Tile* tile_read(char* buffer)
 {
     Tile* tile = st_calloc(1, sizeof(Tile));
-    memcpy(&tile->position, *buffer, sizeof(tile->position));
-    *buffer += sizeof(tile->position);
-    memcpy(&tile->tex, *buffer, sizeof(tile->tex));
-    *buffer += sizeof(tile->tex);
-    memcpy(&tile->minimap_color, *buffer, sizeof(tile->minimap_color));
-    *buffer += sizeof(tile->minimap_color);
-    memcpy(&tile->flags, *buffer, sizeof(tile->flags));
-    *buffer += sizeof(tile->flags);
-    memcpy(&tile->uid, *buffer, sizeof(tile->uid));
-    *buffer += sizeof(tile->uid);
+    memcpy(&tile->position, buffer, sizeof(tile->position));
+    buffer += sizeof(tile->position);
+    memcpy(&tile->tex, buffer, sizeof(tile->tex));
+    buffer += sizeof(tile->tex);
+    memcpy(&tile->minimap_color, buffer, sizeof(tile->minimap_color));
+    buffer += sizeof(tile->minimap_color);
+    memcpy(&tile->flags, buffer, sizeof(tile->flags));
+    buffer += sizeof(tile->flags);
+    memcpy(&tile->uid, buffer, sizeof(tile->uid));
+    buffer += sizeof(tile->uid);
     return tile;
 }
 

@@ -132,7 +132,7 @@ static char* parse_set(List* string_views, const char* command)
     var_name = string_view_c_str(string_view, command);
     if (strcmp(var_name, "camera_target") == 0) {
         if (string_views->length < 4) {
-            response = string_copy("camera_target requires 2 numbers");
+            response = string_copy("set camera_target {x} {z}");
             goto fail;
         }
         string_view = list_get(string_views, 2);
@@ -147,7 +147,7 @@ static char* parse_set(List* string_views, const char* command)
         response = string_create("set camera target to %.3f %.3f", x, z);
     } else if (strcmp(var_name, "tps") == 0) {
         if (string_views->length < 3) {
-            response = string_copy("camera_target requires 2 numbers");
+            response = string_copy("set tps {tps}");
             goto fail;
         }
         string_view = list_get(string_views, 2);

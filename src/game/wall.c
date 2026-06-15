@@ -37,6 +37,7 @@ bool wall_get_flag(Wall* wall, WallFlagEnum flag)
 
 void wall_destroy(Wall* wall)
 {
+    game_free_uid(wall->uid);
     st_free(wall);
 }
 
@@ -78,24 +79,24 @@ char* wall_write(Wall* wall, char* buffer)
     return buffer;
 }
 
-Wall* wall_read(char** buffer)
+Wall* wall_read(char* buffer)
 {
     Wall* wall = st_calloc(1, sizeof(Wall));
-    memcpy(&wall->position, *buffer, sizeof(wall->position));
-    *buffer += sizeof(wall->position);
-    memcpy(&wall->size, *buffer, sizeof(wall->size));
-    *buffer += sizeof(wall->size);
-    memcpy(&wall->height, *buffer, sizeof(wall->height));
-    *buffer += sizeof(wall->height);
-    memcpy(&wall->top_tex, *buffer, sizeof(wall->top_tex));
-    *buffer += sizeof(wall->top_tex);
-    memcpy(&wall->side_tex, *buffer, sizeof(wall->side_tex));
-    *buffer += sizeof(wall->side_tex);
-    memcpy(&wall->minimap_color, *buffer, sizeof(wall->minimap_color));
-    *buffer += sizeof(wall->minimap_color);
-    memcpy(&wall->flags, *buffer, sizeof(wall->flags));
-    *buffer += sizeof(wall->flags);
-    memcpy(&wall->uid, *buffer, sizeof(wall->uid));
-    *buffer += sizeof(wall->uid);
+    memcpy(&wall->position, buffer, sizeof(wall->position));
+    buffer += sizeof(wall->position);
+    memcpy(&wall->size, buffer, sizeof(wall->size));
+    buffer += sizeof(wall->size);
+    memcpy(&wall->height, buffer, sizeof(wall->height));
+    buffer += sizeof(wall->height);
+    memcpy(&wall->top_tex, buffer, sizeof(wall->top_tex));
+    buffer += sizeof(wall->top_tex);
+    memcpy(&wall->side_tex, buffer, sizeof(wall->side_tex));
+    buffer += sizeof(wall->side_tex);
+    memcpy(&wall->minimap_color, buffer, sizeof(wall->minimap_color));
+    buffer += sizeof(wall->minimap_color);
+    memcpy(&wall->flags, buffer, sizeof(wall->flags));
+    buffer += sizeof(wall->flags);
+    memcpy(&wall->uid, buffer, sizeof(wall->uid));
+    buffer += sizeof(wall->uid);
     return wall;
 }

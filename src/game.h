@@ -11,16 +11,27 @@
 #define GRAVITY                 -9.8
 #define PROJ_PIERCE_COOLDOWN    1
 #define MAX_UID                 65535
+#define MAP_MAX_WIDTH   1000
+#define MAP_MAX_LENGTH  1000
 
 typedef enum PacketEnum {
+
     PACKET_TEST,
     PACKET_HOST_UDP_PORT,
+    PACKET_CLIENT_UDP_PORT,
     PACKET_HOST_TO_CLIENT_USERNAME,
     PACKET_HOST_TO_CLIENT_HOST_UID,
     PACKET_HOST_TO_CLIENT_CLIENT_UID,
     PACKET_CLIENT_TO_HOST_USERNAME,
     PACKET_MESSAGE,
     PACKET_LOAD_GAME,
+
+    PACKET_CREATE_GAME_OBJ,
+    PACKET_UPDATE_GAME_OBJ,
+    PACKET_DESTROY_GAME_OBJ,
+
+    PACKET_SYNC_CLIENT_ENTITY,
+
     NUM_PACKET_TYPES
 } PacketEnum;
 
@@ -290,6 +301,7 @@ void map_unmake_boss(Entity* entity);
 void map_init(void);
 i32  map_get_id(const char* name);
 Map* map_create(i32 id);
+
 void map_update(Map* map, f32 dt);
 void map_set_active(Map* map);
 void map_set_inactive(Map* map);
@@ -297,13 +309,6 @@ void map_destroy(Map* map);
 void map_cleanup(void);
 
 void map_destroy_projectiles_with_owner_id(i32 uid);
-
-// functions for sending map data over networking
-// clients only care about objs on screen, so things like nodes, palettes, etc
-// are not sent. collision is only done on the server, so they also do not need info
-// for that
-Map*  map_create_from_binary(i32 buffer_len, char* buffer);
-void map_write_data_and_send(Map* map);
 
 // switch collision strategy for map
 void map_use_quadtree(Map* map, i32 split_threshold);
@@ -681,7 +686,7 @@ void entity_cleanup(void);
 
 size_t  entity_sizeof(void);
 char*   entity_write(Entity* entity, char* buffer);
-Entity* entity_read(char** buffer);
+Entity* entity_read(char* buffer);
 
 // Destroy every entity
 void entity_clear(void);
@@ -750,7 +755,7 @@ typedef enum {
  
 size_t  tile_sizeof(void);
 char*   tile_write(Tile* tile, char* buffer);
-Tile*   tile_read(char** buffer);
+Tile*   tile_read(char* buffer);
 void    tile_set_flag(Tile* tile, TileFlagEnum flag, bool val);
 bool    tile_get_flag(Tile* tile, TileFlagEnum flag);
 Tile*   tile_create(vec2 position, u32 minimap_color);
@@ -778,11 +783,11 @@ typedef enum {
 
 size_t  wall_sizeof(void);
 char*   wall_write(Wall* wall, char* buffer);
-Wall*   wall_read(char** buffer);
-Wall* wall_create(vec2 position, f32 height, u32 minimap_color);
-void wall_set_flag(Wall* wall, WallFlagEnum flag, bool val);
-bool wall_get_flag(Wall* wall, WallFlagEnum flag);
-void wall_destroy(Wall* wall);
+Wall*   wall_read(char* buffer);
+Wall*   wall_create(vec2 position, f32 height, u32 minimap_color);
+void    wall_set_flag(Wall* wall, WallFlagEnum flag, bool val);
+bool    wall_get_flag(Wall* wall, WallFlagEnum flag);
+void    wall_destroy(Wall* wall);
 
 //**************************************************************************
 // Projectile _projectile definitions
@@ -961,7 +966,16 @@ void parjicle_destroy(Parjicle* parjicle);
 typedef struct Client {
     Camera camera;
     Player player;
+
+    // socket to communicate with client. bounding to other machine
     Socket* tcp_socket;
+
+    // socket for sendto and recvfrom. bounding to this machine
+    Socket* udp_socket;
+
+    // socket address for this client
+    SocketAddr* udp_address;
+
     char* username;
     i32 uid;
 } Client;
@@ -972,6 +986,12 @@ void client_destroy(Client* client);
 
 // client owns username
 void client_set_username(Client* client, char* username);
+
+// functions for mp clients grouped together
+void client_change_map(void);
+void client_sync_entity(Packet* packet);
+Map* client_map_create(void);
+void client_map_create_game_object(Packet* packet);
 
 //**************************************************************************
 // Game Context
@@ -1001,6 +1021,7 @@ typedef struct {
     pthread_mutex_t getter_mutex;
     f64 time;
     f32 timestep;
+    f32 net_timer;
     i32 tps;
     f32 real_dt;
     bool kill_thread;
@@ -1033,6 +1054,10 @@ void game_net_set_host_ip(const char* ip);
 void game_net_set_host_tcp_port(const char* port);
 void game_net_set_host_udp_port(const char* port);
 
+void game_net_send_tcp_packet_to_clients(Packet* packet);
+void game_net_send_packet_udp(Client* client, Packet* packet);
+void game_net_send_packet_tcp(Client* client, Packet* packet);
+
 // setup and cleanup opengl buffers. this is
 // done on the main thread on program creation
 // and termination
@@ -1060,7 +1085,6 @@ void game_render_update_walls(void);
 void game_update_vertex_data(void);
 
 void game_change_map(i32 id);
-void game_change_map_from_binary(i32 buffer_len, char* buffer);
 
 // camera functions that pass through game to map the client's camera
 

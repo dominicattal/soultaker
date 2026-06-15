@@ -43,3 +43,7 @@ collision algorithms
 replace entity state with animation
 
 fix projectile rotation, doesnt work when tilt
+
+
+
+should change socket_set_thread_id to use mutex instead of thread so i can have several threads running

@@ -27,9 +27,12 @@ Packet* packet_create(u32 id, int length, const char* buffer)
     packet->buffer[1] = (length>>16) & 0xFF;
     packet->buffer[2] = (length>>8) & 0xFF;
     packet->buffer[3] = length & 0xFF;
-    packet->buffer[4] = (id>>8) & 0xFF;
-    packet->buffer[5] = id & 0xFF;
-    memcpy(packet->buffer + PACKET_HEADER_BYTES, buffer, length);
+    packet->buffer[4] = (id>>24) & 0xFF;
+    packet->buffer[5] = (id>>16) & 0xFF;
+    packet->buffer[6] = (id>>8) & 0xFF;
+    packet->buffer[7] = id & 0xFF;
+    if (buffer != NULL)
+        memcpy(packet->buffer + PACKET_HEADER_BYTES, buffer, length);
     packet->buffer += PACKET_HEADER_BYTES;
     return packet;
 }

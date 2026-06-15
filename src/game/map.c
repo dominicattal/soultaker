@@ -11,8 +11,6 @@
 // or a boss room.
 
 #define DEFAULT_WALL_HEIGHT 1.5f
-#define MAP_MAX_WIDTH   1000
-#define MAP_MAX_LENGTH  1000
 #define WHITE   0xFFFFFF
 #define GRAY    0x808080
 #define BLACK   0x000000
@@ -1530,7 +1528,6 @@ static Map* generate_map(i32 id)
 
     map->width = MAP_MAX_WIDTH;
     map->length = MAP_MAX_LENGTH;
-    map->root = NULL;
     map->roomset = roomset;
     map->tile_mask = quadmask_create(MAP_MAX_WIDTH, MAP_MAX_LENGTH);
     map->fog_mask = quadmask_create(MAP_MAX_WIDTH, MAP_MAX_LENGTH);
@@ -1863,6 +1860,17 @@ Entity* map_create_entity(vec2 position, i32 id)
     entity = entity_create(position, id);
     list_append(map->entities, entity);
     buckets_insert_entity(map, entity);
+    if (game_context.hosting) {
+        size_t size = sizeof(GameObj) + entity_sizeof();
+        char* buffer = st_malloc(size);
+        GameObj type = GAME_OBJ_ENTITY;
+        memcpy(buffer, &type, sizeof(GameObj));
+        entity_write(entity, buffer + sizeof(GameObj));
+        Packet* packet = packet_create(PACKET_CREATE_GAME_OBJ, size, buffer);
+        game_net_send_tcp_packet_to_clients(packet);
+        st_free(buffer);
+        packet_destroy(packet);
+    }
     return entity;
 }
 
@@ -2446,6 +2454,11 @@ Map* map_create(i32 id)
         entity = map_create_entity(map->spawn_point, 0);
         player_reset(client->uid, entity);
         entity->max_health = 101;
+        if (client != game_context.this_client) {
+            Packet* packet = packet_create(PACKET_SYNC_CLIENT_ENTITY, sizeof(entity->uid), (char*)&entity->uid);
+            game_net_send_packet_tcp(client, packet);
+            packet_destroy(packet);
+        }
     }
 
     game_context.current_map = map;
@@ -3129,6 +3142,19 @@ void map_collide_objects(Map* map)
         map_collide_objects_naive(map);
 }
 
+static void map_send_state(Map* map, f32 dt)
+{
+    char* buf = "hello world";
+    Packet* packet = packet_create(PACKET_MESSAGE, strlen(buf)+1, buf);
+    for (i32 i = 0; i < game_context.clients->length; i++) {
+        Client* client = list_get(game_context.clients, i);
+        if (client != game_context.this_client) {
+            //socket_send(client->udp_socket, packet);
+        }
+    }
+    packet_destroy(packet);
+}
+
 void map_update(Map* map, f32 dt)
 {
     if (map == NULL)
@@ -3137,6 +3163,8 @@ void map_update(Map* map, f32 dt)
         map_update_objects(map, dt);
         map_collide_tilemap(map);
         map_collide_objects(map);
+        if (game_context.hosting)
+            map_send_state(map, dt);
     }
 }
 
@@ -3182,157 +3210,4 @@ found:
     gui_destroy_boss_healthbar(entity);
     pthread_mutex_lock(&game_context.getter_mutex);
     pthread_mutex_unlock(&game_context.getter_mutex);
-}
-
-
-/*
-Binary format:
-    4 bytes - number of tiles
-    foreach tile
-        x bytes - tile info
-    4 bytes - number of walls
-    foreach tile
-        x bytes - wall info
-    4 bytes - number of entities
-    foreach entitiy
-        x bytes - entity info
-    4 bytes - number of clients
-    foreach client
-        4 bytes - uid of the client
-        4 bytes - uid of entity for the client
-*/
-Map* map_create_from_binary(i32 buffer_len, char* buffer)
-{
-    game_render_update_obstacles();
-    game_render_update_parstacles();
-    game_render_update_tiles();
-    game_render_update_walls();
-
-    clear_map();
-    game_context.this_client->player.entity = NULL;
-
-    Map* map = st_calloc(1, sizeof(Map));
-    map->bosses = list_create();
-    map->entities = list_create();
-    map->tiles = list_create();
-    map->walls = list_create();
-    map->free_walls = list_create();
-    map->projectiles = list_create();
-    map->obstacles = list_create();
-    map->parstacles = list_create();
-    map->particles = list_create();
-    map->parjicles = list_create();
-    map->triggers = list_create();
-    map->aoes = list_create();
-    map->lines = list_create();
-    map->tile_mask = quadmask_create(1000, 1000);
-    map->fog_mask = quadmask_create(1000, 1000);
-
-    game_context.current_map = map;
-
-    i32 num_tiles;
-    memcpy(&num_tiles, buffer, sizeof(i32));
-    buffer += sizeof(i32);
-    for (i32 i = 0; i < num_tiles; i++) {
-        Tile* tile = tile_read(&buffer);
-        log_write(DEBUG, "%d", tile->uid);
-        game_set_uid(tile, GAME_OBJ_TILE, tile->uid);
-        list_append(map->tiles, tile);
-    }
-
-    i32 num_walls;
-    memcpy(&num_walls, buffer, sizeof(i32));
-    buffer += sizeof(i32);
-    for (i32 i = 0; i < num_walls; i++) {
-        Wall* wall = wall_read(&buffer);
-        game_set_uid(wall, GAME_OBJ_WALL, wall->uid);
-        list_append(map->walls, wall);
-    }
-
-    i32 num_entities;
-    memcpy(&num_entities, buffer, sizeof(i32));
-    buffer += sizeof(i32);
-    for (i32 i = 0; i < num_entities; i++) {
-        Entity* entity = entity_read(&buffer);
-        game_set_uid(entity, GAME_OBJ_ENTITY, entity->uid);
-        list_append(map->entities, entity);
-    }
-
-    Client* this_client = game_context.this_client;
-    log_write(DEBUG, "client_id=%d", game_context.this_client->uid);
-    i32 num_clients, client_uid, entity_uid;
-    memcpy(&num_clients, buffer, sizeof(i32));
-    buffer += sizeof(i32);
-    log_write(DEBUG, "num_clients=%d", num_clients);
-    for (i32 i = 0; i < num_clients; i++) {
-        memcpy(&client_uid, buffer, sizeof(i32));
-        buffer += sizeof(i32);
-        memcpy(&entity_uid, buffer, sizeof(i32));
-        buffer += sizeof(i32);
-        log_write(DEBUG, "%d %d", client_uid, entity_uid);
-        if (client_uid == this_client->uid) {
-            Entity* entity = game_context.uid_map[entity_uid];
-            player_reset(this_client->uid, entity);
-        }
-    }
-
-    return map;
-}
-
-void map_write_data_and_send(Map* map)
-{
-    if (game_context.clients->length <= 1)
-        return;
-    char* mut_buffer;
-    char* org_buffer;
-    size_t buffer_len = 0;
-    i32 tile_length = map->tiles->length;
-    i32 wall_length = map->walls->length;
-    i32 entity_length = map->entities->length;
-    // tile
-    buffer_len += sizeof(i32);
-    buffer_len += tile_length * tile_sizeof();
-    // wall
-    buffer_len += sizeof(i32);
-    buffer_len += wall_length * wall_sizeof();
-    // entity
-    buffer_len += sizeof(i32);
-    buffer_len += entity_length * entity_sizeof();
-    // clients
-    buffer_len += sizeof(i32);
-    buffer_len += game_context.clients->length * sizeof(i32);
-    buffer_len += game_context.clients->length * sizeof(i32);
-    mut_buffer = org_buffer = st_malloc(buffer_len);
-
-    memcpy(mut_buffer, &tile_length, sizeof(i32));
-    mut_buffer += sizeof(i32);
-    for (i32 i = 0; i < tile_length; i++)
-        mut_buffer = tile_write(list_get(map->tiles, i), mut_buffer);
-
-    memcpy(mut_buffer, &wall_length, sizeof(i32));
-    mut_buffer += sizeof(i32);
-    for (i32 i = 0; i < wall_length; i++)
-        mut_buffer = wall_write(list_get(map->walls, i), mut_buffer);
-
-    memcpy(mut_buffer, &entity_length, sizeof(i32));
-    mut_buffer += sizeof(i32);
-    for (i32 i = 0; i < entity_length; i++)
-        mut_buffer = entity_write(list_get(map->entities, i), mut_buffer);
-    
-    memcpy(mut_buffer, &game_context.clients->length, sizeof(i32));
-    mut_buffer += sizeof(i32);
-    for (i32 i = 0; i < game_context.clients->length; i++) {
-        Client* client = list_get(game_context.clients, i);
-        log_write(DEBUG, "A: %d %d", client->uid, client->player.entity->uid);
-        memcpy(mut_buffer, &client->uid, sizeof(i32));
-        mut_buffer += sizeof(i32);
-        memcpy(mut_buffer, &client->player.entity->uid, sizeof(i32));
-        mut_buffer += sizeof(i32);
-    }
-
-    log_assert(mut_buffer, org_buffer + buffer_len, "pointers do not match");
-    Packet* packet = packet_create(PACKET_LOAD_GAME, buffer_len, org_buffer);
-    socket_send_all(game_context.net, packet);
-    packet_destroy(packet);
-    st_free(org_buffer);
 }

@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include <string.h>
 
+#define TRACK_POINTERS
 #ifdef TRACK_POINTERS
 
 typedef struct {
@@ -90,7 +91,7 @@ static void _print_pointers(void)
     pthread_mutex_lock(&mutex);
     for (int i = 0; i < pointers.length; i++) {
         Pointer* ptr = pointers.buffer[i];
-        sprintf(string+idx, "%p %-16llx %s:%-8d\n", ptr->addr, ptr->size, ptr->file, ptr->line); 
+        sprintf(string+idx, "%p %-16llx %s:%-8d\n", ptr->addr, (long long unsigned int)ptr->size, ptr->file, ptr->line); 
         idx += 16 + 1 + 16 + 1 + strlen(ptr->file) + 1 + 8 + 1;
     }
     pthread_mutex_unlock(&mutex);

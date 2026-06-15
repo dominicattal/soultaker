@@ -108,16 +108,14 @@ void game_free_uid(i32 uid)
 
 void game_change_map(i32 id)
 {
+    if (game_context.hosting) {
+        Packet* packet = packet_create(PACKET_LOAD_GAME, 0, NULL);
+        game_net_send_tcp_packet_to_clients(packet);
+        packet_destroy(packet);
+    }
+
     gui_preset_load(GUI_PRESET_GAME);
     Map* map = map_create(id);
-    if (game_context.hosting)
-        map_write_data_and_send(map);
-}
-
-void game_change_map_from_binary(i32 buffer_len, char* buffer)
-{
-    gui_preset_load(GUI_PRESET_GAME);
-    map_create_from_binary(buffer_len, buffer);
 }
 
 void game_halt_input(void)
