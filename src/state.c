@@ -32,7 +32,7 @@ void state_loop(void)
     while (!window_closed()) {
         start = get_time();
         glfwPollEvents();
-        game_process_input();
+        game_update_keys();
         renderer_render();
         glfwSwapBuffers(window_context.handle);
         end = get_time();

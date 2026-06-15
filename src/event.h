@@ -21,9 +21,6 @@ void event_cleanup(void);
 void event_queue_flush(void);
 
 // Game events
-void event_create_game_camera_update_direction(i32 client_id, vec2 mag);
-void event_create_game_camera_update_rotation(i32 client_id, f32 mag);
-void event_create_game_camera_update_tilt(i32 client_id, f32 mag);
 void event_create_game_framebuffer_size_callback(void);
 void event_create_game_change_map(i32 id);
 
