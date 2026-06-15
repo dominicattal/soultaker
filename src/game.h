@@ -98,7 +98,7 @@ typedef bool (*RoomsetBranchFuncPtr)(LocalMapGenerationSettings*);
 typedef void (*UseFuncPtr)(Player*, vec2, vec2);
 
 //**************************************************************************
-// Camera declarations
+// Camera declarations _camera
 //**************************************************************************
 
 typedef struct Camera {
@@ -119,14 +119,14 @@ void camera_framebuffer_size_callback(void);
 void camera_zoom(Camera* camera, i32 mag);
 void camera_minimap_zoom(Camera* camera, i32 mag);
 
-void camera_update_direction(i32 client_uid, vec2 mag);
+void camera_update_direction(i32 client_uid, vec2 mag, f32 dt);
 void camera_update_rotation(i32 client_uid, f32 mag);
 void camera_update_tilt(i32 client_uid, f32 mag);
 void camera_rotate(Camera* camera, f32 dt);
 void camera_tilt(Camera* camera, f32 dt);
 
 //**************************************************************************
-// Maps. See docs/maps.md for more information
+// Maps. _maps See docs/maps.md for more information
 //**************************************************************************
 
 typedef struct LocalMapGenerationSettings {
@@ -290,7 +290,7 @@ void map_unmake_boss(Entity* entity);
 void map_init(void);
 i32  map_get_id(const char* name);
 Map* map_create(i32 id);
-void map_update(Map* map);
+void map_update(Map* map, f32 dt);
 void map_set_active(Map* map);
 void map_set_inactive(Map* map);
 void map_destroy(Map* map);
@@ -411,7 +411,7 @@ Tile*           room_set_tilemap_tile(i32 x, i32 z, u32 minimap_color);
 Wall*           room_set_tilemap_wall(i32 x, i32 z, f32 height, u32 minimap_color);
 
 //**************************************************************************
-// Line definitions
+// Line _line definitions
 //**************************************************************************
 
 typedef struct Line {
@@ -431,7 +431,7 @@ void    line_update(Line* line, f32 dt);
 void    line_destroy(Line* line);
 
 //**************************************************************************
-// Trigger definitions
+// Trigger _trigger definitions
 //**************************************************************************
 
 typedef struct Trigger {
@@ -469,7 +469,7 @@ void trigger_set_flag(Trigger* trigger, TriggerFlagEnum flag, bool val);
 bool trigger_get_flag(Trigger* trigger, TriggerFlagEnum flag);
 
 //**************************************************************************
-// Item definitions
+// Item _item definitions
 //**************************************************************************
 
 typedef enum StatEnum {
@@ -534,7 +534,7 @@ char*   item_get_tooltip(Item* item);
 void    item_destroy(Item* item);
 
 //**************************************************************************
-// Synergy definitions
+// Synergy _synergy definitions
 //**************************************************************************
 
 typedef struct {
@@ -577,7 +577,7 @@ i32     synergy_get_id(const char* name);
 char*   synergy_get_name(i32 id);
 
 //**************************************************************************
-// Inventory definitions
+// Inventory _inventory definitions
 //**************************************************************************
 
 typedef struct Inventory {
@@ -604,8 +604,12 @@ void    inventory_shoot_weapons_secondary(Player* player, vec2 direction, vec2 t
 void    inventory_cast_abilities(Player* player, vec2 direction, vec2 target);
 
 //**************************************************************************
-// Entity, Player definitions
+// Entity, Player _entity _player definitions
 //**************************************************************************
+
+typedef void (*EntityCreateFuncPtr)(Entity*);
+typedef void (*EntityDestroyFuncPtr)(Entity*);
+typedef void (*EntityUpdateFuncPtr)(Entity*, f32);
 
 typedef struct Stats {
     f32 health, max_health;
@@ -715,7 +719,7 @@ bool player_is_casting(void);
 void player_cleanup(Player* player);
 
 //**************************************************************************
-// Tile definitions
+// Tile _tile definitions
 //**************************************************************************
 
 typedef struct Tile {
@@ -752,7 +756,7 @@ void    tile_destroy(Tile* tile);
 void    tile_lava_collision(Entity* entity);
 
 //**************************************************************************
-// Wall definitions
+// Wall _wall definitions
 //**************************************************************************
 
 typedef struct Wall {
@@ -779,7 +783,7 @@ bool wall_get_flag(Wall* wall, WallFlagEnum flag);
 void wall_destroy(Wall* wall);
 
 //**************************************************************************
-// Projectile definitions
+// Projectile _projectile definitions
 //**************************************************************************
 
 typedef struct Projectile {
@@ -798,6 +802,7 @@ typedef struct Projectile {
     f32 lifetime;
     f32 pierce_timer;
     u32 flags;
+    i32 owner_uid;
     i32 tex;
 } Projectile;
 
@@ -805,6 +810,7 @@ typedef enum {
     PROJECTILE_FLAG_AUTO_FREE_DATA,
     PROJECTILE_FLAG_TEX_ROTATION,
     PROJECTILE_FLAG_PIERCE,
+    PROJECTILE_FLAG_IGNORE_LIFETIME,
     PROJECTILE_FLAG_FRIENDLY
 } ProjectileFlagEnum;
 
@@ -820,7 +826,7 @@ void projectile_set_flag(Projectile* proj, ProjectileFlagEnum flag, bool val);
 bool projectile_get_flag(Projectile* proj, ProjectileFlagEnum flag);
 
 //**************************************************************************
-// AOE definitions
+// AOE _aoe definitions
 //**************************************************************************
 
 typedef void (*AOEUpdateFuncPtr)(AOE*, f32);
@@ -860,7 +866,7 @@ void aoe_set_flag(AOE* proj, AOEFlagEnum flag, bool val);
 bool aoe_get_flag(AOE* proj, AOEFlagEnum flag);
 
 //**************************************************************************
-// Obstacle definitions
+// Obstacle _obstacle definitions
 // Obstacles have a circular hitbox
 // They do not receive updates every frame
 //**************************************************************************
@@ -876,7 +882,7 @@ Obstacle* obstacle_create(vec2 position);
 void obstacle_destroy(Obstacle* obstacle);
 
 //**************************************************************************
-// Parstacle definitions
+// Parstacle _parstacle definitions
 // Parstacles are obstacles without a hitbox (obstacle + particle)
 // They do not receive updates every frame.
 //**************************************************************************
@@ -891,7 +897,7 @@ Parstacle* parstacle_create(vec2 position);
 void parstacle_destroy(Parstacle* parstacle);
 
 //**************************************************************************
-// Particle definitions
+// Particle _particle definitions
 // Particles have no hitbox and are solid colors
 //**************************************************************************
 
@@ -915,7 +921,7 @@ void particle_update(Particle* particle, f32 dt);
 void particle_destroy(Particle* particle);
 
 //**************************************************************************
-// Parjicle definitions
+// Parjicle _parjicle definitions
 // Parjicles are particles with rotation (particle + projectile)
 //**************************************************************************
 
@@ -947,7 +953,7 @@ bool parjicle_is_flag_set(Parjicle* parjicle, ParjicleFlagEnum flag);
 void parjicle_destroy(Parjicle* parjicle);
 
 //**************************************************************************
-// Game Context
+// Client _client
 //**************************************************************************
 
 typedef struct Client {
@@ -992,7 +998,8 @@ typedef struct {
     pthread_mutex_t handler_thread_mutex;
     pthread_mutex_t getter_mutex;
     f64 time;
-    f64 dt;
+    f32 timestep;
+    f32 dt;
     bool kill_thread;
     bool halt_input;
     bool halt_render;
@@ -1086,7 +1093,7 @@ void game_resume(void);
 
 void game_init(void);
 void game_cleanup(void);
-void game_process_input(void);
+void game_process_input(f32 dt);
 void game_update_keys(void);
 void game_render(void);
 void game_load_starting_area(void);

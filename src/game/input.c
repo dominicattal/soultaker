@@ -26,7 +26,7 @@ void game_update_keys(void)
         game_context.glfw_key_down[mbs[i]] = window_get_mouse_button(mbs[i]);
 }
 
-void game_process_input(void)
+void game_process_input(f32 dt)
 {
     vec2 move_mag = vec2_create(0, 0);
     f32 rotate_mag = 0;
@@ -58,7 +58,7 @@ void game_process_input(void)
     if (game_context.glfw_key_down[GLFW_MOUSE_BUTTON_RIGHT])
         game_context.this_client->player.shooting_secondary = true;
 
-    camera_update_direction(game_context.this_client->uid, move_mag);
+    camera_update_direction(game_context.this_client->uid, move_mag, dt);
     camera_update_rotation(game_context.this_client->uid, rotate_mag);
     camera_update_tilt(game_context.this_client->uid, tilt_mag);
 }

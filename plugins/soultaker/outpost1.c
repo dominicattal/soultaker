@@ -559,6 +559,7 @@ typedef struct {
     f32 shot_timer;
     f32 shot_timer2;
     f32 shot_timer3;
+    f32 radians;
     i32 pattern;
     i32 phase_pattern;
     i32 attack;
@@ -727,8 +728,8 @@ static void boss_start(Trigger* trigger, Entity* entity)
     data->invulnerable_timer = 6.0;
     //entity_set_state(boss, "phase1");
     //gui_create_notification("phase1 attack1");
-    entity_set_state(boss, "phase2");
-    gui_create_notification("phase2 attack1");
+    entity_set_state(boss, "phase4");
+    gui_create_notification("phase4 attack1");
     map_make_boss("Asgore", boss);
     data->attack = 0;
     Wall* wall;
@@ -922,18 +923,20 @@ typedef struct {
     vec2 origin;
     f32 initial_angle_offset;
     f32 initial_facing;
+    f32 radians;
+    f32 distance;
     bool clockwise;
 } ProjCircleData;
 
 static void sword_circle_proj_update(Projectile* proj, f32 dt)
 {
     ProjCircleData* data = proj->data;
-    vec2 direction = vec2_sub(proj->position, data->origin);
     if (data->clockwise)
-        proj->direction = vec2_create(-direction.z, direction.x);
+        data->radians += proj->speed * dt;
     else
-        proj->direction = vec2_create(direction.z, -direction.x);
-    proj->facing = data->initial_facing + vec2_radians(proj->direction) - data->initial_angle_offset + PI/2;
+        data->radians -= proj->speed * dt;
+    proj->facing = data->initial_facing + data->radians - data->initial_angle_offset;
+    proj->position = vec2_add(data->origin, vec2_scale(vec2_direction(data->radians), data->distance));
 }
 
 static f32 spawn_circle_sword(f32 start_rad, f32 arc_length, vec2 origin, f32 dist_from_origin, f32 speed_per_rad, bool clockwise)
@@ -945,8 +948,8 @@ static f32 spawn_circle_sword(f32 start_rad, f32 arc_length, vec2 origin, f32 di
         vec2 pos_offset = vec2_rotate(offset, start_rad - PI/2);
         pos_offset = vec2_add(pos_offset, vec2_scale(vec2_direction(start_rad), dist_from_origin));
         vec2 pos = vec2_add(origin, pos_offset);
+        f32 distance = vec2_mag(pos_offset);
         Projectile* proj = map_create_projectile(pos);
-        proj->direction = vec2_direction(start_rad);
         proj->size = 0.5;
         proj->speed = speed_per_rad;
         proj->lifetime = lifetime;
@@ -960,10 +963,12 @@ static f32 spawn_circle_sword(f32 start_rad, f32 arc_length, vec2 origin, f32 di
         else
             proj->tex = texture_get_id("outpost1_sword_blade");
         *(ProjCircleData*)proj->data = (ProjCircleData) { 
-            origin, 
-            vec2_radians(pos_offset),
-            proj->facing,
-            clockwise
+            .origin = origin, 
+            .initial_angle_offset = vec2_radians(pos_offset),
+            .initial_facing = proj->facing,
+            .radians = vec2_radians(pos_offset),
+            .distance = distance,
+            .clockwise = clockwise
         };
         projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, false);
     }
@@ -998,8 +1003,9 @@ static void outpost1_boss_phase2_chase(Entity* entity, f32 dt)
             vec2 offset = vec2_create(sword_offset.x, sword_offset.z);
             vec2 pos_offset = vec2_rotate(offset, vec2_radians(direction) - PI/2);
             vec2 pos = vec2_add(origin, pos_offset);
+            f32 distance = vec2_mag(offset);
             Projectile* proj = map_create_projectile(pos);
-            proj->direction = direction;
+            //proj->direction = direction;
             proj->size = 0.5;
             proj->speed = speed;
             proj->lifetime = lifetime;
@@ -1013,10 +1019,12 @@ static void outpost1_boss_phase2_chase(Entity* entity, f32 dt)
                 proj->tex = texture_get_id("outpost1_sword_blade");
             bool clockwise = true;
             *(ProjCircleData*)proj->data = (ProjCircleData) { 
-                origin, 
-                vec2_radians(pos_offset),
-                proj->facing,
-                clockwise
+                .origin = origin, 
+                .initial_angle_offset = vec2_radians(pos_offset),
+                .initial_facing = proj->facing,
+                .radians = vec2_radians(pos_offset),
+                .distance = distance,
+                .clockwise = clockwise
             };
             projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, false);
         }
@@ -1097,14 +1105,18 @@ void outpost1_boss_phase3_update(Entity* entity, f32 dt)
     } else if (data->phase_pattern == 1) {
         data->chase_timer -= dt;
         if (data->chase_timer < 0) {
+            data->radians = vec2_radians(offset);
             entity->direction = vec2_create(0, 0);
             data->phase_pattern = 2;
         }
     } else {
         // need to make this based on radius rather than current position
         // rounding error / dt variations will cause boss to stray
-        vec2 velocity = vec2_rotate(offset, -PI / 2);
-        entity->direction = vec2_normalize(velocity);
+        //f32 tiles_per_rad = entity->speed / (2 * radius * PI);
+        data->radians = fmod(data->radians + 0.1 * entity->speed * dt, 2 * PI);
+        entity->position = vec2_add(origin, vec2_scale(vec2_direction(data->radians), radius));
+        //vec2 velocity = vec2_rotate(offset, -PI / 2);
+        //entity->direction = vec2_normalize(velocity);
     }
 
     data->shot_timer -= dt;
@@ -1138,6 +1150,40 @@ void outpost1_boss_phase3_update(Entity* entity, f32 dt)
     }
 }
 
+static void spawn_phase4_circle_sword(f32 start_rad, vec2 origin, f32 dist_from_origin, f32 speed_per_rad, bool clockwise)
+{
+    for (size_t i = 0; i < sizeof(sword_offsets) / sizeof(SwordOffset); i++) {
+        SwordOffset sword_offset = sword_offsets[i];
+        vec2 offset = vec2_create(sword_offset.x, sword_offset.z);
+        vec2 pos_offset = vec2_rotate(offset, start_rad - PI/2);
+        pos_offset = vec2_add(pos_offset, vec2_scale(vec2_direction(start_rad), dist_from_origin));
+        vec2 pos = vec2_add(origin, pos_offset);
+        f32 distance = vec2_mag(pos_offset);
+        Projectile* proj = map_create_projectile(pos);
+        proj->size = 0.5;
+        proj->speed = speed_per_rad;
+        proj->facing = start_rad + sword_offset.rotation;
+        proj->update = sword_circle_proj_update;
+        proj->data = st_malloc(sizeof(ProjCircleData));
+        projectile_set_flag(proj, PROJECTILE_FLAG_IGNORE_LIFETIME, true);
+        projectile_set_flag(proj, PROJECTILE_FLAG_AUTO_FREE_DATA, true);
+        projectile_set_flag(proj, PROJECTILE_FLAG_PIERCE, true);
+        if (offset.z <= 3.0)
+            proj->tex = texture_get_id("outpost1_sword_handle");
+        else
+            proj->tex = texture_get_id("outpost1_sword_blade");
+        *(ProjCircleData*)proj->data = (ProjCircleData) { 
+            .origin = origin, 
+            .initial_angle_offset = vec2_radians(pos_offset),
+            .initial_facing = proj->facing,
+            .radians = vec2_radians(pos_offset),
+            .distance = distance,
+            .clockwise = clockwise
+        };
+        projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, false);
+    }
+}
+
 void outpost1_boss_phase4_update(Entity* entity, f32 dt)
 {
     BossData* data = entity->data;
@@ -1154,6 +1200,10 @@ void outpost1_boss_phase4_update(Entity* entity, f32 dt)
         if (data->chase_timer < 0) {
             entity->direction = vec2_create(0, 0);
             data->phase_pattern = 2;
+            for (i32 i = 0; i < 2; i++)
+                spawn_phase4_circle_sword(i*PI, entity->position, 0, 1, true);
+            for (i32 i = 0; i < 8; i++)
+                spawn_phase4_circle_sword(i*PI/4, entity->position, 8.5, 0.7, false);
         }
         return;
     }
@@ -1171,18 +1221,5 @@ void outpost1_boss_phase4_update(Entity* entity, f32 dt)
         lifetime = (f32)(boss_room_width-23)/speed;
         spawn_sword_at_wall_with_delay(sword_idx, data->wall_idx, lifetime, speed, delay);
         data->wall_idx = (data->wall_idx+1) % 4;
-    }
-    f32 lifetime;
-    data->shot_timer2 -= dt;
-    if (data->shot_timer2 < 0) {
-        for (i32 i = 0; i < 2; i++)
-            lifetime = spawn_circle_sword(i*PI, 2*PI, entity->position, 0, 1, true);
-        data->shot_timer2 += lifetime;
-    }
-    data->shot_timer3 -= dt;
-    if (data->shot_timer3 < 0) {
-        for (i32 i = 0; i < 8; i++)
-            lifetime = spawn_circle_sword(i*PI/4, 2*PI, entity->position, 8.5, 0.7, false);
-        data->shot_timer3 += lifetime;
     }
 }
