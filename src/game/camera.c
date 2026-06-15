@@ -14,7 +14,7 @@
 #define DEFAULT_ZOOM_LEVEL  4
 #define DEFAULT_ROTSPEED    3.5
 #define DEFAULT_TILTSPEED   3.5
-#define DEFAULT_MOVESPEED   2500
+#define DEFAULT_MOVESPEED   10
 #define DEFAULT_POSITION    vec3_create(0, 5, 0)
 #define Y_AXIS              vec3_create(0, 1, 0)
 

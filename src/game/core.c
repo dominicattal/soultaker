@@ -5,7 +5,7 @@
 
 GameContext game_context;
 
-#define MIN_DT  0.0001
+#define MIN_DT  0.1
 
 void* game_loop(void* vargp)
 {
@@ -44,6 +44,7 @@ void* game_loop(void* vargp)
         game_context.time += game_context.dt;
         start = end;
         pthread_mutex_lock(&game_context.handler_thread_mutex);
+        game_process_input();
         event_queue_flush();
         gui_update_comps(game_context.dt);
         if (game_context.current_map != NULL) {

@@ -10,7 +10,7 @@
 
 #define GRAVITY                 -9.8
 #define PROJ_PIERCE_COOLDOWN    1
-#define MAX_UID 65535
+#define MAX_UID                 65535
 
 typedef enum PacketEnum {
     PACKET_TEST,
@@ -971,6 +971,8 @@ void client_set_username(Client* client, char* username);
 
 typedef struct {
 
+    bool glfw_key_down[512];
+
     void* uid_map[MAX_UID]; 
     GameObj uid_map_type[MAX_UID];
     i32 uid_cursor;
@@ -1083,7 +1085,8 @@ void game_resume(void);
 
 void game_init(void);
 void game_cleanup(void);
-void game_process_input();
+void game_process_input(void);
+void game_update_keys(void);
 void game_render(void);
 void game_load_starting_area(void);
 

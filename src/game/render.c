@@ -715,6 +715,11 @@ void game_update_vertex_data(void)
     render_context.data = render_context.data_swap;
     render_context.data_swap = tmp;
     copy_camera();
+    vec2 a = game_context.this_client->player.entity->position;
+    vec2 b = render_context.camera.target;
+    if (!vec2_equal(a, b))
+        log_write(DEBUG, "AA");
+    //log_write(DEBUG, "%f %f %f %f", a.x, a.z, b.x, b.z);
     pthread_mutex_unlock(&render_context.mutex);
 }
 
@@ -1057,6 +1062,7 @@ void game_render(void)
     update_view_matrix();
     update_proj_matrix();
     copy_buffers();
+    glFlush();
     pthread_mutex_unlock(&render_context.mutex);
 
     GLenum buffer[] = { GL_COLOR_ATTACHMENT0 };
