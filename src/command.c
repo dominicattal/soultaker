@@ -145,6 +145,16 @@ static char* parse_set(List* string_views, const char* command)
         st_free(c_str);
         camera_set_target(vec2_create(x, z));
         response = string_create("set camera target to %.3f %.3f", x, z);
+    } else if (strcmp(var_name, "tps") == 0) {
+        if (string_views->length < 3) {
+            response = string_copy("camera_target requires 2 numbers");
+            goto fail;
+        }
+        string_view = list_get(string_views, 2);
+        c_str = string_view_c_str(string_view, command);
+        game_context.tps = atoi(c_str);
+        game_context.timestep = 1.0 / game_context.tps;
+        st_free(c_str);
     }
 fail:
     if (var_name != NULL)

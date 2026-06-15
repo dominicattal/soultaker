@@ -170,7 +170,7 @@ static void update_debug(GUIComp* comp, f32 dt)
             "Tiles: %d\n"
             "Lines: %d\n"
             "Memory: %d KB",
-        1000 * game_get_dt(),
+        1000 * game_context.real_dt,
         1000 * state_dt(),
         1 / state_dt(),
         camera_target.x, camera_target.z,
