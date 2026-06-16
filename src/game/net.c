@@ -206,6 +206,9 @@ static void client_handle_tcp_packet(Packet* packet)
         case PACKET_UPDATE_GAME_OBJ:
             client_map_update_game_object(packet);
             break;
+        case PACKET_DESTROY_GAME_OBJ:
+            client_map_destroy_game_object(packet);
+            break;
         case PACKET_SYNC_CLIENT_ENTITY:
             client_sync_entity(packet);
             break;
@@ -415,6 +418,17 @@ void game_net_send_tcp_packet_to_clients(Packet* packet)
         Client* client = list_get(game_context.clients, i);
         if (client != game_context.this_client)
             socket_send(client->tcp_socket, packet);
+    }
+}
+
+void game_net_send_udp_packet_to_clients(Packet* packet)
+{
+    if (!game_context.hosting)
+        return;
+    for (i32 i = 0; i < game_context.clients->length; i++) {
+        Client* client = list_get(game_context.clients, i);
+        if (client != game_context.this_client)
+            socket_sendto(game_context.this_client->udp_socket, client->udp_address, packet);
     }
 }
 

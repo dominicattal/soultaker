@@ -50,6 +50,7 @@ void* game_loop(void* vargp)
         dt = game_context.timestep;
         game_context.time += dt;
         start = end;
+        real_start = get_time();
         pthread_mutex_lock(&game_context.handler_thread_mutex);
         handle_callback();
         event_queue_flush();
@@ -59,11 +60,10 @@ void* game_loop(void* vargp)
             if (!game_context.paused)
                 map_update(game_context.current_map, dt);
             client_update(game_context.this_client, dt);
-            real_start = get_time();
             game_update_vertex_data();
-            game_context.real_dt = get_time() - real_start;
         }
         pthread_mutex_unlock(&game_context.handler_thread_mutex);
+        game_context.real_dt = get_time() - real_start;
     }
     gui_comp_cleanup();
     map_cleanup();
@@ -195,6 +195,9 @@ size_t game_object_write(GameObj type, void* obj, char* buffer)
         case GAME_OBJ_ENTITY:
             entity_write(obj, buffer);
             return entity_sizeof();
+        case GAME_OBJ_PROJECTILE:
+            projectile_write(obj, buffer);
+            return entity_sizeof();
         case GAME_OBJ_TILE:
             tile_write(obj, buffer);
             return entity_sizeof();
@@ -204,5 +207,6 @@ size_t game_object_write(GameObj type, void* obj, char* buffer)
         default:
             break;
     }
+    log_write(WARNING, "writing unrecognized object %d", type);
     return 0;
 }

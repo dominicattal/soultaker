@@ -42,6 +42,7 @@ typedef enum GameObj {
     GAME_OBJ_ENTITY,
     GAME_OBJ_LINE,
     GAME_OBJ_TRIGGER,
+    GAME_OBJ_PROJECTILE,
     GAME_OBJ_TILE,
     GAME_OBJ_WALL,
     NUM_GAME_OBJS,
@@ -689,6 +690,7 @@ typedef enum {
 void entity_init(void);
 void entity_cleanup(void);
 
+// functions for interacting with entity in binary format
 size_t  entity_sizeof(void);
 char*   entity_write(Entity* entity, char* buffer);
 Entity* entity_read(char* buffer);
@@ -816,6 +818,7 @@ typedef struct Projectile {
     u32 flags;
     i32 owner_uid;
     i32 tex;
+    i32 uid;
 } Projectile;
 
 typedef enum {
@@ -836,6 +839,10 @@ void projectile_destroy(Projectile* projectile);
 
 void projectile_set_flag(Projectile* proj, ProjectileFlagEnum flag, bool val);
 bool projectile_get_flag(Projectile* proj, ProjectileFlagEnum flag);
+
+size_t      projectile_sizeof(void);
+Projectile* projectile_read(char* buffer);
+void        projectile_write(Projectile* projectile, char* buffer);
 
 //**************************************************************************
 // AOE _aoe definitions
@@ -998,8 +1005,10 @@ void client_sync_entity(Packet* packet);
 void client_map_clear_fog(Packet* packet);
 void client_map_create_map_nodes(Packet* packet);
 Map* client_map_create(void);
+void client_map_update(Map* map, f32 dt);
 void client_map_create_game_object(Packet* packet);
 void client_map_update_game_object(Packet* packet);
+void client_map_destroy_game_object(Packet* packet);
 
 //**************************************************************************
 // Game Context
@@ -1066,6 +1075,7 @@ void game_net_set_host_tcp_port(const char* port);
 void game_net_set_host_udp_port(const char* port);
 
 void game_net_send_tcp_packet_to_clients(Packet* packet);
+void game_net_send_udp_packet_to_clients(Packet* packet);
 void game_net_send_packet_udp(Client* client, Packet* packet);
 void game_net_send_packet_tcp(Client* client, Packet* packet);
 

@@ -88,6 +88,20 @@ Map* client_map_create(void)
     return map;
 }
 
+void client_map_update(Map* map, f32 dt)
+{
+    i32 i;
+    i = 0;
+    while (i < map->projectiles->length) {
+        Projectile* projectile = list_get(map->projectiles, i);
+        projectile_update(projectile, dt);
+        if (projectile->lifetime <= 0)
+            projectile_destroy(list_remove(map->projectiles, i));
+        else
+            i++;
+    }
+}
+
 void client_map_create_game_object(Packet* packet)
 {
     Map* map = game_context.current_map;
@@ -104,6 +118,11 @@ void client_map_create_game_object(Packet* packet)
             Entity* entity = entity_read(buffer);
             list_append(map->entities, entity);
             game_set_uid(entity, type, entity->uid);
+            break;
+        case GAME_OBJ_PROJECTILE:
+            Projectile* proj = projectile_read(buffer);
+            list_append(map->projectiles, proj);
+            game_set_uid(proj, type, proj->uid);
             break;
         case GAME_OBJ_TILE:
             Tile* tile = tile_read(buffer);
@@ -133,9 +152,6 @@ void client_map_update_game_object(Packet* packet)
 
     switch (type) {
         case GAME_OBJ_ENTITY:
-            // can optimize by taking specific values rather than creating a new
-            // entity on the heap
-            // why can this_entity be null?
             Entity* host_entity = entity_read(buffer);
             Entity* this_entity = game_context.uid_map[host_entity->uid];
             if (this_entity != NULL) {
@@ -148,9 +164,28 @@ void client_map_update_game_object(Packet* packet)
             }
             st_free(host_entity);
             break;
+        case GAME_OBJ_PROJECTILE:
+            Projectile* host_proj = projectile_read(buffer);
+            Projectile* this_proj = game_context.uid_map[host_proj->uid];
+            if (this_proj != NULL) {
+                this_proj->position = host_proj->position;
+            }
+            st_free(host_proj);
+            break;
         default:
             break;
     }
+}
+
+void client_map_destroy_game_object(Packet* packet)
+{
+    Map* map = game_context.current_map;
+    if (map == NULL)
+        return;
+
+    i32 uid;
+    memcpy(&uid, packet->buffer, sizeof(uid));
+    game_free_uid(uid);
 }
 
 void client_map_clear_fog(Packet* packet)

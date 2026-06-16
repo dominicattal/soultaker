@@ -3149,27 +3149,50 @@ void map_collide_objects(Map* map)
 
 static void map_send_state(Map* map, f32 dt)
 {
+    // use only tcp connections for now so i dont have to deal with synchronization issues
     GameObj type;
     size_t size;
     Packet* packet;
+    i32 uid;
     char buffer[1024];
     for (i32 i = 0; i < game_context.created_uids->length; i++) {
-        type = game_context.uid_map_type[i];
+        uid = game_context.created_uids->buffer[i];
+        type = game_context.uid_map_type[uid];
         memcpy(buffer, &type, sizeof(type));
-        size = game_object_write(type, game_context.uid_map[i], buffer + sizeof(type));
+        size = game_object_write(type, game_context.uid_map[uid], buffer + sizeof(type));
         packet = packet_create(PACKET_CREATE_GAME_OBJ, size + sizeof(GameObj), buffer);
         game_net_send_tcp_packet_to_clients(packet);
         packet_destroy(packet);
     }
+    game_context.created_uids->length = 0;
+    for (i32 i = 0; i < game_context.freed_uids->length; i++) {
+        // game objects should be freed by the condition they sent in the update loop
+        // cant just free uid since memory still in map
+        // can maybe just remove from map but concerned about race conditions + performance
+        //uid = game_context.freed_uids->buffer[i];
+        //memcpy(buffer, &uid, sizeof(uid));
+        //packet = packet_create(PACKET_CREATE_GAME_OBJ, sizeof(uid), buffer);
+        //game_net_send_tcp_packet_to_clients(packet);
+        //packet_destroy(packet);
+    }
+    game_context.freed_uids->length = 0;
     for (i32 i = 0; i < map->entities->length; i++) {
         type = GAME_OBJ_ENTITY;
         memcpy(buffer, &type, sizeof(type));
         size = game_object_write(type, list_get(map->entities, i), buffer + sizeof(type));
         packet = packet_create(PACKET_UPDATE_GAME_OBJ, size + sizeof(GameObj), buffer);
+        //game_net_send_udp_packet_to_clients(packet);
         game_net_send_tcp_packet_to_clients(packet);
         packet_destroy(packet);
     }
-    game_context.created_uids->length = 0;
+    for (i32 i = 0; i < map->projectiles->length; i++) {
+        type = GAME_OBJ_PROJECTILE;
+        memcpy(buffer, &type, sizeof(type));
+        size = game_object_write(type, list_get(map->projectiles, i), buffer + sizeof(type));
+        packet = packet_create(PACKET_UPDATE_GAME_OBJ, size + sizeof(GameObj), buffer);
+        game_net_send_tcp_packet_to_clients(packet);
+        packet_destroy(packet);
+    }
 }
 
 void map_update(Map* map, f32 dt)
@@ -3182,6 +3205,8 @@ void map_update(Map* map, f32 dt)
         map_collide_objects(map);
         if (game_context.hosting)
             map_send_state(map, dt);
+    } else {
+        client_map_update(map, dt);
     }
 }
 
