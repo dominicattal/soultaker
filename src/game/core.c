@@ -51,7 +51,6 @@ void* game_loop(void* vargp)
         game_context.time += dt;
         start = end;
         pthread_mutex_lock(&game_context.handler_thread_mutex);
-        real_start = get_time();
         handle_callback();
         event_queue_flush();
         gui_update_comps(dt);
@@ -60,9 +59,10 @@ void* game_loop(void* vargp)
             if (!game_context.paused)
                 map_update(game_context.current_map, dt);
             client_update(game_context.this_client, dt);
+            real_start = get_time();
             game_update_vertex_data();
+            game_context.real_dt = get_time() - real_start;
         }
-        game_context.real_dt = get_time() - real_start;
         pthread_mutex_unlock(&game_context.handler_thread_mutex);
     }
     gui_comp_cleanup();

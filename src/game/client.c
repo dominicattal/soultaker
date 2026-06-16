@@ -120,6 +120,39 @@ void client_map_create_game_object(Packet* packet)
     }
 }
 
+void client_map_update_game_object(Packet* packet)
+{
+    Map* map = game_context.current_map;
+    if (map == NULL)
+        return;
+
+    GameObj type;
+    char* buffer = packet->buffer;
+    memcpy(&type, buffer, sizeof(type));
+    buffer += sizeof(type);
+
+    switch (type) {
+        case GAME_OBJ_ENTITY:
+            // can optimize by taking specific values rather than creating a new
+            // entity on the heap
+            // why can this_entity be null?
+            Entity* host_entity = entity_read(buffer);
+            Entity* this_entity = game_context.uid_map[host_entity->uid];
+            if (this_entity != NULL) {
+                this_entity->position = host_entity->position;
+                this_entity->facing = host_entity->facing;
+                this_entity->flags = host_entity->flags;
+                this_entity->state = host_entity->state;
+                this_entity->frame = host_entity->frame;
+                this_entity->id = host_entity->id;
+            }
+            st_free(host_entity);
+            break;
+        default:
+            break;
+    }
+}
+
 void client_map_clear_fog(Packet* packet)
 {
     Map* map = game_context.current_map;
@@ -135,6 +168,11 @@ void client_map_clear_fog(Packet* packet)
         for (i32 x = x1; x <= x2; x++)
             if (node == map->map_nodes[z * map->width + x])
                 quadmask_set(map->fog_mask, x, z);
+
+    game_render_update_obstacles();
+    game_render_update_parstacles();
+    game_render_update_tiles();
+    game_render_update_walls();
 }
 
 void client_map_create_map_nodes(Packet* packet)

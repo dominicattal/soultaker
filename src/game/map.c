@@ -3149,19 +3149,24 @@ void map_collide_objects(Map* map)
 
 static void map_send_state(Map* map, f32 dt)
 {
+    GameObj type;
+    size_t size;
+    Packet* packet;
     char buffer[1024];
     for (i32 i = 0; i < game_context.created_uids->length; i++) {
-        GameObj type = game_context.uid_map_type[i];
+        type = game_context.uid_map_type[i];
         memcpy(buffer, &type, sizeof(type));
-        size_t size = game_object_write(type, game_context.uid_map[i], buffer + sizeof(GameObj));
-        Packet* packet = packet_create(PACKET_CREATE_GAME_OBJ, size + sizeof(GameObj), buffer);
-        for (i32 i = 0; i < game_context.clients->length; i++) {
-            Client* client = list_get(game_context.clients, i);
-            if (client != game_context.this_client) {
-                game_net_send_tcp_packet_to_clients(packet);
-                //socket_send(client->udp_socket, packet);
-            }
-        }
+        size = game_object_write(type, game_context.uid_map[i], buffer + sizeof(type));
+        packet = packet_create(PACKET_CREATE_GAME_OBJ, size + sizeof(GameObj), buffer);
+        game_net_send_tcp_packet_to_clients(packet);
+        packet_destroy(packet);
+    }
+    for (i32 i = 0; i < map->entities->length; i++) {
+        type = GAME_OBJ_ENTITY;
+        memcpy(buffer, &type, sizeof(type));
+        size = game_object_write(type, list_get(map->entities, i), buffer + sizeof(type));
+        packet = packet_create(PACKET_UPDATE_GAME_OBJ, size + sizeof(GameObj), buffer);
+        game_net_send_tcp_packet_to_clients(packet);
         packet_destroy(packet);
     }
     game_context.created_uids->length = 0;

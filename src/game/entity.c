@@ -471,7 +471,6 @@ static i32 get_direction_2(f32 rad)
     return (rad < PI) ? LEFT : RIGHT;
 }
 
-
 i32 entity_get_direction(Entity* entity)
 {
     f32 entity_rad = vec2_radians(entity->facing);

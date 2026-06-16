@@ -203,6 +203,9 @@ static void client_handle_tcp_packet(Packet* packet)
         case PACKET_CREATE_GAME_OBJ:
             client_map_create_game_object(packet);
             break;
+        case PACKET_UPDATE_GAME_OBJ:
+            client_map_update_game_object(packet);
+            break;
         case PACKET_SYNC_CLIENT_ENTITY:
             client_sync_entity(packet);
             break;
@@ -239,6 +242,9 @@ static void client_handle_udp_packet(Packet* packet)
     switch (packet->id) {
         case PACKET_MESSAGE:
             log_write(DEBUG, "UDP message: %s", packet->buffer);
+            break;
+        case PACKET_UPDATE_GAME_OBJ:
+            client_map_update_game_object(packet);
             break;
         default:
             break;

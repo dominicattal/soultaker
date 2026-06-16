@@ -999,6 +999,7 @@ void client_map_clear_fog(Packet* packet);
 void client_map_create_map_nodes(Packet* packet);
 Map* client_map_create(void);
 void client_map_create_game_object(Packet* packet);
+void client_map_update_game_object(Packet* packet);
 
 //**************************************************************************
 // Game Context

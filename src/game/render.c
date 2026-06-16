@@ -1024,11 +1024,6 @@ void game_render(void)
 {
     GLuint loc, unit;
 
-    game_render_update_obstacles();
-    game_render_update_parstacles();
-    game_render_update_tiles();
-    game_render_update_walls();
-
     if (game_context.halt_render)
         return;
 

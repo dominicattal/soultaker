@@ -6,3 +6,4 @@ gdb.exe.core
 gmon.out
 profile.txt
 tags
+perf*
