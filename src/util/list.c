@@ -126,3 +126,73 @@ void  list_destroy(List* list)
     st_free(list->buffer);
     st_free(list);
 }
+
+// List i32 implementation
+
+List_i32* list_i32_create(void)
+{
+    List_i32* list = st_malloc(sizeof(List_i32));
+    list->buffer = NULL;
+    list->length = list->capacity = 0;
+    return list;
+}
+
+void list_i32_append(List_i32* list, i32 item)
+{
+    if (list->length >= list->capacity) {
+        list->capacity += LIST_RESIZE_LENGTH;
+        if (list->buffer == NULL)
+            list->buffer = st_malloc(list->capacity * sizeof(void*));
+        else
+            list->buffer = st_realloc(list->buffer, list->capacity * sizeof(void*));
+    }
+    list->buffer[list->length++] = item;
+}
+
+static void downsize_list_i32(List_i32* list)
+{
+    if (list->length % LIST_RESIZE_LENGTH != 0)
+        return;
+    list->capacity = list->length;
+    if (list->capacity == 0) {
+        st_free(list->buffer);
+        list->buffer = NULL;
+    } else
+        list->buffer = st_realloc(list->buffer, list->capacity * sizeof(void*));
+}
+
+i32 list_i32_remove(List_i32* list, i32 idx)
+{
+    i32 item = list->buffer[idx];
+    list->buffer[idx] = list->buffer[--list->length];
+    downsize_list_i32(list);
+    return item;
+}
+
+i32 list_i32_remove_in_order(List_i32* list, i32 idx)
+{
+    i32 item = list->buffer[idx];
+    for (i32 i = idx; i < list->length-1; i++)
+        list->buffer[i] = list->buffer[i+1];
+    list->length--;
+    downsize_list_i32(list);
+    return item;
+}
+
+void list_i32_clear(List_i32* list)
+{
+    st_free(list->buffer);
+    list->buffer = NULL;
+    list->length = list->capacity = 0;
+}
+
+bool list_i32_empty(List_i32* list)
+{
+    return list->length == 0;
+}
+
+void list_i32_destroy(List_i32* list)
+{
+    st_free(list->buffer);
+    st_free(list);
+}

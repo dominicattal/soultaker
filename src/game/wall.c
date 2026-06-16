@@ -22,6 +22,7 @@ Wall* wall_create(vec2 position, f32 height, u32 minimap_color)
     wall->flags = 0;
     wall->uid = game_map_uid(wall, GAME_OBJ_WALL);
     wall_set_flag(wall, WALL_FLAG_ACTIVE, true);
+
     return wall;
 }
 

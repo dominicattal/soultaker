@@ -1581,11 +1581,23 @@ static void clear_map_node_fog(Map* map, MapNode* node)
     if (node->cleared)
         return;
     node->cleared = true;
-    log_write(DEBUG, "%d %d %d %d", node->z1, node->z2, node->x1, node->x2);
     for (i32 z = node->z1; z <= node->z2; z++)
         for (i32 x = node->x1; x <= node->x2; x++)
             if (node == get_map_node(map, x, z))
                 quadmask_set(map->fog_mask, x, z);
+
+    if (game_context.hosting) {
+        size_t size = sizeof(node->x1);
+        char buffer[4 * size + sizeof(void*)];
+        memcpy(buffer, &node->x1, size);
+        memcpy(buffer+size, &node->x2, size);
+        memcpy(buffer+2*size, &node->z1, size);
+        memcpy(buffer+3*size, &node->z2, size);
+        memcpy(buffer+4*size, &node, sizeof(void*));
+        Packet* packet = packet_create(PACKET_CLEAR_FOG, sizeof(buffer), buffer);
+        game_net_send_tcp_packet_to_clients(packet);
+        packet_destroy(packet);
+    }
 }
 
 bool map_fog_contains(Map* map, vec2 position)
@@ -1860,17 +1872,6 @@ Entity* map_create_entity(vec2 position, i32 id)
     entity = entity_create(position, id);
     list_append(map->entities, entity);
     buckets_insert_entity(map, entity);
-    if (game_context.hosting) {
-        size_t size = sizeof(GameObj) + entity_sizeof();
-        char* buffer = st_malloc(size);
-        GameObj type = GAME_OBJ_ENTITY;
-        memcpy(buffer, &type, sizeof(GameObj));
-        entity_write(entity, buffer + sizeof(GameObj));
-        Packet* packet = packet_create(PACKET_CREATE_GAME_OBJ, size, buffer);
-        game_net_send_tcp_packet_to_clients(packet);
-        st_free(buffer);
-        packet_destroy(packet);
-    }
     return entity;
 }
 
@@ -2449,6 +2450,11 @@ Map* map_create(i32 id)
     game_context.this_client->player.entity = NULL;
 
     map = generate_map(id);
+
+    Packet* packet = packet_create(PACKET_CREATE_MAP_NODES, map->width * map->length * sizeof(void*), (char*)map->map_nodes);
+    game_net_send_tcp_packet_to_clients(packet);
+    packet_destroy(packet);
+
     for (i32 i = 0; i < game_context.clients->length; i++) {
         Client* client = list_get(game_context.clients, i);
         entity = map_create_entity(map->spawn_point, 0);
@@ -2992,7 +2998,6 @@ static void map_update_objects(Map* map, f32 dt)
         else
             i++;
     }
-    player_update(&game_context.this_client->player, dt);
 }
 
 static void map_collide_tilemap(Map* map)
@@ -3144,15 +3149,22 @@ void map_collide_objects(Map* map)
 
 static void map_send_state(Map* map, f32 dt)
 {
-    char* buf = "hello world";
-    Packet* packet = packet_create(PACKET_MESSAGE, strlen(buf)+1, buf);
-    for (i32 i = 0; i < game_context.clients->length; i++) {
-        Client* client = list_get(game_context.clients, i);
-        if (client != game_context.this_client) {
-            //socket_send(client->udp_socket, packet);
+    char buffer[1024];
+    for (i32 i = 0; i < game_context.created_uids->length; i++) {
+        GameObj type = game_context.uid_map_type[i];
+        memcpy(buffer, &type, sizeof(type));
+        size_t size = game_object_write(type, game_context.uid_map[i], buffer + sizeof(GameObj));
+        Packet* packet = packet_create(PACKET_CREATE_GAME_OBJ, size + sizeof(GameObj), buffer);
+        for (i32 i = 0; i < game_context.clients->length; i++) {
+            Client* client = list_get(game_context.clients, i);
+            if (client != game_context.this_client) {
+                game_net_send_tcp_packet_to_clients(packet);
+                //socket_send(client->udp_socket, packet);
+            }
         }
+        packet_destroy(packet);
     }
-    packet_destroy(packet);
+    game_context.created_uids->length = 0;
 }
 
 void map_update(Map* map, f32 dt)

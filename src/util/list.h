@@ -10,6 +10,12 @@ typedef struct List {
     i32 length, capacity;
 } List;
 
+typedef struct List_i32 {
+    i32* buffer;
+    i32 length;
+    i32 capacity;
+} List_i32;
+
 // create new list with empty buffer
 List* list_create(void);
 
@@ -55,5 +61,14 @@ void list_shuffle(List* list);
 
 // destroys the list. does not alter any of the list's contents
 void  list_destroy(List* list);
+
+
+List_i32*   list_i32_create(void);
+void        list_i32_append(List_i32* list, i32 item);
+i32         list_i32_remove(List_i32* list, i32 idx);
+i32         list_i32_remove_in_order(List_i32* list, i32 idx);
+void        list_i32_clear(List_i32* list);
+bool        list_i32_empty(List_i32* list);
+void        list_i32_destroy(List_i32* list);
 
 #endif

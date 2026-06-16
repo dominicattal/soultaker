@@ -18,6 +18,7 @@ Tile* tile_create(vec2 position, u32 minimap_color)
     tile->flags = 0;
     tile->uid = game_map_uid(tile, GAME_OBJ_TILE);
     tile_set_flag(tile, TILE_FLAG_ACTIVE, true);
+
     return tile;
 }
 

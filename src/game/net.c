@@ -206,6 +206,12 @@ static void client_handle_tcp_packet(Packet* packet)
         case PACKET_SYNC_CLIENT_ENTITY:
             client_sync_entity(packet);
             break;
+        case PACKET_CREATE_MAP_NODES:
+            client_map_create_map_nodes(packet);
+            break;
+        case PACKET_CLEAR_FOG:
+            client_map_clear_fog(packet);
+            break;
         default:
             log_write(WARNING, "Received unknown packed: %d", packet->id);
     }

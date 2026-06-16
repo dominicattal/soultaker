@@ -24,6 +24,8 @@ void* game_loop(void* vargp)
     game_context.tps = 144;
     game_context.timestep = 1.0 / game_context.tps;
     game_context.clients = list_create();
+    game_context.created_uids = list_i32_create();
+    game_context.freed_uids = list_i32_create();
     client = client_create();
     client_set_username(client, string_copy("fancy"));
     game_context.this_client = client;
@@ -74,6 +76,8 @@ void* game_loop(void* vargp)
         client_destroy(client);
     }
     list_destroy(game_context.clients);
+    list_i32_destroy(game_context.created_uids);
+    list_i32_destroy(game_context.freed_uids);
     game_context.this_client = NULL;
     return NULL;
 }
@@ -91,6 +95,10 @@ i32 game_map_uid(void* obj, GameObj type)
         return -1;
     game_context.uid_map[uid] = obj;
     game_context.uid_map_type[uid] = type;
+
+    if (game_context.hosting)
+        list_i32_append(game_context.created_uids, uid);
+
     return uid;
 }
 
@@ -104,6 +112,9 @@ void game_free_uid(i32 uid)
 {
     game_context.uid_map[uid] = NULL;
     game_context.uid_map_type[uid] = GAME_OBJ_NONE;
+
+    if (game_context.hosting)
+        list_i32_append(game_context.freed_uids, uid);
 }
 
 void game_change_map(i32 id)
@@ -176,4 +187,22 @@ void game_summon(i32 id)
 {
     //vec2 position = player_position();
     //entity_create(position, id);
+}
+
+size_t game_object_write(GameObj type, void* obj, char* buffer)
+{
+    switch (type) {
+        case GAME_OBJ_ENTITY:
+            entity_write(obj, buffer);
+            return entity_sizeof();
+        case GAME_OBJ_TILE:
+            tile_write(obj, buffer);
+            return entity_sizeof();
+        case GAME_OBJ_WALL:
+            wall_write(obj, buffer);
+            return wall_sizeof();
+        default:
+            break;
+    }
+    return 0;
 }

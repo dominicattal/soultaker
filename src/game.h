@@ -31,6 +31,8 @@ typedef enum PacketEnum {
     PACKET_DESTROY_GAME_OBJ,
 
     PACKET_SYNC_CLIENT_ENTITY,
+    PACKET_CREATE_MAP_NODES,
+    PACKET_CLEAR_FOG,
 
     NUM_PACKET_TYPES
 } PacketEnum;
@@ -659,6 +661,9 @@ typedef struct Player {
     Entity* entity;
     vec2 position;
 
+    i32 entity_uid;
+    bool synced;
+
     // store special states
     i32 state_idle;
     i32 state_walking;
@@ -990,6 +995,8 @@ void client_set_username(Client* client, char* username);
 // functions for mp clients grouped together
 void client_change_map(void);
 void client_sync_entity(Packet* packet);
+void client_map_clear_fog(Packet* packet);
+void client_map_create_map_nodes(Packet* packet);
 Map* client_map_create(void);
 void client_map_create_game_object(Packet* packet);
 
@@ -1012,6 +1019,9 @@ typedef struct {
     List* clients;
     Client* this_client;
     Client* host_client;
+
+    List_i32* created_uids;
+    List_i32* freed_uids;
 
     pthread_t net_tcp_listen_thread_id;
     pthread_t net_udp_listen_thread_id;
@@ -1086,7 +1096,7 @@ void game_update_vertex_data(void);
 
 void game_change_map(i32 id);
 
-// camera functions that pass through game to map the client's camera
+size_t game_object_write(GameObj type, void* obj, char* buffer);
 
 //**************************************************************************
 // Collision functions

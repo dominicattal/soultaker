@@ -234,7 +234,7 @@ static void update_inventory(Inventory* inventory, f32 dt)
             synergy_update(inventory->synergies[i], dt);
 }
 
-void player_update(Player* player, f32 dt)
+static void player_update_host(Player* player, f32 dt)
 {
     if (player->entity != NULL) {
         player->position = player->entity->position;
@@ -243,6 +243,23 @@ void player_update(Player* player, f32 dt)
     update_player_state(player, dt);
     update_player_stats(player, dt);
     update_inventory(&player->inventory, dt);
+}
+
+static void player_update_client(Player* player, f32 dt)
+{
+    if (!player->synced && game_context.uid_map_type[player->entity_uid] == GAME_OBJ_ENTITY) {
+        player->entity = game_context.uid_map[player->entity_uid]; 
+        player->synced = true;
+        log_write(DEBUG, "synced");
+    }
+}
+
+void player_update(Player* player, f32 dt)
+{
+    if (game_context.hosting || game_context.singleplayer)
+        player_update_host(player, dt);
+    else
+        player_update_client(player, dt);
 }
 
 static void player_target(Player* player, f32 height, void (*callback)(Player*, vec2, vec2))

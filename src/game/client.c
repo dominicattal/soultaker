@@ -13,6 +13,7 @@ Client* client_create(void)
 void client_update(Client* client, f32 dt)
 {
     camera_update(&client->camera, dt);
+    player_update(&client->player, dt);
 }
 
 void client_set_username(Client* client, char* username)
@@ -37,9 +38,12 @@ void client_sync_entity(Packet* packet)
     memcpy(&uid, packet->buffer, sizeof(uid));
     log_assert(uid >= 0, "");
     log_assert(uid < MAX_UID, "");
-    log_assert(game_context.uid_map_type[uid] == GAME_OBJ_ENTITY, "should be entity object to sync with");
-    Entity* entity = game_context.uid_map[uid];
-    client->player.entity = entity;
+    log_write(DEBUG, "AAAA");
+    //log_assert(game_context.uid_map_type[uid] == GAME_OBJ_ENTITY, "should be entity object to sync with");
+    client->player.entity_uid = uid;
+    client->player.synced = false;
+    //Entity* entity = game_context.uid_map[uid];
+    //client->player.entity = entity;
 }
 
 void client_change_map(void)
@@ -62,7 +66,7 @@ Map* client_map_create(void)
     map->tile_mask = quadmask_create(MAP_MAX_WIDTH, MAP_MAX_LENGTH);
     map->fog_mask = quadmask_create(MAP_MAX_WIDTH, MAP_MAX_LENGTH);
     map->tilemap = NULL;
-    map->map_nodes = NULL;
+    map->map_nodes = st_calloc(map->width * map->length, sizeof(MapNode*));
     map->bosses = list_create();
     map->entities = list_create();
     map->tiles = list_create();
@@ -114,6 +118,30 @@ void client_map_create_game_object(Packet* packet)
         default:
             break;
     }
-    log_write(DEBUG, "%d", map->entities->length);
 }
 
+void client_map_clear_fog(Packet* packet)
+{
+    Map* map = game_context.current_map;
+    size_t size = sizeof(i32);
+    void* node;
+    i32 x1, x2, z1, z2;
+    memcpy((char*)&x1, packet->buffer, size);
+    memcpy((char*)&x2, packet->buffer + size, size);
+    memcpy((char*)&z1, packet->buffer + 2 * size, size);
+    memcpy((char*)&z2, packet->buffer + 3 * size, size);
+    memcpy(&node, packet->buffer + 4 * size, sizeof(void*));
+    for (i32 z = z1; z <= z2; z++)
+        for (i32 x = x1; x <= x2; x++)
+            if (node == map->map_nodes[z * map->width + x])
+                quadmask_set(map->fog_mask, x, z);
+}
+
+void client_map_create_map_nodes(Packet* packet)
+{
+    Map* map = game_context.current_map;
+    if  (map == NULL)
+        return;
+
+    memcpy(map->map_nodes, packet->buffer, packet->length);
+}
