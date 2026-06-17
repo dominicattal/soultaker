@@ -134,6 +134,16 @@ void client_map_create_game_object(Packet* packet)
             list_append(map->walls, wall);
             game_set_uid(wall, type, wall->uid);
             break;
+        case GAME_OBJ_OBSTACLE:
+            Obstacle* obstacle = obstacle_read(buffer);
+            list_append(map->obstacles, obstacle);
+            game_set_uid(obstacle, type, obstacle->uid);
+            break;
+        case GAME_OBJ_PARSTACLE:
+            Parstacle* parstacle = parstacle_read(buffer);
+            list_append(map->parstacles, parstacle);
+            game_set_uid(parstacle, type, parstacle->uid);
+            break;
         default:
             break;
     }

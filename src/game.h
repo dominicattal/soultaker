@@ -40,11 +40,16 @@ typedef enum PacketEnum {
 typedef enum GameObj {
     GAME_OBJ_CLIENT,
     GAME_OBJ_ENTITY,
-    GAME_OBJ_LINE,
-    GAME_OBJ_TRIGGER,
-    GAME_OBJ_PROJECTILE,
     GAME_OBJ_TILE,
     GAME_OBJ_WALL,
+    GAME_OBJ_PROJECTILE,
+    GAME_OBJ_OBSTACLE,
+    GAME_OBJ_PARSTACLE,
+    GAME_OBJ_PARTICLE,
+    GMAE_OBJ_PARJICLE,
+    GAME_OBJ_TRIGGER,
+    GAME_OBJ_AOE,
+    GAME_OBJ_LINE,
     NUM_GAME_OBJS,
     GAME_OBJ_NONE
 } GameObj;
@@ -733,7 +738,7 @@ bool player_is_casting(void);
 void player_cleanup(Player* player);
 
 //**************************************************************************
-// Tile _tile definitions
+// Tile %tile definitions
 //**************************************************************************
 
 typedef struct Tile {
@@ -895,10 +900,15 @@ typedef struct Obstacle {
     vec2 position;
     f32 size;
     i32 tex;
+    i32 uid;
 } Obstacle;
 
 Obstacle* obstacle_create(vec2 position);
 void obstacle_destroy(Obstacle* obstacle);
+
+size_t      obstacle_sizeof(void);
+Obstacle*   obstacle_read(char* buffer);
+void        obstacle_write(Obstacle* obstacle, char* buffer);
 
 //**************************************************************************
 // Parstacle _parstacle definitions
@@ -910,10 +920,15 @@ typedef struct Parstacle {
     vec2 position;
     f32 size;
     i32 tex;
+    i32 uid;
 } Parstacle;
 
 Parstacle* parstacle_create(vec2 position);
 void parstacle_destroy(Parstacle* parstacle);
+
+size_t parstacle_sizeof(void);
+Parstacle* parstacle_read(char* buffer);
+void parstacle_write(Parstacle* parstacle, char* buffer);
 
 //**************************************************************************
 // Particle _particle definitions

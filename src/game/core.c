@@ -197,16 +197,22 @@ size_t game_object_write(GameObj type, void* obj, char* buffer)
             return entity_sizeof();
         case GAME_OBJ_PROJECTILE:
             projectile_write(obj, buffer);
-            return entity_sizeof();
+            return projectile_sizeof();
+        case GAME_OBJ_OBSTACLE:
+            obstacle_write(obj, buffer);
+            return obstacle_sizeof();
+        case GAME_OBJ_PARSTACLE:
+            parstacle_write(obj, buffer);
+            return parstacle_sizeof();
         case GAME_OBJ_TILE:
             tile_write(obj, buffer);
-            return entity_sizeof();
+            return tile_sizeof();
         case GAME_OBJ_WALL:
             wall_write(obj, buffer);
             return wall_sizeof();
         default:
             break;
     }
-    log_write(WARNING, "writing unrecognized object %d", type);
+    //log_write(WARNING, "writing unrecognized object %d", type);
     return 0;
 }
