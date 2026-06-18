@@ -571,14 +571,13 @@ static void update_parjicle_vertex_data(Map* map)
         parjicle = list_get(parjicles, i);
         if (map_fog_contains(map, vec2_create(parjicle->position.x, parjicle->position.z)))
             continue;
-        rotate_tex = parjicle_is_flag_set(parjicle, PARJICLE_FLAG_TEX_ROTATION);
         vb->buffer[j++] = parjicle->position.x;
         vb->buffer[j++] = parjicle->position.y;
         vb->buffer[j++] = parjicle->position.z;
         vb->buffer[j++] = parjicle->color.x;
         vb->buffer[j++] = parjicle->color.y;
         vb->buffer[j++] = parjicle->color.z;
-        vb->buffer[j++] = parjicle->size * (rotate_tex ? 1 : -1);
+        vb->buffer[j++] = parjicle->size * (parjicle->rotate_tex ? 1 : -1);
         vb->buffer[j++] = parjicle->rotation;
     }
     

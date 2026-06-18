@@ -27,6 +27,7 @@ typedef enum PacketEnum {
     PACKET_MESSAGE,
     PACKET_LOAD_GAME,
     PACKET_PARTICLE,
+    PACKET_PARJICLE,
 
     PACKET_CREATE_GAME_OBJ,
     PACKET_UPDATE_GAME_OBJ,
@@ -166,9 +167,6 @@ typedef struct Particle {
     i32 id;
 } Particle;
 
-void particle_init(void);
-void particle_cleanup(void);
-
 #define PARTICLE_CREATE(...) \
     (Particle) { \
         .data = NULL, \
@@ -182,6 +180,8 @@ void particle_cleanup(void);
         __VA_ARGS__ \
     }
 
+void particle_init(void);
+void particle_cleanup(void);
 Particle* particle_create_from_struct(Particle particle);
 //Particle* particle_create(vec3 position, vec3 velocity, vec3 acceleration, vec3 color, f32 lifetime, f32 size, i32 id);
 void particle_update(Particle* particle, f32 dt);
@@ -194,12 +194,11 @@ i32 particle_get_id(const char* name);
 // Parjicles are particles with rotation (particle + projectile)
 //**************************************************************************
 
+typedef void (*ParjicleCreateFuncPtr)(Parjicle*);
 typedef void (*ParjicleUpdateFuncPtr)(Parjicle*, f32);
 typedef void (*ParjicleDestroyFuncPtr)(Parjicle*);
 
 typedef struct Parjicle {
-    ParjicleUpdateFuncPtr update;
-    ParjicleDestroyFuncPtr destroy;
     void* data;
     vec3 position;
     vec3 velocity;
@@ -209,18 +208,30 @@ typedef struct Parjicle {
     f32 rotation;
     f32 size;
     i32 id;
-    u32 flags;
+    bool rotate_tex;
 } Parjicle;
 
-typedef enum {
-    PARJICLE_FLAG_TEX_ROTATION
-} ParjicleFlagEnum;
+#define PARJICLE_CREATE(...) \
+    (Parjicle) { \
+        .data = NULL, \
+        .position = vec3_create(0,0,0), \
+        .velocity = vec3_create(0,0,0), \
+        .acceleration = vec3_create(0,0,0), \
+        .color = vec3_create(255,255,255), \
+        .lifetime = 1.0, \
+        .rotation = 0, \
+        .size = 0.1, \
+        .id = -1, \
+        .rotate_tex = false, \
+        __VA_ARGS__ \
+    }
 
-Parjicle* parjicle_create(vec3 position);
+void parjicle_init(void);
+void parjicle_cleanup(void);
+Parjicle* parjicle_create_from_struct(Parjicle parjicle);
 void parjicle_update(Parjicle* parjicle, f32 dt);
-void parjicle_set_flag(Parjicle* parjicle, ParjicleFlagEnum flag, u32 val);
-bool parjicle_is_flag_set(Parjicle* parjicle, ParjicleFlagEnum flag);
 void parjicle_destroy(Parjicle* parjicle);
+i32 parjicle_get_id(const char* name);
 
 //**************************************************************************
 // Maps. _maps See docs/maps.md for more information
@@ -490,7 +501,7 @@ void map_queue_particle(Particle particle);
 
 // create object in global map coords
 Entity*         map_create_entity(vec2 position, i32 id);
-Parjicle*       map_create_parjicle(vec3 position);
+bool            map_create_parjicle(Parjicle parjicle);
 bool            map_create_particle(Particle particle);
 Projectile*     map_create_projectile(vec2 position);
 Trigger*        map_create_trigger(vec2 position, f32 radius);
@@ -506,7 +517,7 @@ Trigger*        room_create_trigger(vec2 position, f32 radius);
 AOE*            room_create_aoe(vec2 position, f32 lifetime);
 Wall*           room_create_wall(vec2 position, f32 height, f32 width, f32 length, u32 minimap_color);
 Trigger*        room_create_trigger(vec2 position, f32 radius);
-Parjicle*       room_create_parjicle(vec3 position);
+bool            room_create_parjicle(Parjicle parjicle);
 bool            room_create_particle(Particle particle);
 Line*           room_create_line(void);
 Tile*           room_set_tilemap_tile(i32 x, i32 z, u32 minimap_color);

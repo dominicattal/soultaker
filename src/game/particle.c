@@ -2,8 +2,6 @@
 #include "../state.h"
 #include <string.h>
 
-extern GameContext game_context;
-
 typedef struct {
     ParticleCreateFuncPtr create;
     ParticleUpdateFuncPtr update;
@@ -16,6 +14,7 @@ typedef struct {
     i32 num_particles;
 } ParticleContext;
 
+extern GameContext game_context;
 static ParticleContext particle_context;
 
 static void* load_function(JsonObject* object, const char* key)

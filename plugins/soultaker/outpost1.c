@@ -775,6 +775,21 @@ void outpost1_boss_destroy(Entity* entity)
     map_destroy_projectiles_with_owner_id(entity->uid);
 }
 
+void test_create(Parjicle* parj)
+{
+    log_write(DEBUG, "created");
+}
+
+void test_update(Parjicle* parj)
+{
+    log_write(DEBUG, "update");
+}
+
+void test_destroy(Parjicle* parj)
+{
+    log_write(DEBUG, "destroy");
+}
+
 static void spawn_parjicles(void)
 {
     vec3 position, direction;
@@ -804,16 +819,19 @@ static void spawn_parjicles(void)
                     position = vec3_create(0,0,0);
                     break;
             }
+            f32 speed = randf_range(15, 25);
+            f32 hue = randf_range(0, 0.5);
             position.x += randf_range(-0.1, 0.1);
             position.y += randf_range(-0.1, 0.1);
             position.z += randf_range(-0.1, 0.1);
-            Parjicle* parj = room_create_parjicle(position);
-            f32 speed = randf_range(15, 25);
-            parj->velocity = vec3_scale(direction, speed);
-            f32 hue = randf_range(0, 0.5);
-            parj->size = -randf_range(0.1, 0.2);
-            parj->color = vec3_create(hue, hue, 1);
-            parj->lifetime = num_tiles / speed;
+            room_create_parjicle(PARJICLE_CREATE(
+                        .position = position,
+                        .velocity = vec3_scale(direction, speed),
+                        .color = vec3_create(hue, hue, 1),
+                        .size = -randf_range(0.1, 0.2),
+                        .lifetime = num_tiles / speed,
+                        .id = parjicle_get_id("test")
+                        ));
         }
     }
 }

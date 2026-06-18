@@ -35,6 +35,7 @@ void* game_loop(void* vargp)
     item_init();
     entity_init();
     particle_init();
+    parjicle_init();
     synergy_init();
     gui_comp_init();
 
@@ -72,6 +73,7 @@ void* game_loop(void* vargp)
     synergy_cleanup();
     entity_cleanup();
     particle_cleanup();
+    parjicle_cleanup();
     game_net_cleanup();
     for (i32 i = 0; i < game_context.clients->length; i++) {
         client = list_get(game_context.clients, i);

@@ -1877,16 +1877,19 @@ Entity* map_create_entity(vec2 position, i32 id)
     return entity;
 }
 
-Parjicle* map_create_parjicle(vec3 position)
+bool map_create_parjicle(Parjicle parjicle)
 {
     Parjicle* parj;
     Map* map = map_context.current_map;
     if (!map->active)
-        return NULL;
-    if (!game_context.singleplayer && !game_context.hosting)
-        return NULL;
-    parj = parjicle_create(position);
+        return false;
+    parj = parjicle_create_from_struct(parjicle);
     list_append(map->parjicles, parj);
+    if (game_context.hosting) {
+        Packet* packet = packet_create(PACKET_PARJICLE, sizeof(parjicle), (char*)&parjicle);
+        game_net_send_udp_packet_to_clients(packet);
+        packet_destroy(packet);
+    }
     return parj;
 }
 
@@ -1900,7 +1903,6 @@ bool map_create_particle(Particle particle)
     list_append(map->particles, part);
 
     if (game_context.hosting) {
-        particle.data = NULL;
         Packet* packet = packet_create(PACKET_PARTICLE, sizeof(particle), (char*)&particle);
         game_net_send_udp_packet_to_clients(packet);
         packet_destroy(packet);
@@ -2028,7 +2030,7 @@ AOE* room_create_aoe(vec2 position, f32 lifetime)
     return aoe;
 }
 
-Parjicle* room_create_parjicle(vec3 position)
+bool room_create_parjicle(Parjicle parjicle)
 {
     Map* map = map_context.current_map;
     MapNode* node = map_context.current_map_node;
@@ -2040,9 +2042,17 @@ Parjicle* room_create_parjicle(vec3 position)
         log_write(WARNING, "Parjicle doesn't know its room");
         return NULL;
     }
-    vec3 new_position = room_to_map_position3(position);
-    Parjicle* parj = parjicle_create(new_position);
+
+    parjicle.position = room_to_map_position3(parjicle.position);
+    Parjicle* parj = parjicle_create_from_struct(parjicle);
     list_append(map->parjicles, parj);
+
+    if (game_context.hosting) {
+        Packet* packet = packet_create(PACKET_PARJICLE, sizeof(parjicle), (char*)&parjicle);
+        game_net_send_udp_packet_to_clients(packet);
+        packet_destroy(packet);
+    }
+
     return parj;
 }
 
@@ -2063,7 +2073,6 @@ bool room_create_particle(Particle particle)
     list_append(map->particles, part);
 
     if (game_context.hosting) {
-        particle.data = NULL;
         Packet* packet = packet_create(PACKET_PARTICLE, sizeof(particle), (char*)&particle);
         game_net_send_udp_packet_to_clients(packet);
         packet_destroy(packet);
