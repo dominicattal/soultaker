@@ -208,8 +208,9 @@ static void pointer_spelltome_create_projectiles(vec2 origin)
         proj->size = 0.6f;
         proj->lifetime = 6.0f;
         proj->tex = tex_id;
-        proj->facing = PI / 6 * i;
+        proj->facing = (PI / 6) * i;
         proj->direction = vec2_direction(proj->facing);
+        //log_write(DEBUG, "%d %f %f %f", i, proj->facing, proj->direction.x, proj->direction.z);
         //projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, true);
     }
 }

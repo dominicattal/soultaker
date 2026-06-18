@@ -13,7 +13,7 @@
 #define MAX_UID                 65535
 #define MAP_MAX_WIDTH   1000
 #define MAP_MAX_LENGTH  1000
-#define PARTICLE_QUEUE_LENGTH 1000
+#define PARTICLE_QUEUE_LENGTH 10000
 
 typedef enum PacketEnum {
 

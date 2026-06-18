@@ -181,6 +181,20 @@ void client_map_destroy_game_object(Packet* packet)
 
     i32 uid;
     memcpy(&uid, packet->buffer, sizeof(uid));
+
+    GameObj type = game_context.uid_map_type[uid];
+
+    switch (type) {
+        case GAME_OBJ_PROJECTILE:
+            Projectile* this_proj = game_context.uid_map[uid];
+            if (this_proj != NULL) {
+                this_proj->lifetime = -1;
+            }
+            break;
+        default:
+            break;
+    }
+
     game_free_uid(uid);
 }
 

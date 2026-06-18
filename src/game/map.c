@@ -3221,11 +3221,10 @@ static void map_send_state(Map* map, f32 dt)
         // game objects should be freed by the condition they sent in the update loop
         // cant just free uid since memory still in map
         // can maybe just remove from map but concerned about race conditions + performance
-        //uid = game_context.freed_uids->buffer[i];
-        //memcpy(buffer, &uid, sizeof(uid));
-        //packet = packet_create(PACKET_CREATE_GAME_OBJ, sizeof(uid), buffer);
-        //game_net_send_tcp_packet_to_clients(packet);
-        //packet_destroy(packet);
+        uid = game_context.freed_uids->buffer[i];
+        packet = packet_create(PACKET_DESTROY_GAME_OBJ, sizeof(uid), (char*)&uid);
+        game_net_send_tcp_packet_to_clients(packet);
+        packet_destroy(packet);
     }
     game_context.freed_uids->length = 0;
     for (i32 i = 0; i < map->entities->length; i++) {

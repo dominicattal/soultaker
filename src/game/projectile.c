@@ -67,7 +67,8 @@ size_t projectile_sizeof(void)
          + sizeof(proj.size)
          + sizeof(proj.lifetime)
          + sizeof(proj.flags)
-         + sizeof(proj.tex);
+         + sizeof(proj.tex)
+         + sizeof(proj.uid);
 }
 
 void projectile_write(Projectile* proj, char* buffer)
@@ -92,6 +93,8 @@ void projectile_write(Projectile* proj, char* buffer)
     buffer += sizeof(proj->flags);
     memcpy(buffer, &proj->tex, sizeof(proj->tex));
     buffer += sizeof(proj->tex);
+    memcpy(buffer, &proj->uid, sizeof(proj->uid));
+    buffer += sizeof(proj->uid);
 }
 
 Projectile* projectile_read(char* buffer)
@@ -117,5 +120,7 @@ Projectile* projectile_read(char* buffer)
     buffer += sizeof(proj->flags);
     memcpy(&proj->tex, buffer, sizeof(proj->tex));
     buffer += sizeof(proj->tex);
+    memcpy(&proj->uid, buffer, sizeof(proj->uid));
+    buffer += sizeof(proj->uid);
     return proj;
 }
