@@ -1869,6 +1869,8 @@ Entity* map_create_entity(vec2 position, i32 id)
     Map* map = map_context.current_map;
     if (!map->active)
         return NULL;
+    if (!game_context.singleplayer && !game_context.hosting)
+        return NULL;
     entity = entity_create(position, id);
     list_append(map->entities, entity);
     buckets_insert_entity(map, entity);
@@ -1881,20 +1883,30 @@ Parjicle* map_create_parjicle(vec3 position)
     Map* map = map_context.current_map;
     if (!map->active)
         return NULL;
+    if (!game_context.singleplayer && !game_context.hosting)
+        return NULL;
     parj = parjicle_create(position);
     list_append(map->parjicles, parj);
     return parj;
 }
 
-Particle* map_create_particle(vec3 position)
+bool map_create_particle(Particle particle)
 {
     Particle* part;
     Map* map = map_context.current_map;
     if (!map->active)
-        return NULL;
-    part = particle_create(position);
+        return false;
+    part = particle_create_from_struct(particle);
     list_append(map->particles, part);
-    return part;
+
+    if (game_context.hosting) {
+        particle.data = NULL;
+        Packet* packet = packet_create(PACKET_PARTICLE, sizeof(particle), (char*)&particle);
+        game_net_send_udp_packet_to_clients(packet);
+        packet_destroy(packet);
+    }
+
+    return part != NULL;
 }
 
 Projectile* map_create_projectile(vec2 position)
@@ -1902,6 +1914,8 @@ Projectile* map_create_projectile(vec2 position)
     Projectile* proj;
     Map* map = map_context.current_map;
     if (!map->active)
+        return NULL;
+    if (!game_context.singleplayer && !game_context.hosting)
         return NULL;
     proj = projectile_create(position);
     list_append(map->projectiles, proj);
@@ -1914,6 +1928,8 @@ Trigger* map_create_trigger(vec2 position, f32 radius)
     Trigger* trigger;
     Map* map = map_context.current_map;
     if (!map->active)
+        return NULL;
+    if (!game_context.singleplayer && !game_context.hosting)
         return NULL;
     trigger = trigger_create(position, radius);
     trigger->map_info.spawn_node = NULL;
@@ -1928,6 +1944,8 @@ AOE* map_create_aoe(vec2 position, f32 lifetime)
     Map* map = map_context.current_map;
     if (!map->active)
         return NULL;
+    if (!game_context.singleplayer && !game_context.hosting)
+        return NULL;
     aoe = aoe_create(position, lifetime);
     list_append(map->aoes, aoe);
     buckets_insert_aoe(map, aoe);
@@ -1940,6 +1958,8 @@ Line* map_create_line(void)
     Map* map = map_context.current_map;
     if (!map->active)
         return NULL;
+    if (!game_context.singleplayer && !game_context.hosting)
+        return NULL;
     line = line_create();
     list_append(map->lines, line);
     return line;
@@ -1950,6 +1970,8 @@ Entity* room_create_entity(vec2 position, i32 id)
     Map* map = map_context.current_map;
     MapNode* node = map_context.current_map_node;
     if (!map->active)
+        return NULL;
+    if (!game_context.singleplayer && !game_context.hosting)
         return NULL;
     if (node == NULL) {
         log_write(WARNING, "Entity doesn't know its room");
@@ -1971,6 +1993,8 @@ Trigger* room_create_trigger(vec2 position, f32 radius)
     MapNode* node = map_context.current_map_node;
     if (!map->active)
         return NULL;
+    if (!game_context.singleplayer && !game_context.hosting)
+        return NULL;
     if (node == NULL) {
         log_write(WARNING, "Trigger doesn't know its room");
         return NULL;
@@ -1990,6 +2014,8 @@ AOE* room_create_aoe(vec2 position, f32 lifetime)
     MapNode* node = map_context.current_map_node;
     if (!map->active)
         return NULL;
+    if (!game_context.singleplayer && !game_context.hosting)
+        return NULL;
     if (node == NULL) {
         log_write(WARNING, "AOE doesn't know its room");
         return NULL;
@@ -2008,6 +2034,8 @@ Parjicle* room_create_parjicle(vec3 position)
     MapNode* node = map_context.current_map_node;
     if (!map->active)
         return NULL;
+    if (!game_context.singleplayer && !game_context.hosting)
+        return NULL;
     if (node == NULL) {
         log_write(WARNING, "Parjicle doesn't know its room");
         return NULL;
@@ -2018,20 +2046,30 @@ Parjicle* room_create_parjicle(vec3 position)
     return parj;
 }
 
-Particle* room_create_particle(vec3 position)
+bool room_create_particle(Particle particle)
 {
     Map* map = map_context.current_map;
     MapNode* node = map_context.current_map_node;
     if (!map->active)
+        return false;
+    if (!game_context.singleplayer && !game_context.hosting)
         return NULL;
     if (node == NULL) {
-        log_write(WARNING, "Entity doesn't know its room");
-        return NULL;
+        log_write(WARNING, "Particle doesn't know its room");
+        return false;
     }
-    vec3 new_position = room_to_map_position3(position);
-    Particle* part = particle_create(new_position);
+    particle.position = room_to_map_position3(particle.position);
+    Particle* part = particle_create_from_struct(particle);
     list_append(map->particles, part);
-    return part;
+
+    if (game_context.hosting) {
+        particle.data = NULL;
+        Packet* packet = packet_create(PACKET_PARTICLE, sizeof(particle), (char*)&particle);
+        game_net_send_udp_packet_to_clients(packet);
+        packet_destroy(packet);
+    }
+
+    return part != NULL;
 }
 
 Obstacle* room_create_obstacle(vec2 position)
@@ -2040,6 +2078,8 @@ Obstacle* room_create_obstacle(vec2 position)
     Map* map = map_context.current_map;
     MapNode* node = map_context.current_map_node;
     if (!map->active)
+        return NULL;
+    if (!game_context.singleplayer && !game_context.hosting)
         return NULL;
     if (node == NULL) {
         log_write(WARNING, "Obstacle doesn't know its room");
@@ -2060,6 +2100,8 @@ Parstacle* room_create_parstacle(vec2 position)
     MapNode* node = map_context.current_map_node;
     if (!map->active)
         return NULL;
+    if (!game_context.singleplayer && !game_context.hosting)
+        return NULL;
     if (node == NULL) {
         log_write(WARNING, "Parstacle doesn't know its room");
         return NULL;
@@ -2076,6 +2118,8 @@ Projectile* room_create_projectile(vec2 position)
     Map* map = map_context.current_map;
     MapNode* node = map_context.current_map_node;
     if (!map->active)
+        return NULL;
+    if (!game_context.singleplayer && !game_context.hosting)
         return NULL;
     if (node == NULL) {
         log_write(WARNING, "Projectile doesn't know its room");
@@ -2094,6 +2138,8 @@ Wall* room_create_wall(vec2 position, f32 height, f32 width, f32 length, u32 min
     Map* map = map_context.current_map;
     MapNode* node = map_context.current_map_node;
     if (!map->active)
+        return NULL;
+    if (!game_context.singleplayer && !game_context.hosting)
         return NULL;
     if (node == NULL) {
         log_write(WARNING, "Wall doesn't know its room");
@@ -2130,6 +2176,8 @@ Tile* room_set_tilemap_tile(i32 x, i32 z, u32 minimap_color)
     MapNode* node = map_context.current_map_node;
     if (!map->active)
         return NULL;
+    if (!game_context.singleplayer && !game_context.hosting)
+        return NULL;
     if (node == NULL) {
         log_write(WARNING, "Tilemap tile doesn't know its room");
         return NULL;
@@ -2156,6 +2204,8 @@ Wall* room_set_tilemap_wall(i32 x, i32 z, f32 height, u32 minimap_color)
     MapNode* node = map_context.current_map_node;
     if (!map->active)
         return NULL;
+    if (!game_context.singleplayer && !game_context.hosting)
+        return NULL;
     if (node == NULL) {
         log_write(WARNING, "Tilemap wall doesn't know its room");
         return NULL;
@@ -2181,6 +2231,8 @@ Line* room_create_line(void)
     Map* map = map_context.current_map;
     MapNode* node = map_context.current_map_node;
     if (!map->active)
+        return NULL;
+    if (!game_context.singleplayer && !game_context.hosting)
         return NULL;
     if (node == NULL) {
         log_write(WARNING, "Line doesn't know its room");
@@ -3195,6 +3247,39 @@ static void map_send_state(Map* map, f32 dt)
     }
 }
 
+void client_map_update(Map* map, f32 dt)
+{
+    i32 i;
+
+    // need this here because of jank need to fix
+    map_context.current_map = game_context.current_map;
+
+    while (map->particle_queue.tail != map->particle_queue.head) {
+        map_create_particle(map->particle_queue.buffer[map->particle_queue.tail]);
+        map->particle_queue.tail = (map->particle_queue.tail + 1) % (PARTICLE_QUEUE_LENGTH + 1);
+    }
+
+    i = 0;
+    while (i < map->particles->length) {
+        Particle* particle = list_get(map->particles, i);
+        particle_update(particle, dt);
+        if (particle->lifetime <= 0)
+            particle_destroy(list_remove(map->particles, i));
+        else
+            i++;
+    }
+
+    i = 0;
+    while (i < map->projectiles->length) {
+        Projectile* projectile = list_get(map->projectiles, i);
+        projectile_update(projectile, dt);
+        if (projectile->lifetime <= 0)
+            projectile_destroy(list_remove(map->projectiles, i));
+        else
+            i++;
+    }
+}
+
 void map_update(Map* map, f32 dt)
 {
     if (map == NULL)
@@ -3252,4 +3337,18 @@ found:
     gui_destroy_boss_healthbar(entity);
     pthread_mutex_lock(&game_context.getter_mutex);
     pthread_mutex_unlock(&game_context.getter_mutex);
+}
+
+void map_queue_particle(Particle particle)
+{
+    Map* map = map_context.current_map;
+    if (map == NULL)
+        return;
+    if (!map->active)
+        return;
+    if (map->particle_queue.head == (map->particle_queue.tail-1)%(PARTICLE_QUEUE_LENGTH+1))
+        return;
+
+    map->particle_queue.buffer[map->particle_queue.head] = particle;
+    map->particle_queue.head = (map->particle_queue.head+1)%(PARTICLE_QUEUE_LENGTH+1);
 }

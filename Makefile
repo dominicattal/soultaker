@@ -1,6 +1,7 @@
 CC = gcc
 CFLAGS = -fPIC -Wall -Wextra -Werror -Wfatal-errors -Wno-unused-parameter -finline-functions \
-		 -fopenmp -pthread -Wno-unused-function -Iinclude -Wno-unused-result -Wno-maybe-uninitialized -Wno-unused-but-set-variable -Wno-unused-variable 
+		 -fopenmp -pthread -Wno-unused-function -Iinclude -Wno-unused-result -Wno-maybe-uninitialized \
+		 -Wno-unused-but-set-variable -Wno-unused-variable -Wno-override-init-side-effects -Wno-override-init
 CFLAGS_DEV = -g3 -D DEBUG_BUILD
 CFLAGS_RELEASE = -O2 -D RELEASE_BUILD
 ifeq ($(OS), Windows_NT)

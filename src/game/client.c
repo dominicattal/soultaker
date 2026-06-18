@@ -88,20 +88,6 @@ Map* client_map_create(void)
     return map;
 }
 
-void client_map_update(Map* map, f32 dt)
-{
-    i32 i;
-    i = 0;
-    while (i < map->projectiles->length) {
-        Projectile* projectile = list_get(map->projectiles, i);
-        projectile_update(projectile, dt);
-        if (projectile->lifetime <= 0)
-            projectile_destroy(list_remove(map->projectiles, i));
-        else
-            i++;
-    }
-}
-
 void client_map_create_game_object(Packet* packet)
 {
     Map* map = game_context.current_map;
@@ -227,4 +213,11 @@ void client_map_create_map_nodes(Packet* packet)
         return;
 
     memcpy(map->map_nodes, packet->buffer, packet->length);
+}
+
+void client_map_create_particle(Packet* packet)
+{
+    Particle particle;
+    memcpy(&particle, packet->buffer, sizeof(particle));
+    map_queue_particle(particle);
 }

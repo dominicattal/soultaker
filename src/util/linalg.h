@@ -3,6 +3,9 @@
 
 #include "type.h"
 
+#define VEC3_ZERO (vec3){0}
+#define VEC2_ZERO (vec2){0}
+
 typedef struct {
     f64 x;
     union { f64 y, z; };

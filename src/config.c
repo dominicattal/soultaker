@@ -256,6 +256,84 @@ static void read_maps(Config* config, const char* dir_path)
     closedir(cur_dir);
 }
 
+static void read_particles(Config* config, const char* dir_path)
+{
+    DIR* cur_dir = opendir(dir_path);
+    if (cur_dir == NULL) {
+        log_write(WARNING, "Something weird happened %s", dir_path);
+        return;
+    }
+    JsonObject* object;
+    JsonObject* new_config_maps;
+    char* new_dir;
+    char* path;
+    const struct dirent* iterator = readdir(cur_dir);
+    while (iterator != NULL) {
+        if (iterator->d_name[0] != '.') {
+            if (is_dir(dir_path, iterator)) {
+                new_dir = string_create("%s/%s", dir_path, iterator->d_name);
+                read_maps(config, new_dir);
+                string_free(new_dir);
+            } else if (ends_with(iterator->d_name, ".json")) {
+                path = string_create("%s/%s", dir_path, iterator->d_name);
+                log_write(INFO, "Reading particle config: %s", path);
+                object = json_read(path);
+                if (object == NULL)
+                    log_write(CRITICAL, "Error reading %s", path);
+                else {
+                    new_config_maps = json_merge_objects(config->particles, object);
+                    if (new_config_maps == NULL)
+                        log_write(CRITICAL, "Error merging %s", path);
+                    else
+                        config->particles = new_config_maps;
+                }
+                string_free(path);
+            }
+        }
+        iterator = readdir(cur_dir);
+    }
+    closedir(cur_dir);
+}
+
+static void read_parjicles(Config* config, const char* dir_path)
+{
+    DIR* cur_dir = opendir(dir_path);
+    if (cur_dir == NULL) {
+        log_write(WARNING, "Something weird happened %s", dir_path);
+        return;
+    }
+    JsonObject* object;
+    JsonObject* new_config_maps;
+    char* new_dir;
+    char* path;
+    const struct dirent* iterator = readdir(cur_dir);
+    while (iterator != NULL) {
+        if (iterator->d_name[0] != '.') {
+            if (is_dir(dir_path, iterator)) {
+                new_dir = string_create("%s/%s", dir_path, iterator->d_name);
+                read_maps(config, new_dir);
+                string_free(new_dir);
+            } else if (ends_with(iterator->d_name, ".json")) {
+                path = string_create("%s/%s", dir_path, iterator->d_name);
+                log_write(INFO, "Reading particle config: %s", path);
+                object = json_read(path);
+                if (object == NULL)
+                    log_write(CRITICAL, "Error reading %s", path);
+                else {
+                    new_config_maps = json_merge_objects(config->parjicles, object);
+                    if (new_config_maps == NULL)
+                        log_write(CRITICAL, "Error merging %s", path);
+                    else
+                        config->parjicles = new_config_maps;
+                }
+                string_free(path);
+            }
+        }
+        iterator = readdir(cur_dir);
+    }
+    closedir(cur_dir);
+}
+
 static void read_config(Config* config)
 {
     const char* dir_path = "config";
@@ -288,6 +366,14 @@ static void read_config(Config* config)
             new_dir = string_create("%s/%s", dir_path, config_type->d_name);
             read_items(config, new_dir);
             string_free(new_dir);
+        } else if (strcmp(config_type->d_name, "particles") == 0) {
+            new_dir = string_create("%s/%s", dir_path, config_type->d_name);
+            read_particles(config, new_dir);
+            string_free(new_dir);
+        } else if (strcmp(config_type->d_name, "parjicles") == 0) {
+            new_dir = string_create("%s/%s", dir_path, config_type->d_name);
+            read_parjicles(config, new_dir);
+            string_free(new_dir);
         }
         config_type = readdir(config_dir);
     }
@@ -302,6 +388,8 @@ Config* config_create(void)
     config->entities = json_object_create();
     config->synergies = json_object_create();
     config->maps = json_object_create();
+    config->particles = json_object_create();
+    config->parjicles = json_object_create();
     read_config(config);
     if (json_object_length(config->textures) == 0)
         log_write(FATAL, "Did not find any textures");
@@ -322,6 +410,8 @@ void config_destroy(Config* config)
     json_object_destroy(config->entities);
     json_object_destroy(config->synergies);
     json_object_destroy(config->maps);
+    json_object_destroy(config->particles);
+    json_object_destroy(config->parjicles);
     dlclose(config->shared_handle);
     st_free(config);
 }

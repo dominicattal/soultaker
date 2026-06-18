@@ -9,6 +9,8 @@ typedef struct Config {
     JsonObject* entities;
     JsonObject* synergies;
     JsonObject* maps;
+    JsonObject* particles;
+    JsonObject* parjicles;
     void* shared_handle;
 } Config;
 

@@ -644,11 +644,13 @@ static void spawn_sword_with_delay(vec2 origin, vec2 direction, f32 lifetime, f3
     f32 distance = speed * lifetime + 8;
     f32 cur_distance = vec2_mag(vec2_sub(origin, cur));
     while (cur_distance < distance) {
-        Particle* part = room_create_particle(vec3_create(cur.x, 0.5, cur.z));
         f32 g = lerp(0.0, 1.0, distance, cur_distance);
-        part->color = vec3_create(1.0, g, 1.0);
-        part->size = 0.1;
-        part->lifetime = delay;
+        //Particle* part = room_create_particle(position, velocity, acceleration, color, lifetime, size, id);
+        room_create_particle(PARTICLE_CREATE( 
+                    .position = vec3_create(cur.x, 0.5, cur.z), 
+                    .color = vec3_create(1.0, g, 1.0),
+                    .lifetime = delay));
+
         cur = vec2_add(cur, vec2_scale(direction, 0.25));
         cur_distance = vec2_mag(vec2_sub(origin, cur));
     }

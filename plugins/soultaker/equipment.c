@@ -117,7 +117,7 @@ void super_pointer_secondary(Player* player, vec2 direction, vec2 target)
     }
 }
 
-static void other_part_update(Particle* part, f32 dt)
+void other_part_update(Particle* part, f32 dt)
 {
     part->size -= 0.4*dt;
     if (part->size < 0) 
@@ -130,81 +130,69 @@ static void create_aoe(vec2 position)
     vec2 dir;
     vec3 pos3;
     i32 i;
-    f32 rad, hue, lifetime;
+    f32 rad, hue;
+    bool success;
+
     AOE* aoe = map_create_aoe(position, 1.0f);
     if (aoe == NULL)
         return;
+
+    i32 part_id = particle_get_id("other_part");
+
     i32 n = 100;
-    lifetime = 0.4;
     pos3 = vec3_create(position.x, 0.5, position.z);
     for (i = 0; i < n; i++) {
         rad = (2*PI*i)/n;
         dir = vec2_direction(rad);
-        part = map_create_particle(pos3);
-        if (part == NULL)
-            return;
-        part->velocity.x = 5*dir.x;
-        part->velocity.z = 5*dir.z;
-        part->update = other_part_update;
-        part->lifetime = lifetime;
-        hue = randf();
-        part->color.x = hue;
-        part->color.y = hue;
-        part->color.z = hue;
-        part = map_create_particle(pos3);
-        if (part == NULL)
-            return;
-        part->velocity.x = 7*dir.x;
-        part->velocity.z = 7*dir.z;
-        part->update = other_part_update;
-        part->lifetime = lifetime;
-        hue = randf();
-        part->color.x = hue;
-        part->color.y = hue;
-        part->color.z = hue;
-        part = map_create_particle(pos3);
-        if (part == NULL)
-            return;
-        part->velocity.x = 9*dir.x;
-        part->velocity.z = 9*dir.z;
-        part->lifetime = lifetime;
-        part->update = other_part_update;
-        hue = randf();
-        part->color.x = hue;
-        part->color.y = hue;
-        part->color.z = hue;
+
+        for (i32 j = 5; j <= 9; j += 2) {
+            hue = randf();
+            success = map_create_particle(PARTICLE_CREATE(
+                        .position = pos3,
+                        .velocity = vec3_create(j*dir.x, 0, j*dir.z),
+                        .color = vec3_create(hue, hue, hue),
+                        .lifetime = 0.4,
+                        .id = part_id
+                        ));
+            if (!success)
+                return;
+        }
     }
 }
 
-static void spelltome_update_lob(Particle* part, f32 dt)
+void spelltome_update_lob(Particle* part, f32 dt)
 {
     Particle* new_part;
     f32* timer = part->data;
     *timer -= dt;
     if (*timer < 0) {
-        new_part = map_create_particle(part->position);
-        new_part->color.x = new_part->color.y = new_part->color.z = randf();
-        new_part->lifetime = 0.1;
+        map_create_particle(PARTICLE_CREATE(
+                    .position = part->position,
+                    .color = vec3_create(randf(), randf(), randf()),
+                    .lifetime = 0.1
+                    ));
         *timer += 0.01;
     }
 }
 
-static void spelltome_destroy_lob(Particle* part)
+void spelltome_destroy_lob(Particle* part)
 {
     create_aoe(vec2_create(part->position.x, part->position.z));
     st_free(part->data);
 }
 
-static void pointer_spelltome_update_lob(Particle* part, f32 dt)
+void pointer_spelltome_update_lob(Particle* part, f32 dt)
 {
     Particle* new_part;
     f32* timer = part->data;
     *timer -= dt;
     if (*timer < 0) {
-        new_part = map_create_particle(part->position);
-        new_part->color.z = 255;
-        new_part->color.x = new_part->color.y = randf();
-        new_part->lifetime = 0.1;
+        f32 hue = randf();
+        map_create_particle(PARTICLE_CREATE(
+                    .position = part->position,
+                    .color = vec3_create(hue, hue, 255),
+                    .lifetime = 0.1
+                    ));
         *timer += 0.01;
     }
 }
@@ -226,27 +214,29 @@ static void pointer_spelltome_create_projectiles(vec2 origin)
     }
 }
 
-static void pointer_spelltome_destroy_lob(Particle* part)
+void pointer_spelltome_destroy_lob(Particle* part)
 {
     pointer_spelltome_create_projectiles(vec2_create(part->position.x, part->position.z));
     st_free(part->data);
 }
 
-static void null_pointer_spelltome_update_lob(Particle* part, f32 dt)
+void null_pointer_spelltome_update_lob(Particle* part, f32 dt)
 {
     Particle* new_part;
     f32* timer = part->data;
     *timer -= dt;
     if (*timer < 0) {
-        new_part = map_create_particle(part->position);
-        new_part->color.x = 255;
-        new_part->color.y = new_part->color.z = randf();
-        new_part->lifetime = 0.1;
+        f32 hue = randf();
+        map_create_particle(PARTICLE_CREATE(
+                    .position = part->position,
+                    .color = vec3_create(hue, hue, 255),
+                    .lifetime = 0.1
+                    ));
         *timer += 0.01;
     }
 }
 
-static void null_pointer_spelltome_create_projectiles(vec2 origin)
+void null_pointer_spelltome_create_projectiles(vec2 origin)
 {
     Projectile* proj;
     i32 tex_id = texture_get_id("null_ptr");
@@ -263,28 +253,28 @@ static void null_pointer_spelltome_create_projectiles(vec2 origin)
     }
 }
 
-static void null_pointer_spelltome_destroy_lob(Particle* part)
+void null_pointer_spelltome_destroy_lob(Particle* part)
 {
     null_pointer_spelltome_create_projectiles(vec2_create(part->position.x, part->position.z));
     st_free(part->data);
 }
 
-static void pointer_null_pointer_spelltome_update_lob(Particle* part, f32 dt)
+void pointer_null_pointer_spelltome_update_lob(Particle* part, f32 dt)
 {
     Particle* new_part;
     f32* timer = part->data;
     *timer -= dt;
     if (*timer < 0) {
-        new_part = map_create_particle(part->position);
-        new_part->color.x = 255;
-        new_part->color.z = 255;
-        new_part->color.y = randf();
-        new_part->lifetime = 0.1;
+        map_create_particle(PARTICLE_CREATE(
+                    .position = part->position,
+                    .color = vec3_create(randf(), randf(), randf()),
+                    .lifetime = 0.1
+                    ));
         *timer += 0.01;
     }
 }
 
-static void pointer_null_pointer_spelltome_create_projectiles(vec2 origin)
+void pointer_null_pointer_spelltome_create_projectiles(vec2 origin)
 {
     Projectile* proj;
     i32 tex_id = texture_get_id("purp_bullet");
@@ -301,25 +291,27 @@ static void pointer_null_pointer_spelltome_create_projectiles(vec2 origin)
     }
 }
 
-static void pointer_null_pointer_spelltome_destroy_lob(Particle* part)
+void pointer_null_pointer_spelltome_destroy_lob(Particle* part)
 {
     pointer_null_pointer_spelltome_create_projectiles(vec2_create(part->position.x, part->position.z));
     st_free(part->data);
 }
 
-static void create_lob(Player* player, vec2 direction, vec2 target, void (*update_lob)(Particle*, f32), void (*destroy_lob)(Particle*))
+void spelltome_create_lob(Particle* particle)
+{
+    particle->data = st_malloc(sizeof(f32));
+    *((f32*)particle->data) = 0.0f;
+}
+
+static void create_lob(Player* player, vec2 direction, vec2 target, i32 part_id)
 {
     // https://www.desmos.com/calculator/lybiehprmk
     Particle* part;
     vec2 origin = player->entity->position;
     vec2 offset = vec2_sub(target, origin);
     vec2 part_velocity = vec2_normalize(offset);
+    vec3 velocity;
     f32 distance = vec2_mag(offset);
-    vec3 origin3 = vec3_create(origin.x, 0.5, origin.z);
-    part = map_create_particle(origin3);
-    if (part == NULL)
-        return;
-
     f32 g, h, y1, y2, t1, t2, speed;
     g = GRAVITY;
     h = 3.0f;
@@ -327,38 +319,43 @@ static void create_lob(Player* player, vec2 direction, vec2 target, void (*updat
     t1 = sqrt(2*(y2-h)/g);
     y1 = -g*t1;
     t2 = (-y1-sqrt(y1*y1-2*g*y2))/g;
-    part->lifetime = t2;
     speed = distance / t2;
     part_velocity = vec2_scale(part_velocity, speed);
-    part->velocity.x = part_velocity.x;
-    part->velocity.y = y1;
-    part->velocity.z = part_velocity.z;
-    part->acceleration.y = GRAVITY;
-    part->data = st_malloc(sizeof(f32));
-    part->size = 0.2f;
-    *((f32*)part->data) = 0.0f;
-    part->update = update_lob;
-    part->destroy = destroy_lob;
+    velocity.x = part_velocity.x;
+    velocity.y = y1;
+    velocity.z = part_velocity.z;
+    bool success = map_create_particle(PARTICLE_CREATE(
+                .position = vec3_create(origin.x, 0.5, origin.z),
+                .velocity = velocity,
+                .acceleration = vec3_create(0, GRAVITY, 0),
+                .lifetime = t2,
+                .size = 0.2,
+                .id = part_id
+                ));
 }
 
 void spelltome_cast(Player* player, vec2 direction, vec2 target)
 {
-    create_lob(player, direction, target, spelltome_update_lob, spelltome_destroy_lob);
+    i32 part_id = particle_get_id("spelltome_lob");
+    create_lob(player, direction, target, part_id);
 }
 
 void pointer_spelltome_cast(Player* player, vec2 direction, vec2 target)
 {
-    create_lob(player, direction, target, pointer_spelltome_update_lob, pointer_spelltome_destroy_lob);
+    i32 part_id = particle_get_id("pointer_spelltome_lob");
+    create_lob(player, direction, target, part_id);
 }
 
 void null_pointer_spelltome_cast(Player* player, vec2 direction, vec2 target)
 {
-    create_lob(player, direction, target, null_pointer_spelltome_update_lob, null_pointer_spelltome_destroy_lob);
+    i32 part_id = particle_get_id("null_pointer_spelltome_lob");
+    create_lob(player, direction, target, part_id);
 }
 
 void pointer_null_pointer_spelltome_cast(Player* player, vec2 direction, vec2 target)
 {
-    create_lob(player, direction, target, pointer_null_pointer_spelltome_update_lob, pointer_null_pointer_spelltome_destroy_lob);
+    i32 part_id = particle_get_id("pointer_null_pointer_spelltome_lob");
+    create_lob(player, direction, target, part_id);
 }
 
 static vec2 sword_offsets[] = {

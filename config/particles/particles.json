@@ -1,0 +1,25 @@
+{
+    "spelltome_lob": {
+        "create": "spelltome_create_lob",
+        "update": "spelltome_update_lob",
+        "destroy": "spelltome_destroy_lob"
+    },
+    "pointer_spelltome_lob": {
+        "create": "spelltome_create_lob",
+        "update": "pointer_spelltome_update_lob",
+        "destroy": "pointer_spelltome_destroy_lob"
+    },
+    "null_pointer_spelltome_lob": {
+        "create": "spelltome_create_lob",
+        "update": "null_pointer_spelltome_update_lob",
+        "destroy": "null_pointer_spelltome_destroy_lob"
+    },
+    "pointer_null_pointer_spelltome_lob": {
+        "create": "spelltome_create_lob",
+        "update": "pointer_null_pointer_spelltome_update_lob",
+        "destroy": "pointer_null_pointer_spelltome_destroy_lob"
+    },
+    "other_part": {
+        "update": "other_part_update"
+    }
+}
