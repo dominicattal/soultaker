@@ -14,6 +14,7 @@
 #define MAP_MAX_WIDTH   1000
 #define MAP_MAX_LENGTH  1000
 #define PARTICLE_QUEUE_LENGTH 10000
+#define GAME_OBJECT_QUEUE_LENGTH 10000
 
 typedef enum PacketEnum {
 
@@ -26,8 +27,8 @@ typedef enum PacketEnum {
     PACKET_CLIENT_TO_HOST_USERNAME,
     PACKET_MESSAGE,
     PACKET_LOAD_GAME,
-    PACKET_PARTICLE,
-    PACKET_PARJICLE,
+    PACKET_CREATE_PARTICLE,
+    PACKET_CREATE_PARJICLE,
 
     PACKET_CREATE_GAME_OBJ,
     PACKET_UPDATE_GAME_OBJ,
@@ -118,6 +119,17 @@ typedef bool (*RoomsetBranchFuncPtr)(LocalMapGenerationSettings*);
 
 // used for items and synergies
 typedef void (*UseFuncPtr)(Player*, vec2, vec2);
+
+//**************************************************************************
+// Actual declarations
+//**************************************************************************
+
+typedef struct MapInfo {
+    MapNode* spawn_node;
+    MapNode* current_node;
+    i32 tr_bucket_idx;
+    i32 bl_bucket_idx;
+} MapInfo;
 
 //**************************************************************************
 // Camera declarations _camera
@@ -232,296 +244,6 @@ Parjicle* parjicle_create_from_struct(Parjicle parjicle);
 void parjicle_update(Parjicle* parjicle, f32 dt);
 void parjicle_destroy(Parjicle* parjicle);
 i32 parjicle_get_id(const char* name);
-
-//**************************************************************************
-// Maps. _maps See docs/maps.md for more information
-//**************************************************************************
-
-typedef struct LocalMapGenerationSettings {
-    const char* current_branch;
-    const char* current_room_type;
-    i32 num_rooms_left;
-    i32 num_rooms_loaded;
-    i32 male_x, male_z;
-    bool no_path;
-    bool create_no_path;
-    bool succeed_even_if_no_path;
-} LocalMapGenerationSettings;
-
-typedef struct {
-    union {
-        i32 idx_x;
-        i32 bl_bucket_idx;
-    };
-    union {
-        i32 idx_z;
-        i32 tr_bucket_idx;
-    };
-} IntPair;
-
-typedef struct MapInfo {
-    MapNode* spawn_node;
-    MapNode* current_node;
-    i32 tr_bucket_idx;
-    i32 bl_bucket_idx;
-} MapInfo;
-
-typedef struct {
-    const char* name;
-    TileCreateFuncPtr create;
-    TileCollideFuncPtr collide;
-    u32 color;
-    u32 top_tex;
-    f32 height;
-    union {
-        u32 tex;
-        u32 side_tex;
-    };
-    bool is_wall;
-} TileColor;
-
-typedef struct {
-    TileColor* colors;
-    i32 num_colors;
-} Palette;
-
-typedef struct {
-    i32 u1, v1, u2, v2;
-    i32 origin_u, origin_v;
-    i32 loc_u, loc_v;
-    TileColor* default_tile;
-} Alternate;
-
-typedef struct Room {
-    i32 u1, v1, u2, v2;
-    const char* name;
-    const char* type;
-    RoomCreateFuncPtr create;
-    RoomEnterFuncPtr enter;
-    RoomExitFuncPtr exit;
-    List* male_alternates;
-    List* female_alternates;
-    bool rotate;
-} Room;
-
-typedef struct {
-    i32 width, length;
-    u32* pixels;
-    Room* rooms;
-    i32 num_rooms;
-    void* data;
-    Palette* palette;
-    RoomsetInitFuncPtr init;
-    RoomsetGenerateFuncPtr generate;
-    RoomsetBranchFuncPtr branch;
-    RoomsetCleanupFuncPtr cleanup;
-} Roomset;
-
-typedef enum {
-    // Partitions map into equal-sized buckets 
-    MAP_COLLIDE_SPATIAL_HASH,
-
-    // Allocates no extra memory but is very slow
-    MAP_COLLIDE_NAIVE
-} MapCollisionStrategy;
-
-typedef struct {
-    List* entities;
-    List* free_walls;
-    List* projectiles;
-    List* obstacles;
-    List* triggers;
-    List* aoes;
-} Bucket;
-
-typedef struct {
-    i32 bucket_width;
-    i32 num_buckets_wide; // x
-    i32 num_buckets_long; // z
-    i32 num_buckets;
-    Bucket* buckets;
-} SpatialHashData;
-
-typedef struct {
-    Particle buffer[PARTICLE_QUEUE_LENGTH+1];
-    i32 head;
-    i32 tail;
-} ParticleQueue;
-
-typedef struct Map {
-    ParticleQueue particle_queue;
-    i32 width, length;
-    vec2 spawn_point;
-    Roomset* roomset;
-    MapNode* root;
-    void** tilemap;
-    MapNode** map_nodes;
-    Quadmask* tile_mask;
-    Quadmask* fog_mask;
-    SpatialHashData spatial_hash_data;
-    MapCollisionStrategy collision_strategy;
-    List* bosses;
-    List* entities;
-    List* tiles;
-    List* walls;
-    List* free_walls;
-    List* projectiles;
-    List* obstacles;
-    List* parstacles;
-    List* particles;
-    List* parjicles;
-    List* triggers;
-    List* aoes;
-    List* lines;
-    bool active;
-    bool show_spatial_hash_lines;
-} Map;
-
-typedef struct MapNode {
-    MapNode* parent;
-    MapNode** children;
-    Alternate* female_alternate;
-    Room* room;
-    List* male_alternates;
-    i32 num_children;
-    i32 origin_x, origin_z;
-    i32 x1, x2, z1, z2;
-    i32 orientation;
-    i32 num_exits;
-    i32 num_enters;
-    bool visited;
-    bool cleared;
-} MapNode;
-
-typedef struct {
-    Quadmask* qm;
-    Roomset* roomset;
-} GlobalMapGenerationSettings;
-
-void map_make_boss(char* name, Entity* entity);
-void map_boss_update(Entity* entity);
-void map_unmake_boss(Entity* entity);
-
-void map_init(void);
-i32  map_get_id(const char* name);
-Map* map_create(i32 id);
-
-void map_update(Map* map, f32 dt);
-void map_set_active(Map* map);
-void map_set_inactive(Map* map);
-void map_destroy(Map* map);
-void map_cleanup(void);
-
-void map_destroy_projectiles_with_owner_id(i32 uid);
-
-// switch collision strategy for map
-void map_use_quadtree(Map* map, i32 split_threshold);
-void map_use_spatial_hash(Map* map, i32 bucket_width);
-void map_use_naive(Map* map);
-
-void bucket_create(Bucket* bucket);
-void bucket_destroy(Bucket* bucket);
-
-void buckets_insert_trigger(Map* map, Trigger* trigger);
-void buckets_insert_entity(Map* map, Entity* entity);
-void buckets_insert_projectile(Map* map, Projectile* projectile);
-void buckets_insert_free_wall(Map* map, Wall* wall);
-void buckets_insert_obstacle(Map* map, Obstacle* obstacle);
-void buckets_insert_aoe(Map* map, AOE* aoe);
-
-void buckets_update_trigger(Map* map, Trigger* trigger);
-void buckets_update_entity(Map* map, Entity* entity);
-void buckets_update_projectile(Map* map, Projectile* projectile);
-void buckets_update_free_wall(Map* map, Wall* wall);
-void buckets_update_obstacle(Map* map, Obstacle* obstacle);
-void buckets_update_aoe(Map* map, AOE* aoe);
-
-void buckets_remove_trigger(Map* map, Trigger* trigger);
-void buckets_remove_entity(Map* map, Entity* entity);
-void buckets_remove_projectile(Map* map, Projectile* projectile);
-void buckets_remove_free_wall(Map* map, Wall* wall);
-void buckets_remove_obstacle(Map* map, Obstacle* obstacle);
-void buckets_remove_aoe(Map* map, AOE* aoe);
-
-// returns true if the tile at (x, z) is a wall
-bool map_is_wall(Map* map, i32 x, i32 z);
-
-// gets the tile or wall at (x, z), returns NULL if out of bounds
-void* map_get(Map* map, i32 x, i32 z);
-
-// get the tile at (x, z) for the current map. returns
-// NULL if it is out of bounds, the unit is empty, or is a wall
-Tile* map_get_tile(Map* map, i32 x, i32 z);
-
-// get the wall at (x, z) for the current map. returns
-// NULL if it is out of bounds, the unit is empty, or is a tile
-Wall* map_get_wall(Map* map, i32 x, i32 z);
-
-// replaces the tile or wall at (x, z) with tile or wall
-void map_set_tile(Map* map, i32 x, i32 z, Tile* tile);
-void map_set_wall(Map* map, i32 x, i32 z, Wall* wall);
-
-// returns whether coordinate in fog
-bool map_fog_contains(Map* map, vec2 position);
-bool map_fog_contains_tile(Map* map, Tile* tile);
-bool map_fog_contains_wall(Map* map, Wall* wall);
-
-// defogs room that contains coordinate and adjacent rooms
-void map_fog_explore(Map* map, vec2 position);
-
-// clears all the fog
-void map_fog_clear(Map* map);
-
-void map_toggle_spatial_hash_lines(Map* map);
-
-void map_handle_trigger_enter(Trigger* trigger, Entity* entity);
-void map_handle_trigger_stay(Trigger* trigger, Entity* entity);
-void map_handle_trigger_leave(Trigger* trigger, Entity* entity);
-
-// gets the orientation of the current map node, where northwest is toward 0, 0 in uv map
-// returns vec2(0,0) if no map node currently bounded
-vec2 map_orientation(void);
-
-void map_interactable_callback(InteractableFuncPtr fptr, Map* map, MapNode* map_node);
-void map_set_interactable(const char* desc, InteractableFuncPtr func_ptr);
-
-// get global data that is created on map generation
-void* map_get_data(void);
-
-vec2 room_to_map_position(vec2 position);
-vec2 map_to_room_position(vec2 position);
-vec3 room_to_map_position3(vec3 position);
-vec3 map_to_room_position3(vec3 position);
-
-void map_queue_particle(Particle particle);
-
-// the following functions will return NULL if the map is not active
-// a map is inactive when it is signaled to be destroyed. this is so that
-// objects can free their memory without creating new memory
-
-// create object in global map coords
-Entity*         map_create_entity(vec2 position, i32 id);
-bool            map_create_parjicle(Parjicle parjicle);
-bool            map_create_particle(Particle particle);
-Projectile*     map_create_projectile(vec2 position);
-Trigger*        map_create_trigger(vec2 position, f32 radius);
-AOE*            map_create_aoe(vec2 position, f32 lifetime);
-Line*           map_create_line(void);
-
-// create objects in local room coords
-Entity*         room_create_entity(vec2 position, i32 id);
-Obstacle*       room_create_obstacle(vec2 position);
-Parstacle*      room_create_parstacle(vec2 position);
-Projectile*     room_create_projectile(vec2 position);
-Trigger*        room_create_trigger(vec2 position, f32 radius);
-AOE*            room_create_aoe(vec2 position, f32 lifetime);
-Wall*           room_create_wall(vec2 position, f32 height, f32 width, f32 length, u32 minimap_color);
-Trigger*        room_create_trigger(vec2 position, f32 radius);
-bool            room_create_parjicle(Parjicle parjicle);
-bool            room_create_particle(Particle particle);
-Line*           room_create_line(void);
-Tile*           room_set_tilemap_tile(i32 x, i32 z, u32 minimap_color);
-Wall*           room_set_tilemap_wall(i32 x, i32 z, f32 height, u32 minimap_color);
 
 //**************************************************************************
 // Line _line definitions
@@ -1031,6 +753,304 @@ Parstacle* parstacle_read(char* buffer);
 void parstacle_write(Parstacle* parstacle, char* buffer);
 
 //**************************************************************************
+// Maps. _maps See docs/maps.md for more information
+//**************************************************************************
+
+typedef struct LocalMapGenerationSettings {
+    const char* current_branch;
+    const char* current_room_type;
+    i32 num_rooms_left;
+    i32 num_rooms_loaded;
+    i32 male_x, male_z;
+    bool no_path;
+    bool create_no_path;
+    bool succeed_even_if_no_path;
+} LocalMapGenerationSettings;
+
+typedef struct {
+    union {
+        i32 idx_x;
+        i32 bl_bucket_idx;
+    };
+    union {
+        i32 idx_z;
+        i32 tr_bucket_idx;
+    };
+} IntPair;
+
+typedef struct {
+    const char* name;
+    TileCreateFuncPtr create;
+    TileCollideFuncPtr collide;
+    u32 color;
+    u32 top_tex;
+    f32 height;
+    union {
+        u32 tex;
+        u32 side_tex;
+    };
+    bool is_wall;
+} TileColor;
+
+typedef struct {
+    TileColor* colors;
+    i32 num_colors;
+} Palette;
+
+typedef struct {
+    i32 u1, v1, u2, v2;
+    i32 origin_u, origin_v;
+    i32 loc_u, loc_v;
+    TileColor* default_tile;
+} Alternate;
+
+typedef struct Room {
+    i32 u1, v1, u2, v2;
+    const char* name;
+    const char* type;
+    RoomCreateFuncPtr create;
+    RoomEnterFuncPtr enter;
+    RoomExitFuncPtr exit;
+    List* male_alternates;
+    List* female_alternates;
+    bool rotate;
+} Room;
+
+typedef struct {
+    i32 width, length;
+    u32* pixels;
+    Room* rooms;
+    i32 num_rooms;
+    void* data;
+    Palette* palette;
+    RoomsetInitFuncPtr init;
+    RoomsetGenerateFuncPtr generate;
+    RoomsetBranchFuncPtr branch;
+    RoomsetCleanupFuncPtr cleanup;
+} Roomset;
+
+typedef enum {
+    // Partitions map into equal-sized buckets 
+    MAP_COLLIDE_SPATIAL_HASH,
+
+    // Allocates no extra memory but is very slow
+    MAP_COLLIDE_NAIVE
+} MapCollisionStrategy;
+
+typedef struct {
+    List* entities;
+    List* free_walls;
+    List* projectiles;
+    List* obstacles;
+    List* triggers;
+    List* aoes;
+} Bucket;
+
+typedef struct {
+    i32 bucket_width;
+    i32 num_buckets_wide; // x
+    i32 num_buckets_long; // z
+    i32 num_buckets;
+    Bucket* buckets;
+} SpatialHashData;
+
+typedef struct {
+    Particle buffer[PARTICLE_QUEUE_LENGTH+1];
+    i32 head;
+    i32 tail;
+} ParticleQueue;
+
+typedef struct {
+    struct {
+        union {
+            Entity entity;
+            Projectile proj;
+        };
+        GameObj type;
+    } buffer[GAME_OBJECT_QUEUE_LENGTH+1];
+    i32 head;
+    i32 tail;
+} GameObjectQueue;
+
+typedef struct Map {
+    GameObjectQueue object_queue;
+    ParticleQueue particle_queue;
+    i32 width, length;
+    vec2 spawn_point;
+    Roomset* roomset;
+    MapNode* root;
+    void** tilemap;
+    MapNode** map_nodes;
+    Quadmask* tile_mask;
+    Quadmask* fog_mask;
+    SpatialHashData spatial_hash_data;
+    MapCollisionStrategy collision_strategy;
+    List* bosses;
+    List* entities;
+    List* tiles;
+    List* walls;
+    List* free_walls;
+    List* projectiles;
+    List* obstacles;
+    List* parstacles;
+    List* particles;
+    List* parjicles;
+    List* triggers;
+    List* aoes;
+    List* lines;
+    bool active;
+    bool show_spatial_hash_lines;
+} Map;
+
+typedef struct MapNode {
+    MapNode* parent;
+    MapNode** children;
+    Alternate* female_alternate;
+    Room* room;
+    List* male_alternates;
+    i32 num_children;
+    i32 origin_x, origin_z;
+    i32 x1, x2, z1, z2;
+    i32 orientation;
+    i32 num_exits;
+    i32 num_enters;
+    bool visited;
+    bool cleared;
+} MapNode;
+
+typedef struct {
+    Quadmask* qm;
+    Roomset* roomset;
+} GlobalMapGenerationSettings;
+
+void map_make_boss(char* name, Entity* entity);
+void map_boss_update(Entity* entity);
+void map_unmake_boss(Entity* entity);
+
+void map_init(void);
+i32  map_get_id(const char* name);
+Map* map_create(i32 id);
+
+void map_update(Map* map, f32 dt);
+void map_set_active(Map* map);
+void map_set_inactive(Map* map);
+void map_destroy(Map* map);
+void map_cleanup(void);
+
+void map_destroy_projectiles_with_owner_id(i32 uid);
+
+// switch collision strategy for map
+void map_use_quadtree(Map* map, i32 split_threshold);
+void map_use_spatial_hash(Map* map, i32 bucket_width);
+void map_use_naive(Map* map);
+
+void bucket_create(Bucket* bucket);
+void bucket_destroy(Bucket* bucket);
+
+void buckets_insert_trigger(Map* map, Trigger* trigger);
+void buckets_insert_entity(Map* map, Entity* entity);
+void buckets_insert_projectile(Map* map, Projectile* projectile);
+void buckets_insert_free_wall(Map* map, Wall* wall);
+void buckets_insert_obstacle(Map* map, Obstacle* obstacle);
+void buckets_insert_aoe(Map* map, AOE* aoe);
+
+void buckets_update_trigger(Map* map, Trigger* trigger);
+void buckets_update_entity(Map* map, Entity* entity);
+void buckets_update_projectile(Map* map, Projectile* projectile);
+void buckets_update_free_wall(Map* map, Wall* wall);
+void buckets_update_obstacle(Map* map, Obstacle* obstacle);
+void buckets_update_aoe(Map* map, AOE* aoe);
+
+void buckets_remove_trigger(Map* map, Trigger* trigger);
+void buckets_remove_entity(Map* map, Entity* entity);
+void buckets_remove_projectile(Map* map, Projectile* projectile);
+void buckets_remove_free_wall(Map* map, Wall* wall);
+void buckets_remove_obstacle(Map* map, Obstacle* obstacle);
+void buckets_remove_aoe(Map* map, AOE* aoe);
+
+// returns true if the tile at (x, z) is a wall
+bool map_is_wall(Map* map, i32 x, i32 z);
+
+// gets the tile or wall at (x, z), returns NULL if out of bounds
+void* map_get(Map* map, i32 x, i32 z);
+
+// get the tile at (x, z) for the current map. returns
+// NULL if it is out of bounds, the unit is empty, or is a wall
+Tile* map_get_tile(Map* map, i32 x, i32 z);
+
+// get the wall at (x, z) for the current map. returns
+// NULL if it is out of bounds, the unit is empty, or is a tile
+Wall* map_get_wall(Map* map, i32 x, i32 z);
+
+// replaces the tile or wall at (x, z) with tile or wall
+void map_set_tile(Map* map, i32 x, i32 z, Tile* tile);
+void map_set_wall(Map* map, i32 x, i32 z, Wall* wall);
+
+// returns whether coordinate in fog
+bool map_fog_contains(Map* map, vec2 position);
+bool map_fog_contains_tile(Map* map, Tile* tile);
+bool map_fog_contains_wall(Map* map, Wall* wall);
+
+// defogs room that contains coordinate and adjacent rooms
+void map_fog_explore(Map* map, vec2 position);
+
+// clears all the fog
+void map_fog_clear(Map* map);
+
+void map_toggle_spatial_hash_lines(Map* map);
+
+void map_handle_trigger_enter(Trigger* trigger, Entity* entity);
+void map_handle_trigger_stay(Trigger* trigger, Entity* entity);
+void map_handle_trigger_leave(Trigger* trigger, Entity* entity);
+
+// gets the orientation of the current map node, where northwest is toward 0, 0 in uv map
+// returns vec2(0,0) if no map node currently bounded
+vec2 map_orientation(void);
+
+void map_interactable_callback(InteractableFuncPtr fptr, Map* map, MapNode* map_node);
+void map_set_interactable(const char* desc, InteractableFuncPtr func_ptr);
+
+// get global data that is created on map generation
+void* map_get_data(void);
+
+vec2 room_to_map_position(vec2 position);
+vec2 map_to_room_position(vec2 position);
+vec3 room_to_map_position3(vec3 position);
+vec3 map_to_room_position3(vec3 position);
+
+void map_queue_particle(Particle particle);
+void map_queue_projectile(Projectile proj);
+void map_queue_entity(Entity entity);
+
+// the following functions will return NULL if the map is not active
+// a map is inactive when it is signaled to be destroyed. this is so that
+// objects can free their memory without creating new memory
+
+// create object in global map coords
+Entity*         map_create_entity(vec2 position, i32 id);
+bool            map_create_parjicle(Parjicle parjicle);
+bool            map_create_particle(Particle particle);
+Projectile*     map_create_projectile(vec2 position);
+Trigger*        map_create_trigger(vec2 position, f32 radius);
+AOE*            map_create_aoe(vec2 position, f32 lifetime);
+Line*           map_create_line(void);
+
+// create objects in local room coords
+Entity*         room_create_entity(vec2 position, i32 id);
+Obstacle*       room_create_obstacle(vec2 position);
+Parstacle*      room_create_parstacle(vec2 position);
+Projectile*     room_create_projectile(vec2 position);
+Trigger*        room_create_trigger(vec2 position, f32 radius);
+AOE*            room_create_aoe(vec2 position, f32 lifetime);
+Wall*           room_create_wall(vec2 position, f32 height, f32 width, f32 length, u32 minimap_color);
+Trigger*        room_create_trigger(vec2 position, f32 radius);
+bool            room_create_parjicle(Parjicle parjicle);
+bool            room_create_particle(Particle particle);
+Line*           room_create_line(void);
+Tile*           room_set_tilemap_tile(i32 x, i32 z, u32 minimap_color);
+Wall*           room_set_tilemap_wall(i32 x, i32 z, f32 height, u32 minimap_color);
+
+//**************************************************************************
 // Client _client
 //**************************************************************************
 
@@ -1102,6 +1122,7 @@ typedef struct {
     f64 time;
     f32 timestep;
     f32 net_timer;
+    f32 net_timestep;
     i32 tps;
     f32 real_dt;
     bool kill_thread;

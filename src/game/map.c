@@ -1886,7 +1886,7 @@ bool map_create_parjicle(Parjicle parjicle)
     parj = parjicle_create_from_struct(parjicle);
     list_append(map->parjicles, parj);
     if (game_context.hosting) {
-        Packet* packet = packet_create(PACKET_PARJICLE, sizeof(parjicle), (char*)&parjicle);
+        Packet* packet = packet_create(PACKET_CREATE_PARJICLE, sizeof(parjicle), (char*)&parjicle);
         game_net_send_udp_packet_to_clients(packet);
         packet_destroy(packet);
     }
@@ -1903,7 +1903,7 @@ bool map_create_particle(Particle particle)
     list_append(map->particles, part);
 
     if (game_context.hosting) {
-        Packet* packet = packet_create(PACKET_PARTICLE, sizeof(particle), (char*)&particle);
+        Packet* packet = packet_create(PACKET_CREATE_PARTICLE, sizeof(particle), (char*)&particle);
         game_net_send_udp_packet_to_clients(packet);
         packet_destroy(packet);
     }
@@ -2048,7 +2048,7 @@ bool room_create_parjicle(Parjicle parjicle)
     list_append(map->parjicles, parj);
 
     if (game_context.hosting) {
-        Packet* packet = packet_create(PACKET_PARJICLE, sizeof(parjicle), (char*)&parjicle);
+        Packet* packet = packet_create(PACKET_CREATE_PARJICLE, sizeof(parjicle), (char*)&parjicle);
         game_net_send_udp_packet_to_clients(packet);
         packet_destroy(packet);
     }
@@ -2073,7 +2073,7 @@ bool room_create_particle(Particle particle)
     list_append(map->particles, part);
 
     if (game_context.hosting) {
-        Packet* packet = packet_create(PACKET_PARTICLE, sizeof(particle), (char*)&particle);
+        Packet* packet = packet_create(PACKET_CREATE_PARTICLE, sizeof(particle), (char*)&particle);
         game_net_send_udp_packet_to_clients(packet);
         packet_destroy(packet);
     }
@@ -3267,6 +3267,31 @@ void client_map_update(Map* map, f32 dt)
         map->particle_queue.tail = (map->particle_queue.tail + 1) % (PARTICLE_QUEUE_LENGTH + 1);
     }
 
+    while (map->object_queue.tail != map->object_queue.head) {
+        //map_create_object(map->object_queue.buffer[map->object_queue.tail]);
+        GameObj type = map->object_queue.buffer[map->object_queue.tail].type;
+        switch (type) {
+            case GAME_OBJ_ENTITY:
+                Entity host_entity = map->object_queue.buffer[map->object_queue.tail].entity;
+                Entity* this_entity = game_context.uid_map[host_entity.uid];
+                this_entity->position = host_entity.position;
+                this_entity->facing = host_entity.facing;
+                this_entity->flags = host_entity.flags;
+                this_entity->state = host_entity.state;
+                this_entity->frame = host_entity.frame;
+                this_entity->id = host_entity.id;
+                break;
+            case GAME_OBJ_PROJECTILE:
+                Projectile host_proj = map->object_queue.buffer[map->object_queue.tail].proj;
+                Projectile* this_proj = game_context.uid_map[host_proj.uid];
+                this_proj->position = host_proj.position;
+                break;
+            default:
+                break;
+        }
+        map->object_queue.tail = (map->object_queue.tail + 1) % (PARTICLE_QUEUE_LENGTH + 1);
+    }
+
     i = 0;
     while (i < map->particles->length) {
         Particle* particle = list_get(map->particles, i);
@@ -3296,8 +3321,13 @@ void map_update(Map* map, f32 dt)
         map_update_objects(map, dt);
         map_collide_tilemap(map);
         map_collide_objects(map);
-        if (game_context.hosting)
+        if (game_context.hosting) {
             map_send_state(map, dt);
+            //game_context.net_timer -= dt;
+            //if (game_context.net_timer < 0) {
+            //    game_context.net_timer += game_context.net_timestep;
+            //}
+        }
     } else {
         client_map_update(map, dt);
     }
@@ -3359,4 +3389,32 @@ void map_queue_particle(Particle particle)
 
     map->particle_queue.buffer[map->particle_queue.head] = particle;
     map->particle_queue.head = (map->particle_queue.head+1)%(PARTICLE_QUEUE_LENGTH+1);
+}
+
+void map_queue_projectile(Projectile proj)
+{
+    Map* map = map_context.current_map;
+    if (map == NULL)
+        return;
+    if (!map->active)
+        return;
+    if (map->object_queue.head == (map->object_queue.tail-1)%(GAME_OBJECT_QUEUE_LENGTH+1))
+        return;
+
+    map->object_queue.buffer[map->object_queue.head].proj = proj;
+    map->object_queue.head = (map->object_queue.head+1)%(GAME_OBJECT_QUEUE_LENGTH+1);
+}
+
+void map_queue_entity(Entity entity)
+{
+    Map* map = map_context.current_map;
+    if (map == NULL)
+        return;
+    if (!map->active)
+        return;
+    if (map->object_queue.head == (map->object_queue.tail-1)%(GAME_OBJECT_QUEUE_LENGTH+1))
+        return;
+
+    map->object_queue.buffer[map->object_queue.head].entity = entity;
+    map->object_queue.head = (map->object_queue.head+1)%(GAME_OBJECT_QUEUE_LENGTH+1);
 }

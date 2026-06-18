@@ -1,7 +1,0 @@
-{
-    "test": {
-        "create": "test_create",
-        "update": "test_update",
-        "destroy": "test_destroy"
-    }
-}

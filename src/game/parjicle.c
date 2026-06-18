@@ -38,13 +38,16 @@ static void* load_function(JsonObject* object, const char* key)
 void parjicle_init(void)
 {
     JsonObject* json = state_context.config->parjicles;
-    JsonIterator* it = json_iterator_create(json);
 
     JsonMember* member;
     JsonValue* val_object;
     JsonObject* object;
     const char* string;
     parjicle_context.num_parjicles = json_object_length(json);
+    if (parjicle_context.num_parjicles == 0)
+        return;
+
+    JsonIterator* it = json_iterator_create(json);
     parjicle_context.infos = st_malloc(parjicle_context.num_parjicles * sizeof(ParjicleInfo));
     for (i32 i = 0; i < parjicle_context.num_parjicles; i++) {
         member = json_iterator_get(it);

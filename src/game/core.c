@@ -26,6 +26,7 @@ void* game_loop(void* vargp)
     game_context.clients = list_create();
     game_context.created_uids = list_i32_create();
     game_context.freed_uids = list_i32_create();
+    game_context.net_timestep = 1.0 / 20.0;
     client = client_create();
     client_set_username(client, string_copy("fancy"));
     game_context.this_client = client;

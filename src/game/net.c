@@ -247,11 +247,11 @@ static void client_handle_udp_packet(Packet* packet)
             log_write(DEBUG, "UDP message: %s", packet->buffer);
             break;
         case PACKET_UPDATE_GAME_OBJ:
-            pthread_mutex_lock(&game_context.handler_thread_mutex);
+            //pthread_mutex_lock(&game_context.handler_thread_mutex);
             client_map_update_game_object(packet);
-            pthread_mutex_unlock(&game_context.handler_thread_mutex);
+            //pthread_mutex_unlock(&game_context.handler_thread_mutex);
             break;
-        case PACKET_PARTICLE:
+        case PACKET_CREATE_PARTICLE:
             client_map_create_particle(packet);
             break;
         default:

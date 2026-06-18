@@ -775,21 +775,6 @@ void outpost1_boss_destroy(Entity* entity)
     map_destroy_projectiles_with_owner_id(entity->uid);
 }
 
-void test_create(Parjicle* parj)
-{
-    log_write(DEBUG, "created");
-}
-
-void test_update(Parjicle* parj)
-{
-    log_write(DEBUG, "update");
-}
-
-void test_destroy(Parjicle* parj)
-{
-    log_write(DEBUG, "destroy");
-}
-
 static void spawn_parjicles(void)
 {
     vec3 position, direction;
@@ -829,8 +814,7 @@ static void spawn_parjicles(void)
                         .velocity = vec3_scale(direction, speed),
                         .color = vec3_create(hue, hue, 1),
                         .size = -randf_range(0.1, 0.2),
-                        .lifetime = num_tiles / speed,
-                        .id = parjicle_get_id("test")
+                        .lifetime = num_tiles / speed
                         ));
         }
     }
