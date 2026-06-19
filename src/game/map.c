@@ -3239,11 +3239,8 @@ static void map_send_state(Map* map, f32 dt)
     game_context.created_uids->length = 0;
 
     for (i32 i = 0; i < game_context.freed_uids->length; i++) {
-        // game objects should be freed by the condition they sent in the update loop
-        // cant just free uid since memory still in map
-        // can maybe just remove from map but concerned about race conditions + performance
         packet.id = PACKET_DESTROY_GAME_OBJ;
-        uid = game_context.created_uids->buffer[i];
+        uid = game_context.freed_uids->buffer[i];
 
         memcpy(packet.buffer, &uid, sizeof(uid));
 

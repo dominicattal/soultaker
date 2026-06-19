@@ -12,6 +12,35 @@ Client* client_create(void)
 
 void client_update(Client* client, f32 dt)
 {
+    Player* player = &client->player;
+    if (!game_context.hosting && !game_context.singleplayer) {
+        Packet packet;
+        static char buffer[256];
+        char* ptr = buffer;
+        packet.buffer = buffer + PACKET_HEADER_BYTES;
+        packet.length = sizeof(client->uid) 
+                      + sizeof(client->control_flags)
+                      + sizeof(client->camera.facing)
+                      + sizeof(client->camera.right)
+                      + sizeof(client->camera.follow);
+        packet.id = PACKET_CLIENT_INPUT;
+        memcpy(ptr, &packet.length, sizeof(packet.length));
+        ptr += sizeof(packet.length);
+        memcpy(ptr, &packet.id, sizeof(packet.id));
+        ptr += sizeof(packet.id);
+        memcpy(ptr, &client->uid, sizeof(client->uid));
+        ptr += sizeof(client->uid);
+        memcpy(ptr, &client->control_flags, sizeof(client->control_flags));
+        ptr += sizeof(client->control_flags);
+        memcpy(ptr, &client->camera.facing, sizeof(client->camera.facing));
+        ptr += sizeof(client->camera.facing);
+        memcpy(ptr, &client->camera.right, sizeof(client->camera.right));
+        ptr += sizeof(client->camera.right);
+        memcpy(ptr, &client->camera.follow, sizeof(client->camera.follow));
+        ptr += sizeof(client->camera.follow);
+        game_net_send_packet_udp(game_context.host_client, &packet);
+    }
+
     camera_update(&client->camera, dt);
     player_update(&client->player, dt);
 }
@@ -146,6 +175,7 @@ void client_map_update_game_object(Packet* packet)
     GameObj type;
     i32 high;
     char* buffer = packet->buffer;
+    size_t size;
     memcpy(&type, buffer, sizeof(type));
     buffer += sizeof(type);
     memcpy(&high, buffer, sizeof(type));
@@ -154,18 +184,20 @@ void client_map_update_game_object(Packet* packet)
     switch (type) {
         case GAME_OBJ_ENTITY:
             Entity entity;
+            size = entity_sizeof();
             for (i32 i = 0; i < high; i++) {
                 entity_read(&entity, buffer);
                 map_queue_entity(entity);
-                buffer += entity_sizeof();
+                buffer += size;
             }
             break;
         case GAME_OBJ_PROJECTILE:
             Projectile proj;
+            size = projectile_sizeof();
             for (i32 i = 0; i < high; i++) {
                 projectile_read(&proj, buffer);
                 map_queue_projectile(proj);
-                buffer += projectile_sizeof();
+                buffer += size;
             }
             break;
         default:

@@ -93,7 +93,7 @@ void camera_update_direction(i32 client_uid, vec2 mag, f32 dt)
         player->entity->direction = direction;
         if (vec2_mag(direction) != 0) {
             entity_set_flag(entity, ENTITY_FLAG_MOVING, true);
-            if (!player_is_shooting())
+            if (!client->player.shooting_primary)
                 player->entity->facing = direction;
         } 
         else

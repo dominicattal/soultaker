@@ -39,6 +39,8 @@ typedef enum PacketEnum {
     PACKET_CREATE_MAP_NODES,
     PACKET_CLEAR_FOG,
 
+    PACKET_CLIENT_INPUT,
+
     NUM_PACKET_TYPES
 } PacketEnum;
 
@@ -58,6 +60,17 @@ typedef enum GameObj {
     NUM_GAME_OBJS,
     GAME_OBJ_NONE
 } GameObj;
+
+#define INPUT_W         (1<<0)
+#define INPUT_S         (1<<1)
+#define INPUT_A         (1<<2)
+#define INPUT_D         (1<<3)
+#define INPUT_Q         (1<<4)
+#define INPUT_E         (1<<5)
+#define INPUT_T         (1<<6)
+#define INPUT_Y         (1<<7)
+#define INPUT_MB_LEFT   (1<<8)
+#define INPUT_MB_RIGHT  (1<<9)
 
 //**************************************************************************
 // Forward Declarations
@@ -556,7 +569,6 @@ void player_shoot_primary(Player* player);
 void player_shoot_secondary(Player* player);
 void player_cast(Player* player);
 void player_swap_weapons(void);
-bool player_is_shooting(void);
 bool player_is_casting(void);
 void player_cleanup(Player* player);
 
@@ -1079,6 +1091,8 @@ typedef struct Client {
     SocketAddr* udp_address;
 
     char* username;
+
+    i32 control_flags;
     i32 uid;
 } Client;
 
@@ -1107,8 +1121,6 @@ void client_map_create_parjicle(Packet* packet);
 //**************************************************************************
 
 typedef struct {
-
-    bool glfw_key_down[512];
 
     void* uid_map[MAX_UID]; 
     GameObj uid_map_type[MAX_UID];

@@ -61,6 +61,23 @@ static void host_handle_udp_packet(Packet* packet)
         case PACKET_MESSAGE:
             log_write(DEBUG, "UDP message: %s", packet->buffer);
             break;
+        case PACKET_CLIENT_INPUT:
+            i32 client_uid, client_controls;
+            char* buffer = packet->buffer;
+            memcpy(&client_uid, buffer, sizeof(client_uid));
+            buffer += sizeof(client_uid);
+            memcpy(&client_controls, buffer, sizeof(client_controls));
+            buffer += sizeof(client_controls);
+            Client* client = game_context.uid_map[client_uid];
+            client->control_flags = client_controls;
+            memcpy(&client->camera.facing, buffer, sizeof(client->camera.facing));
+            buffer += sizeof(client->camera.facing);
+            memcpy(&client->camera.right, buffer, sizeof(client->camera.right));
+            buffer += sizeof(client->camera.right);
+            memcpy(&client->camera.follow, buffer, sizeof(client->camera.follow));
+            buffer += sizeof(client->camera.follow);
+            //log_write(DEBUG, "%d %d %f %f", client_uid, client_controls, client->camera.facing.x, client->camera.facing.z);
+            break;
         default:
             break;
     }

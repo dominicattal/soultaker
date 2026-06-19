@@ -162,7 +162,7 @@ static void update_player_state(Player* player, f32 dt)
     if (entity == NULL) return;
     player_shoot_primary(player);
     player_shoot_secondary(player);
-    if (player_is_shooting()) {
+    if (player->shooting_primary) {
         if (entity->state == player->state_shooting)
             return;
         entity->state = player->state_shooting;
@@ -321,11 +321,6 @@ void player_cast(Player* player)
         return;
     }
     player_target(player, 0.0, inventory_cast_abilities);
-}
-
-bool player_is_shooting(void)
-{
-    return game_context.this_client->player.shooting_primary;
 }
 
 vec2 player_position(void)
