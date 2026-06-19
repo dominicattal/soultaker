@@ -3321,6 +3321,7 @@ void client_map_update(Map* map, f32 dt)
                 Entity* this_entity = game_context.uid_map[host_entity.uid];
                 if (this_entity != NULL) {
                     this_entity->position = host_entity.position;
+                    this_entity->direction = host_entity.direction;
                     this_entity->facing = host_entity.facing;
                     this_entity->flags = host_entity.flags;
                     this_entity->state = host_entity.state;
@@ -3333,6 +3334,8 @@ void client_map_update(Map* map, f32 dt)
                 Projectile* this_proj = game_context.uid_map[host_proj.uid];
                 if (this_proj != NULL) {
                     this_proj->position = host_proj.position;
+                    this_proj->direction = host_proj.direction;
+                    this_proj->facing = host_proj.facing;
                 }
                 break;
             default:
