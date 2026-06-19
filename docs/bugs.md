@@ -82,3 +82,6 @@
 ### 2026-6-14
 - gui inventory filled with garbage
 - race condnition when refreshing inventory and rendering at same time
+
+### 2026-6-18
+- net code breaks on litten endian machines, should use htonl family of functions

@@ -518,7 +518,7 @@ void entity_cleanup(void);
 // functions for interacting with entity in binary format
 size_t  entity_sizeof(void);
 char*   entity_write(Entity* entity, char* buffer);
-Entity* entity_read(char* buffer);
+char*   entity_read(Entity* entity, char* buffer);
 
 // Destroy every entity
 void entity_clear(void);
@@ -668,8 +668,8 @@ void projectile_set_flag(Projectile* proj, ProjectileFlagEnum flag, bool val);
 bool projectile_get_flag(Projectile* proj, ProjectileFlagEnum flag);
 
 size_t      projectile_sizeof(void);
-Projectile* projectile_read(char* buffer);
-void        projectile_write(Projectile* projectile, char* buffer);
+char*       projectile_read(Projectile* proj, char* buffer);
+char*       projectile_write(Projectile* projectile, char* buffer);
 
 //**************************************************************************
 // AOE _aoe definitions
@@ -873,6 +873,9 @@ typedef struct {
 } GameObjectQueue;
 
 typedef struct Map {
+
+    Packet* state_packet;
+
     GameObjectQueue object_queue;
     ParticleQueue particle_queue;
     i32 width, length;

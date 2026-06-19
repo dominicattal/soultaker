@@ -594,9 +594,8 @@ char* entity_write(Entity* entity, char* buffer)
     return buffer;
 }
 
-Entity* entity_read(char* buffer)
+char* entity_read(Entity* entity, char* buffer)
 {
-    Entity* entity = st_calloc(1, sizeof(Entity));
     memcpy(&entity->position, buffer, sizeof(entity->position));
     buffer += sizeof(entity->position);
     memcpy(&entity->direction, buffer, sizeof(entity->direction));
@@ -637,5 +636,5 @@ Entity* entity_read(char* buffer)
     buffer += sizeof(entity->id);
     memcpy(&entity->uid, buffer, sizeof(entity->uid));
     buffer += sizeof(entity->uid);
-    return entity;
+    return buffer;
 }

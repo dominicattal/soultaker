@@ -354,8 +354,8 @@ Packet* socket_recv(Socket* sock)
     }
 
     packet = st_malloc(sizeof(Packet));
-    packet->id = ((u8)buffer[4]<<24)|((u8)buffer[5]<<16)|((u8)buffer[6]<<8)|(u8)buffer[7];
-    packet->length = ((u8)buffer[0]<<24)|((u8)buffer[1]<<16)|((u8)buffer[2]<<8)|(u8)buffer[3];
+    memcpy(&packet->length, buffer, sizeof(packet->length));
+    memcpy(&packet->id, buffer + sizeof(packet->length), sizeof(packet->id));
     packet->buffer = st_malloc((packet->length + PACKET_HEADER_BYTES) * sizeof(char));
     memcpy(packet->buffer, buffer, PACKET_HEADER_BYTES);
 
@@ -386,8 +386,8 @@ Packet* socket_recvfrom(Socket* src_socket, SocketAddr** dst_addr)
         return NULL;
     }
     packet = st_malloc(sizeof(Packet));
-    packet->id = ((u8)buffer[4]<<24)|((u8)buffer[5]<<16)|((u8)buffer[6]<<8)|(u8)buffer[7];
-    packet->length = ((u8)buffer[0]<<24)|((u8)buffer[1]<<16)|((u8)buffer[2]<<8)|(u8)buffer[3];
+    memcpy(&packet->length, buffer, sizeof(packet->length));
+    memcpy(&packet->id, buffer + sizeof(packet->length), sizeof(packet->id));
     packet->buffer = st_malloc((packet->length + PACKET_HEADER_BYTES) * sizeof(char));
     memcpy(packet->buffer, buffer, packet->length + PACKET_HEADER_BYTES);
     packet->buffer += PACKET_HEADER_BYTES;

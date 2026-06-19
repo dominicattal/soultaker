@@ -9,15 +9,14 @@
 #define BIT_UDP  0x0
 #define BIT_TCP  0x1
 
-#define UDP_MAX_PAYLOAD 65535
+#define UDP_MAX_PAYLOAD 1500
 
 #define PACKET_HEADER_BYTES 8
 #define PACKET_MAX_SIZE (1024 * 1024)
 
-
 typedef struct Packet {
-    size_t length;
     char* buffer;
+    i32 length;
     u32 id;
 } Packet;
 
@@ -97,7 +96,7 @@ const char* socket_port(Socket* socket);
 
 // Create a packet with id with a buffer of length. buffer can be NULL iff length is 0.
 // Returns NULL if buffer is NULL and length is not 0
-Packet* packet_create(u32 id, int length, const char* buffer);
+Packet* packet_create(u32 id, i32 length, const char* buffer);
 
 // Frees memory from packet. Undefined if packet is NULL
 void    packet_destroy(Packet* packet);

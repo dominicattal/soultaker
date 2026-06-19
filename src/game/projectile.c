@@ -71,7 +71,7 @@ size_t projectile_sizeof(void)
          + sizeof(proj.uid);
 }
 
-void projectile_write(Projectile* proj, char* buffer)
+char* projectile_write(Projectile* proj, char* buffer)
 {
     memcpy(buffer, &proj->position, sizeof(proj->position));
     buffer += sizeof(proj->position);
@@ -95,11 +95,11 @@ void projectile_write(Projectile* proj, char* buffer)
     buffer += sizeof(proj->tex);
     memcpy(buffer, &proj->uid, sizeof(proj->uid));
     buffer += sizeof(proj->uid);
+    return buffer;
 }
 
-Projectile* projectile_read(char* buffer)
+char* projectile_read(Projectile* proj, char* buffer)
 {
-    Projectile* proj = st_calloc(1, sizeof(Projectile));
     memcpy(&proj->position, buffer, sizeof(proj->position));
     buffer += sizeof(proj->position);
     memcpy(&proj->direction, buffer, sizeof(proj->direction));
@@ -122,5 +122,5 @@ Projectile* projectile_read(char* buffer)
     buffer += sizeof(proj->tex);
     memcpy(&proj->uid, buffer, sizeof(proj->uid));
     buffer += sizeof(proj->uid);
-    return proj;
+    return buffer;
 }

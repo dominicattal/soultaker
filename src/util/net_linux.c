@@ -304,8 +304,8 @@ Packet* socket_recv(Socket* sock)
     }
 
     packet = st_malloc(sizeof(Packet));
-    packet->id = ((u8)buffer[4]<<24)|((u8)buffer[5]<<16)|((u8)buffer[6]<<8)|(u8)buffer[7];
-    packet->length = ((u8)buffer[0]<<24)|((u8)buffer[1]<<16)|((u8)buffer[2]<<8)|(u8)buffer[3];
+    memcpy(&packet->length, buffer, sizeof(packet->length));
+    memcpy(&packet->id, buffer + sizeof(packet->length), sizeof(packet->id));
     packet->buffer = st_malloc((packet->length + PACKET_HEADER_BYTES) * sizeof(char));
     memcpy(packet->buffer, buffer, PACKET_HEADER_BYTES);
 
@@ -324,34 +324,6 @@ Packet* socket_recv(Socket* sock)
     return packet;
 }
 
-/*
-Packet* socket_recvfrom(Socket* src_socket, SocketAddr** dst_addr)
-{
-    Packet* packet;
-    socklen_t sender_len = sizeof(struct sockaddr_in);
-    ssize_t len = recvfrom(src_socket->fd, NULL, 0, MSG_PEEK | MSG_TRUNC, NULL, NULL);
-    if (len == (ssize_t)-1)
-        return NULL;
-    if (len < 6)
-        return NULL;
-    char* buffer = st_malloc(len);
-    *dst_addr = st_malloc(sizeof(SocketAddr));
-    recvfrom(src_socket->fd, buffer, len, 0, (struct sockaddr*)&((*dst_addr)->addr), &sender_len);
-    packet = st_malloc(sizeof(Packet));
-    packet->id = (buffer[4]<<8) + buffer[5];
-    packet->length = (buffer[0]<<24)+(buffer[1]<<16)+(buffer[2]<<8)+buffer[3];
-    if (packet->length == 0) {
-        packet->buffer = NULL;
-        st_free(buffer);
-        return packet;
-    }
-    packet->buffer = st_malloc(packet->length * sizeof(char));
-    memcpy(packet->buffer, buffer+6, packet->length);
-    st_free(buffer);
-    return packet;
-}
-*/
-
 Packet* socket_recvfrom(Socket* src_socket, SocketAddr** dst_addr)
 {
     Packet* packet;
@@ -359,13 +331,14 @@ Packet* socket_recvfrom(Socket* src_socket, SocketAddr** dst_addr)
     char buffer[UDP_MAX_PAYLOAD];
     *dst_addr = st_malloc(sizeof(SocketAddr));
     ssize_t len = recvfrom(src_socket->fd, buffer, sizeof(buffer), 0, (struct sockaddr*)&(*dst_addr)->addr, &client_len);
-    if (len == -1) {
+    if (len <= 0) {
         log_write(CRITICAL, "recvfrom failed: errono = %d", errno);
+        st_free(*dst_addr);
         return NULL;
     }
     packet = st_malloc(sizeof(Packet));
-    packet->id = ((u8)buffer[4]<<24)|((u8)buffer[5]<<16)|((u8)buffer[6]<<8)|(u8)buffer[7];
-    packet->length = ((u8)buffer[0]<<24)|((u8)buffer[1]<<16)|((u8)buffer[2]<<8)|(u8)buffer[3];
+    memcpy(&packet->length, buffer, sizeof(packet->length));
+    memcpy(&packet->id, buffer + sizeof(packet->length), sizeof(packet->id));
     packet->buffer = st_malloc((packet->length + PACKET_HEADER_BYTES) * sizeof(char));
     memcpy(packet->buffer, buffer, packet->length + PACKET_HEADER_BYTES);
     packet->buffer += PACKET_HEADER_BYTES;

@@ -2511,6 +2511,8 @@ Map* map_create(i32 id)
     game_context.this_client->player.entity = NULL;
 
     map = generate_map(id);
+    if (game_context.hosting)
+        map->state_packet = st_malloc(sizeof(Packet));
 
     Packet* packet = packet_create(PACKET_CREATE_MAP_NODES, map->width * map->length * sizeof(void*), (char*)map->map_nodes);
     game_net_send_tcp_packet_to_clients(packet);
@@ -2658,6 +2660,8 @@ void map_destroy(Map* map)
 {
     map_context.current_map = map;
     map->active = false;
+    if (map->state_packet != NULL)
+        st_free(map->state_packet);
     clear_previous_collision_strategy(map);
     destroy_entities(map);
     destroy_projectiles(map);
@@ -3215,7 +3219,8 @@ static void map_send_state(Map* map, f32 dt)
     size_t size;
     Packet* packet;
     i32 uid;
-    char buffer[1024];
+    i32 length, step, high;
+    char buffer[UDP_MAX_PAYLOAD];
     for (i32 i = 0; i < game_context.created_uids->length; i++) {
         uid = game_context.created_uids->buffer[i];
         type = game_context.uid_map_type[uid];
@@ -3236,23 +3241,63 @@ static void map_send_state(Map* map, f32 dt)
         packet_destroy(packet);
     }
     game_context.freed_uids->length = 0;
+
+    packet = st_malloc(sizeof(Packet));
+    packet->buffer = st_malloc(UDP_MAX_PAYLOAD * sizeof(char));
+
+    size = entity_sizeof();
+    step = (UDP_MAX_PAYLOAD-sizeof(type)-sizeof(length)-sizeof(uid)-sizeof(high)) / size;
+    type = GAME_OBJ_ENTITY;
     for (i32 i = 0; i < map->entities->length; i++) {
-        type = GAME_OBJ_ENTITY;
+        high = (step < map->entities->length - i) ? step : map->entities->length - i;
+        packet->length = sizeof(type) + sizeof(high) + size * high;
+        packet->id = PACKET_UPDATE_GAME_OBJ;
+        char* buffer = packet->buffer;
+        memcpy(buffer, &packet->length, sizeof(packet->length));
+        buffer += sizeof(packet->length);
+        memcpy(buffer, &packet->id, sizeof(packet->id));
+        buffer += sizeof(packet->id);
         memcpy(buffer, &type, sizeof(type));
-        size = game_object_write(type, list_get(map->entities, i), buffer + sizeof(type));
-        packet = packet_create(PACKET_UPDATE_GAME_OBJ, size + sizeof(GameObj), buffer);
-        //game_net_send_udp_packet_to_clients(packet);
-        game_net_send_tcp_packet_to_clients(packet);
-        packet_destroy(packet);
+        buffer += sizeof(type);
+        memcpy(buffer, &high, sizeof(high));
+        buffer += sizeof(high);
+        for (i32 j = 0; j < high; j++) {
+            game_object_write(GAME_OBJ_ENTITY, 
+                              list_get(map->entities, i+j), 
+                              packet->buffer + sizeof(packet->length) + sizeof(packet->id) + sizeof(type) + sizeof(high) + j * size);
+        }
+        packet->buffer += PACKET_HEADER_BYTES;
+        game_net_send_udp_packet_to_clients(packet);
+        packet->buffer -= PACKET_HEADER_BYTES;
     }
-    for (i32 i = 0; i < map->projectiles->length; i++) {
-        type = GAME_OBJ_PROJECTILE;
+
+    size = projectile_sizeof();
+    step = (UDP_MAX_PAYLOAD-sizeof(type)-sizeof(length)-sizeof(uid)-sizeof(high)) / size;
+    type = GAME_OBJ_PROJECTILE;
+    for (i32 i = 0; i < map->projectiles->length; i+=step) {
+        high = (step < map->projectiles->length - i) ? step : map->projectiles->length - i;
+        packet->length = sizeof(type) + sizeof(high) + size * high;
+        packet->id = PACKET_UPDATE_GAME_OBJ;
+        char* buffer = packet->buffer;
+        memcpy(buffer, &packet->length, sizeof(packet->length));
+        buffer += sizeof(packet->length);
+        memcpy(buffer, &packet->id, sizeof(packet->id));
+        buffer += sizeof(packet->id);
         memcpy(buffer, &type, sizeof(type));
-        size = game_object_write(type, list_get(map->projectiles, i), buffer + sizeof(type));
-        packet = packet_create(PACKET_UPDATE_GAME_OBJ, size + sizeof(GameObj), buffer);
-        game_net_send_tcp_packet_to_clients(packet);
-        packet_destroy(packet);
+        buffer += sizeof(type);
+        memcpy(buffer, &high, sizeof(high));
+        buffer += sizeof(high);
+        for (i32 j = 0; j < high; j++) {
+            game_object_write(GAME_OBJ_PROJECTILE, 
+                              list_get(map->projectiles, i+j), 
+                              buffer + j * size);
+        }
+        packet->buffer += PACKET_HEADER_BYTES;
+        game_net_send_udp_packet_to_clients(packet);
+        packet->buffer -= PACKET_HEADER_BYTES;
     }
+    st_free(packet->buffer);
+    st_free(packet);
 }
 
 void client_map_update(Map* map, f32 dt)
@@ -3274,17 +3319,21 @@ void client_map_update(Map* map, f32 dt)
             case GAME_OBJ_ENTITY:
                 Entity host_entity = map->object_queue.buffer[map->object_queue.tail].entity;
                 Entity* this_entity = game_context.uid_map[host_entity.uid];
-                this_entity->position = host_entity.position;
-                this_entity->facing = host_entity.facing;
-                this_entity->flags = host_entity.flags;
-                this_entity->state = host_entity.state;
-                this_entity->frame = host_entity.frame;
-                this_entity->id = host_entity.id;
+                if (this_entity != NULL) {
+                    this_entity->position = host_entity.position;
+                    this_entity->facing = host_entity.facing;
+                    this_entity->flags = host_entity.flags;
+                    this_entity->state = host_entity.state;
+                    this_entity->frame = host_entity.frame;
+                    this_entity->id = host_entity.id;
+                }
                 break;
             case GAME_OBJ_PROJECTILE:
                 Projectile host_proj = map->object_queue.buffer[map->object_queue.tail].proj;
                 Projectile* this_proj = game_context.uid_map[host_proj.uid];
-                this_proj->position = host_proj.position;
+                if (this_proj != NULL) {
+                    this_proj->position = host_proj.position;
+                }
                 break;
             default:
                 break;
@@ -3401,6 +3450,7 @@ void map_queue_projectile(Projectile proj)
     if (map->object_queue.head == (map->object_queue.tail-1)%(GAME_OBJECT_QUEUE_LENGTH+1))
         return;
 
+    map->object_queue.buffer[map->object_queue.head].type = GAME_OBJ_PROJECTILE;
     map->object_queue.buffer[map->object_queue.head].proj = proj;
     map->object_queue.head = (map->object_queue.head+1)%(GAME_OBJECT_QUEUE_LENGTH+1);
 }
@@ -3415,6 +3465,7 @@ void map_queue_entity(Entity entity)
     if (map->object_queue.head == (map->object_queue.tail-1)%(GAME_OBJECT_QUEUE_LENGTH+1))
         return;
 
+    map->object_queue.buffer[map->object_queue.head].type = GAME_OBJ_ENTITY;
     map->object_queue.buffer[map->object_queue.head].entity = entity;
     map->object_queue.head = (map->object_queue.head+1)%(GAME_OBJECT_QUEUE_LENGTH+1);
 }

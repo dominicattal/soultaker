@@ -101,12 +101,14 @@ void client_map_create_game_object(Packet* packet)
 
     switch (type) {
         case GAME_OBJ_ENTITY:
-            Entity* entity = entity_read(buffer);
+            Entity* entity = st_calloc(1, sizeof(Entity));
+            entity_read(entity, buffer);
             list_append(map->entities, entity);
             game_set_uid(entity, type, entity->uid);
             break;
         case GAME_OBJ_PROJECTILE:
-            Projectile* proj = projectile_read(buffer);
+            Projectile* proj = st_calloc(1, sizeof(Projectile));
+            projectile_read(proj, buffer);
             list_append(map->projectiles, proj);
             game_set_uid(proj, type, proj->uid);
             break;
@@ -142,31 +144,29 @@ void client_map_update_game_object(Packet* packet)
         return;
 
     GameObj type;
+    i32 high;
     char* buffer = packet->buffer;
     memcpy(&type, buffer, sizeof(type));
     buffer += sizeof(type);
+    memcpy(&high, buffer, sizeof(type));
+    buffer += sizeof(high);
 
     switch (type) {
         case GAME_OBJ_ENTITY:
-            Entity* host_entity = entity_read(buffer);
-            Entity* this_entity = game_context.uid_map[host_entity->uid];
-            if (this_entity != NULL) {
-                this_entity->position = host_entity->position;
-                this_entity->facing = host_entity->facing;
-                this_entity->flags = host_entity->flags;
-                this_entity->state = host_entity->state;
-                this_entity->frame = host_entity->frame;
-                this_entity->id = host_entity->id;
+            Entity entity;
+            for (i32 i = 0; i < high; i++) {
+                entity_read(&entity, buffer);
+                map_queue_entity(entity);
+                buffer += entity_sizeof();
             }
-            st_free(host_entity);
             break;
         case GAME_OBJ_PROJECTILE:
-            Projectile* host_proj = projectile_read(buffer);
-            Projectile* this_proj = game_context.uid_map[host_proj->uid];
-            if (this_proj != NULL) {
-                this_proj->position = host_proj->position;
+            Projectile proj;
+            for (i32 i = 0; i < high; i++) {
+                projectile_read(&proj, buffer);
+                map_queue_projectile(proj);
+                buffer += projectile_sizeof();
             }
-            st_free(host_proj);
             break;
         default:
             break;
