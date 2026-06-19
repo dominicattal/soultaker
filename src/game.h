@@ -14,6 +14,7 @@
 #define MAP_MAX_WIDTH   1000
 #define MAP_MAX_LENGTH  1000
 #define PARTICLE_QUEUE_LENGTH 10000
+#define PARJICLE_QUEUE_LENGTH 10000
 #define GAME_OBJECT_QUEUE_LENGTH 10000
 
 typedef enum PacketEnum {
@@ -861,6 +862,12 @@ typedef struct {
 } ParticleQueue;
 
 typedef struct {
+    Parjicle buffer[PARJICLE_QUEUE_LENGTH+1];
+    i32 head;
+    i32 tail;
+} ParjicleQueue;
+
+typedef struct {
     struct {
         union {
             Entity entity;
@@ -874,10 +881,10 @@ typedef struct {
 
 typedef struct Map {
 
-    Packet* state_packet;
-
     GameObjectQueue object_queue;
     ParticleQueue particle_queue;
+    ParjicleQueue parjicle_queue;
+
     i32 width, length;
     vec2 spawn_point;
     Roomset* roomset;
@@ -1022,6 +1029,7 @@ vec3 room_to_map_position3(vec3 position);
 vec3 map_to_room_position3(vec3 position);
 
 void map_queue_particle(Particle particle);
+void map_queue_parjicle(Parjicle parjicle);
 void map_queue_projectile(Projectile proj);
 void map_queue_entity(Entity entity);
 
@@ -1092,6 +1100,7 @@ void client_map_create_game_object(Packet* packet);
 void client_map_update_game_object(Packet* packet);
 void client_map_destroy_game_object(Packet* packet);
 void client_map_create_particle(Packet* packet);
+void client_map_create_parjicle(Packet* packet);
 
 //**************************************************************************
 // Game Context

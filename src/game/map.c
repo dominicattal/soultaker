@@ -2511,8 +2511,6 @@ Map* map_create(i32 id)
     game_context.this_client->player.entity = NULL;
 
     map = generate_map(id);
-    if (game_context.hosting)
-        map->state_packet = st_malloc(sizeof(Packet));
 
     Packet* packet = packet_create(PACKET_CREATE_MAP_NODES, map->width * map->length * sizeof(void*), (char*)map->map_nodes);
     game_net_send_tcp_packet_to_clients(packet);
@@ -2660,8 +2658,6 @@ void map_destroy(Map* map)
 {
     map_context.current_map = map;
     map->active = false;
-    if (map->state_packet != NULL)
-        st_free(map->state_packet);
     clear_previous_collision_strategy(map);
     destroy_entities(map);
     destroy_projectiles(map);
@@ -3221,42 +3217,66 @@ static void map_send_state(Map* map, f32 dt)
     i32 uid;
     i32 length, step, high;
     char buffer[UDP_MAX_PAYLOAD];
+
+    Packet macket;
+    static char muffer[UDP_MAX_PAYLOAD];
+    macket.buffer = muffer + PACKET_HEADER_BYTES;
+
     for (i32 i = 0; i < game_context.created_uids->length; i++) {
+        macket.id = PACKET_CREATE_GAME_OBJ;
         uid = game_context.created_uids->buffer[i];
         type = game_context.uid_map_type[uid];
-        memcpy(buffer, &type, sizeof(type));
-        size = game_object_write(type, game_context.uid_map[uid], buffer + sizeof(type));
-        packet = packet_create(PACKET_CREATE_GAME_OBJ, size + sizeof(GameObj), buffer);
-        game_net_send_tcp_packet_to_clients(packet);
-        packet_destroy(packet);
+
+        memcpy(macket.buffer, &type, sizeof(type));
+        size = game_object_write(type, game_context.uid_map[uid], macket.buffer + sizeof(type));
+
+        macket.length = size + sizeof(type);
+
+        char* buffer = muffer;
+        memcpy(buffer, &macket.length, sizeof(macket.length));
+        buffer += sizeof(macket.length);
+        memcpy(buffer, &macket.id, sizeof(macket.id));
+        buffer += sizeof(macket.id);
+
+        game_net_send_tcp_packet_to_clients(&macket);
     }
     game_context.created_uids->length = 0;
+
     for (i32 i = 0; i < game_context.freed_uids->length; i++) {
         // game objects should be freed by the condition they sent in the update loop
         // cant just free uid since memory still in map
         // can maybe just remove from map but concerned about race conditions + performance
-        uid = game_context.freed_uids->buffer[i];
-        packet = packet_create(PACKET_DESTROY_GAME_OBJ, sizeof(uid), (char*)&uid);
-        game_net_send_tcp_packet_to_clients(packet);
-        packet_destroy(packet);
+        macket.id = PACKET_DESTROY_GAME_OBJ;
+        uid = game_context.created_uids->buffer[i];
+        type = game_context.uid_map_type[uid];
+
+        memcpy(macket.buffer, &type, sizeof(type));
+        memcpy(macket.buffer + sizeof(type), &uid, sizeof(uid));
+
+        macket.length = sizeof(uid) + sizeof(type);
+
+        char* buffer = muffer;
+        memcpy(buffer, &macket.length, sizeof(macket.length));
+        buffer += sizeof(macket.length);
+        memcpy(buffer, &macket.id, sizeof(macket.id));
+        buffer += sizeof(macket.id);
+
+        game_net_send_tcp_packet_to_clients(&macket);
     }
     game_context.freed_uids->length = 0;
-
-    packet = st_malloc(sizeof(Packet));
-    packet->buffer = st_malloc(UDP_MAX_PAYLOAD * sizeof(char));
 
     size = entity_sizeof();
     step = (UDP_MAX_PAYLOAD-sizeof(type)-sizeof(length)-sizeof(uid)-sizeof(high)) / size;
     type = GAME_OBJ_ENTITY;
     for (i32 i = 0; i < map->entities->length; i++) {
         high = (step < map->entities->length - i) ? step : map->entities->length - i;
-        packet->length = sizeof(type) + sizeof(high) + size * high;
-        packet->id = PACKET_UPDATE_GAME_OBJ;
-        char* buffer = packet->buffer;
-        memcpy(buffer, &packet->length, sizeof(packet->length));
-        buffer += sizeof(packet->length);
-        memcpy(buffer, &packet->id, sizeof(packet->id));
-        buffer += sizeof(packet->id);
+        macket.length = sizeof(type) + sizeof(high) + size * high;
+        macket.id = PACKET_UPDATE_GAME_OBJ;
+        char* buffer = muffer;
+        memcpy(buffer, &macket.length, sizeof(macket.length));
+        buffer += sizeof(macket.length);
+        memcpy(buffer, &macket.id, sizeof(macket.id));
+        buffer += sizeof(macket.id);
         memcpy(buffer, &type, sizeof(type));
         buffer += sizeof(type);
         memcpy(buffer, &high, sizeof(high));
@@ -3264,11 +3284,9 @@ static void map_send_state(Map* map, f32 dt)
         for (i32 j = 0; j < high; j++) {
             game_object_write(GAME_OBJ_ENTITY, 
                               list_get(map->entities, i+j), 
-                              packet->buffer + sizeof(packet->length) + sizeof(packet->id) + sizeof(type) + sizeof(high) + j * size);
+                              buffer + j * size);
         }
-        packet->buffer += PACKET_HEADER_BYTES;
-        game_net_send_udp_packet_to_clients(packet);
-        packet->buffer -= PACKET_HEADER_BYTES;
+        game_net_send_udp_packet_to_clients(&macket);
     }
 
     size = projectile_sizeof();
@@ -3276,13 +3294,13 @@ static void map_send_state(Map* map, f32 dt)
     type = GAME_OBJ_PROJECTILE;
     for (i32 i = 0; i < map->projectiles->length; i+=step) {
         high = (step < map->projectiles->length - i) ? step : map->projectiles->length - i;
-        packet->length = sizeof(type) + sizeof(high) + size * high;
-        packet->id = PACKET_UPDATE_GAME_OBJ;
-        char* buffer = packet->buffer;
-        memcpy(buffer, &packet->length, sizeof(packet->length));
-        buffer += sizeof(packet->length);
-        memcpy(buffer, &packet->id, sizeof(packet->id));
-        buffer += sizeof(packet->id);
+        macket.length = sizeof(type) + sizeof(high) + size * high;
+        macket.id = PACKET_UPDATE_GAME_OBJ;
+        char* buffer = muffer;
+        memcpy(buffer, &macket.length, sizeof(macket.length));
+        buffer += sizeof(macket.length);
+        memcpy(buffer, &macket.id, sizeof(macket.id));
+        buffer += sizeof(macket.id);
         memcpy(buffer, &type, sizeof(type));
         buffer += sizeof(type);
         memcpy(buffer, &high, sizeof(high));
@@ -3292,12 +3310,8 @@ static void map_send_state(Map* map, f32 dt)
                               list_get(map->projectiles, i+j), 
                               buffer + j * size);
         }
-        packet->buffer += PACKET_HEADER_BYTES;
-        game_net_send_udp_packet_to_clients(packet);
-        packet->buffer -= PACKET_HEADER_BYTES;
+        game_net_send_udp_packet_to_clients(&macket);
     }
-    st_free(packet->buffer);
-    st_free(packet);
 }
 
 void client_map_update(Map* map, f32 dt)
@@ -3310,6 +3324,11 @@ void client_map_update(Map* map, f32 dt)
     while (map->particle_queue.tail != map->particle_queue.head) {
         map_create_particle(map->particle_queue.buffer[map->particle_queue.tail]);
         map->particle_queue.tail = (map->particle_queue.tail + 1) % (PARTICLE_QUEUE_LENGTH + 1);
+    }
+
+    while (map->parjicle_queue.tail != map->parjicle_queue.head) {
+        map_create_parjicle(map->parjicle_queue.buffer[map->parjicle_queue.tail]);
+        map->parjicle_queue.tail = (map->parjicle_queue.tail + 1) % (PARJICLE_QUEUE_LENGTH + 1);
     }
 
     while (map->object_queue.tail != map->object_queue.head) {
@@ -3350,6 +3369,16 @@ void client_map_update(Map* map, f32 dt)
         particle_update(particle, dt);
         if (particle->lifetime <= 0)
             particle_destroy(list_remove(map->particles, i));
+        else
+            i++;
+    }
+
+    i = 0;
+    while (i < map->parjicles->length) {
+        Parjicle* parjicle = list_get(map->parjicles, i);
+        parjicle_update(parjicle, dt);
+        if (parjicle->lifetime <= 0)
+            parjicle_destroy(list_remove(map->parjicles, i));
         else
             i++;
     }
@@ -3441,6 +3470,20 @@ void map_queue_particle(Particle particle)
 
     map->particle_queue.buffer[map->particle_queue.head] = particle;
     map->particle_queue.head = (map->particle_queue.head+1)%(PARTICLE_QUEUE_LENGTH+1);
+}
+
+void map_queue_parjicle(Parjicle parjicle)
+{
+    Map* map = map_context.current_map;
+    if (map == NULL)
+        return;
+    if (!map->active)
+        return;
+    if (map->parjicle_queue.head == (map->parjicle_queue.tail-1)%(PARJICLE_QUEUE_LENGTH+1))
+        return;
+
+    map->parjicle_queue.buffer[map->parjicle_queue.head] = parjicle;
+    map->parjicle_queue.head = (map->parjicle_queue.head+1)%(PARJICLE_QUEUE_LENGTH+1);
 }
 
 void map_queue_projectile(Projectile proj)

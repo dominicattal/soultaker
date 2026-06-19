@@ -235,3 +235,10 @@ void client_map_create_particle(Packet* packet)
     memcpy(&particle, packet->buffer, sizeof(particle));
     map_queue_particle(particle);
 }
+
+void client_map_create_parjicle(Packet* packet)
+{
+    Parjicle parjicle;
+    memcpy(&parjicle, packet->buffer, sizeof(parjicle));
+    map_queue_parjicle(parjicle);
+}

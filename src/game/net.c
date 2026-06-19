@@ -252,6 +252,9 @@ static void client_handle_udp_packet(Packet* packet)
         case PACKET_CREATE_PARTICLE:
             client_map_create_particle(packet);
             break;
+        case PACKET_CREATE_PARJICLE:
+            client_map_create_parjicle(packet);
+            break;
         default:
             break;
     }
