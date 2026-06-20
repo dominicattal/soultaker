@@ -415,6 +415,7 @@ void entity_update(Entity* entity, f32 dt)
     entity->position = vec2_add(entity->position, vec2_scale(entity->direction, entity->speed * dt));
     entity->state_timer += dt;
     entity->frame_timer += entity->frame_speed * dt;
+
     if (entity->frame_timer > frame_length) {
         entity->frame_timer -= frame_length;
         entity->frame = (entity->frame + 1) % num_frames;

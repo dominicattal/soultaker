@@ -274,3 +274,11 @@ void client_map_create_parjicle(Packet* packet)
     memcpy(&parjicle, packet->buffer, sizeof(parjicle));
     map_queue_parjicle(parjicle);
 }
+
+void client_update_stats(Packet* packet)
+{
+    Player* player = &game_context.this_client->player;
+    size_t size = NUM_STATS * sizeof(f32);
+    memcpy(player->base_stats, packet->buffer, size);
+    memcpy(player->stats, packet->buffer + size, size);
+}

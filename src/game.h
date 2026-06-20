@@ -40,6 +40,7 @@ typedef enum PacketEnum {
     PACKET_CLEAR_FOG,
 
     PACKET_CLIENT_INPUT,
+    PACKET_CLIENT_STATS,
 
     NUM_PACKET_TYPES
 } PacketEnum;
@@ -280,7 +281,7 @@ void    line_update(Line* line, f32 dt);
 void    line_destroy(Line* line);
 
 //**************************************************************************
-// Trigger _trigger definitions
+// Trigger definitions
 //**************************************************************************
 
 typedef struct Trigger {
@@ -459,13 +460,6 @@ void    inventory_cast_abilities(Player* player, vec2 direction, vec2 target);
 typedef void (*EntityCreateFuncPtr)(Entity*);
 typedef void (*EntityDestroyFuncPtr)(Entity*);
 typedef void (*EntityUpdateFuncPtr)(Entity*, f32);
-
-typedef struct Stats {
-    f32 health, max_health;
-    f32 mana, max_mana;
-    f32 souls, max_souls;
-    f32 speed;
-} Stats;
 
 typedef struct Entity {
     MapInfo map_info;
@@ -1115,6 +1109,7 @@ void client_map_update_game_object(Packet* packet);
 void client_map_destroy_game_object(Packet* packet);
 void client_map_create_particle(Packet* packet);
 void client_map_create_parjicle(Packet* packet);
+void client_update_stats(Packet* packet);
 
 //**************************************************************************
 // Game Context

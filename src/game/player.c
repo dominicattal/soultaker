@@ -2,6 +2,7 @@
 #include "../window.h"
 #include "../event.h"
 #include <math.h>
+#include <string.h>
 
 extern GameContext game_context;
 
@@ -185,8 +186,9 @@ static void update_player_state(Player* player, f32 dt)
     }
 }
 
-static void update_player_stats(Player* player, f32 dt)
+static void update_player_stats(Client* client, f32 dt)
 {
+    Player* player = &client->player;
     Entity* entity = player->entity;
     if (entity == NULL) {
         player->stats[STAT_HP] = 0;
@@ -222,6 +224,17 @@ static void update_player_stats(Player* player, f32 dt)
         player->stats[STAT_MP] = player->stats[STAT_MAX_MP];
     player->stats[STAT_SP] = 50;
     player->stats[STAT_MAX_SP] = 100;
+
+    if (player != &game_context.this_client->player) {
+        size_t size = NUM_STATS * sizeof(f32);
+        char* buffer = st_malloc(2 * size);
+        memcpy(buffer, player->base_stats, size);
+        memcpy(buffer + size, player->stats, size);
+        Packet* packet = packet_create(PACKET_CLIENT_STATS, 2 * size, buffer);
+        game_net_send_packet_udp(client, packet);
+        st_free(buffer);
+        packet_destroy(packet);
+    }
 }
 
 static void update_inventory(Inventory* inventory, f32 dt)
@@ -240,8 +253,11 @@ static void player_update_host(Player* player, f32 dt)
         player->position = player->entity->position;
         map_fog_explore(game_context.current_map, player->position);
     }
-    update_player_state(player, dt);
-    update_player_stats(player, dt);
+    for (i32 i = 0; i < game_context.clients->length; i++) {
+        Client* client = list_get(game_context.clients, i);
+        update_player_state(&client->player, dt);
+        update_player_stats(client, dt);
+    }
     update_inventory(&player->inventory, dt);
 }
 

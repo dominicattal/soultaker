@@ -728,10 +728,10 @@ static void boss_start(Trigger* trigger, Entity* entity)
     data->boundary_swords_timer = 0.0;
     data->phase_pattern = 0;
     data->invulnerable_timer = 6.0;
-    //entity_set_state(boss, "phase1");
-    //gui_create_notification("phase1 attack1");
-    entity_set_state(boss, "phase2");
-    gui_create_notification("phase2 attack1");
+    entity_set_state(boss, "phase1");
+    gui_create_notification("phase1 attack1");
+    //entity_set_state(boss, "phase2");
+    //gui_create_notification("phase2 attack1");
     map_make_boss("Asgore", boss);
     data->attack = 0;
     Wall* wall;
