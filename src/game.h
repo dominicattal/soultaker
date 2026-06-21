@@ -367,6 +367,7 @@ typedef struct Item {
     f32 secondary_cooldown;
     f32 secondary_timer;
     i32 id;
+    i32 pool_id;
     u32 uid;
     bool equipped;
 } Item;
@@ -384,6 +385,7 @@ char*   item_write(Item* item, char* buffer);
 i32     item_get_id(const char* name);
 i32     item_get_tex_id(i32 item_id);
 Item*   item_create(i32 id);
+Item*   item_calloc(void);
 void    item_update(Item* item, f32 dt);
 char*   item_get_display_name(Item* item);
 char*   item_get_tooltip(Item* item);

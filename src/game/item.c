@@ -26,7 +26,8 @@ typedef struct {
 
 typedef struct {
 
-    Item* pool;
+    MemoryPool pool;
+
     ItemInfo* infos;
     i32 num_items;
 
@@ -252,8 +253,8 @@ static void load_item_info(void)
 
 void item_init(void)
 {
+    mem_pool_init(&item_context.pool, ITEM_POOL_SIZE, sizeof(Item));
     load_item_info();
-    item_context.pool = st_malloc(ITEM_POOL_SIZE * sizeof(Item));
 }
 
 void item_cleanup(void)
@@ -264,6 +265,7 @@ void item_cleanup(void)
         st_free(item_context.infos[i].display_name);
     }
     st_free(item_context.infos);
+    mem_pool_cleanup(&item_context.pool);
 }
 
 i32 item_get_id(const char* name)
@@ -586,7 +588,9 @@ char* weapon_get_tooltip(i32 id)
 
 Item* item_create(i32 id)
 {
-    Item* item = st_malloc(sizeof(Item));
+    i32 pool_id = mem_pool_malloc(&item_context.pool);
+    Item* item = mem_pool_get(&item_context.pool, pool_id);
+    item->pool_id = pool_id;
     item->id = id;
     item->type = item_context.infos[id].type;
     item->subtype = item_context.infos[id].subtype;
@@ -600,6 +604,14 @@ Item* item_create(i32 id)
         item->additive_stats[i] = 0;
         item->multiplicative_stats[i] = 0;
     }
+    return item;
+}
+
+Item* item_calloc(void)
+{
+    i32 pool_id = mem_pool_calloc(&item_context.pool);
+    Item* item = mem_pool_get(&item_context.pool, pool_id);
+    item->pool_id = pool_id;
     return item;
 }
 
@@ -626,7 +638,7 @@ char* item_get_tooltip(Item* item)
 void item_destroy(Item* item)
 {
     game_free_uid(item->uid);
-    st_free(item);
+    mem_pool_free(&item_context.pool, item->pool_id);
 }
 
 size_t item_sizeof(void)
