@@ -14,7 +14,8 @@
 #include <windows.h>
 
 typedef struct SocketAddr {
-    struct addrinfo addr;
+    struct sockaddr_storage addr;
+    socklen_t len;
 } SocketAddr;
 
 typedef struct Socket {
@@ -195,7 +196,7 @@ SocketAddr* socket_address_create(const char* ip, const char* port)
 {
     struct addrinfo hints = {0};
     struct addrinfo* sock_addr = NULL;
-    SocketAddr* result = st_malloc(sizeof(SocketAddr));
+    SocketAddr* result = st_calloc(1, sizeof(SocketAddr));
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_protocol = IPPROTO_UDP;
@@ -203,14 +204,15 @@ SocketAddr* socket_address_create(const char* ip, const char* port)
     if (rc != 0)
         log_write(FATAL, "getaddrinfo failed %s %s (%d): %s\n", ip, port, rc, gai_strerror(rc));
     memcpy(&result->addr, sock_addr->ai_addr, sock_addr->ai_addrlen);
+    result->len = sock_addr->ai_addrlen;
     freeaddrinfo(sock_addr);
     return (SocketAddr*)result;
 }
 
 void socket_address_destroy(SocketAddr* addr)
 {
+    //freeaddrinfo(&addr->addr);
     st_free(addr);
-    //freeaddrinfo(&addr->addr); 
 }
 
 static void socket_set_ip_and_port(Socket* sock)
@@ -334,12 +336,16 @@ void socket_send_all(NetContext* ctx, Packet* packet)
 
 bool socket_sendto(Socket* src_socket, SocketAddr* dst_addr, Packet* packet)
 {
-    return sendto(*src_socket->sock, 
+    int res = sendto(*src_socket->sock, 
                   packet->buffer - PACKET_HEADER_BYTES, 
                   packet->length + PACKET_HEADER_BYTES, 
                   0, 
-                  dst_addr->addr.ai_addr,
-                  (int)dst_addr->addr.ai_addrlen) != SOCKET_ERROR;
+                  (struct sockaddr*)&dst_addr->addr,
+                  dst_addr->len);
+                  //dst_addr->addr.ai_addrlen);
+    if (res == SOCKET_ERROR)
+        log_write(CRITICAL, "sendto failed: WsaGetLastError() = %d", WSAGetLastError());
+    return res;
 }
 
 Packet* socket_recv(Socket* sock)
@@ -365,7 +371,7 @@ Packet* socket_recv(Socket* sock)
 
     received = 0;
     while (received < (ssize_t)packet->length) {
-        length = recv(*sock->sock, packet->buffer + PACKET_HEADER_BYTES - received, packet->length - received, 0);
+        length = recv(*sock->sock, packet->buffer + PACKET_HEADER_BYTES + received, packet->length - received, 0);
         if (length == SOCKET_ERROR) {
             log_write(CRITICAL, "recvfailed: WsaGetLastError() = %d", WSAGetLastError());
             st_free(packet->buffer);
@@ -375,16 +381,17 @@ Packet* socket_recv(Socket* sock)
         received += length;
     }
     packet->buffer += PACKET_HEADER_BYTES;
+
     return packet;
 }
 
 Packet* socket_recvfrom(Socket* src_socket, SocketAddr** dst_addr)
 {
     Packet* packet;
-    socklen_t client_len = sizeof(struct sockaddr);
     char buffer[UDP_MAX_PAYLOAD];
     *dst_addr = st_malloc(sizeof(SocketAddr));
-    ssize_t len = recvfrom(*src_socket->sock, buffer, sizeof(buffer), 0, (struct sockaddr*)&(*dst_addr)->addr, &client_len);
+    (*dst_addr)->len = sizeof((*dst_addr)->addr);
+    ssize_t len = recvfrom(*src_socket->sock, buffer, sizeof(buffer), 0, (struct sockaddr*)&(*dst_addr)->addr, &(*dst_addr)->len);
     if (len == SOCKET_ERROR) {
         log_write(CRITICAL, "recvfrom failed: WsaGetLastError() = %d", WSAGetLastError());
         st_free(*dst_addr);

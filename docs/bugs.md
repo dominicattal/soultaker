@@ -85,3 +85,13 @@
 
 ### 2026-6-18
 - net code breaks on litten endian machines, should use htonl family of functions
+
+### 2026-6-21
+- error in net_win.c
+```
+length = recv(*sock->sock, packet->buffer + PACKET_HEADER_BYTES - received, packet->length - received, 0);
+```
+instead of
+```
+length = recv(*sock->sock, packet->buffer + PACKET_HEADER_BYTES + received, packet->length - received, 0);
+```

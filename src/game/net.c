@@ -236,7 +236,7 @@ static void client_handle_tcp_packet(Packet* packet)
             client_map_clear_fog(packet);
             break;
         default:
-            log_write(WARNING, "Received unknown packed: %d", packet->id);
+            log_write(WARNING, "Received unknown packed: %d %d", packet->id, packet->length);
     }
 }
 
