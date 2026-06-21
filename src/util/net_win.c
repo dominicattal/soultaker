@@ -195,18 +195,22 @@ SocketAddr* socket_address_create(const char* ip, const char* port)
 {
     struct addrinfo hints = {0};
     struct addrinfo* sock_addr = NULL;
+    SocketAddr* result = st_malloc(sizeof(SocketAddr));
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_protocol = IPPROTO_UDP;
     int rc = getaddrinfo(ip, port, &hints, &sock_addr);
     if (rc != 0)
         log_write(FATAL, "getaddrinfo failed %s %s (%d): %s\n", ip, port, rc, gai_strerror(rc));
-    return (SocketAddr*)sock_addr;
+    memcpy(&result->addr, sock_addr->ai_addr, sock_addr->ai_addrlen);
+    freeaddrinfo(sock_addr);
+    return (SocketAddr*)result;
 }
 
 void socket_address_destroy(SocketAddr* addr)
 {
-    freeaddrinfo(&addr->addr); 
+    st_free(addr);
+    //freeaddrinfo(&addr->addr); 
 }
 
 static void socket_set_ip_and_port(Socket* sock)
@@ -383,6 +387,7 @@ Packet* socket_recvfrom(Socket* src_socket, SocketAddr** dst_addr)
     ssize_t len = recvfrom(*src_socket->sock, buffer, sizeof(buffer), 0, (struct sockaddr*)&(*dst_addr)->addr, &client_len);
     if (len == SOCKET_ERROR) {
         log_write(CRITICAL, "recvfrom failed: WsaGetLastError() = %d", WSAGetLastError());
+        st_free(*dst_addr);
         return NULL;
     }
     packet = st_malloc(sizeof(Packet));
