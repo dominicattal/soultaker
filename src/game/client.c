@@ -161,6 +161,11 @@ void client_map_create_game_object(Packet* packet)
             list_append(map->parstacles, parstacle);
             game_set_uid(parstacle, type, parstacle->uid);
             break;
+        case GAME_OBJ_ITEM:
+            Item* item = st_calloc(1, sizeof(Item));
+            item_read(item, buffer);
+            game_set_uid(item, type, item->uid);
+            break;
         default:
             break;
     }

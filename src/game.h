@@ -47,9 +47,10 @@ typedef enum PacketEnum {
 
 typedef enum GameObj {
     GAME_OBJ_CLIENT,
-    GAME_OBJ_ENTITY,
+    GAME_OBJ_ITEM,
     GAME_OBJ_TILE,
     GAME_OBJ_WALL,
+    GAME_OBJ_ENTITY,
     GAME_OBJ_PROJECTILE,
     GAME_OBJ_OBSTACLE,
     GAME_OBJ_PARSTACLE,
@@ -361,11 +362,12 @@ typedef struct Item {
     ItemSubTypeEnum subtype;
     f32 additive_stats[NUM_STATS];
     f32 multiplicative_stats[NUM_STATS];
-    i32 id;
     f32 primary_cooldown;
     f32 primary_timer;
     f32 secondary_cooldown;
     f32 secondary_timer;
+    i32 id;
+    u32 uid;
     bool equipped;
 } Item;
 
@@ -374,6 +376,10 @@ typedef struct Item {
 // Loads weapon data from config/weapons.json
 void    item_init(void);
 void    item_cleanup(void);
+
+size_t  item_sizeof(void);
+char*   item_read(Item* item, char* buffer);
+char*   item_write(Item* item, char* buffer);
 
 i32     item_get_id(const char* name);
 i32     item_get_tex_id(i32 item_id);

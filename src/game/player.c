@@ -102,7 +102,8 @@ void inventory_init(Inventory* inventory)
 void inventory_destroy(Inventory* inventory)
 {
     for (i32 i = 0; i < inventory->num_items; i++) {
-        item_destroy(inventory->items[i]);
+        if (inventory->items[i] != NULL)
+            item_destroy(inventory->items[i]);
         inventory->items[i] = NULL;
     }
     for (i32 i = 0; i < inventory->num_synergies; i++)

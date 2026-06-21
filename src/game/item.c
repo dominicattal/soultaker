@@ -5,6 +5,8 @@
 
 typedef void (*UseFuncPtr)(Player*, vec2, vec2);
 
+#define ITEM_POOL_SIZE  1000
+
 typedef struct {
     ItemTypeEnum type;
     ItemSubTypeEnum subtype;
@@ -23,6 +25,8 @@ typedef struct {
 } ItemInfo;
 
 typedef struct {
+
+    Item* pool;
     ItemInfo* infos;
     i32 num_items;
 
@@ -249,6 +253,7 @@ static void load_item_info(void)
 void item_init(void)
 {
     load_item_info();
+    item_context.pool = st_malloc(ITEM_POOL_SIZE * sizeof(Item));
 }
 
 void item_cleanup(void)
@@ -590,6 +595,7 @@ Item* item_create(i32 id)
     item->primary_timer = 0;
     item->secondary_cooldown = 0;
     item->secondary_timer = 0;
+    item->uid = game_map_uid(item, GAME_OBJ_ITEM);
     for (i32 i = 0; i < NUM_STATS; i++) {
         item->additive_stats[i] = 0;
         item->multiplicative_stats[i] = 0;
@@ -619,5 +625,23 @@ char* item_get_tooltip(Item* item)
 
 void item_destroy(Item* item)
 {
+    game_free_uid(item->uid);
     st_free(item);
+}
+
+size_t item_sizeof(void)
+{
+    return sizeof(Item);
+}
+
+char* item_read(Item* item, char* buffer)
+{
+    memcpy(item, buffer, sizeof(Item));
+    return buffer + sizeof(Item);
+}
+
+char* item_write(Item* item, char* buffer)
+{
+    memcpy(buffer, item, sizeof(Item));
+    return buffer + sizeof(Item);
 }
