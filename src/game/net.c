@@ -333,7 +333,7 @@ void game_net_join(const char* ip, const char* port)
     log_write(DEBUG, "udp port: %s", packet->buffer);
     packet_destroy(packet);
 
-    this_client->udp_socket = socket_create(game_context.net, "127.0.0.1", NULL, BIT_UDP);
+    this_client->udp_socket = socket_create(game_context.net, "0.0.0.0", NULL, BIT_UDP);
     socket_bind(this_client->udp_socket);
     log_write(DEBUG, "listening on udp %s:%s", socket_ip(this_client->udp_socket), socket_port(this_client->udp_socket));
     game_context.host_client->udp_address = socket_address_create(ip, game_context.host_udp_port);
