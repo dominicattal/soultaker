@@ -3210,7 +3210,6 @@ void map_collide_objects(Map* map)
 
 static void map_send_state(Map* map, f32 dt)
 {
-    // use only tcp connections for now so i dont have to deal with synchronization issues
     GameObj type;
     size_t size;
     i32 uid;

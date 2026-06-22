@@ -67,7 +67,6 @@ void client_sync_entity(Packet* packet)
     memcpy(&uid, packet->buffer, sizeof(uid));
     log_assert(uid >= 0, "");
     log_assert(uid < MAX_UID, "");
-    log_write(DEBUG, "AAAA");
     //log_assert(game_context.uid_map_type[uid] == GAME_OBJ_ENTITY, "should be entity object to sync with");
     client->player.entity_uid = uid;
     client->player.synced = false;
@@ -136,7 +135,7 @@ void client_map_create_game_object(Packet* packet)
             game_set_uid(entity, type, entity->uid);
             break;
         case GAME_OBJ_PROJECTILE:
-            Projectile* proj = st_calloc(1, sizeof(Projectile));
+            Projectile* proj = projectile_calloc();
             projectile_read(proj, buffer);
             list_append(map->projectiles, proj);
             game_set_uid(proj, type, proj->uid);
@@ -161,11 +160,11 @@ void client_map_create_game_object(Packet* packet)
             list_append(map->parstacles, parstacle);
             game_set_uid(parstacle, type, parstacle->uid);
             break;
-        case GAME_OBJ_ITEM:
-            Item* item = item_calloc();
-            item_read(item, buffer);
-            game_set_uid(item, type, item->uid);
-            break;
+        //case GAME_OBJ_ITEM:
+        //    Item* item = item_calloc();
+        //    item_read(item, buffer);
+        //    game_set_uid(item, type, item->uid);
+        //    break;
         default:
             break;
     }
@@ -224,10 +223,15 @@ void client_map_destroy_game_object(Packet* packet)
     switch (type) {
         case GAME_OBJ_PROJECTILE:
             Projectile* this_proj = game_context.uid_map[uid];
-            if (this_proj != NULL) {
-                this_proj->lifetime = -1;
-            }
+            log_assert(this_proj != NULL, "game projectiel null while trying to destroy");
+            this_proj->lifetime = -1;
             break;
+        //case GAME_OBJ_ITEM:
+        //    log_write(DEBUG, "BBBB");
+        //    Item* item = game_context.uid_map[uid];
+        //    log_assert(item != NULL, "game item null while trying to destroy");
+        //    item_destroy(item);
+        //    break;
         default:
             break;
     }

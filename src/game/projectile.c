@@ -1,11 +1,31 @@
 #include "../game.h"
 #include <string.h>
 
+#define PROJ_POOL_SIZE 100000
+
 extern GameContext game_context;
+
+typedef struct {
+    MemoryPool pool;
+} ProjectileContext;
+
+static ProjectileContext projectile_context;
+
+void projectile_init(void)
+{
+    mem_pool_init(&projectile_context.pool, PROJ_POOL_SIZE, sizeof(Projectile));
+}
+
+void projectile_cleanup(void)
+{
+    mem_pool_cleanup(&projectile_context.pool);
+}
 
 Projectile* projectile_create(vec2 position)
 {
-    Projectile* proj = st_malloc(sizeof(Projectile));
+    i32 pool_id = mem_pool_malloc(&projectile_context.pool);
+    Projectile* proj = mem_pool_get(&projectile_context.pool, pool_id);
+    proj->pool_id = pool_id;
     proj->position = position;
     proj->direction = vec2_create(0, 0);
     proj->elevation = 0.5;
@@ -21,6 +41,14 @@ Projectile* projectile_create(vec2 position)
     proj->destroy = NULL;
     proj->data = NULL;
     proj->uid = game_map_uid(proj, GAME_OBJ_PROJECTILE);
+    return proj;
+}
+
+Projectile* projectile_calloc(void)
+{
+    i32 pool_id = mem_pool_malloc(&projectile_context.pool);
+    Projectile* proj = mem_pool_get(&projectile_context.pool, pool_id);
+    proj->pool_id = pool_id;
     return proj;
 }
 
@@ -52,7 +80,7 @@ void projectile_destroy(Projectile* proj)
         proj->destroy(proj);
     if (projectile_get_flag(proj, PROJECTILE_FLAG_AUTO_FREE_DATA))
         st_free(proj->data);
-    st_free(proj);
+    mem_pool_free(&projectile_context.pool, proj->pool_id);
 }
 
 size_t projectile_sizeof(void)

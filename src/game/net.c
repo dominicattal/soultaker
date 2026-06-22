@@ -214,7 +214,6 @@ static void client_handle_tcp_packet(Packet* packet)
             log_write(DEBUG, "TCP message: %s", packet->buffer);
             break;
         case PACKET_LOAD_GAME:
-            log_write(DEBUG, "Loading game");
             client_change_map();
             break;
         case PACKET_CREATE_GAME_OBJ:

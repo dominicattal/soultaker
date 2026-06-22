@@ -661,6 +661,7 @@ typedef struct Projectile {
     i32 owner_uid;
     i32 tex;
     i32 uid;
+    i32 pool_id;
 } Projectile;
 
 typedef enum {
@@ -671,16 +672,20 @@ typedef enum {
     PROJECTILE_FLAG_FRIENDLY
 } ProjectileFlagEnum;
 
+void projectile_init(void);
+void projectile_cleanup(void);
+
 // Projectiles call their update and destroy functions. They do
 // not have a create function. They do not have ids mapped to a 
 // function ptr (like entities) because it is not necessary to 
 // know projectile information + it would be a headache.
 Projectile* projectile_create(vec2 position);
-void projectile_update(Projectile* projectile, f32 dt);
-void projectile_destroy(Projectile* projectile);
+Projectile* projectile_calloc(void);
+void        projectile_update(Projectile* projectile, f32 dt);
+void        projectile_destroy(Projectile* projectile);
 
-void projectile_set_flag(Projectile* proj, ProjectileFlagEnum flag, bool val);
-bool projectile_get_flag(Projectile* proj, ProjectileFlagEnum flag);
+void        projectile_set_flag(Projectile* proj, ProjectileFlagEnum flag, bool val);
+bool        projectile_get_flag(Projectile* proj, ProjectileFlagEnum flag);
 
 size_t      projectile_sizeof(void);
 char*       projectile_read(Projectile* proj, char* buffer);

@@ -35,6 +35,7 @@ void* game_loop(void* vargp)
     map_init();
     item_init();
     entity_init();
+    projectile_init();
     particle_init();
     parjicle_init();
     synergy_init();
@@ -72,6 +73,7 @@ void* game_loop(void* vargp)
     map_cleanup();
     item_cleanup();
     synergy_cleanup();
+    projectile_cleanup();
     entity_cleanup();
     particle_cleanup();
     parjicle_cleanup();
