@@ -7,6 +7,7 @@
 #include "../command.h"
 #include <math.h>
 #include <string.h>
+#include <errno.h>
 
 // **************************************************
 
@@ -621,7 +622,9 @@ static GUIComp* create_inventory_slot(i32 x, i32 y, Item** item_slot, i32 defaul
 
 void gui_refresh_inventory(void)
 {
-    pthread_mutex_lock(&gui_context.data_mutex);
+    i32 res = pthread_mutex_trylock(&gui_context.data_mutex);
+    if (res == EBUSY)
+        log_write(WARNING, "gui data mutex already locked");
     Inventory* inventory = &game_context.this_client->player.inventory;
     GUIComp* inventory_comp = gui_comp_get_by_name("inventory");
     log_assert(inventory_comp != NULL, "inventory comp is null");
@@ -657,7 +660,9 @@ void gui_refresh_inventory(void)
         if (i % 5 == 0)
             inventory_comp->h += 70;
     }
-    pthread_mutex_unlock(&gui_context.data_mutex);
+
+    if (res != EBUSY)
+        pthread_mutex_unlock(&gui_context.data_mutex);
 }
 
 static void inventory_toggle(GUIComp* comp)
