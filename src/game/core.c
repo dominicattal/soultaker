@@ -75,12 +75,9 @@ void* game_loop(void* vargp)
     entity_cleanup();
     particle_cleanup();
     parjicle_cleanup();
-    for (i32 i = 0; game_context.clients->length > 0;) {
-        client = list_get(game_context.clients, i);
-        client_destroy(client);
-    }
-    list_destroy(game_context.clients);
     game_net_cleanup();
+    client_destroy(game_context.this_client);
+    list_destroy(game_context.clients);
     list_i32_destroy(game_context.created_uids);
     list_i32_destroy(game_context.freed_uids);
     game_context.this_client = NULL;

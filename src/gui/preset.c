@@ -1213,6 +1213,12 @@ static void start_button_onclick(GUIComp* comp, i32 button, i32 action, i32 mods
     }
 }
 
+static void leave_button_onclick(GUIComp* comp, i32 button, i32 action, i32 mods)
+{
+    game_net_cleanup();
+    //gui_preset_load(GUI_PRESET_MAIN_MENU);  --- inside of lock already
+}
+
 static void load_preset_lobby(GUIComp* root)
 {
     GUIComp* player_card;
@@ -1232,6 +1238,12 @@ static void load_preset_lobby(GUIComp* root)
     start_button->click = start_button_onclick;
     gui_comp_point_to_text(start_button, "Start Game");
     gui_comp_attach(root, start_button);
+
+    GUIComp* leave_button = gui_comp_create(500, 600, 200, 50);
+    gui_comp_set_flag(leave_button, GUI_COMP_FLAG_CLICKABLE, true);
+    leave_button->click = leave_button_onclick;
+    gui_comp_point_to_text(leave_button, "Leave Lobby");
+    gui_comp_attach(root, leave_button);
 }
 
 // **************************************************

@@ -1,4 +1,5 @@
 #include "../game.h"
+#include "../gui.h"
 #include <string.h>
 #include <pthread.h>
 
@@ -139,22 +140,22 @@ static void* host_tcp_handler(void* vargp)
         listen_socket = socket_create(net_ctx, ip, port, BIT_TCP);
         if (listen_socket == NULL) {
             log_write(CRITICAL, "failed to create tcp listen socket");
-            goto fail;
+            return NULL;
         }
         if (!socket_bind(listen_socket)) {
             log_write(CRITICAL, "failed to bind tcp listen socket");
-            goto fail;
+            return NULL;
         }
         if (!socket_listen(listen_socket)) {
             log_write(CRITICAL, "failed to listen for tcp listen socket");
-            goto fail;
+            return NULL;
         }
         client_socket = socket_accept(listen_socket);
         socket_destroy(listen_socket);
         if (client_socket == NULL) {
             if (!kill_net_host_thread) {
                 log_write(CRITICAL, "client socket is NULL for tcp listen socket");
-                goto fail;
+                return NULL;
             }
             break;
         }
@@ -199,10 +200,6 @@ static void* host_tcp_handler(void* vargp)
 
         test_connectivity(client);
     }
-    networking_join_sockets(game_context.net);
-    return NULL;
-fail:
-    game_net_stop_hosting();
     return NULL;
 }
 
@@ -394,42 +391,44 @@ void game_net_start_hosting(const char* ip, const char* port)
     log_write(DEBUG, "hosting");
 }
 
-void game_net_stop_hosting(void)
+void game_net_cleanup(void)
 {
-    if (!game_context.hosting) {
-        log_write(WARNING, "game is not hosting");
+    if (game_context.net == NULL)
         return;
-    }
 
     kill_net_host_thread = true;
     kill_net_handler_threads = true;
+
+    i32 i = 0;
+    while (i < game_context.clients->length) {
+        Client* client = list_get(game_context.clients, i);
+        if (client != game_context.this_client) {
+            client_destroy(client);
+            i32 client_idx = list_search(game_context.clients, client);
+            list_remove_in_order(game_context.clients, client_idx);
+        } else
+            i++;
+    }
+
+    game_context.this_client->tcp_socket = NULL;
+    game_context.this_client->udp_socket = NULL;
+    game_context.this_client->udp_address = NULL;
+    networking_shutdown_sockets(game_context.net);
+    if (game_context.hosting) {
+        pthread_join(game_context.net_tcp_listen_thread_id, NULL);
+        pthread_join(game_context.net_udp_listen_thread_id, NULL);
+    }
+    networking_cleanup(game_context.net);
     game_context.hosting = false;
     game_context.singleplayer = true;
-    networking_shutdown_sockets(game_context.net);
-    pthread_join(game_context.net_tcp_listen_thread_id, NULL);
-    pthread_join(game_context.net_udp_listen_thread_id, NULL);
-    networking_cleanup(game_context.net);
     game_context.net = NULL;
 
     string_free(game_context.host_ip);
     string_free(game_context.host_tcp_port);
     string_free(game_context.host_udp_port);
-}
-
-void game_net_cleanup(void)
-{
-    if (game_context.hosting)
-        game_net_stop_hosting();
-    else if (game_context.net != NULL) {
-        kill_net_handler_threads = true;
-        networking_cleanup(game_context.net);
-        game_context.hosting = false;
-        game_context.singleplayer = true;
-        game_context.net = NULL;
-        string_free(game_context.host_ip);
-        string_free(game_context.host_tcp_port);
-        string_free(game_context.host_udp_port);
-    }
+    game_context.host_ip = NULL;
+    game_context.host_tcp_port = NULL;
+    game_context.host_udp_port = NULL;
 }
 
 void game_net_send_tcp_packet_to_clients(Packet* packet)

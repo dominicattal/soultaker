@@ -54,8 +54,6 @@ void client_set_username(Client* client, char* username)
 
 void client_destroy(Client* client)
 {
-    i32 client_idx = list_search(game_context.clients, client);
-    list_remove_in_order(game_context.clients, client_idx);
     if (client->udp_address != NULL)
         socket_address_destroy(client->udp_address);
     if (client->tcp_socket != NULL)

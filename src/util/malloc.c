@@ -4,7 +4,6 @@
 #include <pthread.h>
 #include <string.h>
 
-#define TRACK_POINTERS
 #ifdef TRACK_POINTERS
 
 typedef struct {
