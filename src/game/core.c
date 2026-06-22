@@ -30,7 +30,6 @@ void* game_loop(void* vargp)
     client = client_create();
     client_set_username(client, string_copy("fancy"));
     game_context.this_client = client;
-    list_append(game_context.clients, client);
 
     map_init();
     item_init();
@@ -68,6 +67,7 @@ void* game_loop(void* vargp)
         pthread_mutex_unlock(&game_context.handler_thread_mutex);
         game_context.real_dt = get_time() - real_start;
     }
+    log_write(DEBUG, "clietns list: %d", game_context.clients->length);
     gui_comp_cleanup();
     map_cleanup();
     item_cleanup();
@@ -75,12 +75,12 @@ void* game_loop(void* vargp)
     entity_cleanup();
     particle_cleanup();
     parjicle_cleanup();
-    game_net_cleanup();
-    for (i32 i = 0; i < game_context.clients->length; i++) {
+    for (i32 i = 0; game_context.clients->length > 0;) {
         client = list_get(game_context.clients, i);
         client_destroy(client);
     }
     list_destroy(game_context.clients);
+    game_net_cleanup();
     list_i32_destroy(game_context.created_uids);
     list_i32_destroy(game_context.freed_uids);
     game_context.this_client = NULL;

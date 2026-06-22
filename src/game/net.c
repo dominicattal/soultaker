@@ -47,7 +47,7 @@ static void* host_tcp_client_handler(void* vargp)
         packet = socket_recv(client->tcp_socket);
         if (packet == NULL) {
             log_write(WARNING, "packet is null");
-            continue;
+            break;
         }
         host_handle_tcp_packet(client, packet);
         packet_destroy(packet);
@@ -164,7 +164,6 @@ static void* host_tcp_handler(void* vargp)
         log_write(DEBUG, "connected to %s:%s", client_ip, client_port);
 
         Client* client = client_create();
-        list_append(game_context.clients, client);
         client->tcp_socket = client_socket;
 
         packet = packet_create(PACKET_HOST_UDP_PORT, strlen(game_context.host_udp_port)+1, game_context.host_udp_port);
@@ -325,7 +324,6 @@ void game_net_join(const char* ip, const char* port)
     Client* this_client = game_context.this_client;
     game_context.host_client = client_create();
     game_context.host_client->tcp_socket = server_socket;
-    list_append(game_context.clients, game_context.host_client);
 
     packet = socket_recv(server_socket);
     log_assert(packet->id == PACKET_HOST_UDP_PORT, "");

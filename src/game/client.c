@@ -7,6 +7,7 @@ Client* client_create(void)
     Client* client = st_calloc(1, sizeof(Client));
     client->uid = game_map_uid(client, GAME_OBJ_CLIENT);
     camera_set_defaults(&client->camera);
+    list_append(game_context.clients, client);
     return client;
 }
 
@@ -53,8 +54,14 @@ void client_set_username(Client* client, char* username)
 
 void client_destroy(Client* client)
 {
+    i32 client_idx = list_search(game_context.clients, client);
+    list_remove_in_order(game_context.clients, client_idx);
     if (client->udp_address != NULL)
         socket_address_destroy(client->udp_address);
+    if (client->tcp_socket != NULL)
+        socket_destroy(client->tcp_socket);
+    if (client->udp_socket != NULL)
+        socket_destroy(client->udp_socket);
     game_free_uid(client->uid);
     string_free(client->username);
     st_free(client);
@@ -67,7 +74,6 @@ void client_sync_entity(Packet* packet)
     memcpy(&uid, packet->buffer, sizeof(uid));
     log_assert(uid >= 0, "");
     log_assert(uid < MAX_UID, "");
-    log_write(DEBUG, "AAAA");
     //log_assert(game_context.uid_map_type[uid] == GAME_OBJ_ENTITY, "should be entity object to sync with");
     client->player.entity_uid = uid;
     client->player.synced = false;

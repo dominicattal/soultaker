@@ -296,6 +296,10 @@ Packet* socket_recv(Socket* sock)
     char buffer[PACKET_HEADER_BYTES];
     while (received < PACKET_HEADER_BYTES) {
         length = read(sock->fd, buffer + received, PACKET_HEADER_BYTES - received);
+        if (length == 0) {
+            log_write(DEBUG, "connection disconnected");
+            return NULL;
+        }
         if (length == -1) {
             log_write(CRITICAL, "read failed: errno = %d", errno);
             return NULL;
@@ -312,6 +316,12 @@ Packet* socket_recv(Socket* sock)
     received = 0;
     while (received < (ssize_t)packet->length) {
         length = read(sock->fd, packet->buffer + PACKET_HEADER_BYTES + received, packet->length - received);
+        if (length == 0) {
+            log_write(DEBUG, "connection disconnected");
+            st_free(packet->buffer);
+            st_free(packet);
+            return NULL;
+        }
         if (length == -1) {
             log_write(CRITICAL, "read failed: errno = %d", errno);
             st_free(packet->buffer);
