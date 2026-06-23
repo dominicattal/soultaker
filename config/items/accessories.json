@@ -3,7 +3,8 @@
         "type": "accessory",
         "display_name": "Mother's Pendant",
         "tooltip": "This is a tooltip",
-        "texture": "mothers_pendant"
+        "texture": "mothers_pendant",
+        "+hp": 10
     },
     "feral_claws": {
         "type": "accessory",

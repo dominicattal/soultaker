@@ -61,20 +61,12 @@ void inventory_init(Inventory* inventory)
         inventory->misc_slots[i] = &inventory->items[i+9];
 
     *inventory->misc_slots[0] = item_create(item_get_id("pointer"));
-    (*inventory->misc_slots[0])->primary_cooldown = 0.5;
-    (*inventory->misc_slots[0])->secondary_cooldown = 0.5;
     *inventory->misc_slots[1] = item_create(item_get_id("null_pointer"));
-    (*inventory->misc_slots[1])->primary_cooldown = 0.75;
-    (*inventory->misc_slots[1])->secondary_cooldown = 0.75;
     *inventory->misc_slots[2] = item_create(item_get_id("mothers_pendant"));
-    (*inventory->misc_slots[2])->additive_stats[STAT_MAX_HP] = 10;
     *inventory->misc_slots[5] = item_create(item_get_id("shiv"));
-    (*inventory->misc_slots[5])->primary_cooldown = 0.5;
-    (*inventory->misc_slots[5])->secondary_cooldown = 0.5;
     *inventory->misc_slots[6] = item_create(item_get_id("staff"));
     *inventory->misc_slots[7] = item_create(item_get_id("wand"));
     *inventory->misc_slots[10] = item_create(item_get_id("spelltome"));
-    (*inventory->misc_slots[10])->primary_cooldown = 0.75;
     *inventory->misc_slots[11] = item_create(item_get_id("healing_tome"));
     *inventory->misc_slots[12] = item_create(item_get_id("hermes_boots"));
 
@@ -83,18 +75,12 @@ void inventory_init(Inventory* inventory)
     *inventory->misc_slots[17] = item_create(item_get_id("dragon_scale"));
 
     *inventory->misc_slots[3] = item_create(item_get_id("wizard_hat"));
-    (*inventory->misc_slots[3])->additive_stats[STAT_MAX_MP] = 50;
     *inventory->misc_slots[8] = item_create(item_get_id("robe"));
-    (*inventory->misc_slots[8])->additive_stats[STAT_MAX_MP] = 50;
     *inventory->misc_slots[13] = item_create(item_get_id("wizard_boots"));
-    (*inventory->misc_slots[13])->additive_stats[STAT_MAX_MP] = 50;
 
     *inventory->misc_slots[4] = item_create(item_get_id("helmet"));
-    (*inventory->misc_slots[4])->additive_stats[STAT_MAX_HP] = 50;
     *inventory->misc_slots[9] = item_create(item_get_id("chestplate"));
-    (*inventory->misc_slots[9])->additive_stats[STAT_MAX_HP] = 50;
     *inventory->misc_slots[14] = item_create(item_get_id("boots"));
-    (*inventory->misc_slots[14])->additive_stats[STAT_MAX_HP] = 50;
 
     gui_refresh_inventory();
 }
@@ -264,8 +250,8 @@ static void player_update_host(Player* player, f32 dt)
 static void player_update_client(Player* player, f32 dt)
 {
     if (!player->synced && game_context.uid_map_type[player->entity_uid] == GAME_OBJ_ENTITY) {
-        player->entity = game_context.uid_map[player->entity_uid]; 
         player->synced = true;
+        player_reset(game_context.this_client->uid, game_context.uid_map[player->entity_uid]);
         log_write(DEBUG, "synced");
     }
 }

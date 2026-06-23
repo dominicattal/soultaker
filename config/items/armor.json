@@ -6,21 +6,24 @@
         "tooltip": "Use to increase damage in radius",
         "texture": "helmet",
         "use": "helmet_use",
-        "control": "helmet_use"
+        "control": "helmet_use",
+        "+max_hp": 50
     },
     "chestplate": {
         "type": "armor",
         "subtype": "chestplate",
         "display_name": "Chestplate",
         "tooltip": "tooltip",
-        "texture": "chestplate"
+        "texture": "chestplate",
+        "+max_hp": 50
     },
     "boots": {
         "type": "armor",
         "subtype": "boots",
         "display_name": "Boots",
         "tooltip": "The striped socks are necessary",
-        "texture": "boots"
+        "texture": "boots",
+        "+max_hp": 50
     },
     "wizard_hat": {
         "type": "armor",
@@ -29,20 +32,23 @@
         "tooltip": "Use to increase ability haste in radius",
         "texture": "wizard_hat",
         "use": "wizard_hat_use",
-        "control": "wizard_hat_use"
+        "control": "wizard_hat_use",
+        "+max_mp": 50
     },
     "robe": {
         "type": "armor",
         "subtype": "chestplate",
         "display_name": "Robe",
         "tooltip": "tooltip",
-        "texture": "robe"
+        "texture": "robe",
+        "+max_mp": 50
     },
     "wizard_boots": {
         "type": "armor",
         "subtype": "boots",
         "display_name": "Wizard Boots",
         "tooltip": "The striped socks are necessary",
-        "texture": "wizard_boots"
+        "texture": "wizard_boots",
+        "+max_mp": 50
     }
 }

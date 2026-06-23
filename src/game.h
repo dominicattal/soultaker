@@ -58,6 +58,7 @@ typedef enum GameObj {
     GAME_OBJ_TRIGGER,
     GAME_OBJ_AOE,
     GAME_OBJ_LINE,
+    GAME_OBJ_ITEM,
     NUM_GAME_OBJS,
     GAME_OBJ_NONE
 } GameObj;
@@ -366,6 +367,7 @@ typedef struct Item {
     f32 primary_timer;
     f32 secondary_cooldown;
     f32 secondary_timer;
+    i32 uid;
     bool equipped;
 } Item;
 

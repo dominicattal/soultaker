@@ -5,7 +5,9 @@
         "tooltip": "Points toward the enemy unless they weren't allocated",
         "primary": "weapon_pointer_primary",
         "secondary": "weapon_pointer_secondary",
-        "texture": "pointer_weapon"
+        "texture": "pointer_weapon",
+        "primary_cooldown": 0.5,
+        "secondary_cooldown": 0.5
     },
     "null_pointer": {
         "type": "weapon",
@@ -13,14 +15,18 @@
         "tooltip": "Segmentation fault",
         "primary": "weapon_null_pointer_primary",
         "secondary": "weapon_null_pointer_secondary",
-        "texture": "null_weapon"
+        "texture": "null_weapon",
+        "primary_cooldown": 0.75,
+        "secondary_cooldown": 0.75
     },
     "shiv": {
         "type": "weapon",
         "display_name": "Shiv",
         "tooltip": "Stab stab stab",
         "primary": "shiv_primary",
-        "texture": "shiv_weapon"
+        "texture": "shiv_weapon",
+        "primary_cooldown": 0.5,
+        "secondary_cooldown": 0.5
     },
     "staff": {
         "type": "weapon",

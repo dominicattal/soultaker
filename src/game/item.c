@@ -8,6 +8,10 @@ typedef void (*UseFuncPtr)(Player*, vec2, vec2);
 typedef struct {
     ItemTypeEnum type;
     ItemSubTypeEnum subtype;
+    f32 additive_stats[NUM_STATS];
+    f32 multiplicative_stats[NUM_STATS];
+    f32 primary_cooldown;
+    f32 secondary_cooldown;
     char* name;
     char* tooltip;
     char* display_name;
@@ -210,6 +214,47 @@ static void load_cast_func(JsonObject* object, i32 id)
     item_context.infos[id].cast = state_load_function(string);
 }
 
+static f32 load_stat(JsonObject* object, const char* name)
+{
+    JsonValue* val_float = json_object_get_value(object, name);
+    if (val_float == NULL)
+        return 0;
+    JsonType type = json_value_get_type(val_float);
+    if (type == JTYPE_FLOAT)
+        return json_value_get_float(val_float);
+    else if (type == JTYPE_INT)
+        return json_value_get_int(val_float);
+    return 0;
+}
+
+static void load_stats(JsonObject* object, i32 id)
+{
+    item_context.infos[id].primary_cooldown = load_stat(object, "primary_cooldown");
+    item_context.infos[id].secondary_cooldown = load_stat(object, "secondary_cooldown");
+    item_context.infos[id].additive_stats[STAT_HP] = load_stat(object, "+hp");
+    if (item_context.infos[id].additive_stats[STAT_HP] != 0)
+        log_write(DEBUG, "%f", item_context.infos[id].additive_stats[STAT_HP]);
+    item_context.infos[id].additive_stats[STAT_MAX_HP] = load_stat(object, "+max_hp");
+    item_context.infos[id].additive_stats[STAT_HP_REGEN] = load_stat(object, "+hp_regen");
+    item_context.infos[id].additive_stats[STAT_MP] = load_stat(object, "+mp");
+    item_context.infos[id].additive_stats[STAT_MAX_MP] = load_stat(object, "+max_mp");
+    item_context.infos[id].additive_stats[STAT_MP_REGEN] = load_stat(object, "+mp_regen");
+    item_context.infos[id].additive_stats[STAT_SP] = load_stat(object, "+sp");
+    item_context.infos[id].additive_stats[STAT_MAX_SP] = load_stat(object, "+max_sp");
+    item_context.infos[id].additive_stats[STAT_SPEED] = load_stat(object, "+speed");
+    item_context.infos[id].additive_stats[STAT_DAMAGE] = load_stat(object, "+damage");
+    item_context.infos[id].multiplicative_stats[STAT_HP] = load_stat(object, "*hp");
+    item_context.infos[id].multiplicative_stats[STAT_MAX_HP] = load_stat(object, "*max_hp");
+    item_context.infos[id].multiplicative_stats[STAT_HP_REGEN] = load_stat(object, "*hp_regen");
+    item_context.infos[id].multiplicative_stats[STAT_MP] = load_stat(object, "*mp");
+    item_context.infos[id].multiplicative_stats[STAT_MAX_MP] = load_stat(object, "*max_mp");
+    item_context.infos[id].multiplicative_stats[STAT_MP_REGEN] = load_stat(object, "*mp_regen");
+    item_context.infos[id].multiplicative_stats[STAT_SP] = load_stat(object, "*sp");
+    item_context.infos[id].multiplicative_stats[STAT_MAX_SP] = load_stat(object, "*max_sp");
+    item_context.infos[id].multiplicative_stats[STAT_SPEED] = load_stat(object, "*speed");
+    item_context.infos[id].multiplicative_stats[STAT_DAMAGE] = load_stat(object, "*damage");
+}
+
 static void load_item_info(void)
 {
     JsonObject* json = state_context.config->items;
@@ -227,6 +272,7 @@ static void load_item_info(void)
     for (i32 i = 0; i < item_context.num_items; i++) {
         member = json_iterator_get(it);
         string = json_member_get_key(member);
+        log_write(DEBUG, string);
         item_context.infos[i].name = string_copy(string);
         val_object = json_member_get_value(member);
         object = json_value_get_object(val_object);
@@ -235,6 +281,7 @@ static void load_item_info(void)
         load_type(object, i);
         load_subtype(object, i);
         load_texture(object, i);
+        load_stats(object, i);
         if (item_context.infos[i].type == ITEM_WEAPON) {
             load_primary_func(object, i);
             load_secondary_func(object, i);
@@ -586,13 +633,13 @@ Item* item_create(i32 id)
     item->type = item_context.infos[id].type;
     item->subtype = item_context.infos[id].subtype;
     item->equipped = false;
-    item->primary_cooldown = 0;
+    item->primary_cooldown = item_context.infos[id].primary_cooldown;
     item->primary_timer = 0;
-    item->secondary_cooldown = 0;
+    item->secondary_cooldown = item_context.infos[id].secondary_cooldown;
     item->secondary_timer = 0;
     for (i32 i = 0; i < NUM_STATS; i++) {
-        item->additive_stats[i] = 0;
-        item->multiplicative_stats[i] = 0;
+        item->additive_stats[i] = item_context.infos[id].additive_stats[i];
+        item->multiplicative_stats[i] = item_context.infos[id].multiplicative_stats[i];
     }
     return item;
 }

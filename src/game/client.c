@@ -75,14 +75,14 @@ void client_sync_entity(Packet* packet)
     //log_assert(game_context.uid_map_type[uid] == GAME_OBJ_ENTITY, "should be entity object to sync with");
     client->player.entity_uid = uid;
     client->player.synced = false;
-    //Entity* entity = game_context.uid_map[uid];
+    Entity* entity = game_context.uid_map[uid];
     //client->player.entity = entity;
 }
 
 void client_change_map(void)
 {
-    gui_preset_load(GUI_PRESET_GAME);
     client_map_create();
+    gui_preset_load(GUI_PRESET_GAME);
 }
 
 Map* client_map_create(void)

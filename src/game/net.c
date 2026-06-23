@@ -243,8 +243,10 @@ static void* client_tcp_handler(void* vargp)
     log_write(DEBUG, "initalized client tcp handler");
     while (!kill_net_handler_threads) {
         packet = socket_recv(server_socket);
-        if (packet == NULL)
-            continue;
+        if (packet == NULL) {
+            log_write(DEBUG, "received null packet");
+            break;
+        }
         pthread_mutex_lock(&game_context.handler_thread_mutex);
         client_handle_tcp_packet(packet);
         pthread_mutex_unlock(&game_context.handler_thread_mutex);

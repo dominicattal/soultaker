@@ -4,7 +4,8 @@
         "display_name": "Spelltome",
         "tooltip": "Casts a big lob",
         "cast": "spelltome_cast",
-        "texture": "spelltome"
+        "texture": "spelltome",
+        "primary_cooldown": 0.75
     },
     "healing_tome": {
         "type": "ability",
