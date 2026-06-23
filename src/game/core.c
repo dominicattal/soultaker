@@ -40,7 +40,7 @@ void* game_loop(void* vargp)
     gui_comp_init();
 
     pthread_mutex_unlock(init_mutex);
-    gui_preset_load(GUI_PRESET_MAIN_MENU);
+    gui_preset_load(GUI_PRESET_MP);
     //gui_preset_load(GUI_PRESET_GAME);
     game_resume_render();
     //map_create(map_get_id("outpost1"));

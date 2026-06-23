@@ -30,8 +30,9 @@ void game_set_player_position(vec2 position)
     game_context.this_client->player.entity->position = position;
 }
 
-void inventory_init(Inventory* inventory)
+void inventory_init(Client* client)
 {
+    Inventory* inventory = &client->player.inventory;
     inventory->num_armor_slots = 3;
     inventory->num_weapon_slots = 3;
     inventory->num_ability_slots = 3;
@@ -59,6 +60,11 @@ void inventory_init(Inventory* inventory)
 
     for (i32 i = 0; i < inventory->num_misc_slots; i++)
         inventory->misc_slots[i] = &inventory->items[i+9];
+}
+
+static void inventory_reset(Client* client)
+{
+    Inventory* inventory = &client->player.inventory;
 
     *inventory->misc_slots[0] = item_create(item_get_id("pointer"));
     *inventory->misc_slots[1] = item_create(item_get_id("null_pointer"));
@@ -69,15 +75,12 @@ void inventory_init(Inventory* inventory)
     *inventory->misc_slots[10] = item_create(item_get_id("spelltome"));
     *inventory->misc_slots[11] = item_create(item_get_id("healing_tome"));
     *inventory->misc_slots[12] = item_create(item_get_id("hermes_boots"));
-
     *inventory->misc_slots[15] = item_create(item_get_id("feral_claws"));
     *inventory->misc_slots[16] = item_create(item_get_id("bear_hide"));
     *inventory->misc_slots[17] = item_create(item_get_id("dragon_scale"));
-
     *inventory->misc_slots[3] = item_create(item_get_id("wizard_hat"));
     *inventory->misc_slots[8] = item_create(item_get_id("robe"));
     *inventory->misc_slots[13] = item_create(item_get_id("wizard_boots"));
-
     *inventory->misc_slots[4] = item_create(item_get_id("helmet"));
     *inventory->misc_slots[9] = item_create(item_get_id("chestplate"));
     *inventory->misc_slots[14] = item_create(item_get_id("boots"));
@@ -85,8 +88,9 @@ void inventory_init(Inventory* inventory)
     gui_refresh_inventory();
 }
 
-void inventory_destroy(Inventory* inventory)
+void inventory_cleanup(Client* client)
 {
+    Inventory* inventory = &client->player.inventory;
     for (i32 i = 0; i < inventory->num_items; i++) {
         item_destroy(inventory->items[i]);
         inventory->items[i] = NULL;
@@ -100,16 +104,10 @@ void inventory_destroy(Inventory* inventory)
     st_free(inventory->items);
 }
 
-void player_cleanup(Player* player)
+void player_reset(Client* client, Entity* entity)
 {
-    inventory_destroy(&player->inventory);
-}
-
-void player_reset(i32 client_uid, Entity* entity)
-{
-    Client* client = game_context.uid_map[client_uid];
     Player* player = &client->player;
-    inventory_destroy(&player->inventory);
+    inventory_reset(client);
     if (player->entity != NULL) {
         log_write(WARNING, "Did not destroy player entity before resetting");
         entity_destroy(player->entity);
@@ -119,7 +117,6 @@ void player_reset(i32 client_uid, Entity* entity)
     player->stats[STAT_MP] = 50;
     player->base_stats[STAT_HP_REGEN] = 5;
     player->base_stats[STAT_MP_REGEN] = 5;
-    inventory_init(&player->inventory);
     entity->id = entity_get_id("knight");
     player->entity = entity;
     entity->direction = vec2_create(0, 0);
@@ -134,6 +131,24 @@ void player_reset(i32 client_uid, Entity* entity)
     player->state_idle = entity_get_state_id(entity, "idle");
     player->state_walking = entity_get_state_id(entity, "walking");
     player->state_shooting = entity_get_state_id(entity, "shooting");
+
+    if (client != game_context.this_client) {
+
+        Packet* packet = packet_create(PACKET_SYNC_CLIENT_ENTITY, sizeof(entity->uid), (char*)&entity->uid);
+        game_net_send_packet_tcp(client, packet);
+        packet_destroy(packet);
+
+        for (i32 i = 0; i < player->inventory.num_items; i++) {
+            if (player->inventory.items[i] == NULL)
+                continue;
+            static char buffer[256];
+            memcpy(buffer, &i, sizeof(i));
+            memcpy(buffer + sizeof(i), player->inventory.items[i], sizeof(Item));
+            Packet* packet = packet_create(PACKET_SYNC_ITEM, sizeof(i) + sizeof(Item), buffer);
+            game_net_send_packet_tcp(client, packet);
+            packet_destroy(packet);
+        }
+    }
 }
 
 vec2 game_get_nearest_player_position(void)
@@ -251,7 +266,7 @@ static void player_update_client(Player* player, f32 dt)
 {
     if (!player->synced && game_context.uid_map_type[player->entity_uid] == GAME_OBJ_ENTITY) {
         player->synced = true;
-        player_reset(game_context.this_client->uid, game_context.uid_map[player->entity_uid]);
+        game_context.this_client->player.entity = game_context.uid_map[player->entity_uid];
         log_write(DEBUG, "synced");
     }
 }

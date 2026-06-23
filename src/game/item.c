@@ -641,6 +641,7 @@ Item* item_create(i32 id)
         item->additive_stats[i] = item_context.infos[id].additive_stats[i];
         item->multiplicative_stats[i] = item_context.infos[id].multiplicative_stats[i];
     }
+    item->uid = game_map_uid(item, GAME_OBJ_ITEM);
     return item;
 }
 
@@ -666,5 +667,8 @@ char* item_get_tooltip(Item* item)
 
 void item_destroy(Item* item)
 {
+    if (item == NULL) 
+        return;
+    game_free_uid(item->uid);
     st_free(item);
 }

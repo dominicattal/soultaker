@@ -7,6 +7,7 @@ Client* client_create(void)
     Client* client = st_calloc(1, sizeof(Client));
     client->uid = game_map_uid(client, GAME_OBJ_CLIENT);
     camera_set_defaults(&client->camera);
+    inventory_init(client);
     list_append(game_context.clients, client);
     return client;
 }
@@ -46,6 +47,18 @@ void client_update(Client* client, f32 dt)
     player_update(&client->player, dt);
 }
 
+void client_map_sync_item(Packet* packet)
+{
+    Client* client = game_context.this_client;
+    i32 idx;
+    Item* item = st_calloc(1, sizeof(Item));
+    memcpy(&idx, packet->buffer, sizeof(idx));
+    memcpy(item, packet->buffer + sizeof(idx), sizeof(Item));
+    client->player.inventory.items[idx] = item;
+    game_set_uid(item, GAME_OBJ_ITEM, item->uid);
+    gui_refresh_inventory();
+}
+
 void client_set_username(Client* client, char* username)
 {
     string_free(client->username);
@@ -62,6 +75,7 @@ void client_destroy(Client* client)
         socket_destroy(client->udp_socket);
     game_free_uid(client->uid);
     string_free(client->username);
+    inventory_cleanup(client);
     st_free(client);
 }
 

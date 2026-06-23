@@ -2389,10 +2389,6 @@ void map_cleanup(void)
     st_free(map_context.names);
     if (game_context.current_map != NULL)
         map_destroy(game_context.current_map);
-    for (i32 i = 0; i < game_context.clients->length; i++) {
-        Client* client = list_get(game_context.clients, i);
-        player_cleanup(&client->player);
-    }
 }
 
 void map_destroy_projectiles_with_owner_id(i32 uid)
@@ -2519,13 +2515,8 @@ Map* map_create(i32 id)
     for (i32 i = 0; i < game_context.clients->length; i++) {
         Client* client = list_get(game_context.clients, i);
         entity = map_create_entity(map->spawn_point, 0);
-        player_reset(client->uid, entity);
+        player_reset(client, entity);
         entity->max_health = 101;
-        if (client != game_context.this_client) {
-            Packet* packet = packet_create(PACKET_SYNC_CLIENT_ENTITY, sizeof(entity->uid), (char*)&entity->uid);
-            game_net_send_packet_tcp(client, packet);
-            packet_destroy(packet);
-        }
     }
 
     game_context.current_map = map;

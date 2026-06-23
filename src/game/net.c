@@ -231,6 +231,9 @@ static void client_handle_tcp_packet(Packet* packet)
         case PACKET_CLEAR_FOG:
             client_map_clear_fog(packet);
             break;
+        case PACKET_SYNC_ITEM:
+            client_map_sync_item(packet);
+            break;
         default:
             log_write(WARNING, "Received unknown packed: %d %d", packet->id, packet->length);
     }

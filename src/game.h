@@ -36,6 +36,7 @@ typedef enum PacketEnum {
     PACKET_DESTROY_GAME_OBJ,
 
     PACKET_SYNC_CLIENT_ENTITY,
+    PACKET_SYNC_ITEM,
     PACKET_CREATE_MAP_NODES,
     PACKET_CLEAR_FOG,
 
@@ -448,6 +449,8 @@ typedef struct Inventory {
     i32 num_synergies;
 } Inventory;
 
+void    inventory_init(Client* client);
+void    inventory_cleanup(Client* client);
 void    inventory_refresh(void);
 void    inventory_swap_items(Item** slot1, Item** slot2);
 void    inventory_move_item(Item** slot);
@@ -559,7 +562,7 @@ void entity_damage(Entity* entity, f32 damage);
 i32 entity_get_id(const char* name);
 
 // Assigns default entity for the player
-void player_reset(i32 client_uid, Entity* entity);
+void player_reset(Client* client, Entity* entity);
 void player_update(Player* player, f32 dt);
 void player_shoot_primary(Player* player);
 void player_shoot_secondary(Player* player);
@@ -1103,6 +1106,7 @@ void client_set_username(Client* client, char* username);
 void client_change_map(void);
 void client_sync_entity(Packet* packet);
 void client_map_clear_fog(Packet* packet);
+void client_map_sync_item(Packet* packet);
 void client_map_create_map_nodes(Packet* packet);
 Map* client_map_create(void);
 void client_map_update(Map* map, f32 dt);
