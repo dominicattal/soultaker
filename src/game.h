@@ -33,6 +33,7 @@ typedef enum PacketEnum {
 
     PACKET_CREATE_GAME_OBJ,
     PACKET_UPDATE_GAME_OBJ,
+    PACKET_FORCE_UPDATE_GAME_OBJ,
     PACKET_DESTROY_GAME_OBJ,
 
     PACKET_SYNC_CLIENT_ENTITY,
@@ -604,7 +605,7 @@ typedef enum {
  
 size_t  tile_sizeof(void);
 char*   tile_write(Tile* tile, char* buffer);
-Tile*   tile_read(char* buffer);
+char*   tile_read(Tile* tile, char* buffer);
 void    tile_set_flag(Tile* tile, TileFlagEnum flag, bool val);
 bool    tile_get_flag(Tile* tile, TileFlagEnum flag);
 Tile*   tile_create(vec2 position, u32 minimap_color);

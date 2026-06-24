@@ -154,7 +154,8 @@ void client_map_create_game_object(Packet* packet)
             game_set_uid(proj, type, proj->uid);
             break;
         case GAME_OBJ_TILE:
-            Tile* tile = tile_read(buffer);
+            Tile* tile = st_calloc(1, sizeof(Tile));
+            tile_read(tile, buffer);
             list_append(map->tiles, tile);
             game_set_uid(tile, type, tile->uid);
             break;
@@ -230,13 +231,14 @@ void client_map_update_game_object(Packet* packet)
             }
             break;
         case GAME_OBJ_TILE:
-            //Tile* tile;
-            //size = tile_sizeof();
-            //for (i32 i = 0; i < high; i++) {
-            //    tile_read(&tile, buffer);
-            //    map_queue_game_obj(tile, GAME_OBJ_WALL);
-            //    buffer += size;
-            //}
+            Tile tile;
+            size = tile_sizeof();
+            for (i32 i = 0; i < high; i++) {
+                tile_read(&tile, buffer);
+                log_write(DEBUG, "%d %d %d", type, high, tile.uid);
+                map_queue_game_obj(&tile, GAME_OBJ_TILE);
+                buffer += size;
+            }
             break;
         default:
             break;

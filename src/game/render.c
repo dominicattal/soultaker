@@ -322,6 +322,7 @@ static void update_tile_vertex_data(Map* map)
 
     for (i = j = 0; i < tiles->length; i++) {
         tile = list_get(tiles, i);
+        //log_write(DEBUG, "%d %d", tile->uid,tile->tex);
         if (!tile_get_flag(tile, TILE_FLAG_ACTIVE))
             continue;
         if (map_fog_contains_tile(map, tile))

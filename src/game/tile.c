@@ -72,9 +72,8 @@ char* tile_write(Tile* tile, char* buffer)
     return buffer;
 }
 
-Tile* tile_read(char* buffer)
+char* tile_read(Tile* tile, char* buffer)
 {
-    Tile* tile = st_calloc(1, sizeof(Tile));
     memcpy(&tile->position, buffer, sizeof(tile->position));
     buffer += sizeof(tile->position);
     memcpy(&tile->tex, buffer, sizeof(tile->tex));
@@ -85,6 +84,6 @@ Tile* tile_read(char* buffer)
     buffer += sizeof(tile->flags);
     memcpy(&tile->uid, buffer, sizeof(tile->uid));
     buffer += sizeof(tile->uid);
-    return tile;
+    return buffer;
 }
 

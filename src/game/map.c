@@ -3218,9 +3218,11 @@ static void map_send_state(Map* map, f32 dt)
         type = game_context.uid_map_type[uid];
 
         memcpy(packet.buffer, &type, sizeof(type));
-        size = game_object_write(type, game_context.uid_map[uid], packet.buffer + sizeof(type));
+        high = 1;
+        memcpy(packet.buffer + sizeof(type), &high, sizeof(high));
+        size = game_object_write(type, game_context.uid_map[uid], packet.buffer + sizeof(type) + sizeof(high));
 
-        packet.length = size + sizeof(type);
+        packet.length = size + sizeof(type) + sizeof(high);
 
         memcpy(packet_buffer, &packet.length, sizeof(packet.length));
         memcpy(packet_buffer + sizeof(packet.length), &packet.id, sizeof(packet.id));
@@ -3257,14 +3259,10 @@ static void map_send_state(Map* map, f32 dt)
         packet.length = sizeof(type) + sizeof(high) + size * high;
         packet.id = PACKET_UPDATE_GAME_OBJ;
         char* buffer = packet_buffer;
-        memcpy(buffer, &packet.length, sizeof(packet.length));
-        buffer += sizeof(packet.length);
-        memcpy(buffer, &packet.id, sizeof(packet.id));
-        buffer += sizeof(packet.id);
-        memcpy(buffer, &type, sizeof(type));
-        buffer += sizeof(type);
-        memcpy(buffer, &high, sizeof(high));
-        buffer += sizeof(high);
+        memcpyadv(&buffer, (char*)&packet.length, sizeof(packet.length));
+        memcpyadv(&buffer, (char*)&packet.id, sizeof(packet.id));
+        memcpyadv(&buffer, (char*)&type, sizeof(type));
+        memcpyadv(&buffer, (char*)&high, sizeof(high));
         for (i32 j = 0; j < high; j++) {
             game_object_write(GAME_OBJ_PROJECTILE, 
                               list_get(map->projectiles, i+j), 
@@ -3324,6 +3322,18 @@ void client_map_update(Map* map, f32 dt)
                     this_tile->position = host_tile.position;
                     this_tile->tex = host_tile.tex;
                     this_tile->flags = host_tile.flags;
+                    game_render_update_tiles();
+                }
+                break;
+            case GAME_OBJ_WALL:
+                Wall host_wall = map->object_queue.buffer[map->object_queue.tail].wall;
+                Wall* this_wall = game_context.uid_map[host_wall.uid];
+                if (this_wall != NULL) {
+                    this_wall->position = host_wall.position;
+                    this_wall->top_tex = host_wall.top_tex;
+                    this_wall->side_tex = host_wall.side_tex;
+                    this_wall->flags = host_wall.flags;
+                    game_render_update_walls();
                 }
                 break;
             default:
@@ -3457,7 +3467,7 @@ void map_queue_parjicle(Parjicle parjicle)
 
 void map_queue_projectile(Projectile proj)
 {
-    Map* map = map_context.current_map;
+    Map* map = game_context.current_map;
     if (map == NULL)
         return;
     if (!map->active)
@@ -3472,7 +3482,7 @@ void map_queue_projectile(Projectile proj)
 
 void map_queue_entity(Entity entity)
 {
-    Map* map = map_context.current_map;
+    Map* map = game_context.current_map;
     if (map == NULL)
         return;
     if (!map->active)
@@ -3487,7 +3497,7 @@ void map_queue_entity(Entity entity)
 
 void map_queue_game_obj(void* obj, GameObj type)
 {
-    Map* map = map_context.current_map;
+    Map* map = game_context.current_map;
     if (map == NULL)
         return;
     if (!map->active)
