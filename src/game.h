@@ -39,6 +39,7 @@ typedef enum PacketEnum {
     PACKET_SYNC_ITEM,
     PACKET_CREATE_MAP_NODES,
     PACKET_CLEAR_FOG,
+    PACKET_SWAP_ITEMS,
 
     PACKET_CLIENT_INPUT,
     PACKET_CLIENT_STATS,
@@ -451,12 +452,14 @@ typedef struct Inventory {
 
 void    inventory_init(Client* client);
 void    inventory_cleanup(Client* client);
-void    inventory_refresh(void);
+void    inventory_refresh(Client* client);
 void    inventory_swap_items(Item** slot1, Item** slot2);
+void    inventory_swap_items_for_client(Client* client, Item** slot1, Item** slot2);
 void    inventory_move_item(Item** slot);
 void    inventory_shoot_weapons_primary(Player* player, vec2 direction, vec2 target);
 void    inventory_shoot_weapons_secondary(Player* player, vec2 direction, vec2 target);
 void    inventory_cast_abilities(Player* player, vec2 direction, vec2 target);
+void    inventory_sync(Client* client);
 
 //**************************************************************************
 // Entity, Player _entity _player definitions
@@ -629,7 +632,7 @@ typedef enum {
 
 size_t  wall_sizeof(void);
 char*   wall_write(Wall* wall, char* buffer);
-Wall*   wall_read(char* buffer);
+char*   wall_read(Wall* wall, char* buffer);
 Wall*   wall_create(vec2 position, f32 height, u32 minimap_color);
 void    wall_set_flag(Wall* wall, WallFlagEnum flag, bool val);
 bool    wall_get_flag(Wall* wall, WallFlagEnum flag);
@@ -881,6 +884,8 @@ typedef struct {
 typedef struct {
     struct {
         union {
+            Tile tile;
+            Wall wall;
             Entity entity;
             Projectile proj;
         };
@@ -1043,6 +1048,7 @@ void map_queue_particle(Particle particle);
 void map_queue_parjicle(Parjicle parjicle);
 void map_queue_projectile(Projectile proj);
 void map_queue_entity(Entity entity);
+void map_queue_game_obj(void* obj, GameObj type);
 
 // the following functions will return NULL if the map is not active
 // a map is inactive when it is signaled to be destroyed. this is so that
@@ -1117,6 +1123,11 @@ void client_map_create_particle(Packet* packet);
 void client_map_create_parjicle(Packet* packet);
 void client_update_stats(Packet* packet);
 
+void host_create_game_obj(i32 uid);
+void host_destroy_game_obj(i32 uid);
+void host_swap_items(Packet* packet);
+void host_handle_client_input(Packet* packet);
+
 //**************************************************************************
 // Game Context
 //**************************************************************************
@@ -1135,8 +1146,7 @@ typedef struct {
     Client* this_client;
     Client* host_client;
 
-    List_i32* created_uids;
-    List_i32* freed_uids;
+    List_i32* updated_uids;
 
     pthread_t net_tcp_listen_thread_id;
     pthread_t net_udp_listen_thread_id;

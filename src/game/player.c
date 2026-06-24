@@ -138,16 +138,7 @@ void player_reset(Client* client, Entity* entity)
         game_net_send_packet_tcp(client, packet);
         packet_destroy(packet);
 
-        for (i32 i = 0; i < player->inventory.num_items; i++) {
-            if (player->inventory.items[i] == NULL)
-                continue;
-            static char buffer[256];
-            memcpy(buffer, &i, sizeof(i));
-            memcpy(buffer + sizeof(i), player->inventory.items[i], sizeof(Item));
-            Packet* packet = packet_create(PACKET_SYNC_ITEM, sizeof(i) + sizeof(Item), buffer);
-            game_net_send_packet_tcp(client, packet);
-            packet_destroy(packet);
-        }
+        inventory_sync(client);
     }
 }
 

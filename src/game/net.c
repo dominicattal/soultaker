@@ -29,11 +29,17 @@ void game_net_set_host_udp_port(const char* port)
     game_context.host_udp_port = string_copy(port);
 }
 
-static void host_handle_tcp_packet(Client* client, Packet* packet)
+static void host_handle_packet(Packet* packet)
 {
     switch (packet->id) {
         case PACKET_MESSAGE:
-            log_write(DEBUG, "TCP message: %s", packet->buffer);
+            log_write(DEBUG, "message: %s", packet->buffer);
+            break;
+        case PACKET_SWAP_ITEMS:
+            host_swap_items(packet);
+            break;
+        case PACKET_CLIENT_INPUT:
+            host_handle_client_input(packet);
             break;
         default:
             break;
@@ -50,38 +56,12 @@ static void* host_tcp_client_handler(void* vargp)
             log_write(WARNING, "packet is null");
             break;
         }
-        host_handle_tcp_packet(client, packet);
+        pthread_mutex_lock(&game_context.handler_thread_mutex);
+        host_handle_packet(packet);
+        pthread_mutex_unlock(&game_context.handler_thread_mutex);
         packet_destroy(packet);
     }
     return NULL;
-}
-
-static void host_handle_udp_packet(Packet* packet)
-{
-    switch (packet->id) {
-        case PACKET_MESSAGE:
-            log_write(DEBUG, "UDP message: %s", packet->buffer);
-            break;
-        case PACKET_CLIENT_INPUT:
-            i32 client_uid, client_controls;
-            char* buffer = packet->buffer;
-            memcpy(&client_uid, buffer, sizeof(client_uid));
-            buffer += sizeof(client_uid);
-            memcpy(&client_controls, buffer, sizeof(client_controls));
-            buffer += sizeof(client_controls);
-            Client* client = game_context.uid_map[client_uid];
-            client->control_flags = client_controls;
-            memcpy(&client->camera.facing, buffer, sizeof(client->camera.facing));
-            buffer += sizeof(client->camera.facing);
-            memcpy(&client->camera.right, buffer, sizeof(client->camera.right));
-            buffer += sizeof(client->camera.right);
-            memcpy(&client->camera.follow, buffer, sizeof(client->camera.follow));
-            buffer += sizeof(client->camera.follow);
-            //log_write(DEBUG, "%d %d %f %f", client_uid, client_controls, client->camera.facing.x, client->camera.facing.z);
-            break;
-        default:
-            break;
-    }
 }
 
 static void* host_udp_handler(void* vargp)
@@ -103,7 +83,7 @@ static void* host_udp_handler(void* vargp)
             log_write(WARNING, "packet is null");
             continue;
         }
-        host_handle_udp_packet(packet);
+        host_handle_packet(packet);
         packet_destroy(packet);
         socket_address_destroy(addr);
     }
@@ -203,11 +183,11 @@ static void* host_tcp_handler(void* vargp)
     return NULL;
 }
 
-static void client_handle_tcp_packet(Packet* packet)
+static void client_handle_packet(Packet* packet)
 {
     switch (packet->id) {
         case PACKET_MESSAGE:
-            log_write(DEBUG, "TCP message: %s", packet->buffer);
+            log_write(DEBUG, "message: %s", packet->buffer);
             break;
         case PACKET_LOAD_GAME:
             log_write(DEBUG, "Loading game");
@@ -234,6 +214,15 @@ static void client_handle_tcp_packet(Packet* packet)
         case PACKET_SYNC_ITEM:
             client_map_sync_item(packet);
             break;
+        case PACKET_CREATE_PARTICLE:
+            client_map_create_particle(packet);
+            break;
+        case PACKET_CREATE_PARJICLE:
+            client_map_create_parjicle(packet);
+            break;
+        case PACKET_CLIENT_STATS:
+            client_update_stats(packet);
+            break;
         default:
             log_write(WARNING, "Received unknown packed: %d %d", packet->id, packet->length);
     }
@@ -251,34 +240,11 @@ static void* client_tcp_handler(void* vargp)
             break;
         }
         pthread_mutex_lock(&game_context.handler_thread_mutex);
-        client_handle_tcp_packet(packet);
+        client_handle_packet(packet);
         pthread_mutex_unlock(&game_context.handler_thread_mutex);
         packet_destroy(packet);
     }
     return NULL;
-}
-
-static void client_handle_udp_packet(Packet* packet)
-{
-    switch (packet->id) {
-        case PACKET_MESSAGE:
-            log_write(DEBUG, "UDP message: %s", packet->buffer);
-            break;
-        case PACKET_UPDATE_GAME_OBJ:
-            client_map_update_game_object(packet);
-            break;
-        case PACKET_CREATE_PARTICLE:
-            client_map_create_particle(packet);
-            break;
-        case PACKET_CREATE_PARJICLE:
-            client_map_create_parjicle(packet);
-            break;
-        case PACKET_CLIENT_STATS:
-            client_update_stats(packet);
-            break;
-        default:
-            break;
-    }
 }
 
 static void* client_udp_handler(void* vargp)
@@ -293,7 +259,7 @@ static void* client_udp_handler(void* vargp)
             log_write(WARNING, "received null packet");
             continue;
         }
-        client_handle_udp_packet(packet);
+        client_handle_packet(packet);
         packet_destroy(packet);
         socket_address_destroy(server_addr);
     }

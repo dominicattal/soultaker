@@ -622,9 +622,8 @@ static GUIComp* create_inventory_slot(i32 x, i32 y, Item** item_slot, i32 defaul
 
 void gui_refresh_inventory(void)
 {
-    //i32 res = pthread_mutex_trylock(&gui_context.data_mutex);
-    //if (res == EBUSY)
-    //    log_write(WARNING, "gui data mutex already locked");
+    if (!gui_context.updating)
+        pthread_mutex_lock(&gui_context.data_mutex);
 
     Inventory* inventory = &game_context.this_client->player.inventory;
     GUIComp* inventory_comp = gui_comp_get_by_name("inventory");
@@ -662,8 +661,8 @@ void gui_refresh_inventory(void)
             inventory_comp->h += 70;
     }
 
-    //if (res != EBUSY)
-    //    pthread_mutex_unlock(&gui_context.data_mutex);
+    if (!gui_context.updating)
+        pthread_mutex_unlock(&gui_context.data_mutex);
 }
 
 static void inventory_toggle(GUIComp* comp)

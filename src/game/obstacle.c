@@ -9,6 +9,12 @@ Obstacle* obstacle_create(vec2 position)
     obstacle->position = position;
     obstacle->size = 1.0f;
     obstacle->uid = game_map_uid(obstacle, GAME_OBJ_OBSTACLE);
+
+    if (game_context.hosting)
+        host_create_game_obj(obstacle->uid);
+
+    list_i32_append(game_context.updated_uids, obstacle->uid);
+
     return obstacle;
 }
 

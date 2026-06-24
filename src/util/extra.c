@@ -84,6 +84,13 @@ void string_free(char* string)
     st_free(string);
 }
 
+void* memcpyadv(char** dst, char* src, size_t n)
+{
+    void* res = memcpy(*dst, src, n);
+    *dst += n;
+    return res;
+}
+
 i32 maxi(i32 x, i32 y)
 {
     return (x > y) ? x : y;

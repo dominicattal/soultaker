@@ -135,6 +135,9 @@ typedef struct GUIContext {
     pthread_t thread_id;
     pthread_mutex_t data_mutex;
     f32 dt;
+
+    // this field exists so can verify if data mutex is locked or not
+    bool updating;
 } GUIContext;
 
 extern GUIContext gui_context;

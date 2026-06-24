@@ -26,20 +26,13 @@ void client_update(Client* client, f32 dt)
                       + sizeof(client->camera.right)
                       + sizeof(client->camera.follow);
         packet.id = PACKET_CLIENT_INPUT;
-        memcpy(ptr, &packet.length, sizeof(packet.length));
-        ptr += sizeof(packet.length);
-        memcpy(ptr, &packet.id, sizeof(packet.id));
-        ptr += sizeof(packet.id);
-        memcpy(ptr, &client->uid, sizeof(client->uid));
-        ptr += sizeof(client->uid);
-        memcpy(ptr, &client->control_flags, sizeof(client->control_flags));
-        ptr += sizeof(client->control_flags);
-        memcpy(ptr, &client->camera.facing, sizeof(client->camera.facing));
-        ptr += sizeof(client->camera.facing);
-        memcpy(ptr, &client->camera.right, sizeof(client->camera.right));
-        ptr += sizeof(client->camera.right);
-        memcpy(ptr, &client->camera.follow, sizeof(client->camera.follow));
-        ptr += sizeof(client->camera.follow);
+        memcpyadv(&ptr, (char*)&packet.length, sizeof(packet.length));
+        memcpyadv(&ptr, (char*)&packet.id, sizeof(packet.id));
+        memcpyadv(&ptr, (char*)&client->uid, sizeof(client->uid));
+        memcpyadv(&ptr, (char*)&client->control_flags, sizeof(client->control_flags));
+        memcpyadv(&ptr, (char*)&client->camera.facing, sizeof(client->camera.facing));
+        memcpyadv(&ptr, (char*)&client->camera.right, sizeof(client->camera.right));
+        memcpyadv(&ptr, (char*)&client->camera.follow, sizeof(client->camera.follow));
         game_net_send_packet_udp(game_context.host_client, &packet);
     }
 
@@ -50,12 +43,13 @@ void client_update(Client* client, f32 dt)
 void client_map_sync_item(Packet* packet)
 {
     Client* client = game_context.this_client;
+    Item item;
     i32 idx;
-    Item* item = st_calloc(1, sizeof(Item));
     memcpy(&idx, packet->buffer, sizeof(idx));
-    memcpy(item, packet->buffer + sizeof(idx), sizeof(Item));
-    client->player.inventory.items[idx] = item;
-    game_set_uid(item, GAME_OBJ_ITEM, item->uid);
+    memcpy(&item, packet->buffer + sizeof(idx), sizeof(Item));
+    client->player.inventory.items[idx] = game_context.uid_map[item.uid];
+    log_write(DEBUG, "%d %p", item.uid, game_context.uid_map[item.uid]);
+    inventory_refresh(client);
     gui_refresh_inventory();
 }
 
@@ -165,7 +159,8 @@ void client_map_create_game_object(Packet* packet)
             game_set_uid(tile, type, tile->uid);
             break;
         case GAME_OBJ_WALL:
-            Wall* wall = wall_read(buffer);
+            Wall* wall = st_calloc(1, sizeof(Wall));
+            wall_read(wall, buffer);
             list_append(map->walls, wall);
             game_set_uid(wall, type, wall->uid);
             break;
@@ -178,6 +173,13 @@ void client_map_create_game_object(Packet* packet)
             Parstacle* parstacle = parstacle_read(buffer);
             list_append(map->parstacles, parstacle);
             game_set_uid(parstacle, type, parstacle->uid);
+            break;
+        case GAME_OBJ_ITEM:
+            Client* client = game_context.this_client;
+            Item* item = st_calloc(1, sizeof(Item));
+            memcpy(item, packet->buffer + sizeof(i32), sizeof(Item));
+            game_set_uid(item, GAME_OBJ_ITEM, item->uid);
+            log_write(DEBUG, "%d %p", item->uid, game_context.uid_map[item->uid]);
             break;
         default:
             break;
@@ -217,6 +219,24 @@ void client_map_update_game_object(Packet* packet)
                 map_queue_projectile(proj);
                 buffer += size;
             }
+            break;
+        case GAME_OBJ_WALL:
+            Wall wall;
+            size = wall_sizeof();
+            for (i32 i = 0; i < high; i++) {
+                wall_read(&wall, buffer);
+                map_queue_game_obj(&wall, GAME_OBJ_WALL);
+                buffer += size;
+            }
+            break;
+        case GAME_OBJ_TILE:
+            //Tile* tile;
+            //size = tile_sizeof();
+            //for (i32 i = 0; i < high; i++) {
+            //    tile_read(&tile, buffer);
+            //    map_queue_game_obj(tile, GAME_OBJ_WALL);
+            //    buffer += size;
+            //}
             break;
         default:
             break;

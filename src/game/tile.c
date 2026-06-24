@@ -19,6 +19,11 @@ Tile* tile_create(vec2 position, u32 minimap_color)
     tile->uid = game_map_uid(tile, GAME_OBJ_TILE);
     tile_set_flag(tile, TILE_FLAG_ACTIVE, true);
 
+    if (game_context.hosting)
+        host_create_game_obj(tile->uid);
+
+    list_i32_append(game_context.updated_uids, tile->uid);
+
     return tile;
 }
 

@@ -385,6 +385,9 @@ Entity* entity_create(vec2 position, i32 id)
     if (create != NULL)
         create(entity);
 
+    if (game_context.hosting)
+        host_create_game_obj(entity->uid);
+
     return entity;
 }
 

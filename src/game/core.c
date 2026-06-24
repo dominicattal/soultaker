@@ -24,8 +24,7 @@ void* game_loop(void* vargp)
     game_context.tps = 144;
     game_context.timestep = 1.0 / game_context.tps;
     game_context.clients = list_create();
-    game_context.created_uids = list_i32_create();
-    game_context.freed_uids = list_i32_create();
+    game_context.updated_uids = list_i32_create();
     game_context.net_timestep = 1.0 / 20.0;
     client = client_create();
     client_set_username(client, string_copy("fancy"));
@@ -78,8 +77,7 @@ void* game_loop(void* vargp)
     game_net_cleanup();
     client_destroy(game_context.this_client);
     list_destroy(game_context.clients);
-    list_i32_destroy(game_context.created_uids);
-    list_i32_destroy(game_context.freed_uids);
+    list_i32_destroy(game_context.updated_uids);
     game_context.this_client = NULL;
     return NULL;
 }
@@ -98,9 +96,6 @@ i32 game_map_uid(void* obj, GameObj type)
     game_context.uid_map[uid] = obj;
     game_context.uid_map_type[uid] = type;
 
-    if (game_context.hosting)
-        list_i32_append(game_context.created_uids, uid);
-
     return uid;
 }
 
@@ -116,7 +111,7 @@ void game_free_uid(i32 uid)
     game_context.uid_map_type[uid] = GAME_OBJ_NONE;
 
     if (game_context.hosting)
-        list_i32_append(game_context.freed_uids, uid);
+        host_destroy_game_obj(uid);
 }
 
 void game_change_map(i32 id)
@@ -212,6 +207,10 @@ size_t game_object_write(GameObj type, void* obj, char* buffer)
         case GAME_OBJ_WALL:
             wall_write(obj, buffer);
             return wall_sizeof();
+        case GAME_OBJ_ITEM:
+            log_write(DEBUG, "item uid = %d", ((Item*)obj)->uid);
+            memcpy(buffer, obj, sizeof(Item));
+            return sizeof(Item);
         default:
             break;
     }

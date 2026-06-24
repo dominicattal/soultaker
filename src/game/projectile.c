@@ -21,6 +21,10 @@ Projectile* projectile_create(vec2 position)
     proj->destroy = NULL;
     proj->data = NULL;
     proj->uid = game_map_uid(proj, GAME_OBJ_PROJECTILE);
+
+    if (game_context.hosting)
+        host_create_game_obj(proj->uid);
+
     return proj;
 }
 

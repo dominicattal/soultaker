@@ -332,9 +332,9 @@ i32 item_get_tex_id(i32 item_id)
     return item_context.infos[item_id].tex_id;
 }
 
-void inventory_refresh(void)
+void inventory_refresh(Client* client)
 {
-    Inventory* inventory = &game_context.this_client->player.inventory;
+    Inventory* inventory = &client->player.inventory;
 
     for (i32 i = 0; i < inventory->num_armor_slots; i++) {
         Item* item = *inventory->armor_slots[i];
@@ -434,9 +434,9 @@ next_synergy:
     inventory->num_synergies = num_synergies;
 }
 
-void inventory_swap_items(Item** slot1, Item** slot2)
+void inventory_swap_items_for_client(Client* client, Item** slot1, Item** slot2)
 {
-    Inventory* inventory = &game_context.this_client->player.inventory;
+    Inventory* inventory = &client->player.inventory;
     log_assert(inventory != NULL, "inventory is null for some reason");
 
     for (i32 i = 0; i < 2; i++) {
@@ -481,7 +481,41 @@ next:
     *slot1 = *slot2;
     *slot2 = tmp;
 
-    inventory_refresh();
+    inventory_refresh(client);
+}
+
+void inventory_swap_items(Item** slot1, Item** slot2)
+{
+    Client* client = game_context.this_client;
+    Inventory* inventory = &client->player.inventory;
+    if (!game_context.hosting && !game_context.singleplayer) {
+        Packet packet;
+        static char buffer[256];
+        packet.id = PACKET_SWAP_ITEMS;
+        packet.length = 3 * sizeof(i32);
+        packet.buffer = buffer + 2 * sizeof(i32);
+        char* ptr = buffer;
+        memcpyadv(&ptr, (char*)&packet.length, sizeof(packet.length));
+        memcpyadv(&ptr, (char*)&packet.id, sizeof(packet.id));
+        memcpyadv(&ptr, (char*)&client->uid, sizeof(client->uid));
+        for (i32 idx = 0; idx < inventory->num_items; idx++) {
+            if (slot1 == &inventory->items[idx]) {
+                memcpyadv(&ptr, (char*)&idx, sizeof(idx));
+                log_write(DEBUG, "%d", idx);
+                break;
+            }
+        }
+        for (i32 idx = 0; idx < inventory->num_items; idx++) {
+            if (slot2 == &inventory->items[idx]) {
+                memcpyadv(&ptr, (char*)&idx, sizeof(idx));
+                log_write(DEBUG, "%d", idx);
+                break;
+            }
+        }
+        game_net_send_packet_tcp(game_context.host_client, &packet);
+    } else {
+        inventory_swap_items_for_client(game_context.this_client, slot1, slot2);
+    }
 }
 
 void inventory_move_item(Item** slot)
@@ -547,6 +581,21 @@ move_to_misc:
             inventory_swap_items(slot, inventory->misc_slots[i]);
             return;
         }
+    }
+}
+
+void inventory_sync(Client* client)
+{
+    Player* player = &client->player;
+    for (i32 i = 0; i < player->inventory.num_items; i++) {
+        if (player->inventory.items[i] == NULL)
+            continue;
+        static char buffer[256];
+        memcpy(buffer, &i, sizeof(i));
+        memcpy(buffer + sizeof(i), player->inventory.items[i], sizeof(Item));
+        Packet* packet = packet_create(PACKET_SYNC_ITEM, sizeof(i) + sizeof(Item), buffer);
+        game_net_send_packet_tcp(client, packet);
+        packet_destroy(packet);
     }
 }
 

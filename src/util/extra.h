@@ -2,6 +2,7 @@
 #define EXTRA_H
 
 #include "type.h"
+#include <stddef.h>
 
 void st_sleep(i32 msec);
 f64  get_time(void);
@@ -20,6 +21,8 @@ char* string_create_len(const char* fmt, i32* len, ...);
 
 // free a string created by string_copy or string_create
 void  string_free(char* string);
+
+void* memcpyadv(char** dst, char* src, size_t n);
 
 i32 maxi(i32 x, i32 y);
 i32 mini(i32 x, i32 y);

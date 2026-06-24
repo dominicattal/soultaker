@@ -9,6 +9,12 @@ Parstacle* parstacle_create(vec2 position)
     parstacle->position = position;
     parstacle->size = 1.5;
     parstacle->uid = game_map_uid(parstacle, GAME_OBJ_PARSTACLE);
+
+    if (game_context.hosting)
+        host_create_game_obj(parstacle->uid);
+
+    list_i32_append(game_context.updated_uids, parstacle->uid);
+
     return parstacle;
 }
 

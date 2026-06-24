@@ -23,6 +23,11 @@ Wall* wall_create(vec2 position, f32 height, u32 minimap_color)
     wall->uid = game_map_uid(wall, GAME_OBJ_WALL);
     wall_set_flag(wall, WALL_FLAG_ACTIVE, true);
 
+    if (game_context.hosting)
+        host_create_game_obj(wall->uid);
+
+    list_i32_append(game_context.updated_uids, wall->uid);
+
     return wall;
 }
 
@@ -80,9 +85,8 @@ char* wall_write(Wall* wall, char* buffer)
     return buffer;
 }
 
-Wall* wall_read(char* buffer)
+char* wall_read(Wall* wall, char* buffer)
 {
-    Wall* wall = st_calloc(1, sizeof(Wall));
     memcpy(&wall->position, buffer, sizeof(wall->position));
     buffer += sizeof(wall->position);
     memcpy(&wall->size, buffer, sizeof(wall->size));
@@ -99,5 +103,5 @@ Wall* wall_read(char* buffer)
     buffer += sizeof(wall->flags);
     memcpy(&wall->uid, buffer, sizeof(wall->uid));
     buffer += sizeof(wall->uid);
-    return wall;
+    return buffer;
 }

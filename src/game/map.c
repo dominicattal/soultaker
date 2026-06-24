@@ -3212,9 +3212,9 @@ static void map_send_state(Map* map, f32 dt)
     static char packet_buffer[UDP_MAX_PAYLOAD];
     packet.buffer = packet_buffer + PACKET_HEADER_BYTES;
 
-    for (i32 i = 0; i < game_context.created_uids->length; i++) {
-        packet.id = PACKET_CREATE_GAME_OBJ;
-        uid = game_context.created_uids->buffer[i];
+    for (i32 i = 0; i < game_context.updated_uids->length; i++) {
+        packet.id = PACKET_UPDATE_GAME_OBJ;
+        uid = game_context.updated_uids->buffer[i];
         type = game_context.uid_map_type[uid];
 
         memcpy(packet.buffer, &type, sizeof(type));
@@ -3227,22 +3227,7 @@ static void map_send_state(Map* map, f32 dt)
 
         game_net_send_tcp_packet_to_clients(&packet);
     }
-    game_context.created_uids->length = 0;
-
-    for (i32 i = 0; i < game_context.freed_uids->length; i++) {
-        packet.id = PACKET_DESTROY_GAME_OBJ;
-        uid = game_context.freed_uids->buffer[i];
-
-        memcpy(packet.buffer, &uid, sizeof(uid));
-
-        packet.length = sizeof(uid) + sizeof(type);
-
-        memcpy(packet_buffer, &packet.length, sizeof(packet.length));
-        memcpy(packet_buffer + sizeof(packet.length), &packet.id, sizeof(packet.id));
-
-        game_net_send_tcp_packet_to_clients(&packet);
-    }
-    game_context.freed_uids->length = 0;
+    game_context.updated_uids->length = 0;
 
     size = entity_sizeof();
     step = (UDP_MAX_PAYLOAD-sizeof(type)-sizeof(length)-sizeof(uid)-sizeof(high)) / size;
@@ -3252,14 +3237,10 @@ static void map_send_state(Map* map, f32 dt)
         packet.length = sizeof(type) + sizeof(high) + size * high;
         packet.id = PACKET_UPDATE_GAME_OBJ;
         char* buffer = packet_buffer;
-        memcpy(buffer, &packet.length, sizeof(packet.length));
-        buffer += sizeof(packet.length);
-        memcpy(buffer, &packet.id, sizeof(packet.id));
-        buffer += sizeof(packet.id);
-        memcpy(buffer, &type, sizeof(type));
-        buffer += sizeof(type);
-        memcpy(buffer, &high, sizeof(high));
-        buffer += sizeof(high);
+        memcpyadv(&buffer, (char*)&packet.length, sizeof(packet.length));
+        memcpyadv(&buffer, (char*)&packet.id, sizeof(packet.id));
+        memcpyadv(&buffer, (char*)&type, sizeof(type));
+        memcpyadv(&buffer, (char*)&high, sizeof(high));
         for (i32 j = 0; j < high; j++) {
             game_object_write(GAME_OBJ_ENTITY, 
                               list_get(map->entities, i+j), 
@@ -3334,6 +3315,15 @@ void client_map_update(Map* map, f32 dt)
                     this_proj->position = host_proj.position;
                     this_proj->direction = host_proj.direction;
                     this_proj->facing = host_proj.facing;
+                }
+                break;
+            case GAME_OBJ_TILE:
+                Tile host_tile = map->object_queue.buffer[map->object_queue.tail].tile;
+                Tile* this_tile = game_context.uid_map[host_tile.uid];
+                if (this_tile != NULL) {
+                    this_tile->position = host_tile.position;
+                    this_tile->tex = host_tile.tex;
+                    this_tile->flags = host_tile.flags;
                 }
                 break;
             default:
@@ -3492,5 +3482,29 @@ void map_queue_entity(Entity entity)
 
     map->object_queue.buffer[map->object_queue.head].type = GAME_OBJ_ENTITY;
     map->object_queue.buffer[map->object_queue.head].entity = entity;
+    map->object_queue.head = (map->object_queue.head+1)%(GAME_OBJECT_QUEUE_LENGTH+1);
+}
+
+void map_queue_game_obj(void* obj, GameObj type)
+{
+    Map* map = map_context.current_map;
+    if (map == NULL)
+        return;
+    if (!map->active)
+        return;
+    if (map->object_queue.head == (map->object_queue.tail-1)%(GAME_OBJECT_QUEUE_LENGTH+1))
+        return;
+
+    map->object_queue.buffer[map->object_queue.head].type = type;
+    switch (type) {
+        case GAME_OBJ_TILE:
+            memcpy(&map->object_queue.buffer[map->object_queue.head].tile , obj, sizeof(Tile));
+            break;
+        case GAME_OBJ_WALL:
+            memcpy(&map->object_queue.buffer[map->object_queue.head].wall , obj, sizeof(Wall));
+            break;
+        default:
+            break;
+    }
     map->object_queue.head = (map->object_queue.head+1)%(GAME_OBJECT_QUEUE_LENGTH+1);
 }

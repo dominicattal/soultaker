@@ -56,3 +56,22 @@ void host_create_game_obj(i32 uid)
     game_net_send_tcp_packet_to_clients(&packet);
     
 }
+
+void host_destroy_game_obj(i32 uid)
+{
+    Packet packet;
+    GameObj type;
+    static char packet_buffer[UDP_MAX_PAYLOAD];
+
+    packet.buffer = packet_buffer + PACKET_HEADER_BYTES;
+    packet.id = PACKET_DESTROY_GAME_OBJ;
+
+    memcpy(packet.buffer, &uid, sizeof(uid));
+
+    packet.length = sizeof(uid) + sizeof(type);
+
+    memcpy(packet_buffer, &packet.length, sizeof(packet.length));
+    memcpy(packet_buffer + sizeof(packet.length), &packet.id, sizeof(packet.id));
+
+    game_net_send_tcp_packet_to_clients(&packet);
+}
