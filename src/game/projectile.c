@@ -12,6 +12,7 @@ Projectile* projectile_create(vec2 position)
     proj->facing = 0;
     proj->rotation = 0;
     proj->speed = 1;
+    proj->tex = 0;
     proj->size = 0.5;
     proj->lifetime = 1;
     proj->flags = 0;

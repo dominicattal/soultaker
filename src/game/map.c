@@ -3312,28 +3312,8 @@ void client_map_update(Map* map, f32 dt)
                 if (this_proj != NULL) {
                     this_proj->position = host_proj.position;
                     this_proj->direction = host_proj.direction;
+                    this_proj->tex = host_proj.tex;
                     this_proj->facing = host_proj.facing;
-                }
-                break;
-            case GAME_OBJ_TILE:
-                Tile host_tile = map->object_queue.buffer[map->object_queue.tail].tile;
-                Tile* this_tile = game_context.uid_map[host_tile.uid];
-                if (this_tile != NULL) {
-                    this_tile->position = host_tile.position;
-                    this_tile->tex = host_tile.tex;
-                    this_tile->flags = host_tile.flags;
-                    game_render_update_tiles();
-                }
-                break;
-            case GAME_OBJ_WALL:
-                Wall host_wall = map->object_queue.buffer[map->object_queue.tail].wall;
-                Wall* this_wall = game_context.uid_map[host_wall.uid];
-                if (this_wall != NULL) {
-                    this_wall->position = host_wall.position;
-                    this_wall->top_tex = host_wall.top_tex;
-                    this_wall->side_tex = host_wall.side_tex;
-                    this_wall->flags = host_wall.flags;
-                    game_render_update_walls();
                 }
                 break;
             default:
@@ -3502,8 +3482,37 @@ void map_queue_game_obj(void* obj, GameObj type)
         return;
     if (!map->active)
         return;
-    if (map->object_queue.head == (map->object_queue.tail-1)%(GAME_OBJECT_QUEUE_LENGTH+1))
-        return;
+
+
+    //log_write(DEBUG, (type == GAME_OBJ_TILE) ? "tile" : "wall");
+
+    switch (type) {
+        case GAME_OBJ_TILE:
+            Tile* host_tile = obj;
+            Tile* this_tile = game_context.uid_map[host_tile->uid];
+            if (this_tile != NULL) {
+                this_tile->position = host_tile->position;
+                this_tile->tex = host_tile->tex;
+                this_tile->flags = host_tile->flags;
+                game_render_update_tiles();
+            }
+            break;
+        case GAME_OBJ_WALL:
+            Wall* host_wall = obj;
+            Wall* this_wall = game_context.uid_map[host_wall->uid];
+            if (this_wall != NULL) {
+                this_wall->position = host_wall->position;
+                this_wall->top_tex = host_wall->top_tex;
+                this_wall->side_tex = host_wall->side_tex;
+                this_wall->flags = host_wall->flags;
+                game_render_update_walls();
+            }
+            break;
+        default:
+            break;
+    }
+
+    return;
 
     map->object_queue.buffer[map->object_queue.head].type = type;
     switch (type) {

@@ -180,7 +180,6 @@ void client_map_create_game_object(Packet* packet)
             Item* item = st_calloc(1, sizeof(Item));
             memcpy(item, packet->buffer + sizeof(i32), sizeof(Item));
             game_set_uid(item, GAME_OBJ_ITEM, item->uid);
-            log_write(DEBUG, "%d %p", item->uid, game_context.uid_map[item->uid]);
             break;
         default:
             break;
@@ -235,7 +234,6 @@ void client_map_update_game_object(Packet* packet)
             size = tile_sizeof();
             for (i32 i = 0; i < high; i++) {
                 tile_read(&tile, buffer);
-                log_write(DEBUG, "%d %d %d", type, high, tile.uid);
                 map_queue_game_obj(&tile, GAME_OBJ_TILE);
                 buffer += size;
             }
