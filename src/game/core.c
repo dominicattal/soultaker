@@ -208,7 +208,6 @@ size_t game_object_write(GameObj type, void* obj, char* buffer)
             wall_write(obj, buffer);
             return wall_sizeof();
         case GAME_OBJ_ITEM:
-            log_write(DEBUG, "item uid = %d", ((Item*)obj)->uid);
             memcpy(buffer, obj, sizeof(Item));
             return sizeof(Item);
         default:

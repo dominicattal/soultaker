@@ -27,6 +27,10 @@ typedef struct {
 } ItemInfo;
 
 typedef struct {
+
+    Item* head;
+    Item* tail;
+
     ItemInfo* infos;
     i32 num_items;
 
@@ -300,6 +304,9 @@ void item_init(void)
 
 void item_cleanup(void)
 {
+    while (item_context.head != NULL)
+        item_destroy(item_context.head);
+
     for (i32 i = 0; i < item_context.num_items; i++) {
         st_free(item_context.infos[i].name);
         st_free(item_context.infos[i].tooltip);
@@ -682,10 +689,9 @@ char* weapon_get_tooltip(i32 id)
     return item_context.infos[id].tooltip;
 }
 
-Item* item_create(i32 id)
+void item_init_stats(Item* item)
 {
-    Item* item = st_malloc(sizeof(Item));
-    item->id = id;
+    i32 id = item->id;
     item->type = item_context.infos[id].type;
     item->subtype = item_context.infos[id].subtype;
     item->equipped = false;
@@ -697,12 +703,45 @@ Item* item_create(i32 id)
         item->additive_stats[i] = item_context.infos[id].additive_stats[i];
         item->multiplicative_stats[i] = item_context.infos[id].multiplicative_stats[i];
     }
+}
+
+Item* item_create(i32 id)
+{
+    Item* item = st_calloc(1, sizeof(Item));
+    item->id = id;
+    item_init_stats(item);
+    item_attach(item);
     item->uid = game_map_uid(item, GAME_OBJ_ITEM);
 
     if (game_context.hosting)
         host_create_game_obj(item->uid);
 
     return item;
+}
+
+void item_attach(Item* item)
+{
+    if (item_context.head == NULL) {
+        item_context.head = item;
+        item_context.tail = item;
+    } else {
+        item->next = NULL;
+        item->prev = item_context.tail;
+        item_context.tail->next = item;
+        item_context.tail = item;
+    }
+}
+
+void item_detach(Item* item)
+{
+    if (item == item_context.head)
+        item_context.head = item->next;
+    if (item == item_context.tail)
+        item_context.tail = item->prev;
+    if (item->next != NULL)
+        item->next->prev = item->prev;
+    if (item->prev != NULL)
+        item->prev->next = item->next;
 }
 
 void item_update(Item* item, f32 dt)
@@ -729,6 +768,7 @@ void item_destroy(Item* item)
 {
     if (item == NULL) 
         return;
+    item_detach(item);
     game_free_uid(item->uid);
     st_free(item);
 }

@@ -91,10 +91,10 @@ static void inventory_reset(Client* client)
 void inventory_cleanup(Client* client)
 {
     Inventory* inventory = &client->player.inventory;
-    for (i32 i = 0; i < inventory->num_items; i++) {
-        item_destroy(inventory->items[i]);
-        inventory->items[i] = NULL;
-    }
+    //for (i32 i = 0; i < inventory->num_items; i++) {
+    //    item_destroy(inventory->items[i]);
+    //    inventory->items[i] = NULL;
+    //}
     for (i32 i = 0; i < inventory->num_synergies; i++)
         st_free(inventory->synergies[i]);
     st_free(inventory->synergies);

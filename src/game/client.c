@@ -183,6 +183,8 @@ void client_map_create_game_object(Packet* packet)
             Client* client = game_context.this_client;
             Item* item = st_calloc(1, sizeof(Item));
             memcpy(item, packet->buffer + sizeof(i32), sizeof(Item));
+            item_init_stats(item);
+            item_attach(item);
             game_set_uid(item, GAME_OBJ_ITEM, item->uid);
             break;
         default:

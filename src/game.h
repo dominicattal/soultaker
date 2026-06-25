@@ -361,6 +361,10 @@ typedef enum ItemSubTypeEnum {
 } ItemSubTypeEnum;
 
 typedef struct Item {
+
+    Item* next;
+    Item* prev;
+
     ItemTypeEnum type;
     ItemSubTypeEnum subtype;
     f32 additive_stats[NUM_STATS];
@@ -380,8 +384,13 @@ typedef struct Item {
 void    item_init(void);
 void    item_cleanup(void);
 
+// item is linked list to manage memory
+void    item_attach(Item* item);
+void    item_detach(Item* item);
+
 i32     item_get_id(const char* name);
 i32     item_get_tex_id(i32 item_id);
+void    item_init_stats(Item* item);
 Item*   item_create(i32 id);
 void    item_update(Item* item, f32 dt);
 char*   item_get_display_name(Item* item);
