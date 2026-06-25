@@ -37,7 +37,7 @@ typedef enum PacketEnum {
     PACKET_DESTROY_GAME_OBJ,
 
     PACKET_SYNC_CLIENT_ENTITY,
-    PACKET_SYNC_ITEM,
+    PACKET_SYNC_INVENTORY,
     PACKET_CREATE_MAP_NODES,
     PACKET_CLEAR_FOG,
     PACKET_SWAP_ITEMS,
@@ -1113,7 +1113,7 @@ void client_set_username(Client* client, char* username);
 void client_change_map(void);
 void client_sync_entity(Packet* packet);
 void client_map_clear_fog(Packet* packet);
-void client_map_sync_item(Packet* packet);
+void client_map_sync_inventory(Packet* packet);
 void client_map_create_map_nodes(Packet* packet);
 Map* client_map_create(void);
 void client_map_update(Map* map, f32 dt);

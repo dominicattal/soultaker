@@ -211,8 +211,8 @@ static void client_handle_packet(Packet* packet)
         case PACKET_CLEAR_FOG:
             client_map_clear_fog(packet);
             break;
-        case PACKET_SYNC_ITEM:
-            client_map_sync_item(packet);
+        case PACKET_SYNC_INVENTORY:
+            client_map_sync_inventory(packet);
             break;
         case PACKET_CREATE_PARTICLE:
             client_map_create_particle(packet);

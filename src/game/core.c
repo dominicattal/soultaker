@@ -66,7 +66,7 @@ void* game_loop(void* vargp)
         pthread_mutex_unlock(&game_context.handler_thread_mutex);
         game_context.real_dt = get_time() - real_start;
     }
-    log_write(DEBUG, "clietns list: %d", game_context.clients->length);
+    log_write(DEBUG, "clients list: %d", game_context.clients->length);
     gui_comp_cleanup();
     map_cleanup();
     item_cleanup();

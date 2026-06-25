@@ -44,6 +44,8 @@ void host_create_game_obj(i32 uid)
 
     packet.id = PACKET_CREATE_GAME_OBJ;
     type = game_context.uid_map_type[uid];
+    if (type == GAME_OBJ_ITEM)
+        log_write(DEBUG, "AAA");
 
     memcpy(packet.buffer, &type, sizeof(type));
     size_t size = game_object_write(type, game_context.uid_map[uid], packet.buffer + sizeof(type));

@@ -587,16 +587,23 @@ move_to_misc:
 void inventory_sync(Client* client)
 {
     Player* player = &client->player;
+    Packet packet;
+    i32 uid;
+    char* buffer = st_malloc(sizeof(packet.length) + sizeof(packet.id) + player->inventory.num_items * sizeof(uid));
+    packet.id = PACKET_SYNC_INVENTORY;
+    packet.length = player->inventory.num_items * sizeof(i32);
+    packet.buffer = buffer + PACKET_HEADER_BYTES;
+    memcpy(buffer, &packet.length, sizeof(packet.length));
+    memcpy(buffer + sizeof(packet.length), &packet.id, sizeof(packet.id));
+    log_write(DEBUG, "");
     for (i32 i = 0; i < player->inventory.num_items; i++) {
-        if (player->inventory.items[i] == NULL)
-            continue;
-        static char buffer[256];
-        memcpy(buffer, &i, sizeof(i));
-        memcpy(buffer + sizeof(i), player->inventory.items[i], sizeof(Item));
-        Packet* packet = packet_create(PACKET_SYNC_ITEM, sizeof(i) + sizeof(Item), buffer);
-        game_net_send_packet_tcp(client, packet);
-        packet_destroy(packet);
+        Item* item = player->inventory.items[i];
+        uid = (item == NULL) ? -1 : player->inventory.items[i]->uid;
+        printf("%d\n", uid);
+        memcpy(packet.buffer + i * sizeof(i32), &uid, sizeof(uid));
     }
+    game_net_send_packet_tcp(client, &packet);
+    st_free(buffer);
 }
 
 void inventory_shoot_weapons_primary(Player* player, vec2 direction, vec2 target)
@@ -691,6 +698,10 @@ Item* item_create(i32 id)
         item->multiplicative_stats[i] = item_context.infos[id].multiplicative_stats[i];
     }
     item->uid = game_map_uid(item, GAME_OBJ_ITEM);
+
+    if (game_context.hosting)
+        host_create_game_obj(item->uid);
+
     return item;
 }
 

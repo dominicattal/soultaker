@@ -40,15 +40,19 @@ void client_update(Client* client, f32 dt)
     player_update(&client->player, dt);
 }
 
-void client_map_sync_item(Packet* packet)
+void client_map_sync_inventory(Packet* packet)
 {
     Client* client = game_context.this_client;
-    Item item;
-    i32 idx;
-    memcpy(&idx, packet->buffer, sizeof(idx));
-    memcpy(&item, packet->buffer + sizeof(idx), sizeof(Item));
-    client->player.inventory.items[idx] = game_context.uid_map[item.uid];
-    log_write(DEBUG, "%d %p", item.uid, game_context.uid_map[item.uid]);
+    Inventory* inventory = &client->player.inventory;
+    i32 uid;
+    for (i32 i = 0; i < inventory->num_items; i++) {
+        memcpy(&uid, packet->buffer + i * sizeof(i32), sizeof(i32));
+        printf("%d\n", uid);
+        if (uid == -1)
+            inventory->items[i] = NULL;
+        else
+            inventory->items[i] = game_context.uid_map[uid];
+    }
     inventory_refresh(client);
     gui_refresh_inventory();
 }
