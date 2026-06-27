@@ -82,7 +82,17 @@ void window_close(void)
 
 void window_toggle_fullscreen(void)
 {
-    glfwMaximizeWindow(window_context.handle);
+    GLFWmonitor* monitor;
+    GLFWwindow* window = window_context.handle;
+    
+    monitor = glfwGetWindowMonitor(window);
+    if (monitor == NULL) {
+        monitor = glfwGetPrimaryMonitor();
+        const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+        glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+    } else {
+        glfwSetWindowMonitor(window, NULL, 100, 100, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, 0);
+    }
 }
 
 bool window_closed(void)

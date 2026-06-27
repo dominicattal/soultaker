@@ -208,14 +208,15 @@ static void pointer_spelltome_create_projectiles(vec2 origin)
     Projectile* proj;
     i32 tex_id = texture_get_id("bullet");
     for (i32 i = 0; i < 12; i++) {
+        f32 facing = (PI / 6) * i;
         proj = map_create_projectile(PROJECTILE_CREATE(
                     .position = origin,
                     .speed = 4.0f,
                     .size = 0.6f,
                     .lifetime = 6.0f,
                     .tex = tex_id,
-                    .facing = (PI / 6) * i,
-                    .direction = vec2_direction(proj->facing),
+                    .facing = facing,
+                    .direction = vec2_direction(facing),
                     ));
     }
 }
@@ -247,14 +248,15 @@ void null_pointer_spelltome_create_projectiles(vec2 origin)
     Projectile* proj;
     i32 tex_id = texture_get_id("null_ptr");
     for (i32 i = 0; i < 12; i++) {
+        f32 facing = PI / 6 * i + PI / 12;
         proj = map_create_projectile(PROJECTILE_CREATE(
                     .position = origin, 
                     .speed = 4.0f,
                     .size = 0.6f,
                     .lifetime = 6.0f,
                     .tex = tex_id,
-                    .facing = PI / 6 * i + PI / 12,
-                    .direction = vec2_direction(proj->facing),
+                    .facing = facing,
+                    .direction = vec2_direction(facing)
                     ));
         //projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, true);
     }
@@ -286,14 +288,15 @@ void pointer_null_pointer_spelltome_create_projectiles(vec2 origin)
     Projectile* proj;
     i32 tex_id = texture_get_id("purp_bullet");
     for (i32 i = 0; i < 12; i++) {
+        f32 facing = PI / 6 * i + PI / 24;
         proj = map_create_projectile(PROJECTILE_CREATE(
                     .position = origin,
                     .speed = 4.0f,
                     .size = 0.6f,
                     .lifetime = 6.0f,
                     .tex = tex_id,
-                    .facing = PI / 6 * i + PI / 24,
-                    .direction = vec2_direction(proj->facing),
+                    .facing = facing,
+                    .direction = vec2_direction(facing),
                     ));
         //projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, true);
     }
