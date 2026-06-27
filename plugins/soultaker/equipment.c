@@ -27,15 +27,16 @@ static vec2 pointer_offsets[] = {
 
 void weapon_pointer_primary(Player* player, vec2 direction, vec2 target)
 {
-    vec2 pos = player->entity->position;
-    Projectile* proj = map_create_projectile(pos);
-    proj->direction = direction;
-    proj->size = 0.5;
-    proj->speed = 20;
-    proj->lifetime = 0.15;
-    proj->facing = vec2_radians(direction);
-    proj->tex = texture_get_id("bullet");
-    projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, 1);
+    Projectile* proj = map_create_projectile(PROJECTILE_CREATE(
+                .position = player->entity->position,
+                .direction = direction,
+                .size = 0.5,
+                .speed = 20,
+                .lifetime = 0.15,
+                .facing = vec2_radians(direction),
+                .tex = texture_get_id("bullet"),
+                ));
+    projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, true);
 }
 
 void weapon_pointer_secondary(Player* player, vec2 direction, vec2 target)
@@ -44,29 +45,31 @@ void weapon_pointer_secondary(Player* player, vec2 direction, vec2 target)
     for (size_t i = 0; i < sizeof(pointer_offsets) / sizeof(vec2); i++) {
         vec2 offset = pointer_offsets[i];
         offset.x -= 0.5;
-        vec2 pos = vec2_add(player_pos, vec2_rotate(offset, vec2_radians(direction) - PI/2));
-        Projectile* proj = map_create_projectile(pos);
-        proj->direction = direction;
-        proj->size = 0.5;
-        proj->speed = 20;
-        proj->lifetime = 0.15;
-        proj->facing = vec2_radians(direction);
-        proj->tex = texture_get_id("bullet");
-        projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, 1);
+        Projectile* proj = map_create_projectile(PROJECTILE_CREATE(
+                    .position = vec2_add(player_pos, vec2_rotate(offset, vec2_radians(direction) - PI/2)),
+                    .direction = direction,
+                    .size = 0.5,
+                    .speed = 20,
+                    .lifetime = 0.15,
+                    .facing = vec2_radians(direction),
+                    .tex = texture_get_id("bullet"),
+                    ));
+        projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, true);
     }
 }
 
 void weapon_null_pointer_primary(Player* player, vec2 direction, vec2 target)
 {
-    vec2 pos = player->entity->position;
-    Projectile* proj = map_create_projectile(pos);
-    proj->direction = direction;
-    proj->size = 0.5;
-    proj->speed = 20;
-    proj->lifetime = 0.15;
-    proj->facing = vec2_radians(direction);
-    proj->tex = texture_get_id("null_ptr");
-    projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, 1);
+    Projectile* proj = map_create_projectile(PROJECTILE_CREATE(
+                .position = player->entity->position,
+                .direction = direction,
+                .size = 0.5,
+                .speed = 20,
+                .lifetime = 0.15,
+                .facing = vec2_radians(direction),
+                .tex = texture_get_id("null_ptr"),
+                ));
+    projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, true);
 }
 
 void weapon_null_pointer_secondary(Player* player, vec2 direction, vec2 target)
@@ -75,29 +78,31 @@ void weapon_null_pointer_secondary(Player* player, vec2 direction, vec2 target)
     for (size_t i = 0; i < sizeof(pointer_offsets) / sizeof(vec2); i++) {
         vec2 offset = pointer_offsets[i];
         offset.x += 0.5;
-        vec2 pos = vec2_add(player_pos, vec2_rotate(offset, vec2_radians(direction) - PI/2));
-        Projectile* proj = map_create_projectile(pos);
-        proj->direction = direction;
-        proj->size = 0.5;
-        proj->speed = 20;
-        proj->lifetime = 0.15;
-        proj->facing = vec2_radians(direction);
-        proj->tex = texture_get_id("null_ptr");
-        projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, 1);
+        Projectile* proj = map_create_projectile(PROJECTILE_CREATE(
+                    .position = vec2_add(player_pos, vec2_rotate(offset, vec2_radians(direction) - PI/2)),
+                    .direction = direction,
+                    .size = 0.5,
+                    .speed = 20,
+                    .lifetime = 0.15,
+                    .facing = vec2_radians(direction),
+                    .tex = texture_get_id("null_ptr"),
+                    ));
+        projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, true);
     }
 }
 
 void super_pointer_primary(Player* player, vec2 direction, vec2 target)
 {
-    vec2 pos = player->entity->position;
-    Projectile* proj = map_create_projectile(pos);
-    proj->direction = direction;
-    proj->size = 0.65;
-    proj->speed = 40;
-    proj->lifetime = 0.1;
-    proj->facing = vec2_radians(direction);
-    proj->tex = texture_get_id("purp_bullet");
-    projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, 1);
+    Projectile* proj = map_create_projectile(PROJECTILE_CREATE(
+                .position = player->entity->position,
+                .direction = direction,
+                .size = 0.65,
+                .speed = 40,
+                .lifetime = 0.1,
+                .facing = vec2_radians(direction),
+                .tex = texture_get_id("purp_bullet"),
+                ));
+    projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, true);
 }
 
 void super_pointer_secondary(Player* player, vec2 direction, vec2 target)
@@ -105,15 +110,16 @@ void super_pointer_secondary(Player* player, vec2 direction, vec2 target)
     vec2 player_pos = player->entity->position;
     for (size_t i = 0; i < sizeof(pointer_offsets) / sizeof(vec2); i++) {
         vec2 offset = pointer_offsets[i];
-        vec2 pos = vec2_add(player_pos, vec2_rotate(offset, vec2_radians(direction) - PI/2));
-        Projectile* proj = map_create_projectile(pos);
-        proj->direction = direction;
-        proj->size = 0.65;
-        proj->speed = 40;
-        proj->lifetime = 0.1;
-        proj->facing = vec2_radians(direction);
-        proj->tex = texture_get_id("purp_bullet");
-        projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, 1);
+        Projectile* proj = map_create_projectile(PROJECTILE_CREATE(
+                    .position = vec2_add(player_pos, vec2_rotate(offset, vec2_radians(direction) - PI/2)),
+                    .direction = direction,
+                    .size = 0.65,
+                    .speed = 40,
+                    .lifetime = 0.1,
+                    .facing = vec2_radians(direction),
+                    .tex = texture_get_id("purp_bullet"),
+                    ));
+        projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, true);
     }
 }
 
@@ -202,16 +208,15 @@ static void pointer_spelltome_create_projectiles(vec2 origin)
     Projectile* proj;
     i32 tex_id = texture_get_id("bullet");
     for (i32 i = 0; i < 12; i++) {
-        proj = map_create_projectile(origin);
-        if (proj == NULL) return;
-        proj->speed = 4.0f;
-        proj->size = 0.6f;
-        proj->lifetime = 6.0f;
-        proj->tex = tex_id;
-        proj->facing = (PI / 6) * i;
-        proj->direction = vec2_direction(proj->facing);
-        //log_write(DEBUG, "%d %f %f %f", i, proj->facing, proj->direction.x, proj->direction.z);
-        //projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, true);
+        proj = map_create_projectile(PROJECTILE_CREATE(
+                    .position = origin,
+                    .speed = 4.0f,
+                    .size = 0.6f,
+                    .lifetime = 6.0f,
+                    .tex = tex_id,
+                    .facing = (PI / 6) * i,
+                    .direction = vec2_direction(proj->facing),
+                    ));
     }
 }
 
@@ -242,14 +247,15 @@ void null_pointer_spelltome_create_projectiles(vec2 origin)
     Projectile* proj;
     i32 tex_id = texture_get_id("null_ptr");
     for (i32 i = 0; i < 12; i++) {
-        proj = map_create_projectile(origin);
-        if (proj == NULL) return;
-        proj->speed = 4.0f;
-        proj->size = 0.6f;
-        proj->lifetime = 6.0f;
-        proj->tex = tex_id;
-        proj->facing = PI / 6 * i + PI / 12;
-        proj->direction = vec2_direction(proj->facing);
+        proj = map_create_projectile(PROJECTILE_CREATE(
+                    .position = origin, 
+                    .speed = 4.0f,
+                    .size = 0.6f,
+                    .lifetime = 6.0f,
+                    .tex = tex_id,
+                    .facing = PI / 6 * i + PI / 12,
+                    .direction = vec2_direction(proj->facing),
+                    ));
         //projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, true);
     }
 }
@@ -280,14 +286,15 @@ void pointer_null_pointer_spelltome_create_projectiles(vec2 origin)
     Projectile* proj;
     i32 tex_id = texture_get_id("purp_bullet");
     for (i32 i = 0; i < 12; i++) {
-        proj = map_create_projectile(origin);
-        if (proj == NULL) return;
-        proj->speed = 4.0f;
-        proj->size = 0.6f;
-        proj->lifetime = 6.0f;
-        proj->tex = tex_id;
-        proj->facing = PI / 6 * i + PI / 24;
-        proj->direction = vec2_direction(proj->facing);
+        proj = map_create_projectile(PROJECTILE_CREATE(
+                    .position = origin,
+                    .speed = 4.0f,
+                    .size = 0.6f,
+                    .lifetime = 6.0f,
+                    .tex = tex_id,
+                    .facing = PI / 6 * i + PI / 24,
+                    .direction = vec2_direction(proj->facing),
+                    ));
         //projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, true);
     }
 }
@@ -415,38 +422,42 @@ void shiv_primary(Player* player, vec2 direction, vec2 target)
     vec2 player_pos = player->entity->position;
     for (size_t i = 0; i < sizeof(sword_offsets) / sizeof(vec2); i++) {
         vec2 offset = sword_offsets[i];
-        vec2 pos = vec2_add(player_pos, vec2_rotate(offset, vec2_radians(direction) - PI/2));
-        Projectile* proj = map_create_projectile(pos);
-        proj->direction = direction;
-        proj->size = 0.5;
-        proj->speed = 20;
-        proj->lifetime = 0.15;
-        proj->facing = vec2_radians(direction);
-        proj->tex = texture_get_id("bullet");
-        projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, 1);
+        Projectile* proj = map_create_projectile(PROJECTILE_CREATE(
+                    .position = vec2_add(player_pos, vec2_rotate(offset, vec2_radians(direction) - PI/2)),
+                    .direction = direction,
+                    .size = 0.5,
+                    .speed = 20,
+                    .lifetime = 0.15,
+                    .facing = vec2_radians(direction),
+                    .tex = texture_get_id("bullet"),
+                    ));
+        projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, true);
     }
 }
 
 void wand_primary(Player* player, vec2 direction, vec2 target)
 {
-    vec2 pos = player->entity->position;
-    Projectile* proj = map_create_projectile(pos);
-    proj->direction = vec2_create(1, 0);
-    proj->size = 0.5;
-    proj->speed = 20;
-    proj->lifetime = 0.15;
-    proj->facing = vec2_radians(direction);
-    proj->tex = texture_get_id("bullet");
-    projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, 1);
+    Projectile* proj = map_create_projectile(PROJECTILE_CREATE(
+                .position = player->entity->position,
+                .direction = vec2_create(1, 0),
+                .size = 0.5,
+                .speed = 20,
+                .lifetime = 0.15,
+                .facing = vec2_radians(direction),
+                .tex = texture_get_id("bullet"),
+                ));
+    projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, true);
 
-    proj = map_create_projectile(pos);
-    proj->direction = vec2_create(0, 1);
-    proj->size = 0.5;
-    proj->speed = 20;
-    proj->lifetime = 0.15;
-    proj->facing = vec2_radians(direction);
-    proj->tex = texture_get_id("null_ptr");
-    projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, 1);
+    proj = map_create_projectile(PROJECTILE_CREATE(
+                .position = player->entity->position,
+                .direction = vec2_create(0, 1),
+                .size = 0.5,
+                .speed = 20,
+                .lifetime = 0.15,
+                .facing = vec2_radians(direction),
+                .tex = texture_get_id("null_ptr"),
+                ));
+    projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, true);
 }
 
 void bow_primary(Player* player, vec2 direction, vec2 target)

@@ -101,6 +101,7 @@ i32 game_map_uid(void* obj, GameObj type)
 
 void game_set_uid(void* obj, GameObj type, i32 uid)
 {
+    log_assert(game_context.uid_map_type[uid] == GAME_OBJ_NONE, "Tried to set uid=%d type %d when in use by type %d", uid, type, game_context.uid_map_type[uid]);
     game_context.uid_map[uid] = obj;
     game_context.uid_map_type[uid] = type;
 }

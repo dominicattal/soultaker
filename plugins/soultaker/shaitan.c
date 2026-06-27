@@ -101,24 +101,29 @@ void shaitan_hand_attack_1(Entity* entity, f32 dt)
         entity_set_state(entity, "idle");
         return;
     }
-    if (data->shoot_timer > 0.2) {
-        proj = map_create_projectile(entity->position);
-        proj->update = firebullet;
-        direction = vec2_direction(data->target_rad-PI/3);
-        proj->direction = direction;
-        proj->speed = 5;
-        proj->size = 0.75;
-        proj->facing = data->target_rad;
-        proj->tex = texture_get_id("shaitan_firebullet");
 
-        proj = map_create_projectile(entity->position);
-        proj->update = firebullet;
-        direction = vec2_direction(data->target_rad+PI/3);
-        proj->direction = direction;
-        proj->speed = 5;
-        proj->size = 0.75;
-        proj->facing = data->target_rad;
-        proj->tex = texture_get_id("shaitan_firebullet");
+    i32 tex = texture_get_id("shaitan_firebullet");
+    if (data->shoot_timer > 0.2) {
+
+        proj = map_create_projectile(PROJECTILE_CREATE(
+                    .position = entity->position,
+                    .update = firebullet,
+                    .direction = vec2_direction(data->target_rad-PI/3),
+                    .speed = 5,
+                    .size = 0.75,
+                    .facing = data->target_rad,
+                    .tex = tex
+                    ));
+
+        proj = map_create_projectile(PROJECTILE_CREATE(
+                    .position = entity->position,
+                    .update = firebullet,
+                    .direction = vec2_direction(data->target_rad+PI/3),
+                    .speed = 5,
+                    .size = 0.75,
+                    .facing = data->target_rad,
+                    .tex = tex
+                    ));
 
         data->shoot_timer -= 0.2;
     }
@@ -136,24 +141,27 @@ void shaitan_hand_attack_2(Entity* entity, f32 dt)
         entity_set_state(entity, "idle");
         return;
     }
+    i32 tex = texture_get_id("shaitan_firebullet");
     if (data->shoot_timer > 0.2) {
-        proj = map_create_projectile(entity->position);
-        proj->update = firebullet;
-        direction = vec2_direction(data->target_rad-PI/3);
-        proj->direction = direction;
-        proj->speed = 5;
-        proj->size = 0.75;
-        proj->facing = data->target_rad;
-        proj->tex = texture_get_id("shaitan_firebullet");
+        proj = map_create_projectile(PROJECTILE_CREATE(
+                    .position = entity->position,
+                    .update = firebullet,
+                    .direction = vec2_direction(data->target_rad-PI/3),
+                    .speed = 5,
+                    .size = 0.75,
+                    .facing = data->target_rad,
+                    .tex = tex
+                    ));
 
-        proj = map_create_projectile(entity->position);
-        proj->update = firebullet;
-        direction = vec2_direction(data->target_rad+PI/3);
-        proj->direction = direction;
-        proj->speed = 5;
-        proj->size = 0.75;
-        proj->facing = data->target_rad;
-        proj->tex = texture_get_id("shaitan_firebullet");
+        proj = map_create_projectile(PROJECTILE_CREATE(
+                    .position = entity->position,
+                    .update = firebullet,
+                    .direction = vec2_direction(data->target_rad+PI/3),
+                    .speed = 5,
+                    .size = 0.75,
+                    .facing = data->target_rad,
+                    .tex = tex
+                    ));
 
         data->shoot_timer -= 0.2;
     }
@@ -228,23 +236,25 @@ static void shaitan_attack_1_firestorm(Entity* entity)
     vec2 direction;
     i32 dir = rand() % 2;
     for (i32 i = 0; i < 5; i++) {
-        proj = map_create_projectile(entity->position);
-        proj->speed = 4.5f;
-        proj->size = 0.75f;
-        proj->lifetime = 2.0f;
-        proj->tex = tex_id;
-        direction = vec2_rotate(vec2_create(dir, 1-dir), PI / 6 * (2-i));
-        proj->direction = direction;
-        proj->update = firestorm;
+        proj = map_create_projectile(PROJECTILE_CREATE(
+                    .position = entity->position,
+                    .update = firestorm,
+                    .direction = vec2_rotate(vec2_create(dir, 1-dir), PI / 6 * (2-i)),
+                    .speed = 4.5f,
+                    .size = 0.75f,
+                    .lifetime = 2.0f,
+                    .tex = tex_id,
+                    ));
 
-        proj = map_create_projectile(entity->position);
-        proj->speed = 4.5f;
-        proj->size = 0.75f;
-        proj->lifetime = 7.3f;
-        proj->tex = tex_id;
-        direction = vec2_rotate(vec2_create(-dir, -(1-dir)), PI / 6 * (2-i));
-        proj->direction = direction;
-        proj->update = firestorm;
+        proj = map_create_projectile(PROJECTILE_CREATE(
+                    .position = entity->position,
+                    .update = firestorm,
+                    .direction = vec2_rotate(vec2_create(-dir, -(1-dir)), PI / 6 * (2-i)),
+                    .speed = 4.5f,
+                    .size = 0.75f,
+                    .lifetime = 2.0f,
+                    .tex = tex_id,
+                    ));
     }
 }
 
@@ -272,13 +282,15 @@ static void shaitan_attack_2_firestorm(Entity* entity)
     vec2 position = game_get_nearest_player_position();
     vec2 direction = vec2_sub(position, entity->position);
     i32 tex_id = texture_get_id("shaitan_firestorm");
-    proj = map_create_projectile(entity->position);
-    proj->speed = 4.5f;
-    proj->size = 0.75f;
-    proj->lifetime = 2.0f;
-    proj->tex = tex_id;
-    proj->direction = vec2_normalize(direction);
-    proj->update = firestorm;
+    proj = map_create_projectile(PROJECTILE_CREATE(
+                .position = entity->position,
+                .speed = 4.5,
+                .size = 0.75,
+                .lifetime = 2.0,
+                .tex = tex_id,
+                .direction = vec2_normalize(direction),
+                .update = firestorm
+                ));
 }
 
 static void shaitan_attack_2_fireball(Entity* entity)
@@ -287,14 +299,15 @@ static void shaitan_attack_2_fireball(Entity* entity)
     vec2 direction;
     i32 tex_id = texture_get_id("shaitan_fireball");
     for (i32 i = 0; i < 12; i++) {
-        proj = map_create_projectile(entity->position);
-        proj->speed = 4.0f;
-        proj->size = 0.6f;
-        proj->lifetime = 6.0f;
-        proj->tex = tex_id;
-        direction = vec2_direction(PI / 6 * i);
-        proj->direction = direction;
-        proj->facing = PI / 6 * i;
+        proj = map_create_projectile(PROJECTILE_CREATE(
+                    .position = entity->position,
+                    .speed = 4.0f,
+                    .size = 0.6f,
+                    .lifetime = 6.0f,
+                    .tex = tex_id,
+                    .direction = vec2_direction(PI / 6 * i),
+                    .facing = PI / 6 * i,
+                    ));
     }
 }
 

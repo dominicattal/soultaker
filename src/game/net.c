@@ -293,6 +293,10 @@ void game_net_join(const char* ip, const char* port)
     game_context.host_client = client_create();
     game_context.host_client->tcp_socket = server_socket;
 
+    // uid assigned in client_create but host is authoratative so must reset it
+    game_free_uid(game_context.host_client->uid);
+    game_free_uid(this_client->uid);
+
     packet = socket_recv(server_socket);
     log_assert(packet->id == PACKET_HOST_UDP_PORT, "");
     game_net_set_host_udp_port(packet->buffer);
@@ -308,6 +312,8 @@ void game_net_join(const char* ip, const char* port)
     log_assert(packet->id == PACKET_HOST_TO_CLIENT_USERNAME, "");
     game_context.host_client->username = string_copy(packet->buffer);
     packet_destroy(packet);
+
+    i32 uid;
 
     packet = socket_recv(server_socket);
     log_assert(packet->id == PACKET_HOST_TO_CLIENT_HOST_UID, "");

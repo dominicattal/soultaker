@@ -18,7 +18,6 @@
 #define GAME_OBJECT_QUEUE_LENGTH 10000
 
 typedef enum PacketEnum {
-
     PACKET_TEST,
     PACKET_HOST_UDP_PORT,
     PACKET_CLIENT_UDP_PORT,
@@ -50,6 +49,7 @@ typedef enum PacketEnum {
 } PacketEnum;
 
 typedef enum GameObj {
+    GAME_OBJ_NONE,
     GAME_OBJ_CLIENT,
     GAME_OBJ_ENTITY,
     GAME_OBJ_TILE,
@@ -62,9 +62,7 @@ typedef enum GameObj {
     GAME_OBJ_TRIGGER,
     GAME_OBJ_AOE,
     GAME_OBJ_LINE,
-    GAME_OBJ_ITEM,
-    NUM_GAME_OBJS,
-    GAME_OBJ_NONE
+    GAME_OBJ_ITEM
 } GameObj;
 
 #define INPUT_W         (1<<0)
@@ -682,11 +680,31 @@ typedef enum {
     PROJECTILE_FLAG_FRIENDLY
 } ProjectileFlagEnum;
 
+#define PROJECTILE_CREATE(...) \
+    (Projectile) { \
+        .update = NULL, \
+        .destroy = NULL, \
+        .data = NULL, \
+        .position = vec2_create(0, 0), \
+        .direction = vec2_create(0, 0), \
+        .elevation = 0.5, \
+        .facing = 0, \
+        .rotation = 0, \
+        .speed = 1, \
+        .tex = 0, \
+        .size = 0.5, \
+        .lifetime = 99999, \
+        .flags = 0, \
+        .pierce_timer = 0, \
+        .owner_uid = -1, \
+        __VA_ARGS__ \
+    }
+
 // Projectiles call their update and destroy functions. They do
 // not have a create function. They do not have ids mapped to a 
 // function ptr (like entities) because it is not necessary to 
 // know projectile information + it would be a headache.
-Projectile* projectile_create(vec2 position);
+Projectile* projectile_create(Projectile projectile);
 void projectile_update(Projectile* projectile, f32 dt);
 void projectile_destroy(Projectile* projectile);
 
@@ -1069,7 +1087,7 @@ void map_queue_game_obj(void* obj, GameObj type);
 Entity*         map_create_entity(vec2 position, i32 id);
 bool            map_create_parjicle(Parjicle parjicle);
 bool            map_create_particle(Particle particle);
-Projectile*     map_create_projectile(vec2 position);
+Projectile*     map_create_projectile(Projectile projectile);
 Trigger*        map_create_trigger(vec2 position, f32 radius);
 AOE*            map_create_aoe(vec2 position, f32 lifetime);
 Line*           map_create_line(void);
@@ -1078,7 +1096,7 @@ Line*           map_create_line(void);
 Entity*         room_create_entity(vec2 position, i32 id);
 Obstacle*       room_create_obstacle(vec2 position);
 Parstacle*      room_create_parstacle(vec2 position);
-Projectile*     room_create_projectile(vec2 position);
+Projectile*     room_create_projectile(Projectile projectile);
 Trigger*        room_create_trigger(vec2 position, f32 radius);
 AOE*            room_create_aoe(vec2 position, f32 lifetime);
 Wall*           room_create_wall(vec2 position, f32 height, f32 width, f32 length, u32 minimap_color);

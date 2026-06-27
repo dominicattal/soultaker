@@ -3,24 +3,25 @@
 
 extern GameContext game_context;
 
-Projectile* projectile_create(vec2 position)
+Projectile* projectile_create(Projectile projectile)
 {
     Projectile* proj = st_malloc(sizeof(Projectile));
-    proj->position = position;
-    proj->direction = vec2_create(0, 0);
-    proj->elevation = 0.5;
-    proj->facing = 0;
-    proj->rotation = 0;
-    proj->speed = 1;
-    proj->tex = 0;
-    proj->size = 0.5;
-    proj->lifetime = 1;
-    proj->flags = 0;
-    proj->pierce_timer = 0;
-    proj->owner_uid = -1;
-    proj->update = NULL;
-    proj->destroy = NULL;
-    proj->data = NULL;
+    memcpy(proj, &projectile, sizeof(Projectile));
+    //proj->position = position;
+    //proj->direction = vec2_create(0, 0);
+    //proj->elevation = 0.5;
+    //proj->facing = 0;
+    //proj->rotation = 0;
+    //proj->speed = 1;
+    //proj->tex = 0;
+    //proj->size = 0.5;
+    //proj->lifetime = 1000;
+    //proj->flags = 0;
+    //proj->pierce_timer = 0;
+    //proj->owner_uid = -1;
+    //proj->update = NULL;
+    //proj->destroy = NULL;
+    //proj->data = NULL;
     proj->uid = game_map_uid(proj, GAME_OBJ_PROJECTILE);
 
     if (game_context.hosting)

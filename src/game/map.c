@@ -1911,7 +1911,7 @@ bool map_create_particle(Particle particle)
     return part != NULL;
 }
 
-Projectile* map_create_projectile(vec2 position)
+Projectile* map_create_projectile(Projectile projectile)
 {
     Projectile* proj;
     Map* map = map_context.current_map;
@@ -1919,7 +1919,7 @@ Projectile* map_create_projectile(vec2 position)
         return NULL;
     if (!game_context.singleplayer && !game_context.hosting)
         return NULL;
-    proj = projectile_create(position);
+    proj = projectile_create(projectile);
     list_append(map->projectiles, proj);
     buckets_insert_projectile(map, proj);
     return proj;
@@ -2121,7 +2121,7 @@ Parstacle* room_create_parstacle(vec2 position)
     return parstacle;
 }
 
-Projectile* room_create_projectile(vec2 position)
+Projectile* room_create_projectile(Projectile projectile)
 {
     Projectile* proj;
     Map* map = map_context.current_map;
@@ -2134,8 +2134,8 @@ Projectile* room_create_projectile(vec2 position)
         log_write(WARNING, "Projectile doesn't know its room");
         return NULL;
     }
-    vec2 new_position = room_to_map_position(position);
-    proj = projectile_create(new_position);
+    projectile.position = room_to_map_position(projectile.position);
+    proj = projectile_create(projectile);
     proj->map_info.spawn_node = node;
     list_append(map->projectiles, proj);
     buckets_insert_projectile(map, proj);

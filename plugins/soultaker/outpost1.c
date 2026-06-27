@@ -219,12 +219,14 @@ void outpost1_knight_attack_update(Entity* entity, f32 dt)
         log_write(DEBUG, "%f %f %f %f %i", entity->direction.x, entity->direction.z, entity->position.x, entity->position.z, data->rotate_direction);
     }
     if (data->shot_cooldown < 0) {
-        proj = map_create_projectile(entity->position);
-        proj->direction = vec2_rotate(direction, randf_range(-0.3, 0.3));
-        proj->speed = 6.5f;
-        proj->size = 0.5f;
-        proj->tex = texture_get_id("bullet");
-        proj->facing = vec2_radians(proj->direction);
+        proj = map_create_projectile(PROJECTILE_CREATE(
+                    .position = entity->position,
+                    .direction = vec2_rotate(direction, randf_range(-0.3, 0.3)),
+                    .speed = 6.5,
+                    .size = 0.5,
+                    .tex = texture_get_id("bullet"),
+                    .facing = vec2_radians(proj->direction)
+                    ));
         data->shot_cooldown += 1.0f;
     }
 }
@@ -325,15 +327,15 @@ void outpost1_archer_attack_update(Entity* entity, f32 dt)
     vec2 direction, player_position;
     data->attack_timer -= dt;
     if (data->attack_timer < 0) {
-        proj = map_create_projectile(entity->position);
         player_position = game_get_nearest_player_position();
-        direction = vec2_normalize(vec2_sub(player_position, entity->position));
-        proj->direction = direction;
-        //proj->direction = vec2_rotate(direction, randf_range(-0.3, 0.3));
-        proj->speed = 10.0f;
-        proj->size = 0.5f;
-        proj->tex = texture_get_id("bullet");
-        proj->facing = vec2_radians(proj->direction);
+        proj = map_create_projectile(PROJECTILE_CREATE(
+                    .position = entity->position,
+                    .direction = vec2_normalize(vec2_sub(player_position, entity->position)),
+                    .speed = 10.0f,
+                    .size = 0.5f,
+                    .tex = texture_get_id("bullet"),
+                    .facing = vec2_radians(proj->direction),
+                    ));
         data->attack_timer += 0.5f;
     }
     data->reposition_timer -= dt;
@@ -458,16 +460,16 @@ void outpost1_mage_attack_update(Entity* entity, f32 dt)
     vec2 direction, player_position;
     data->attack_timer -= dt;
     if (data->attack_timer < 0) {
-        proj = map_create_projectile(entity->position);
         player_position = game_get_nearest_player_position();
-        direction = vec2_normalize(vec2_sub(player_position, entity->position));
-        proj->direction = direction;
-        //proj->direction = vec2_rotate(direction, randf_range(-0.3, 0.3));
-        proj->speed = 10.0f;
-        proj->size = 0.5f;
-        proj->tex = texture_get_id("bullet");
-        proj->facing = vec2_radians(proj->direction);
-        proj->update = mage_projectile_update;
+        proj = map_create_projectile(PROJECTILE_CREATE(
+                    .position = entity->position,
+                    .direction = vec2_normalize(vec2_sub(player_position, entity->position)),
+                    .speed = 10.0f,
+                    .size = 0.5f,
+                    .tex = texture_get_id("bullet"),
+                    .facing = vec2_radians(proj->direction),
+                    .update = mage_projectile_update,
+                    ));
         data->attack_timer += 0.5f;
     }
     data->reposition_timer -= dt;
@@ -587,17 +589,15 @@ static void spawn_sword(vec2 origin, vec2 direction, f32 lifetime, f32 speed)
     for (size_t i = 0; i < sizeof(sword_offsets) / sizeof(SwordOffset); i++) {
         SwordOffset sword_offset = sword_offsets[i];
         vec2 offset = vec2_create(sword_offset.x, sword_offset.z);
-        vec2 pos = vec2_add(origin, vec2_rotate(offset, vec2_radians(direction) - PI/2));
-        Projectile* proj = room_create_projectile(pos);
-        proj->direction = direction;
-        proj->size = 0.5;
-        proj->speed = speed;
-        proj->lifetime = lifetime;
-        proj->facing = vec2_radians(direction) + sword_offset.rotation;
-        if (offset.z <= 3.0)
-            proj->tex = texture_get_id("outpost1_sword_handle");
-        else
-            proj->tex = texture_get_id("outpost1_sword_blade");
+        Projectile* proj = room_create_projectile(PROJECTILE_CREATE(
+                    .position = vec2_add(origin, vec2_rotate(offset, vec2_radians(direction) - PI/2)),
+                    .direction = direction,
+                    .size = 0.5,
+                    .speed = speed,
+                    .lifetime = lifetime,
+                    .facing = vec2_radians(direction) + sword_offset.rotation,
+                    .tex = (offset.z <= 3.0) ? texture_get_id("outpost1_sword_handle") : texture_get_id("outpost1_sword_blade"),
+                    ));
         projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, false);
     }
 }
@@ -607,22 +607,22 @@ static void spawn_sword_with_delay(vec2 origin, vec2 direction, f32 lifetime, f3
     for (size_t i = 0; i < sizeof(sword_offsets) / sizeof(SwordOffset); i++) {
         SwordOffset sword_offset = sword_offsets[i];
         vec2 offset = vec2_create(sword_offset.x, sword_offset.z);
-        vec2 pos = vec2_add(origin, vec2_rotate(offset, vec2_radians(direction) - PI/2));
-        Projectile* proj = room_create_projectile(pos);
-        proj->direction = direction;
-        proj->size = 0.5;
-        proj->speed = 0;
-        proj->lifetime = lifetime + delay;
-        proj->update = sword_update;
+
         SwordProjData* data = st_malloc(sizeof(SwordProjData));
         data->delay_timer = delay;
         data->speed = speed;
-        proj->data = data;
-        proj->facing = vec2_radians(direction) + sword_offset.rotation;
-        if (offset.z <= 3.0)
-            proj->tex = texture_get_id("outpost1_sword_handle");
-        else
-            proj->tex = texture_get_id("outpost1_sword_blade");
+
+        Projectile* proj = room_create_projectile(PROJECTILE_CREATE(
+                    .position = vec2_add(origin, vec2_rotate(offset, vec2_radians(direction) - PI/2)),
+                    .direction = direction,
+                    .size = 0.5,
+                    .speed = 0,
+                    .lifetime = lifetime + delay,
+                    .update = sword_update,
+                    .facing = vec2_radians(direction) + sword_offset.rotation,
+                    .data = data,
+                    .tex = (offset.z <= 3.0) ? texture_get_id("outpost1_sword_handle") : texture_get_id("outpost1_sword_blade"),
+                    ));
         projectile_set_flag(proj, PROJECTILE_FLAG_AUTO_FREE_DATA, true);
         projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, false);
     }
@@ -952,21 +952,17 @@ static f32 spawn_circle_sword(f32 start_rad, f32 arc_length, vec2 origin, f32 di
         vec2 offset = vec2_create(sword_offset.x, sword_offset.z);
         vec2 pos_offset = vec2_rotate(offset, start_rad - PI/2);
         pos_offset = vec2_add(pos_offset, vec2_scale(vec2_direction(start_rad), dist_from_origin));
-        vec2 pos = vec2_add(origin, pos_offset);
         f32 distance = vec2_mag(pos_offset);
-        Projectile* proj = map_create_projectile(pos);
-        proj->size = 0.5;
-        proj->speed = speed_per_rad;
-        proj->lifetime = lifetime;
-        proj->facing = start_rad + sword_offset.rotation;
-        proj->update = sword_circle_proj_update;
-        proj->data = st_malloc(sizeof(ProjCircleData));
-        projectile_set_flag(proj, PROJECTILE_FLAG_AUTO_FREE_DATA, true);
-        projectile_set_flag(proj, PROJECTILE_FLAG_PIERCE, true);
-        if (offset.z <= 3.0)
-            proj->tex = texture_get_id("outpost1_sword_handle");
-        else
-            proj->tex = texture_get_id("outpost1_sword_blade");
+        Projectile* proj = map_create_projectile(PROJECTILE_CREATE(
+                    .position = vec2_add(origin, pos_offset),
+                    .size = 0.5,
+                    .speed = speed_per_rad,
+                    .lifetime = lifetime,
+                    .facing = start_rad + sword_offset.rotation,
+                    .update = sword_circle_proj_update,
+                    .data = st_malloc(sizeof(ProjCircleData)),
+                    .tex = (offset.z <= 3.0) ? texture_get_id("outpost1_sword_handle") : texture_get_id("outpost1_sword_blade"),
+                    ));
         *(ProjCircleData*)proj->data = (ProjCircleData) { 
             .origin = origin, 
             .initial_angle_offset = vec2_radians(pos_offset),
@@ -975,6 +971,8 @@ static f32 spawn_circle_sword(f32 start_rad, f32 arc_length, vec2 origin, f32 di
             .distance = distance,
             .clockwise = clockwise
         };
+        projectile_set_flag(proj, PROJECTILE_FLAG_AUTO_FREE_DATA, true);
+        projectile_set_flag(proj, PROJECTILE_FLAG_PIERCE, true);
         projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, false);
     }
     return lifetime;
@@ -1007,21 +1005,18 @@ static void outpost1_boss_phase2_chase(Entity* entity, f32 dt)
             SwordOffset sword_offset = sword_offsets[i];
             vec2 offset = vec2_create(sword_offset.x, sword_offset.z);
             vec2 pos_offset = vec2_rotate(offset, vec2_radians(direction) - PI/2);
-            vec2 pos = vec2_add(origin, pos_offset);
             f32 distance = vec2_mag(offset);
-            Projectile* proj = map_create_projectile(pos);
+            Projectile* proj = map_create_projectile(PROJECTILE_CREATE(
+                        .position = vec2_add(origin, pos_offset),
+                        .size = 0.5,
+                        .speed = speed,
+                        .lifetime = lifetime,
+                        .facing = vec2_radians(direction) + sword_offset.rotation,
+                        .update = sword_circle_proj_update,
+                        .data = st_malloc(sizeof(ProjCircleData)),
+                        .tex = (offset.z <= 3.0) ? texture_get_id("outpost1_sword_handle") : texture_get_id("outpost1_sword_blade"),
+                        ));
             //proj->direction = direction;
-            proj->size = 0.5;
-            proj->speed = speed;
-            proj->lifetime = lifetime;
-            proj->facing = vec2_radians(direction) + sword_offset.rotation;
-            proj->update = sword_circle_proj_update;
-            proj->data = st_malloc(sizeof(ProjCircleData));
-            projectile_set_flag(proj, PROJECTILE_FLAG_AUTO_FREE_DATA, true);
-            if (offset.z <= 3.0)
-                proj->tex = texture_get_id("outpost1_sword_handle");
-            else
-                proj->tex = texture_get_id("outpost1_sword_blade");
             bool clockwise = true;
             *(ProjCircleData*)proj->data = (ProjCircleData) { 
                 .origin = origin, 
@@ -1031,6 +1026,7 @@ static void outpost1_boss_phase2_chase(Entity* entity, f32 dt)
                 .distance = distance,
                 .clockwise = clockwise
             };
+            projectile_set_flag(proj, PROJECTILE_FLAG_AUTO_FREE_DATA, true);
             projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, false);
         }
         data->phase_pattern = 0;
@@ -1162,22 +1158,17 @@ static void spawn_phase4_circle_sword(f32 start_rad, vec2 origin, f32 dist_from_
         vec2 offset = vec2_create(sword_offset.x, sword_offset.z);
         vec2 pos_offset = vec2_rotate(offset, start_rad - PI/2);
         pos_offset = vec2_add(pos_offset, vec2_scale(vec2_direction(start_rad), dist_from_origin));
-        vec2 pos = vec2_add(origin, pos_offset);
         f32 distance = vec2_mag(pos_offset);
-        Projectile* proj = map_create_projectile(pos);
-        proj->size = 0.5;
-        proj->speed = speed_per_rad;
-        proj->facing = start_rad + sword_offset.rotation;
-        proj->update = sword_circle_proj_update;
-        proj->data = st_malloc(sizeof(ProjCircleData));
-        proj->owner_uid = owner_uid;
-        projectile_set_flag(proj, PROJECTILE_FLAG_IGNORE_LIFETIME, true);
-        projectile_set_flag(proj, PROJECTILE_FLAG_AUTO_FREE_DATA, true);
-        projectile_set_flag(proj, PROJECTILE_FLAG_PIERCE, true);
-        if (offset.z <= 3.0)
-            proj->tex = texture_get_id("outpost1_sword_handle");
-        else
-            proj->tex = texture_get_id("outpost1_sword_blade");
+        Projectile* proj = map_create_projectile(PROJECTILE_CREATE(
+                    .position = vec2_add(origin, pos_offset),
+                    .size = 0.5,
+                    .speed = speed_per_rad,
+                    .facing = start_rad + sword_offset.rotation,
+                    .update = sword_circle_proj_update,
+                    .data = st_malloc(sizeof(ProjCircleData)),
+                    .owner_uid = owner_uid,
+                    .tex = (offset.z <= 3.0) ? texture_get_id("outpost1_sword_handle") : texture_get_id("outpost1_sword_blade"),
+                    ));
         *(ProjCircleData*)proj->data = (ProjCircleData) { 
             .origin = origin, 
             .initial_angle_offset = vec2_radians(pos_offset),
@@ -1186,6 +1177,9 @@ static void spawn_phase4_circle_sword(f32 start_rad, vec2 origin, f32 dist_from_
             .distance = distance,
             .clockwise = clockwise
         };
+        projectile_set_flag(proj, PROJECTILE_FLAG_IGNORE_LIFETIME, true);
+        projectile_set_flag(proj, PROJECTILE_FLAG_AUTO_FREE_DATA, true);
+        projectile_set_flag(proj, PROJECTILE_FLAG_PIERCE, true);
         projectile_set_flag(proj, PROJECTILE_FLAG_FRIENDLY, false);
     }
 }

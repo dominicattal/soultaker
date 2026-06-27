@@ -2,9 +2,9 @@
 #include "../gui.h"
 #include <string.h>
 
-Client* client_create(void)
+Client* client_create(void) 
 {
-    Client* client = st_calloc(1, sizeof(Client));
+	Client* client = st_calloc(1, sizeof(Client));
     client->uid = game_map_uid(client, GAME_OBJ_CLIENT);
     camera_set_defaults(&client->camera);
     inventory_init(client);
