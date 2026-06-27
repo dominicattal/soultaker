@@ -64,6 +64,10 @@ void camera_set_defaults(Camera* camera)
 
 void camera_update(Camera* camera, f32 dt)
 {
+    camera->window_cursor_position = vec2_create((f32)window_context.cursor.x / window_context.width, 1 - (f32)window_context.cursor.y / window_context.height);
+
+    camera->aspect_ratio = (f32)window_context.width / (f32)window_context.height;
+
     camera_rotate(camera, dt);
     camera_tilt(camera, dt);
     update_orientation_vectors(camera);

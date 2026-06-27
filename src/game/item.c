@@ -606,7 +606,6 @@ void inventory_sync(Client* client)
     for (i32 i = 0; i < player->inventory.num_items; i++) {
         Item* item = player->inventory.items[i];
         uid = (item == NULL) ? -1 : player->inventory.items[i]->uid;
-        printf("%d\n", uid);
         memcpy(packet.buffer + i * sizeof(i32), &uid, sizeof(uid));
     }
     game_net_send_packet_tcp(client, &packet);

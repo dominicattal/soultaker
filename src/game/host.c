@@ -11,12 +11,10 @@ void host_handle_client_input(Packet* packet)
     buffer += sizeof(client_controls);
     Client* client = game_context.uid_map[client_uid];
     client->control_flags = client_controls;
-    memcpy(&client->camera.facing, buffer, sizeof(client->camera.facing));
-    buffer += sizeof(client->camera.facing);
-    memcpy(&client->camera.right, buffer, sizeof(client->camera.right));
-    buffer += sizeof(client->camera.right);
-    memcpy(&client->camera.follow, buffer, sizeof(client->camera.follow));
-    buffer += sizeof(client->camera.follow);
+    memcpy(&client->camera, buffer, sizeof(client->camera));
+    buffer += sizeof(client->camera);
+
+    //log_write(DEBUG, "%f %f", client->camera.window_cursor_position.x, client->camera.window_cursor_position.y)
 }
 
 void host_swap_items(Packet* packet)

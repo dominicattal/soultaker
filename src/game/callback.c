@@ -34,7 +34,7 @@ void game_key_callback(i32 key, i32 scancode, i32 action, i32 mods)
     if (key == GLFW_KEY_H && action == GLFW_PRESS)
         gui_create_notification(test2);
     if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
-        player_cast(&game_context.this_client->player);
+        client_cast(game_context.this_client);
 }
 
 void game_mouse_button_callback(i32 button, i32 action, i32 mods)

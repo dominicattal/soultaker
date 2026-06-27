@@ -149,12 +149,13 @@ vec2 game_get_nearest_player_position(void)
     return game_context.this_client->player.entity->position;
 }
 
-static void update_player_state(Player* player, f32 dt)
+static void update_client_state(Client* client, f32 dt)
 {
+    Player* player = &client->player;
     Entity* entity = player->entity;
     if (entity == NULL) return;
-    player_shoot_primary(player);
-    player_shoot_secondary(player);
+    client_shoot_primary(client);
+    client_shoot_secondary(client);
     if (player->shooting_primary) {
         if (entity->state == player->state_shooting)
             return;
@@ -247,19 +248,14 @@ static void player_update_host(Player* player, f32 dt)
     }
     for (i32 i = 0; i < game_context.clients->length; i++) {
         Client* client = list_get(game_context.clients, i);
-        update_player_state(&client->player, dt);
+        update_client_state(client, dt);
         update_player_stats(client, dt);
+        update_inventory(&client->player.inventory, dt);
     }
-    update_inventory(&player->inventory, dt);
 }
 
 static void player_update_client(Player* player, f32 dt)
 {
-    if (!player->synced && game_context.uid_map_type[player->entity_uid] == GAME_OBJ_ENTITY) {
-        player->synced = true;
-        game_context.this_client->player.entity = game_context.uid_map[player->entity_uid];
-        log_write(DEBUG, "synced");
-    }
 }
 
 void player_update(Player* player, f32 dt)
@@ -270,16 +266,26 @@ void player_update(Player* player, f32 dt)
         player_update_client(player, dt);
 }
 
-static void player_target(Player* player, f32 height, void (*callback)(Player*, vec2, vec2))
+    //vec2 cursor_position = window_cursor_position();
+    //cursor_position.x /= window_width();
+    //cursor_position.y /= window_height();
+    //cursor_position.y = 1 - cursor_position.y;
+    //f32 ar = window_aspect_ratio();
+    //f32 zoom = camera_get_zoom();
+    //f32 tilt = camera_get_pitch();
+    //f32 rotation = camera_get_yaw();
+
+static void client_target(Client* client, f32 height, void (*callback)(Player*, vec2, vec2))
 {
-    vec2 cursor_position = window_cursor_position();
-    cursor_position.x /= window_width();
-    cursor_position.y /= window_height();
-    cursor_position.y = 1 - cursor_position.y;
-    f32 ar = window_aspect_ratio();
-    f32 zoom = camera_get_zoom();
-    f32 tilt = camera_get_pitch();
-    f32 rotation = camera_get_yaw();
+    Player* player = &client->player;
+    Camera* camera = &client->camera;
+
+    vec2 cursor_position = camera->window_cursor_position;
+    f32 ar = camera->aspect_ratio;
+    f32 zoom = camera->zoom;
+    f32 tilt = camera->pitch;
+    f32 rotation = camera->yaw;
+
     f32 a, b, c, r, ratio;
     vec2 direction, target;
     f32 vertical_offset = 1.0 / (2.0 * zoom) * height;
@@ -298,37 +304,40 @@ static void player_target(Player* player, f32 height, void (*callback)(Player*, 
     direction.y = pos.x * sin(rotation - HALFPI) + pos.y * cos(rotation - HALFPI);
     direction = vec2_normalize(direction);
     target = vec2_sub(player->entity->position, vec2_scale(direction, -2 * zoom * r * r / ratio));
-    callback(player, direction, target);
     player->entity->facing = direction;
+    callback(player, direction, target);
 }
 
-void player_shoot_primary(Player* player)
+void client_shoot_primary(Client* client)
 {
+    Player* player = &client->player;
     if (player->entity == NULL)
         return;
     if (!player->shooting_primary)
         return;
-    player_target(player, 0.5, inventory_shoot_weapons_primary);
+    client_target(client, 0.5, inventory_shoot_weapons_primary);
 }
 
-void player_shoot_secondary(Player* player)
+void client_shoot_secondary(Client* client)
 {
+    Player* player = &client->player;
     if (player->entity == NULL)
         return;
     if (!player->shooting_secondary)
         return;
-    player_target(player, 0.5, inventory_shoot_weapons_secondary);
+    client_target(client, 0.5, inventory_shoot_weapons_secondary);
 }
 
-void player_cast(Player* player)
+void client_cast(Client* client)
 {
+    Player* player = &client->player;
     if (player->entity == NULL)
         return;
     if (player->stats[STAT_MP] < 5) {
         log_write(DEBUG, "Not enough mana");
         return;
     }
-    player_target(player, 0.0, inventory_cast_abilities);
+    client_target(client, 0.0, inventory_cast_abilities);
 }
 
 vec2 player_position(void)

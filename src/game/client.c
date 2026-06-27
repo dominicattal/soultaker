@@ -22,17 +22,13 @@ void client_update(Client* client, f32 dt)
         packet.buffer = buffer + PACKET_HEADER_BYTES;
         packet.length = sizeof(client->uid) 
                       + sizeof(client->control_flags)
-                      + sizeof(client->camera.facing)
-                      + sizeof(client->camera.right)
-                      + sizeof(client->camera.follow);
+                      + sizeof(client->camera);
         packet.id = PACKET_CLIENT_INPUT;
         memcpyadv(&ptr, (char*)&packet.length, sizeof(packet.length));
         memcpyadv(&ptr, (char*)&packet.id, sizeof(packet.id));
         memcpyadv(&ptr, (char*)&client->uid, sizeof(client->uid));
         memcpyadv(&ptr, (char*)&client->control_flags, sizeof(client->control_flags));
-        memcpyadv(&ptr, (char*)&client->camera.facing, sizeof(client->camera.facing));
-        memcpyadv(&ptr, (char*)&client->camera.right, sizeof(client->camera.right));
-        memcpyadv(&ptr, (char*)&client->camera.follow, sizeof(client->camera.follow));
+        memcpyadv(&ptr, (char*)&client->camera, sizeof(client->camera));
         game_net_send_packet_udp(game_context.host_client, &packet);
     }
 
@@ -47,7 +43,6 @@ void client_map_sync_inventory(Packet* packet)
     i32 uid;
     for (i32 i = 0; i < inventory->num_items; i++) {
         memcpy(&uid, packet->buffer + i * sizeof(i32), sizeof(i32));
-        printf("%d\n", uid);
         if (uid == -1)
             inventory->items[i] = NULL;
         else
@@ -84,11 +79,7 @@ void client_sync_entity(Packet* packet)
     memcpy(&uid, packet->buffer, sizeof(uid));
     log_assert(uid >= 0, "");
     log_assert(uid < MAX_UID, "");
-    //log_assert(game_context.uid_map_type[uid] == GAME_OBJ_ENTITY, "should be entity object to sync with");
-    client->player.entity_uid = uid;
-    client->player.synced = false;
-    Entity* entity = game_context.uid_map[uid];
-    //client->player.entity = entity;
+    game_context.this_client->player.entity = game_context.uid_map[uid];
 }
 
 void client_change_map(void)

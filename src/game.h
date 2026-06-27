@@ -42,6 +42,7 @@ typedef enum PacketEnum {
     PACKET_CLEAR_FOG,
     PACKET_SWAP_ITEMS,
 
+    PACKET_CLIENT_CAMERA,
     PACKET_CLIENT_INPUT,
     PACKET_CLIENT_STATS,
 
@@ -161,6 +162,9 @@ typedef struct Camera {
     vec3 position, facing, right, up;
     vec2 target;
     i32 zoom_level;
+    vec2 window_cursor_position;
+    f32 aspect_ratio;
+
     bool follow;
 } Camera;
 
@@ -513,9 +517,6 @@ typedef struct Player {
     Entity* entity;
     vec2 position;
 
-    i32 entity_uid;
-    bool synced;
-
     // store special states
     i32 state_idle;
     i32 state_walking;
@@ -577,9 +578,9 @@ i32 entity_get_id(const char* name);
 // Assigns default entity for the player
 void player_reset(Client* client, Entity* entity);
 void player_update(Player* player, f32 dt);
-void player_shoot_primary(Player* player);
-void player_shoot_secondary(Player* player);
-void player_cast(Player* player);
+void client_shoot_primary(Client* client);
+void client_shoot_secondary(Client* client);
+void client_cast(Client* client);
 void player_swap_weapons(void);
 bool player_is_casting(void);
 void player_cleanup(Player* player);
