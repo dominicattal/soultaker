@@ -49,7 +49,6 @@ typedef enum PacketEnum {
 } PacketEnum;
 
 typedef enum GameObj {
-    GAME_OBJ_NONE,
     GAME_OBJ_CLIENT,
     GAME_OBJ_ENTITY,
     GAME_OBJ_TILE,
@@ -62,7 +61,9 @@ typedef enum GameObj {
     GAME_OBJ_TRIGGER,
     GAME_OBJ_AOE,
     GAME_OBJ_LINE,
-    GAME_OBJ_ITEM
+    GAME_OBJ_ITEM,
+    NUM_GAME_OBJS,
+    GAME_OBJ_NONE
 } GameObj;
 
 #define INPUT_W         (1<<0)
@@ -1163,9 +1164,11 @@ void host_handle_client_input(Packet* packet);
 
 typedef struct {
 
+    // these are only used for syncing over net
     void* uid_map[MAX_UID]; 
     GameObj uid_map_type[MAX_UID];
-    i32 uid_cursor;
+    i32 uid_free_stack[MAX_UID];
+    i32 uid_head;
 
     NetContext* net;
     char* host_ip;
@@ -1209,6 +1212,7 @@ extern GameContext game_context;
 i32  game_map_uid(void* obj, GameObj type);
 void game_set_uid(void* obj, GameObj type, i32 uid);
 void game_free_uid(i32 uid);
+void game_reset_uids(void);
 
 // manage networking
 void game_net_start_hosting(const char* ip, const char* port);

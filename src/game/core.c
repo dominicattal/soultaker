@@ -19,6 +19,7 @@ void* game_loop(void* vargp)
     f32 dt;
     pthread_mutex_t* init_mutex = vargp;
     thread_link("Game");
+    game_reset_uids();
     end = start = get_time();
     game_context.time = 0;
     game_context.tps = 144;
@@ -82,20 +83,25 @@ void* game_loop(void* vargp)
     return NULL;
 }
 
+void game_reset_uids(void)
+{
+    for (i32 i = 0; i < MAX_UID; i++) {
+        game_context.uid_map[i] = NULL;
+        game_context.uid_map_type[i] = GAME_OBJ_NONE;
+        game_context.uid_free_stack[i] = i;
+        game_context.uid_head = 0;
+    }
+}
+
 i32 game_map_uid(void* obj, GameObj type)
 {
-    i32 uid, cnt;
-    cnt = 0;
-    while (game_context.uid_map[game_context.uid_cursor] != NULL && cnt < MAX_UID) {
-        game_context.uid_cursor = (game_context.uid_cursor+1) % MAX_UID;
-        cnt++;
-    }
-    uid = game_context.uid_cursor;
-    if (cnt == MAX_UID) 
+    if (game_context.uid_head == MAX_UID) {
+        log_write(CRITICAL, "ran out of uids");
         return -1;
+    }
+    i32 uid = game_context.uid_free_stack[game_context.uid_head++];
     game_context.uid_map[uid] = obj;
     game_context.uid_map_type[uid] = type;
-
     return uid;
 }
 
@@ -113,6 +119,8 @@ void game_free_uid(i32 uid)
 
     if (game_context.hosting)
         host_destroy_game_obj(uid);
+    if (game_context.hosting || game_context.singleplayer)
+        game_context.uid_free_stack[--game_context.uid_head] = uid;
 }
 
 void game_change_map(i32 id)
