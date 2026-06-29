@@ -71,8 +71,8 @@ void game_process_input(f32 dt)
     if (client->control_flags & INPUT_Y)
         tilt_mag -= 1;
 
-    camera_update_rotation(client->uid, rotate_mag);
-    camera_update_tilt(client->uid, tilt_mag);
+    camera_update_rotation(&client->camera, rotate_mag);
+    camera_update_tilt(&client->camera, tilt_mag);
 
     if (game_context.hosting || game_context.singleplayer) {
         for (i32 i = 0; i < game_context.clients->length; i++) {

@@ -176,8 +176,8 @@ void camera_zoom(Camera* camera, i32 mag);
 void camera_minimap_zoom(Camera* camera, i32 mag);
 
 void camera_update_direction(i32 client_uid, vec2 mag, f32 dt);
-void camera_update_rotation(i32 client_uid, f32 mag);
-void camera_update_tilt(i32 client_uid, f32 mag);
+void camera_update_rotation(Camera* camera, f32 mag);
+void camera_update_tilt(Camera* camera, f32 mag);
 void camera_rotate(Camera* camera, f32 dt);
 void camera_tilt(Camera* camera, f32 dt);
 

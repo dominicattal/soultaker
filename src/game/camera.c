@@ -107,17 +107,13 @@ void camera_update_direction(i32 client_uid, vec2 mag, f32 dt)
     }
 }
 
-void camera_update_rotation(i32 client_uid, f32 mag)
+void camera_update_rotation(Camera* camera, f32 mag)
 {
-    Client* client = game_context.uid_map[client_uid];
-    Camera* camera = &client->camera;
     camera->rotate_mag = mag;
 }
 
-void camera_update_tilt(i32 client_uid, f32 mag)
+void camera_update_tilt(Camera* camera, f32 mag)
 {
-    Client* client = game_context.uid_map[client_uid];
-    Camera* camera = &client->camera;
     camera->tilt_mag = mag;
 }
 
