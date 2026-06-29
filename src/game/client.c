@@ -60,13 +60,13 @@ void client_set_username(Client* client, char* username)
 
 void client_destroy(Client* client)
 {
+    game_free_uid(client->uid);
     if (client->udp_address != NULL)
         socket_address_destroy(client->udp_address);
     if (client->tcp_socket != NULL)
         socket_destroy(client->tcp_socket);
     if (client->udp_socket != NULL)
         socket_destroy(client->udp_socket);
-    game_free_uid(client->uid);
     string_free(client->username);
     inventory_cleanup(client);
     st_free(client);

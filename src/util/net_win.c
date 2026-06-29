@@ -167,6 +167,11 @@ Socket* socket_create(NetContext* ctx, const char* ip, const char* port, int fla
     if (*new_socket == INVALID_SOCKET)
         goto fail_free_addr_info;
 
+    if (tcp) {
+        DWORD option_value = 1;
+        setsockopt(*new_socket, IPPROTO_TCP, TCP_NODELAY, (const char*)&option_value, sizeof(option_value));
+    }
+
     //BOOL opt_val = TRUE;
     //int opt_len = sizeof(BOOL);
     //setsockopt(*new_socket, SOL_SOCKET, SO_REUSEADDR, (char*)&opt_val, opt_len);
