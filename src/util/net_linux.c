@@ -9,6 +9,7 @@
 #include <string.h>
 #include <assert.h>
 #include <pthread.h>
+#include <netinet/tcp.h>
 #include <netinet/ip.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -138,6 +139,7 @@ Socket* socket_create(NetContext* ctx, const char* ip, const char* port_str, int
 
     if (flags & BIT_TCP) {
         sock->fd = socket(AF_INET, SOCK_STREAM, 0);
+        setsockopt(sock->fd, SOL_SOCKET, TCP_NODELAY, &(int){1}, sizeof(int));
         sock->tcp = true;
     } else {
         sock->fd = socket(AF_INET, SOCK_DGRAM, 0);

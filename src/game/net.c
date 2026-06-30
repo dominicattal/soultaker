@@ -268,6 +268,9 @@ static void* client_udp_handler(void* vargp)
 
 void game_net_join(const char* ip, const char* port)
 {
+    log_write(WARNING, "Multiplayer is disabled because skill issue");
+    return;
+
     if (game_context.net != NULL) {
         log_write(WARNING, "game already joined, ignoring");
         return;
@@ -345,6 +348,9 @@ void game_net_join(const char* ip, const char* port)
 
 void game_net_start_hosting(const char* ip, const char* port)
 {
+    log_write(WARNING, "Multiplayer is disabled because skill issue");
+    return;
+
     if (game_context.net != NULL) {
         log_write(WARNING, "game is already hosting, ignoring");
         return;
@@ -370,6 +376,9 @@ void game_net_start_hosting(const char* ip, const char* port)
 
 void game_net_cleanup(void)
 {
+    log_write(WARNING, "Multiplayer is disabled because skill issue");
+    return;
+
     if (game_context.net == NULL)
         return;
 

@@ -26,7 +26,7 @@ void* game_loop(void* vargp)
     game_context.timestep = 1.0 / game_context.tps;
     game_context.clients = list_create();
     game_context.updated_uids = list_i32_create();
-    game_context.net_timestep = 1.0 / 20.0;
+    game_context.net_timestep = 1.0 / 30.0;
     client = client_create();
     client_set_username(client, string_copy("fancy"));
     game_context.this_client = client;
